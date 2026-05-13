@@ -33,15 +33,15 @@ const G = {
 };
 
 const sh = {
-  xs:"0 1px 3px rgba(31,27,46,0.04)",
-  sm:"0 2px 8px rgba(31,27,46,0.05),0 1px 3px rgba(31,27,46,0.04)",
-  md:"0 8px 24px rgba(31,27,46,0.08),0 2px 6px rgba(31,27,46,0.04)",
-  lg:"0 16px 48px rgba(31,27,46,0.10)",
-  c: col=>`0 6px 20px ${col}38,0 2px 6px ${col}22`,
+  xs:"0 1px 2px rgba(31,27,46,0.04), 0 1px 1px rgba(31,27,46,0.03)",
+  sm:"0 1px 3px rgba(31,27,46,0.04), 0 4px 12px rgba(31,27,46,0.05)",
+  md:"0 2px 6px rgba(31,27,46,0.04), 0 12px 30px rgba(31,27,46,0.09), 0 4px 10px rgba(31,27,46,0.04)",
+  lg:"0 4px 12px rgba(31,27,46,0.06), 0 24px 60px rgba(31,27,46,0.12), 0 8px 20px rgba(31,27,46,0.06)",
+  c: col=>`0 2px 5px ${col}1A, 0 10px 26px ${col}3D, 0 4px 10px ${col}22`,
 };
 
 const ACT_C=["#E89B89","#C2607A","#8FBFA1","#9683C2","#D9B868","#8AAFD2","#B58CD0","#E89A9A","#7CB8A0","#8E92D2"];
-const TMR_C=["#E89B89","#C2607A","#D9B868","#8FBFA1","#9683C2","#8AAFD2","#B58CD0","#E89A9A"];
+const TMR_C=["#E89B89","#C2607A","#D9B868","#8FBFA1","#9683C2","#8AAFD2","#B58CD0","#E89A9A","#1F1B2E"];
 
 const EMOJIS=["🌅","🍳","🥐","🥪","🍎","🍕","🎒","🚌","✈️","🚲","📚","✏️","🎨","💻","⚽","🏊","🏃","🚴","🎵","🎸","🎮","🛁","🛏️","🌙","💊","🐶","🐱","🐻","🦁","🐼","🌺","🌈","⭐","🎉","🎁","💧","☕","🧁","🎂","👟","👕","🔑","🏠","🏫","🌳","🌻","🎯","🧩","🏋️","🤸","🧘","🍜","🥗","📝","📱","🎹","🎭","🎬","🦋","🌸","🏖️","🌲","🌟","✨","🍓","🍌","🍊","🧃","🥤","🍦","🍫","🏀","🎾","🚗","🛵","🐸","🐨","🦊","🥞","🧇","🫐"];
 const STEP_E=["👟","👕","👖","🧴","🎒","💧","🧹","📖","✅","🍌","🎵","🛁","🛏️","🪥","🧦","🔑","🏃","🍳","🥤","📋","🖊️","🎯","⭐","☀️","🌙"];
@@ -136,11 +136,11 @@ const RP0=[
   ]},
 ];
 
-const CFG0={cardStyle:"normal",schedView:"both",showSigvard:true,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,tools:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","lava"],defaultType:"sector",defaultMin:5,defaultColor:"#E89B89"},visibleEmotions:[1,2,3,4,5],calmTools:{breath:true,grounding:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]},toolsVisible:{firstthen:true,choices:true,rewards:true,recipes:true}};
+const CFG0={cardStyle:"normal",schedView:"both",showSigvard:true,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,tools:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","lava"],defaultType:"sector",defaultMin:5,defaultColor:"#8AAFD2"},visibleEmotions:[1,2,3,4,5],calmTools:{breath:true,grounding:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]},toolsVisible:{firstthen:true,choices:true,rewards:true,recipes:true}};
 
 const TR={
-  sv:{other:"EN",myDay:"Min dag",editorOpen:"Redaktör",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Inga aktiviteter – öppna Redaktör",addAct:"+ Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Sol",lava:"Lava",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redaktör & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Hem",comm:"Tala",sigvardOn:"Sigvard-lampor",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – öppna Redaktör för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat 🌿",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade"},
-  en:{other:"SV",myDay:"My Day",editorOpen:"Editor",editorClose:"Close",list:"List",card:"Cards",noActs:"No activities – open Editor",addAct:"+ New activity",save:"Save",cancel:"Cancel",actName:"Activity name",actTime:"Time",pickEmoji:"Pick emoji",pickColor:"Colour",steps:"Checklist",stepPH:"e.g. Put on shoes",timerAct:"Timer – activity",timerType:"Timer type",timerMin:"Minutes",timerColor:"Timer colour",sector:"Time Timer",ring:"Ring",dots:"Dot timer",wave:"Wave",sun:"Sun",lava:"Lava",pause:"Pause",resume:"Start",reset:"Reset",next:"Next",prev:"Back",min:"min",settings:"Settings",cardStyle:"Card style",styleNormal:"Normal",styleCompact:"Compact",styleBig:"Large",syncTitle:"Sharing",sameDevice:"Same device",syncMode:"Via code",sameDeviceDesc:"Editor & user view on same device.",syncModeDesc:"Share schedule via code.",yourCode:"Your code",codeHint:"Give this code to the user",enterCode:"Enter code",connect:"Connect",wrongCode:"Not found.",copied:"Copied ✓",openTimer:"Start timer",allDoneMsg:"Great job! 🌟",emotions:"How are you?",emotionSaved:"Saved! ✓",emotionReason:"Why?",emotionHistory:"History",noHistory:"No history",toolsTimer:"Timer",toolsEmotion:"Mood",home:"Home",comm:"Talk",sigvardOn:"Sigvard lamps",visibleTools:"Visible tools",schedView:"Schedule view",viewBoth:"List + Cards",viewList:"List only",viewCard:"Cards only",addCard:"+ New card",addCat:"+ New category",catName:"Category name",autoTimer:"Syncs with start time",preview:"Preview",startTimer:"Start",timerSettings:"Timer settings for user view",allowedTimers:"Allowed timers",defaultTimer:"Default timer",visibleEmotions:"Visible emotions",enlarge:"Enlarge",cardImage:"Image",uploadPhoto:"Upload photo",useEmoji:"Use emoji instead",stories:"Stories",newStory:"New story",storyTitle:"Title",pages:"Pages",addPage:"+ Add page",pageNum:"Page",storyText:"Page text",noStories:"No stories – open Editor to create",renameCat:"Rename category",calm:"Calm",calmTitle:"Find calm",breathing:"Breathe",grounding:"54321",breathIn:"Breathe in",breathHold:"Hold",breathOut:"Breathe out",breathDone:"Well done 🌿",groundIntro:"Pause. Let's do this together.",groundStart:"Begin",see5:"5 things you can see",hear4:"4 things you can hear",touch3:"3 things you can touch",smell2:"2 things you can smell",taste1:"1 thing you can taste",iAmHere:"I am here. I am safe.",roundsDone:"Done",calmSettings:"Calm – exercises",idcard:"My card",myName:"My name",myAge:"Age",aboutMe:"About me",myTriggers:"This can be hard",whatHelps:"This helps me",emergencyContacts:"Call",contactName:"Name",contactPhone:"Phone",contactRelation:"Relation",addContact:"+ Add contact",call:"Call",idHint:"Show this to someone who wants to help","editCard":"Edit my card",tools:"Tools",firstthen:"First-Then",choices:"Choices",rewards:"Reward",recipes:"Recipes",first:"First",then:"Then",ftDone:"Done!",chQuestion:"What do you want?",chTap:"Tap to choose",stars:"stars",goalReached:"You've earned your reward! 🎉",reward:"Reward",starsGoal:"Goal – number of stars",addChoice:"+ New choice",newCategory:"+ New category",rewardEmoji:"Emoji",rewardText:"Reward",ingredients:"Ingredients",instructions:"How to make it",servings:"Servings",time:"Time",newRecipe:"New recipe",step:"Step",addStep:"+ Add step",useReward:"Give star when done",resetStars:"Reset stars",starsEarned:"Stars earned"},
+  sv:{other:"EN",myDay:"Min dag",editorOpen:"Redaktör",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Inga aktiviteter – öppna Redaktör",addAct:"+ Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Sol",lava:"Lava",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redaktör & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Hem",comm:"Tala",sigvardOn:"Sigvard-lampor",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – öppna Redaktör för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat 🌿",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng"},
+  en:{other:"SV",myDay:"My Day",editorOpen:"Editor",editorClose:"Close",list:"List",card:"Cards",noActs:"No activities – open Editor",addAct:"+ New activity",save:"Save",cancel:"Cancel",actName:"Activity name",actTime:"Time",pickEmoji:"Pick emoji",pickColor:"Colour",steps:"Checklist",stepPH:"e.g. Put on shoes",timerAct:"Timer – activity",timerType:"Timer type",timerMin:"Minutes",timerColor:"Timer colour",sector:"Time Timer",ring:"Ring",dots:"Dot timer",wave:"Wave",sun:"Sun",lava:"Lava",pause:"Pause",resume:"Start",reset:"Reset",next:"Next",prev:"Back",min:"min",settings:"Settings",cardStyle:"Card style",styleNormal:"Normal",styleCompact:"Compact",styleBig:"Large",syncTitle:"Sharing",sameDevice:"Same device",syncMode:"Via code",sameDeviceDesc:"Editor & user view on same device.",syncModeDesc:"Share schedule via code.",yourCode:"Your code",codeHint:"Give this code to the user",enterCode:"Enter code",connect:"Connect",wrongCode:"Not found.",copied:"Copied ✓",openTimer:"Start timer",allDoneMsg:"Great job! 🌟",emotions:"How are you?",emotionSaved:"Saved! ✓",emotionReason:"Why?",emotionHistory:"History",noHistory:"No history",toolsTimer:"Timer",toolsEmotion:"Mood",home:"Home",comm:"Talk",sigvardOn:"Sigvard lamps",visibleTools:"Visible tools",schedView:"Schedule view",viewBoth:"List + Cards",viewList:"List only",viewCard:"Cards only",addCard:"+ New card",addCat:"+ New category",catName:"Category name",autoTimer:"Syncs with start time",preview:"Preview",startTimer:"Start",timerSettings:"Timer settings for user view",allowedTimers:"Allowed timers",defaultTimer:"Default timer",visibleEmotions:"Visible emotions",enlarge:"Enlarge",cardImage:"Image",uploadPhoto:"Upload photo",useEmoji:"Use emoji instead",stories:"Stories",newStory:"New story",storyTitle:"Title",pages:"Pages",addPage:"+ Add page",pageNum:"Page",storyText:"Page text",noStories:"No stories – open Editor to create",renameCat:"Rename category",calm:"Calm",calmTitle:"Find calm",breathing:"Breathe",grounding:"54321",breathIn:"Breathe in",breathHold:"Hold",breathOut:"Breathe out",breathDone:"Well done 🌿",groundIntro:"Pause. Let's do this together.",groundStart:"Begin",see5:"5 things you can see",hear4:"4 things you can hear",touch3:"3 things you can touch",smell2:"2 things you can smell",taste1:"1 thing you can taste",iAmHere:"I am here. I am safe.",roundsDone:"Done",calmSettings:"Calm – exercises",idcard:"My card",myName:"My name",myAge:"Age",aboutMe:"About me",myTriggers:"This can be hard",whatHelps:"This helps me",emergencyContacts:"Call",contactName:"Name",contactPhone:"Phone",contactRelation:"Relation",addContact:"+ Add contact",call:"Call",idHint:"Show this to someone who wants to help","editCard":"Edit my card",tools:"Tools",firstthen:"First-Then",choices:"Choices",rewards:"Reward",recipes:"Recipes",first:"First",then:"Then",ftDone:"Done!",chQuestion:"What do you want?",chTap:"Tap to choose",stars:"stars",goalReached:"You've earned your reward! 🎉",reward:"Reward",starsGoal:"Goal – number of stars",addChoice:"+ New choice",newCategory:"+ New category",rewardEmoji:"Emoji",rewardText:"Reward",ingredients:"Ingredients",instructions:"How to make it",servings:"Servings",time:"Time",newRecipe:"New recipe",step:"Step",addStep:"+ Add step",useReward:"Give star when done",resetStars:"Reset stars",starsEarned:"Stars earned",bannerNowOngoing:"Happening now",bannerNextUp:"Next up",bannerDayLabel:"Today",bannerNoActsLeft:"Nothing left today",close:"Close"},
 };
 
 const TTYPES=["sector","ring","dots","wave","sun","lava"];
@@ -190,7 +190,15 @@ function useTimer(initSec,autoRun=false){
   return{secs,run,setRun,label:`${mm}:${ss}`,done:secs<=0,pct:total.current>0?secs/total.current:0,reset:()=>{setSecs(total.current);setRun(autoRun);setRang(false);}};
 }
 
-function TCtrl({c,color,t}){return(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,width:"100%",maxWidth:280,marginTop:20}}>{!c.done&&<button onClick={()=>c.setRun(r=>!r)} style={{width:"100%",padding:"15px 0",borderRadius:16,border:"none",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",background:c.run?color:G.ink,color:"#fff",boxShadow:c.run?sh.c(color):sh.sm}}>{c.run?`⏸ ${t.pause}`:`▶ ${t.resume}`}</button>}<button onClick={c.reset} style={{width:"100%",padding:"12px 0",borderRadius:16,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer"}}>↺ {t.reset}</button></div>);}
+function TCtrl({c,color,t}){
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,width:"100%",maxWidth:280,marginTop:20}}>
+      <style>{`@keyframes runPulse{0%,100%{box-shadow:0 8px 24px ${color}55, 0 2px 6px ${color}33}50%{box-shadow:0 12px 36px ${color}77, 0 4px 12px ${color}44}}`}</style>
+      {!c.done&&<button onClick={()=>c.setRun(r=>!r)} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform=""} onMouseLeave={e=>e.currentTarget.style.transform=""} style={{width:"100%",padding:"15px 0",borderRadius:16,border:"none",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",background:c.run?`linear-gradient(135deg,${color},${color}DC)`:G.ink,color:"#fff",boxShadow:c.run?sh.c(color):sh.sm,transition:"transform .15s, background .25s",animation:c.run?"runPulse 2.6s ease-in-out infinite":"none"}}>{c.run?`⏸ ${t.pause}`:`▶ ${t.resume}`}</button>}
+      <button onClick={c.reset} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform=""} onMouseLeave={e=>e.currentTarget.style.transform=""} style={{width:"100%",padding:"12px 0",borderRadius:16,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",transition:"transform .15s, background .2s, border-color .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=`${color}66`;e.currentTarget.style.color=color;}}>↺ {t.reset}</button>
+    </div>
+  );
+}
 
 function DoneBadge({color}){return(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:18,padding:"40px 0"}}><style>{`@keyframes scUp{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}@keyframes dsh{from{stroke-dashoffset:302}to{stroke-dashoffset:0}}@keyframes chk{from{stroke-dashoffset:70}to{stroke-dashoffset:0}}@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}`}</style><svg width={120} height={120} style={{animation:"scUp .5s cubic-bezier(.34,1.56,.64,1),pulse 2s ease-in-out .6s infinite"}}><defs><radialGradient id="dg"><stop offset="0%" stopColor={`${color}26`}/><stop offset="100%" stopColor={`${color}08`}/></radialGradient></defs><circle cx={60} cy={60} r={56} fill="url(#dg)"/><circle cx={60} cy={60} r={48} fill="none" stroke={color} strokeWidth={2.5} strokeDasharray={302} style={{animation:"dsh .7s ease forwards"}}/><path d="M38,60 L52,75 L82,42" stroke={color} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" fill="none" strokeDasharray={70} style={{animation:"chk .45s .25s ease forwards"}}/></svg><div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color}}>Klar! 🎉</div></div>);}
 
@@ -199,45 +207,80 @@ function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const c=useTimer(totalSec,autoRun);
   if(c.done) return <DoneBadge color={color}/>;
   const cx=size/2, cy=size/2, R=size/2-24;
-  // CCW from top: position is (cx - R·sin(θ), cy - R·cos(θ))
-  // Numbers auto-scaled based on chosen duration
+  // Time Timer behavior: sector shrinks counter-clockwise (matches the red disc
+  // that disappears as time passes). c.pct = remaining.
+  // Number scale: pick clean step based on duration
   const totalMin=Math.max(1,Math.round(totalSec/60));
   let step;
-  if(totalMin<=5)step=1; else if(totalMin<=10)step=2; else if(totalMin<=30)step=5; else if(totalMin<=60)step=10; else step=15;
-  const nums=[]; for(let m=0;m<totalMin;m+=step) nums.push(m);
-  const minorStep = totalMin<=5?0 : totalMin<=60?1 : 5;
+  if(totalMin<=5) step=1;
+  else if(totalMin<=15) step=3;
+  else if(totalMin<=30) step=5;
+  else if(totalMin<=60) step=10;
+  else step=15;
+  const nums=[];
+  for(let m=step; m<totalMin; m+=step) nums.push(m);
+  // Minor ticks every minute (or every 5 min for longer durations)
+  const minorStep = totalMin<=15 ? 1 : totalMin<=60 ? 1 : 5;
   const minorTicks=[];
-  if(minorStep>0) for(let m=0;m<totalMin;m+=minorStep) if(m%step!==0) minorTicks.push(m);
-  // Inner sector with outer number ring (numbers never covered)
-  const sectorR=R*0.74;
-  const nR=R-13;
+  for(let m=0;m<totalMin;m+=minorStep) if(!nums.includes(m) && m!==0) minorTicks.push(m);
+
+  // New layout (inside-out):
+  //   1. Sector (innermost, 0 → R*0.62)
+  //   2. Buffer
+  //   3. Ticks (just outside sector, R*0.67 to R*0.75)
+  //   4. Buffer
+  //   5. Numbers (outermost, centered at R-9, aligned with ticks)
+  const sectorR=R*0.62;
+  const tickInnerR=R*0.67;
+  const tickOuterR=R*0.75;
+  const numR=R-9;
   const theta=c.pct*2*Math.PI;
   const ex=cx-sectorR*Math.sin(theta), ey=cy-sectorR*Math.cos(theta);
   const lg=c.pct>0.5?1:0;
-  const handLen=sectorR;
-  const hx=cx-handLen*Math.sin(theta), hy=cy-handLen*Math.cos(theta);
+  const handX=cx-sectorR*Math.sin(theta), handY=cy-sectorR*Math.cos(theta);
+
   return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
-      <style>{`@keyframes timerIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}`}</style>
-      <div style={{padding:14,borderRadius:size*0.13,background:`linear-gradient(155deg,${color},${color}D8)`,boxShadow:`0 14px 40px ${color}40,inset 0 1.5px 0 rgba(255,255,255,.5)`,animation:"timerIn .3s ease"}}>
-        <div style={{padding:8,borderRadius:size*0.105,background:"#fff",boxShadow:"inset 0 0 0 1px rgba(0,0,0,.05),inset 0 2px 4px rgba(0,0,0,.04)"}}>
+      <style>{`@keyframes timerIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}@keyframes ttPulse{0%,100%{box-shadow:0 14px 40px ${color}40, 0 4px 12px ${color}33, inset 0 1.5px 0 rgba(255,255,255,.5)}50%{box-shadow:0 18px 50px ${color}55, 0 6px 16px ${color}44, inset 0 1.5px 0 rgba(255,255,255,.5)}}`}</style>
+      <div style={{padding:14,borderRadius:size*0.13,background:`linear-gradient(155deg,${color},${color}D8)`,animation:"timerIn .35s ease, ttPulse 3.6s ease-in-out infinite"}}>
+        <div style={{padding:10,borderRadius:size*0.105,background:"#fff",boxShadow:"inset 0 0 0 1px rgba(0,0,0,.05), inset 0 2px 4px rgba(0,0,0,.04)"}}>
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{display:"block"}}>
+            <defs>
+              <radialGradient id={`stSect${size}`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={color} stopOpacity="0.96"/>
+                <stop offset="100%" stopColor={color} stopOpacity="0.85"/>
+              </radialGradient>
+            </defs>
             <circle cx={cx} cy={cy} r={R} fill="#FEFEFE"/>
-            {/* minor ticks */}
-            {minorTicks.map(m=>{const th=(m/totalMin)*2*Math.PI;const r1=R-5;return <line key={'mn'+m} x1={cx-r1*Math.sin(th)} y1={cy-r1*Math.cos(th)} x2={cx-R*Math.sin(th)} y2={cy-R*Math.cos(th)} stroke="#C7C2D8" strokeWidth={1} strokeLinecap="round"/>;})}
-            {/* major ticks at labels */}
-            {nums.map(m=>{const th=(m/totalMin)*2*Math.PI;const r1=R-10;return <line key={'mj'+m} x1={cx-r1*Math.sin(th)} y1={cy-r1*Math.cos(th)} x2={cx-R*Math.sin(th)} y2={cy-R*Math.cos(th)} stroke="#1F1B2E" strokeWidth={2.2} strokeLinecap="round"/>;})}
-            {/* numbers — represent minutes remaining at that position */}
-            {nums.map(m=>{const th=(m/totalMin)*2*Math.PI;return <text key={'n'+m} x={cx-nR*Math.sin(th)} y={cy-nR*Math.cos(th)} textAnchor="middle" dominantBaseline="middle" style={{fontSize:size*0.058,fontWeight:600,fill:"#1F1B2E",fontFamily:G.font}}>{m}</text>;})}
-            {/* colored sector — inner, never covers numbers */}
-            {c.pct>=0.9995 ? <circle cx={cx} cy={cy} r={sectorR} fill={color} opacity={0.92}/>
-              : c.pct>0.002 ? <path d={`M${cx},${cy} L${cx},${cy-sectorR} A${sectorR},${sectorR} 0 ${lg},0 ${ex},${ey} Z`} fill={color} opacity={0.92}/>
+            {/* Inner sector — innermost element */}
+            {c.pct>=0.9995 ? <circle cx={cx} cy={cy} r={sectorR} fill={`url(#stSect${size})`}/>
+              : c.pct>0.002 ? <path d={`M${cx},${cy} L${cx},${cy-sectorR} A${sectorR},${sectorR} 0 ${lg},0 ${ex},${ey} Z`} fill={`url(#stSect${size})`}/>
               : null}
-            {/* hand follows sector edge */}
-            {c.pct>0.002&&c.pct<0.9995&&<line x1={cx} y1={cy} x2={hx} y2={hy} stroke="#1F1B2E" strokeWidth={2.5} strokeLinecap="round"/>}
-            {/* spindle */}
-            <circle cx={cx} cy={cy} r={size*0.055} fill="#FFFFFF" stroke="#1F1B2E" strokeWidth={1.5}/>
-            <circle cx={cx} cy={cy} r={size*0.022} fill="#1F1B2E"/>
+            {/* Minor ticks — just outside sector, short */}
+            {minorTicks.map(m=>{
+              const th=(m/totalMin)*2*Math.PI;
+              const x1=cx-tickInnerR*Math.sin(th), y1=cy-tickInnerR*Math.cos(th);
+              const x2=cx-(tickInnerR+(tickOuterR-tickInnerR)*0.55)*Math.sin(th), y2=cy-(tickInnerR+(tickOuterR-tickInnerR)*0.55)*Math.cos(th);
+              return <line key={'mn'+m} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#A8A0B8" strokeWidth={1} strokeLinecap="round"/>;
+            })}
+            {/* Major ticks — at each numbered position, aligned with numbers radially */}
+            {nums.map(m=>{
+              const th=(m/totalMin)*2*Math.PI;
+              const x1=cx-tickInnerR*Math.sin(th), y1=cy-tickInnerR*Math.cos(th);
+              const x2=cx-tickOuterR*Math.sin(th), y2=cy-tickOuterR*Math.cos(th);
+              return <line key={'mj'+m} x1={x1} y1={y1} x2={x2} y2={y2} stroke={G.ink} strokeWidth={2} strokeLinecap="round"/>;
+            })}
+            {/* Numbers — OUTERMOST, aligned radially with major ticks */}
+            {nums.map(m=>{
+              const th=(m/totalMin)*2*Math.PI;
+              const x=cx-numR*Math.sin(th), y=cy-numR*Math.cos(th);
+              return <text key={'n'+m} x={x} y={y} textAnchor="middle" dominantBaseline="central" style={{fontSize:Math.round(size*0.07),fontWeight:700,fill:G.ink,fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',letterSpacing:0,fontVariantNumeric:"tabular-nums",fontStyle:"normal"}}>{m}</text>;
+            })}
+            {/* Hand */}
+            {c.pct>0.002&&c.pct<0.9995&&<line x1={cx} y1={cy} x2={handX} y2={handY} stroke={G.ink} strokeWidth={2.5} strokeLinecap="round"/>}
+            {/* Spindle */}
+            <circle cx={cx} cy={cy} r={size*0.052} fill="#FFFFFF" stroke={G.ink} strokeWidth={1.5}/>
+            <circle cx={cx} cy={cy} r={size*0.024} fill={G.ink}/>
           </svg>
         </div>
       </div>
@@ -247,29 +290,66 @@ function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   );
 }
 
-/* ═══ RING (Minee-style) ═══ */
+/* ═══ RING (Minee-style donut) ═══ */
 function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const c=useTimer(totalSec,autoRun);
   if(c.done) return <DoneBadge color={color}/>;
-  const cx=size/2, cy=size/2, R=size/2-18;
-  const theta=c.pct*2*Math.PI;
-  const ex=cx-R*Math.sin(theta), ey=cy-R*Math.cos(theta);
+  const cx=size/2, cy=size/2;
+  const Ro=size/2-22;       // outer radius
+  const Ri=Ro*0.58;         // inner radius (hollow center)
+  // Time Timer behavior: donut starts FULL and shrinks counter-clockwise (matches SectorTimer).
+  // c.pct = remaining (1 → 0). End point is on the LEFT side (counter-clockwise from 12).
+  const angle=c.pct*2*Math.PI;
+  const exO=cx-Ro*Math.sin(angle), eyO=cy-Ro*Math.cos(angle);
+  const exI=cx-Ri*Math.sin(angle), eyI=cy-Ri*Math.cos(angle);
   const lg=c.pct>0.5?1:0;
-  let sp="";
-  if(c.pct>=0.9998) sp=`M${cx},${cy-R} A${R},${R} 0 1,0 ${cx-0.01},${cy-R} Z`;
-  else if(c.pct>0.002) sp=`M${cx},${cy} L${cx},${cy-R} A${R},${R} 0 ${lg},0 ${ex},${ey} Z`;
-  const innerR=R*0.42;
+  let donutPath="";
+  if(c.pct>0.002 && c.pct<0.9998){
+    // Annular sector: outer arc counter-clockwise, line in, inner arc back, line out
+    donutPath = `M${cx},${cy-Ro} A${Ro},${Ro} 0 ${lg},0 ${exO},${eyO} L${exI},${eyI} A${Ri},${Ri} 0 ${lg},1 ${cx},${cy-Ri} Z`;
+  }
+  // End-marker position (dot at the boundary where colored region ends)
+  const midR=(Ro+Ri)/2;
+  const markX=cx-midR*Math.sin(angle), markY=cy-midR*Math.cos(angle);
+
   return(
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
-      <div style={{padding:10,borderRadius:"50%",background:"linear-gradient(160deg,#FBFAFE,#F0EEF8)",boxShadow:"0 14px 40px rgba(31,27,46,.10),inset 0 1.5px 0 rgba(255,255,255,.9)",border:`1px solid ${G.border}`}}>
-        <svg width={size} height={size} style={{display:"block"}}>
-          <circle cx={cx} cy={cy} r={R} fill="#FFFFFF" stroke={G.border} strokeWidth={1}/>
-          {sp&&<path d={sp} fill={color} opacity={0.94}/>}
-          <circle cx={cx} cy={cy} r={innerR} fill="#FFFFFF"/>
-          <circle cx={cx} cy={cy-(R+innerR)/2} r={3.5} fill={G.ink}/>
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:18}}>
+      <style>{`@keyframes timerPulse{0%,100%{box-shadow:0 20px 50px rgba(31,27,46,.14), 0 6px 14px rgba(31,27,46,.06), inset 0 2px 0 rgba(255,255,255,.95)}50%{box-shadow:0 24px 60px rgba(31,27,46,.18), 0 8px 20px rgba(31,27,46,.08), inset 0 2px 0 rgba(255,255,255,.95)}}`}</style>
+      <div style={{padding:14,borderRadius:"50%",background:"radial-gradient(circle at 30% 25%, #FFFFFF 0%, #F5F2FA 100%)",border:`1px solid ${G.border}`,animation:"timerPulse 3.6s ease-in-out infinite"}}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{display:"block"}}>
+          <defs>
+            <radialGradient id="rtFace" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stopColor="#FFFFFF"/>
+              <stop offset="100%" stopColor="#FAFAFE"/>
+            </radialGradient>
+            <linearGradient id="rtSector" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={color} stopOpacity="1"/>
+              <stop offset="100%" stopColor={color} stopOpacity="0.9"/>
+            </linearGradient>
+          </defs>
+          {/* Outer face circle */}
+          <circle cx={cx} cy={cy} r={Ro} fill="url(#rtFace)" stroke={G.border} strokeWidth={1}/>
+          {/* Donut: full ring when pct≈1, annular wedge when partial */}
+          {c.pct>=0.9998 ? (
+            <>
+              <circle cx={cx} cy={cy} r={Ro} fill="url(#rtSector)"/>
+              <circle cx={cx} cy={cy} r={Ri} fill="url(#rtFace)"/>
+            </>
+          ) : donutPath ? (
+            <>
+              <path d={donutPath} fill="url(#rtSector)"/>
+              <circle cx={cx} cy={cy} r={Ri} fill="url(#rtFace)" stroke={G.border} strokeWidth={0.5}/>
+            </>
+          ) : (
+            <circle cx={cx} cy={cy} r={Ri} fill="url(#rtFace)" stroke={G.border} strokeWidth={0.5}/>
+          )}
+          {/* End-marker dot — sits at the boundary where peach currently ends */}
+          {c.pct>0.002&&c.pct<0.9998&&(
+            <circle cx={markX} cy={markY} r={3.5} fill={G.ink}/>
+          )}
         </svg>
       </div>
-      <div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.1,color:G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
+      <div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
@@ -291,51 +371,54 @@ function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const remainingMin=totalMin-elapsedMin;
   const lit=Math.max(0,Math.ceil(remainingMin/mpl));
 
-  const led=size>280?32:size>200?26:20;
-  const gap=Math.max(6,Math.round(led*0.42));
-  const padV=26, padH=28;
+  // Dynamic sizing: shrink dots as count grows so they always fit
+  // Available width: assume ~340px usable inside frame after padding
+  const availableW = 340;
+  const minLed = 12;
+  const maxLed = size>280?32:size>200?26:22;
+  // Solve: tot*led + (tot-1)*gap = availableW where gap = led*0.5
+  // → led * (tot + (tot-1)*0.5) = availableW
+  // → led = availableW / (1.5*tot - 0.5)
+  const idealLed = Math.floor(availableW / (1.5*tot - 0.5));
+  const led = Math.max(minLed, Math.min(maxLed, idealLed));
+  const gap = Math.max(4, Math.round(led*0.45));
+  const padV=Math.max(14, Math.round(led*0.7)), padH=Math.max(14, Math.round(led*0.7));
   const lampLabel = mpl===1 ? "1 lampa = 1 minut" : `1 lampa = ${mpl} minuter`;
 
   return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:18,width:"100%"}}>
-      {/* Premium LED frame — light, clean, with gentle border */}
+      <style>{`@keyframes dotBreath{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.045);filter:brightness(1.08)}}@keyframes dotFadeOut{from{opacity:1;transform:scale(1)}to{opacity:0.4;transform:scale(0.85)}}`}</style>
+      {/* Clean lamp row — flat, premium "panel light" design */}
       <div style={{
         display:"flex",flexDirection:"row",alignItems:"center",justifyContent:"center",gap,
         padding:`${padV}px ${padH}px`,
-        background:`linear-gradient(180deg, ${G.white} 0%, ${G.cream} 100%)`,
-        borderRadius:Math.round(led*1.4),
-        boxShadow:`0 12px 36px ${color}1A, inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(0,0,0,0.05)`,
-        border:`1px solid ${color}22`,
-        width:"100%",maxWidth:size*1.6,
-        flexWrap:"nowrap",overflow:"hidden",
+        background:`linear-gradient(180deg, #FCFAFD 0%, #F4F1F8 50%, #FCFAFD 100%)`,
+        borderRadius:Math.round(led*0.95),
+        boxShadow:`0 10px 28px ${color}18, 0 2px 6px rgba(31,27,46,0.05), inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 ${color}10`,
+        border:`1px solid ${color}1A`,
+        maxWidth:"100%",
+        flexWrap:"nowrap",
       }}>
         {Array.from({length:tot}).map((_,i)=>{
           const on=i<lit;
+          // Stagger delay creates wave-like motion across lamps
+          const delay = (i*0.18) % 3.2;
           return(
             <div key={i} style={{
               width:led,height:led,
               borderRadius:"50%",
               flexShrink:0,
               background: on
-                ? `radial-gradient(circle at 32% 28%, #FFFFFF 0%, ${color}EE 30%, ${color} 70%, ${color}CC 100%)`
-                : `radial-gradient(circle at 32% 28%, ${color}25 0%, ${color}15 100%)`,
+                ? `radial-gradient(circle at 38% 26%, #FFFFFF 0%, ${color}FA 16%, ${color} 58%, ${color}C8 100%)`
+                : `radial-gradient(circle at 50% 50%, ${color}14 0%, ${color}08 100%)`,
               boxShadow: on
-                ? `0 0 ${led*0.55}px ${color}77, 0 0 ${led*0.25}px ${color}, inset 0 -${led*0.14}px ${led*0.2}px ${color}AA, inset 0 ${led*0.10}px ${led*0.16}px rgba(255,255,255,0.7)`
-                : `inset 0 1px 2px rgba(0,0,0,0.04), inset 0 -1px 1px ${color}15`,
-              border: on ? `none` : `1px solid ${color}20`,
-              transition:"all 0.6s ease",
-              position:"relative",
-            }}>
-              {on&&<div style={{
-                position:"absolute",
-                top:led*0.13,left:led*0.20,
-                width:led*0.32,height:led*0.22,
-                borderRadius:"50%",
-                background:"rgba(255,255,255,0.85)",
-                filter:`blur(${Math.max(0.5,led*0.06)}px)`,
-                pointerEvents:"none",
-              }}/>}
-            </div>
+                ? `0 ${led*0.12}px ${led*0.45}px ${color}55, 0 ${led*0.04}px ${led*0.1}px ${color}80, inset 0 -${led*0.18}px ${led*0.22}px ${color}A0, inset 0 ${led*0.10}px ${led*0.14}px rgba(255,255,255,0.55)`
+                : `inset 0 1.5px 2px rgba(31,27,46,0.04), inset 0 -1px 1px ${color}12`,
+              border: on ? "none" : `1px solid ${color}25`,
+              transition:"background 0.6s ease, box-shadow 0.6s ease, border 0.6s ease",
+              animation: on ? `dotBreath 3.2s ease-in-out ${delay}s infinite` : "none",
+              transformOrigin:"center",
+            }}/>
           );
         })}
       </div>
@@ -657,67 +740,90 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose}){
   );
 }
 
-/* ═══ Thumbnail (static, for previews) ═══ */
+/* ═══ Thumbnail (static, for previews) — shows FULL state for clean look ═══ */
 function TimerThumb({type,color,size=120,min=30}){
   if(type==="sector"){
     const cx=size/2, cy=size/2, R=size/2-8;
-    const sectorR=R*0.74, nR=R-9;
-    // Same auto-scale logic as live timer
+    // Match the live timer's layout: sector innermost, ticks middle, numbers outer
+    const sectorR=R*0.62;
+    const tickInnerR=R*0.67, tickOuterR=R*0.75;
+    const numR=R-9;
     const totalMin=Math.max(1,Math.round(min));
     let step;
-    if(totalMin<=5)step=1; else if(totalMin<=10)step=2; else if(totalMin<=30)step=5; else if(totalMin<=60)step=10; else step=15;
-    const nums=[]; for(let m=0;m<totalMin;m+=step) nums.push(m);
-    // 65% remaining preview
-    const pct=0.65;
-    const theta=pct*2*Math.PI;
-    const ex=cx-sectorR*Math.sin(theta), ey=cy-sectorR*Math.cos(theta);
+    if(totalMin<=5) step=1;
+    else if(totalMin<=15) step=3;
+    else if(totalMin<=30) step=5;
+    else if(totalMin<=60) step=10;
+    else step=15;
+    const nums=[];
+    for(let m=step; m<totalMin; m+=step) nums.push(m);
     return(
       <div style={{padding:8,borderRadius:size*0.13,background:`linear-gradient(155deg,${color},${color}D0)`,boxShadow:`0 6px 18px ${color}40`}}>
-        <div style={{padding:4,borderRadius:size*0.105,background:"#fff"}}>
+        <div style={{padding:6,borderRadius:size*0.105,background:"#fff"}}>
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+            <defs>
+              <radialGradient id={`thumbSect${size}`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={color} stopOpacity="0.96"/>
+                <stop offset="100%" stopColor={color} stopOpacity="0.85"/>
+              </radialGradient>
+            </defs>
             <circle cx={cx} cy={cy} r={R} fill="#FEFEFE"/>
-            {nums.map(m=>{const th=(m/totalMin)*2*Math.PI;const r1=R-7;return <line key={'mj'+m} x1={cx-r1*Math.sin(th)} y1={cy-r1*Math.cos(th)} x2={cx-R*Math.sin(th)} y2={cy-R*Math.cos(th)} stroke="#1F1B2E" strokeWidth={1.5} strokeLinecap="round"/>;})}
-            {nums.map(m=>{const th=(m/totalMin)*2*Math.PI;return <text key={'n'+m} x={cx-nR*Math.sin(th)} y={cy-nR*Math.cos(th)} textAnchor="middle" dominantBaseline="middle" style={{fontSize:size*0.078,fontWeight:600,fill:"#1F1B2E",fontFamily:G.font}}>{m}</text>;})}
-            <path d={`M${cx},${cy} L${cx},${cy-sectorR} A${sectorR},${sectorR} 0 1,0 ${ex},${ey} Z`} fill={color} opacity={0.9}/>
-            <circle cx={cx} cy={cy} r={size*0.055} fill="#FFFFFF" stroke="#1F1B2E" strokeWidth={1.2}/>
+            {/* FULL sector — always at 100% in preview */}
+            <circle cx={cx} cy={cy} r={sectorR} fill={`url(#thumbSect${size})`}/>
+            {/* Major ticks aligned with numbers */}
+            {nums.map(m=>{
+              const th=(m/totalMin)*2*Math.PI;
+              const x1=cx-tickInnerR*Math.sin(th), y1=cy-tickInnerR*Math.cos(th);
+              const x2=cx-tickOuterR*Math.sin(th), y2=cy-tickOuterR*Math.cos(th);
+              return <line key={'mj'+m} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#1F1B2E" strokeWidth={1.5} strokeLinecap="round"/>;
+            })}
+            {/* Numbers at outer edge */}
+            {nums.map(m=>{
+              const th=(m/totalMin)*2*Math.PI;
+              const x=cx-numR*Math.sin(th), y=cy-numR*Math.cos(th);
+              return <text key={'n'+m} x={x} y={y} textAnchor="middle" dominantBaseline="central" style={{fontSize:Math.round(size*0.085),fontWeight:700,fill:"#1F1B2E",fontFamily:'-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',fontStyle:"normal"}}>{m}</text>;
+            })}
+            {/* Spindle */}
+            <circle cx={cx} cy={cy} r={size*0.05} fill="#FFFFFF" stroke="#1F1B2E" strokeWidth={1.2}/>
+            <circle cx={cx} cy={cy} r={size*0.022} fill="#1F1B2E"/>
           </svg>
         </div>
       </div>
     );
   }
   if(type==="ring"){
-    const cx=size/2, cy=size/2, R=size/2-6;
-    const theta=0.65*2*Math.PI;
-    const ex=cx-R*Math.sin(theta), ey=cy-R*Math.cos(theta);
-    const innerR=R*0.42;
+    // Match donut style: full ring with hollow center
+    const cx=size/2, cy=size/2;
+    const Ro=size/2-6;
+    const Ri=Ro*0.58;
     return(
       <div style={{padding:5,borderRadius:"50%",background:"linear-gradient(160deg,#FBFAFE,#F0EEF8)",boxShadow:"0 6px 18px rgba(31,27,46,.08)",border:`1px solid ${G.border}`}}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <circle cx={cx} cy={cy} r={R} fill="#FFFFFF" stroke={G.border} strokeWidth={1}/>
-          <path d={`M${cx},${cy} L${cx},${cy-R} A${R},${R} 0 1,0 ${ex},${ey} Z`} fill={color} opacity={0.92}/>
-          <circle cx={cx} cy={cy} r={innerR} fill="#FFFFFF"/>
-          <circle cx={cx} cy={cy-(R+innerR)/2} r={2.5} fill={G.ink}/>
+          <circle cx={cx} cy={cy} r={Ro} fill="#FFFFFF" stroke={G.border} strokeWidth={1}/>
+          <circle cx={cx} cy={cy} r={Ro} fill={color} opacity="0.94"/>
+          <circle cx={cx} cy={cy} r={Ri} fill="#FFFFFF" stroke={G.border} strokeWidth={0.5}/>
         </svg>
       </div>
     );
   }
   if(type==="dots"){
     const tot=10, active=7;
-    const led=size>140?10:8, gap=4, padV=12, padH=14;
+    const led=size>140?14:11, gap=Math.max(3,Math.round(led*0.45));
+    const padV=Math.max(10,Math.round(led*0.7)), padH=Math.max(12,Math.round(led*0.8));
     return(
-      <div style={{display:"flex",flexDirection:"row",alignItems:"center",justifyContent:"center",gap,padding:`${padV}px ${padH}px`,background:`linear-gradient(180deg, ${G.white} 0%, ${G.cream} 100%)`,borderRadius:size*0.18,boxShadow:`0 6px 18px ${color}1A, inset 0 1px 0 rgba(255,255,255,0.9)`,border:`1px solid ${color}22`}}>
+      <div style={{display:"flex",flexDirection:"row",alignItems:"center",justifyContent:"center",gap,padding:`${padV}px ${padH}px`,background:`linear-gradient(180deg, #FCFAFD 0%, #F4F1F8 50%, #FCFAFD 100%)`,borderRadius:Math.round(led*0.95),boxShadow:`0 6px 18px ${color}18, 0 1.5px 4px rgba(31,27,46,0.04), inset 0 1.5px 0 rgba(255,255,255,1), inset 0 -1px 0 ${color}10`,border:`1px solid ${color}1A`}}>
         {Array.from({length:tot}).map((_,i)=>{
           const on=i<active;
           return(
             <div key={i} style={{
               width:led,height:led,borderRadius:"50%",flexShrink:0,
               background: on
-                ? `radial-gradient(circle at 32% 28%, #FFFFFF 0%, ${color}EE 30%, ${color} 70%, ${color}CC 100%)`
-                : `radial-gradient(circle at 32% 28%, ${color}25 0%, ${color}15 100%)`,
+                ? `radial-gradient(circle at 38% 26%, #FFFFFF 0%, ${color}FA 16%, ${color} 58%, ${color}C8 100%)`
+                : `radial-gradient(circle at 50% 50%, ${color}14 0%, ${color}08 100%)`,
               boxShadow: on
-                ? `0 0 ${led*0.5}px ${color}77, inset 0 -${led*0.12}px ${led*0.18}px ${color}AA, inset 0 ${led*0.08}px ${led*0.12}px rgba(255,255,255,0.6)`
-                : `inset 0 1px 1px rgba(0,0,0,0.04)`,
-              border: on ? "none" : `1px solid ${color}20`,
+                ? `0 ${led*0.10}px ${led*0.35}px ${color}55, 0 ${led*0.03}px ${led*0.08}px ${color}80, inset 0 -${led*0.16}px ${led*0.20}px ${color}A0, inset 0 ${led*0.08}px ${led*0.12}px rgba(255,255,255,0.55)`
+                : `inset 0 1px 1.5px rgba(31,27,46,0.04), inset 0 -1px 1px ${color}12`,
+              border: on ? "none" : `1px solid ${color}25`,
             }}/>
           );
         })}
@@ -765,7 +871,7 @@ function TimerThumb({type,color,size=120,min=30}){
    - Independent of activities — it's a day clock
 */
 const SIGVARD_MIN_PER_LAMP=30; // 30 minutes per lamp → 48 lamps total
-const SIGVARD_LAMP=10, SIGVARD_GAP=8, SIGVARD_PAD_V=14;
+const SIGVARD_LAMP=8, SIGVARD_GAP=42, SIGVARD_PAD_V=14;
 const SIGVARD_STEP=SIGVARD_LAMP+SIGVARD_GAP;
 const SIGVARD_TOTAL_LAMPS=Math.ceil(24*60/SIGVARD_MIN_PER_LAMP);
 // Vertical center of lamp i (relative to lamps container top) in px
@@ -779,38 +885,15 @@ const SIGVARD_TOTAL_HEIGHT=SIGVARD_PAD_V*2+SIGVARD_TOTAL_LAMPS*SIGVARD_LAMP+(SIG
 
 function SigvardTimeline({now}){
   const nowM=now.getHours()*60+now.getMinutes();
-  // Time labels — every 6 hours (00, 06, 12, 18, 24)
-  const labelHours=[0,6,12,18];
   return(
     <div style={{display:"flex",alignItems:"stretch",gap:4,flexShrink:0,alignSelf:"flex-start"}}>
-      {/* Time labels column */}
-      <div style={{position:"relative",width:18,flexShrink:0}}>
-        {labelHours.map(h=>{
-          const lampMin=h*60;
-          const y=yForTime(lampMin)-7; // -7 so label center aligns with lamp center
-          const isPast=lampMin+SIGVARD_MIN_PER_LAMP<=nowM;
-          return(
-            <div key={h} style={{
-              position:"absolute",
-              top:y,
-              right:0,
-              fontFamily:G.font,
-              fontWeight:600,
-              fontSize:9,
-              letterSpacing:.4,
-              color:isPast?G.ink3:G.ink2,
-              opacity:isPast?0.5:0.9,
-              lineHeight:1,
-              transition:"all .4s",
-            }}>{String(h).padStart(2,"0")}</div>
-          );
-        })}
-      </div>
-      {/* Lamp column */}
+      <style>{`@keyframes lampNow{0%,100%{box-shadow:0 0 10px #FF4848AA, 0 0 20px #FF484866;transform:scale(1)}50%{box-shadow:0 0 18px #FF4848DD, 0 0 32px #FF484899, 0 0 48px #FF484844;transform:scale(1.18)}}`}</style>
       <div style={{
         display:"flex",flexDirection:"column",alignItems:"center",
         padding:`${SIGVARD_PAD_V}px 6px`,
-        background:G.white,borderRadius:14,boxShadow:sh.sm,
+        background:`linear-gradient(180deg, ${G.white} 0%, #FBFAFE 100%)`,
+        borderRadius:14,
+        boxShadow:"0 4px 18px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.9)",
         border:`1px solid ${G.border}`,
         minWidth:28,flexShrink:0,
       }}>
@@ -821,12 +904,13 @@ function SigvardTimeline({now}){
           return <div key={i} style={{
             width:SIGVARD_LAMP,height:SIGVARD_LAMP,borderRadius:"50%",
             marginBottom:i===SIGVARD_TOTAL_LAMPS-1?0:SIGVARD_GAP,
-            background:isPast?"#2C2640":(isNow?"#FF3030":"#E94040"),
+            background:isPast?"radial-gradient(circle at 30% 30%, #4A4258, #1F1B2E)":(isNow?"radial-gradient(circle at 30% 30%, #FF6A6A, #E62525)":"radial-gradient(circle at 30% 30%, #FF6060, #C92020)"),
             boxShadow:isPast
-              ?"inset 0 1px 2px rgba(0,0,0,.5)"
-              :`0 0 ${isNow?12:5}px ${isNow?"#FF4848":"#E94040"}AA`,
+              ?"inset 0 1px 2px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.1)"
+              :(isNow?undefined:"0 0 6px #E9404099, inset 0 -1px 1px rgba(0,0,0,0.15)"),
             border:`1px solid ${isPast?"#2C2640":"#E9404055"}`,
             transition:"all .4s",
+            animation:isNow?"lampNow 2.4s ease-in-out infinite":undefined,
           }}/>;
         })}
       </div>
@@ -844,7 +928,10 @@ function SigvardLamps(props){
 /* ═══ Timeline view: Sigvard + activities scroll together, auto-scroll to "now" ═══ */
 function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now}){
   const scrollRef=useRef(null);
+  const cardRefs=useRef({});
+  const[measured,setMeasured]=useState({});
   const nowM=now.getHours()*60+now.getMinutes();
+
   useEffect(()=>{
     if(!scrollRef.current) return;
     const nowY=yForTime(nowM);
@@ -854,50 +941,138 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now}){
   // eslint-disable-next-line
   },[]);
 
-  // Anti-overlap: sort by time and push later cards down if needed
-  const CARD_H = (cfg.cardStyle==="compact"?68:cfg.cardStyle==="big"?160:78);
-  const MIN_GAP = 8;
+  // Measure each card's actual rendered height with ResizeObserver
+  useEffect(()=>{
+    const ro=new ResizeObserver(entries=>{
+      const updates={};
+      entries.forEach(e=>{
+        const id=e.target.getAttribute("data-act-id");
+        if(id) updates[id]=e.contentRect.height;
+      });
+      if(Object.keys(updates).length){
+        setMeasured(m=>({...m,...updates}));
+      }
+    });
+    Object.values(cardRefs.current).forEach(el=>el&&ro.observe(el));
+    return()=>ro.disconnect();
+  },[acts,cfg.cardStyle]);
+
   const sorted=[...acts].sort((a,b)=>hm(a.time)-hm(b.time));
+  const fallbackH=cfg.cardStyle==="compact"?68:cfg.cardStyle==="big"?180:84;
+  const MIN_GAP=10;
   const positions=[];
   let prevBottom=-Infinity;
   for(const item of sorted){
     const startM=hm(item.time);
-    const naturalY=yForTime(startM)-30; // -30 to align card center with lamp
+    // Card TOP aligns with start time (small offset so first row of text matches the time)
+    const naturalY=yForTime(startM)-4;
     const y=Math.max(naturalY,prevBottom+MIN_GAP);
-    positions.push({item,y,naturalY});
-    prevBottom=y+CARD_H;
+    const h=measured[item.id]||fallbackH;
+    positions.push({item,y,naturalY,h});
+    prevBottom=y+h;
   }
   const totalContentH=Math.max(SIGVARD_TOTAL_HEIGHT,prevBottom+30);
 
+  // Find next upcoming activity for the banner
+  const upcoming=sorted.filter(a=>{
+    const start=hm(a.time), end=a.endTime?hm(a.endTime):start+30;
+    return end>nowM;
+  });
+  const currentAct=upcoming.find(a=>{
+    const start=hm(a.time), end=a.endTime?hm(a.endTime):start+30;
+    return start<=nowM && nowM<end;
+  });
+  const nextAct=currentAct ? upcoming.find(a=>hm(a.time)>nowM) : upcoming[0];
+  const hh=String(now.getHours()).padStart(2,"0");
+  const mm=String(now.getMinutes()).padStart(2,"0");
+  const target = currentAct || nextAct;
+  const jumpToTarget=()=>{
+    if(!scrollRef.current||!target) return;
+    const targetY=yForTime(hm(target.time))-4;
+    scrollRef.current.scrollTo({top:Math.max(0,targetY-80),behavior:"smooth"});
+  };
+
+  // Banner is fully visible at top of scroll, dims away when scrolled down at all
+  const[scrolled,setScrolled]=useState(false);
+  useEffect(()=>{
+    if(!scrollRef.current) return;
+    const scroller=scrollRef.current;
+    const check=()=>setScrolled(scroller.scrollTop>20);
+    check();
+    scroller.addEventListener("scroll",check,{passive:true});
+    return()=>scroller.removeEventListener("scroll",check);
+  },[]);
+
   return(
-    <div ref={scrollRef} style={{flex:1,display:"flex",overflowY:"auto",padding:"14px 14px 30px 12px",position:"relative"}}>
+    <div style={{flex:1,display:"flex",flexDirection:"column",position:"relative",minHeight:0}}>
+      {/* Sticky "Nu" banner */}
+      {!isEd&&(
+        <div style={{position:"sticky",top:0,zIndex:10,maxHeight:scrolled?0:90,opacity:scrolled?0:1,overflow:"hidden",transition:"max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease",pointerEvents:scrolled?"none":"auto"}}>
+        <button onClick={jumpToTarget} style={{margin:"10px 14px 0",padding:"10px 14px",borderRadius:14,border:`1px solid ${G.border}`,background:"linear-gradient(135deg,#FFFFFF 0%, #FCFAFE 60%, #F8F5FC 100%)",boxShadow:"0 4px 14px rgba(31,27,46,0.05), inset 0 1px 0 rgba(255,255,255,0.95)",display:"flex",alignItems:"center",gap:10,cursor:"pointer",textAlign:"left",transition:"transform .15s ease, box-shadow .2s",overflow:"hidden",width:"calc(100% - 28px)"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.985)"} onMouseUp={e=>e.currentTarget.style.transform=""} onMouseLeave={e=>e.currentTarget.style.transform=""}>
+          <style>{`@keyframes bannerSweep{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}`}</style>
+          {/* Subtle shimmer overlay */}
+          <div style={{position:"absolute",inset:0,background:`linear-gradient(105deg, transparent 30%, ${SCREENS.home.h}0D 50%, transparent 70%)`,animation:"bannerSweep 6s ease-in-out infinite",pointerEvents:"none"}}/>
+          <div style={{flex:1,minWidth:0,position:"relative",zIndex:1}}>
+            {currentAct ? (
+              <>
+                <div style={{fontFamily:G.font,fontWeight:500,fontSize:9.5,color:G.ink3,letterSpacing:1.4,textTransform:"uppercase",lineHeight:1,opacity:.7}}>{t.bannerNowOngoing}</div>
+                <div style={{fontFamily:G.serif,fontWeight:600,fontSize:15,color:G.ink2,letterSpacing:0.1,marginTop:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.15}}>{currentAct.name}</div>
+              </>
+            ) : nextAct ? (
+              <>
+                <div style={{fontFamily:G.font,fontWeight:500,fontSize:9.5,color:G.ink3,letterSpacing:1.4,textTransform:"uppercase",lineHeight:1,opacity:.7}}>{t.bannerNextUp}</div>
+                <div style={{fontFamily:G.serif,fontWeight:600,fontSize:15,color:G.ink2,letterSpacing:0.1,marginTop:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.15}}>{nextAct.name}</div>
+              </>
+            ) : (
+              <>
+                <div style={{fontFamily:G.font,fontWeight:500,fontSize:9.5,color:G.ink3,letterSpacing:1.4,textTransform:"uppercase",lineHeight:1,opacity:.7}}>{t.bannerDayLabel}</div>
+                <div style={{fontFamily:G.serif,fontWeight:600,fontSize:14,color:G.ink3,marginTop:4,lineHeight:1.15}}>{t.bannerNoActsLeft}</div>
+              </>
+            )}
+          </div>
+          <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:G.ink3,flexShrink:0,opacity:.5,position:"relative",zIndex:1}}>↓</div>
+        </button>
+        </div>
+      )}
+      <div ref={scrollRef} style={{flex:1,display:"flex",overflowY:"auto",padding:"14px 14px 30px 6px",position:"relative"}}>
+      {!isEd&&(
+        <div style={{flexShrink:0,position:"relative",width:38,height:totalContentH}}>
+          {positions.map(({item,y})=>(
+            <div key={`tl-${item.id}`} style={{position:"absolute",top:y+2,right:6,fontFamily:G.font,fontWeight:700,fontSize:11,color:item.color,letterSpacing:0.3,fontVariantNumeric:"tabular-nums",whiteSpace:"nowrap",lineHeight:1}}>
+              {item.time}
+            </div>
+          ))}
+        </div>
+      )}
       {cfg.showSigvard&&!isEd&&(
-        <div style={{flexShrink:0}}>
+        <div style={{flexShrink:0,position:"relative",zIndex:5}}>
           <SigvardTimeline now={now}/>
         </div>
       )}
-      <div style={{flex:1,position:"relative",height:totalContentH,marginLeft:cfg.showSigvard&&!isEd?12:0}}>
+      <div style={{flex:1,position:"relative",height:totalContentH,marginLeft:cfg.showSigvard&&!isEd?10:0}}>
         {!isEd&&(
-          <div style={{position:"absolute",top:yForTime(nowM)-1,left:-8,right:0,height:2,background:"linear-gradient(90deg,#FF3030 0%,#FF303033 100%)",borderRadius:1,boxShadow:"0 0 8px #FF303066",zIndex:1,pointerEvents:"none"}}/>
+          <>
+            {/* Pulsing now-line */}
+            <div style={{position:"absolute",top:yForTime(nowM)-1,left:-12,right:0,height:2,background:"linear-gradient(90deg,#FF3030 0%, #FF6060 40%, #FF303033 100%)",borderRadius:1,zIndex:1,pointerEvents:"none",animation:"nowPulse 2.4s ease-in-out infinite"}}/>
+            <style>{`@keyframes nowPulse{0%,100%{box-shadow:0 0 6px #FF303055;opacity:.85}50%{box-shadow:0 0 14px #FF3030AA, 0 0 22px #FF303044;opacity:1}}`}</style>
+          </>
         )}
-        {positions.map(({item,y,naturalY},i)=>{
+        {positions.map(({item,y,naturalY,h},i)=>{
           const startM=hm(item.time);
           const endM=item.endTime?hm(item.endTime):null;
           const yBot=endM?yForTime(endM):yForTime(startM);
           const barH=Math.max(0,yBot-yForTime(startM));
-          // Connector line if card was pushed down from its natural position
           const offset=y-naturalY;
           return(
-            <div key={item.id} style={{position:"absolute",top:y,left:0,right:0,zIndex:2+i}}>
-              {/* Thin dashed line connecting card to its actual time on the lamp axis */}
-              {offset>4&&(
-                <div style={{position:"absolute",left:-10,top:-offset+30,width:1,height:offset,borderLeft:`1.5px dashed ${item.color}66`,pointerEvents:"none"}}/>
-              )}
-              <ActRow item={item} cardStyle={cfg.cardStyle||"normal"} isEditor={isEd} onEdit={onEdit} onTap={onTap} onMarkDone={onMarkDone} idx={i}/>
-              {barH>20&&offset<=4&&<div style={{position:"absolute",left:-8,top:30,width:3,height:barH,background:`linear-gradient(180deg,${item.color},${item.color}66)`,borderRadius:2,opacity:0.6}}/>}
+            <div key={item.id}>
+              <div ref={el=>{cardRefs.current[item.id]=el; if(el) el.setAttribute("data-act-id",item.id);}} style={{position:"absolute",top:y,left:0,right:0,zIndex:2+i}}>
+                <ActRow item={item} cardStyle={cfg.cardStyle||"normal"} isEditor={isEd} onEdit={onEdit} onTap={onTap} onMarkDone={onMarkDone} idx={i}/>
+                {barH>20&&offset<=14&&<div style={{position:"absolute",left:-8,top:4,width:3,height:barH,background:`linear-gradient(180deg,${item.color},${item.color}66)`,borderRadius:2,opacity:0.7}}/>}
+              </div>
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );
@@ -1574,8 +1749,8 @@ function ActRow({item,cardStyle,isEditor,onEdit,onTap,onMarkDone,idx}){
     if(isEditor)onEdit(item);else onTap(item);
   };
   return(
-    <div style={{animation:anim==="in"?`rIn .3s ease both`:`rExit .7s ease forwards`,animationDelay:anim==="in"?`${idx*0.045}s`:"0s"}}>
-      <style>{`@keyframes rIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}@keyframes rExit{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.94) translateY(10px)}}`}</style>
+    <div style={{animation:anim==="in"?`rIn .35s cubic-bezier(.2,.7,.2,1) both`:`rExit .8s cubic-bezier(.4,0,.2,1) forwards`,animationDelay:anim==="in"?`${idx*0.04}s`:"0s"}}>
+      <style>{`@keyframes rIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}@keyframes rExit{0%{opacity:1;transform:scale(1);filter:none}40%{opacity:1;transform:scale(1.015);filter:brightness(1.04)}100%{opacity:0;transform:scale(.92) translateY(8px);filter:brightness(1.1)}}`}</style>
       <div
         onClick={handleClick}
         style={{
@@ -1586,11 +1761,13 @@ function ActRow({item,cardStyle,isEditor,onEdit,onTap,onMarkDone,idx}){
           boxShadow:sh.sm,
           border:`1px solid ${G.border}`,
           cursor:"pointer",
-          transition:"box-shadow .25s,border-color .25s,transform .15s",
+          transition:"box-shadow .35s cubic-bezier(.2,.7,.2,1), border-color .25s, transform .2s cubic-bezier(.2,.7,.2,1)",
           userSelect:"none",
           WebkitUserSelect:"none",
           WebkitTouchCallout:"none",
-        }}>
+        }}
+        onMouseEnter={e=>{e.currentTarget.style.boxShadow=sh.md;e.currentTarget.style.borderColor=`${item.color}40`;e.currentTarget.style.transform="translateY(-1px)";}}
+        onMouseLeave={e=>{e.currentTarget.style.boxShadow=sh.sm;e.currentTarget.style.borderColor=G.border;e.currentTarget.style.transform="";}}>
         {big&&<div style={{height:92,background:item.photo?"#000":`linear-gradient(135deg,${item.color}1F,${item.color}38)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:60,position:"relative",overflow:"hidden"}}>{item.photo?<img src={item.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:item.emoji}</div>}
         <div style={{display:"flex",alignItems:"center",gap:compact?10:13,padding:compact?"12px 14px":"16px 18px",position:"relative"}}>
           <div style={{position:"absolute",left:0,top:0,bottom:0,width:4,background:`linear-gradient(180deg,${item.color},${item.color}80)`,borderRadius:"18px 0 0 18px"}}/>
@@ -1759,7 +1936,9 @@ const INP={width:"100%",padding:"13px 16px",borderRadius:14,border:`1px solid ${
 const GHOST={padding:"13px 20px",borderRadius:14,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:14,cursor:"pointer"};
 
 function TabB({active,gold,children,onClick,color,deep,flex=1}){
-  return(<button onClick={onClick} style={{flex,padding:"9px 0",borderRadius:11,border:"none",fontFamily:G.font,fontWeight:700,fontSize:12,cursor:"pointer",transition:"all .22s",background:gold?"#FDE68A":active?color:"transparent",color:gold?"#78350F":active?"#fff":G.ink2}}>{children}</button>);
+  return(
+    <button onClick={onClick} onMouseDown={e=>e.currentTarget.style.transform="scale(0.96)"} onMouseUp={e=>e.currentTarget.style.transform=""} onMouseLeave={e=>e.currentTarget.style.transform=""} style={{flex,padding:"9px 0",borderRadius:11,border:"none",fontFamily:G.font,fontWeight:700,fontSize:12,cursor:"pointer",transition:"transform .15s, background .25s, box-shadow .25s, color .2s",background:gold?"linear-gradient(135deg,#FDE68A,#F4C95C)":active?`linear-gradient(135deg,${color},${color}E5)`:"transparent",color:gold?"#78350F":active?"#fff":G.ink2,boxShadow:active?`0 4px 14px ${color}55, 0 1px 3px ${color}33`:gold?"0 3px 10px #FDE68A88":"none"}}>{children}</button>
+  );
 }
 
 /* ═══ Story viewer (fullscreen page-by-page) ═══ */
@@ -1788,19 +1967,29 @@ function StoryViewer({story,lang,t,onClose}){
         <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 18px",gap:10}}>
           {/* FIRST */}
           <div style={{flex:1,background:G.white,borderRadius:26,padding:"18px 12px 22px",boxShadow:`0 16px 40px ${story.color}26`,border:`1px solid ${story.color}30`,textAlign:"center"}}>
-            <div style={{fontFamily:G.font,fontWeight:700,fontSize:11,color:story.color,letterSpacing:2.5,textTransform:"uppercase",marginBottom:12}}>{t.first||"Först"}</div>
+            <div style={{fontFamily:G.font,fontWeight:700,fontSize:11,color:story.color,letterSpacing:2.5,textTransform:"uppercase",marginBottom:12}}>{story.firstLabel?.trim()||t.first||"Först"}</div>
             <div style={{width:"100%",aspectRatio:"1",borderRadius:20,background:firstPage?.photo?"#000":`linear-gradient(140deg,${story.color}1A,${story.color}3A)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:72,marginBottom:12,overflow:"hidden"}}>
               {firstPage?.photo?<img src={firstPage.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:firstPage?.emoji}
             </div>
             <div style={{fontFamily:G.serif,fontWeight:600,fontSize:17,color:G.ink,lineHeight:1.2,letterSpacing:-.2}}>{lang==="sv"?firstPage?.sv:firstPage?.en}</div>
           </div>
-          {/* Arrow */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"center",animation:"ftArrow 2s ease infinite",flexShrink:0,padding:"0 2px"}}>
-            <div style={{fontSize:32,color:story.color,fontWeight:700}}>→</div>
+          {/* Arrow — elegant SVG with subtle drawn animation */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",animation:"ftArrow 2s ease infinite",flexShrink:0,padding:"0 4px"}}>
+            <svg width="36" height="20" viewBox="0 0 36 20" style={{overflow:"visible"}}>
+              <defs>
+                <linearGradient id={`ftArrG${story.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor={story.color} stopOpacity="0.5"/>
+                  <stop offset="60%" stopColor={story.color} stopOpacity="0.95"/>
+                  <stop offset="100%" stopColor={story.color} stopOpacity="1"/>
+                </linearGradient>
+              </defs>
+              <path d="M 3 10 L 28 10 M 22 4 L 28 10 L 22 16"
+                stroke={`url(#ftArrG${story.id})`} strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
           {/* THEN */}
           <div style={{flex:1,background:G.white,borderRadius:26,padding:"18px 12px 22px",boxShadow:`0 16px 40px ${story.color}26`,border:`1px solid ${story.color}30`,textAlign:"center"}}>
-            <div style={{fontFamily:G.font,fontWeight:700,fontSize:11,color:story.color,letterSpacing:2.5,textTransform:"uppercase",marginBottom:12}}>{t.then||"Sedan"}</div>
+            <div style={{fontFamily:G.font,fontWeight:700,fontSize:11,color:story.color,letterSpacing:2.5,textTransform:"uppercase",marginBottom:12}}>{story.thenLabel?.trim()||t.then||"Sedan"}</div>
             <div style={{width:"100%",aspectRatio:"1",borderRadius:20,background:thenPage?.photo?"#000":`linear-gradient(140deg,${story.color}1A,${story.color}3A)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:72,marginBottom:12,overflow:"hidden"}}>
               {thenPage?.photo?<img src={thenPage.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:thenPage?.emoji}
             </div>
@@ -1912,6 +2101,8 @@ function StoryEditor({story,onSave,onDel,onClose,t}){
   const[title,setTitle]=useState(story?.sv||"");
   const[emoji,setEmoji]=useState(story?.emoji||(story?.type==="firstthen"?"📋":"📖"));
   const[color,setColor]=useState(story?.color||(story?.type==="firstthen"?"#D9886B":"#C9A875"));
+  const[firstLabel,setFirstLabel]=useState(story?.firstLabel||"");
+  const[thenLabel,setThenLabel]=useState(story?.thenLabel||"");
   const[pages,setPages]=useState(()=>{
     if(story?.pages) return story.pages.map(p=>({...p}));
     // Defaults based on type
@@ -1953,7 +2144,7 @@ function StoryEditor({story,onSave,onDel,onClose,t}){
     if(!title.trim()) return;
     if(isFT && pages.length!==2) return;
     if(!isFT && pages.length===0) return;
-    onSave({id:story?.id||"s"+Date.now(),type,sv:title,en:title,emoji,color,pages});
+    onSave({id:story?.id||"s"+Date.now(),type,sv:title,en:title,emoji,color,pages,firstLabel:firstLabel.trim(),thenLabel:thenLabel.trim()});
     onClose();
   };
   return(
@@ -1987,9 +2178,16 @@ function StoryEditor({story,onSave,onDel,onClose,t}){
         <SLabel>{isFT?"Först och Sedan":`${t.pages} · ${pages.length}`}</SLabel>
         {isFT?(
           <>
-            <div style={{fontFamily:G.font,fontWeight:700,fontSize:11,color:color,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{t.first||"Först"}</div>
+            <div style={{padding:"12px 14px",borderRadius:14,background:`${color}0C`,border:`1px solid ${color}28`,marginBottom:18}}>
+              <div style={{fontFamily:G.font,fontWeight:600,fontSize:11,color:G.ink3,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8}}>Etiketter (visas över korten)</div>
+              <div style={{display:"flex",gap:8}}>
+                <input value={firstLabel} onChange={e=>setFirstLabel(e.target.value)} placeholder={t.first||"Först"} maxLength={20} style={{...INP,flex:1,marginBottom:0,fontSize:14}}/>
+                <input value={thenLabel} onChange={e=>setThenLabel(e.target.value)} placeholder={t.then||"Sedan"} maxLength={20} style={{...INP,flex:1,marginBottom:0,fontSize:14}}/>
+              </div>
+            </div>
+            <div style={{fontFamily:G.font,fontWeight:700,fontSize:11,color:color,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{firstLabel.trim()||t.first||"Först"}</div>
             {pages[0]&&<PageEditor key={pages[0].id} page={pages[0]} idx={0} total={2} onUpdate={(f,v)=>updPage(pages[0].id,f,v)} onRemove={()=>{}} onMoveUp={()=>{}} onMoveDown={()=>{}} color={color} t={t}/>}
-            <div style={{fontFamily:G.font,fontWeight:700,fontSize:11,color:color,letterSpacing:2,textTransform:"uppercase",marginBottom:8,marginTop:12}}>{t.then||"Sedan"}</div>
+            <div style={{fontFamily:G.font,fontWeight:700,fontSize:11,color:color,letterSpacing:2,textTransform:"uppercase",marginBottom:8,marginTop:12}}>{thenLabel.trim()||t.then||"Sedan"}</div>
             {pages[1]&&<PageEditor key={pages[1].id} page={pages[1]} idx={1} total={2} onUpdate={(f,v)=>updPage(pages[1].id,f,v)} onRemove={()=>{}} onMoveUp={()=>{}} onMoveDown={()=>{}} color={color} t={t}/>}
           </>
         ):(
@@ -2038,7 +2236,7 @@ function StoryScreen({lang,t,isEditor,stories,setStories}){
           <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12}}>
             {stories.map(s=>(
               <div key={s.id} style={{position:"relative"}}>
-                <div onClick={()=>isEditor?setEditor(s):setViewer(s)} style={{background:G.white,borderRadius:20,padding:"22px 14px 18px",cursor:"pointer",border:`1px solid ${s.color}25`,boxShadow:`0 6px 20px ${s.color}14`,transition:"transform .15s ease"}}>
+                <div onClick={()=>isEditor?setEditor(s):setViewer(s)} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform=""} onMouseLeave={e=>e.currentTarget.style.transform=""} onTouchStart={e=>e.currentTarget.style.transform="scale(0.97)"} onTouchEnd={e=>e.currentTarget.style.transform=""} style={{background:G.white,borderRadius:20,padding:"22px 14px 18px",cursor:"pointer",border:`1px solid ${s.color}25`,boxShadow:`0 6px 20px ${s.color}14`,transition:"transform .15s ease, box-shadow .2s ease"}}>
                   <div style={{width:84,height:84,margin:"0 auto 12px",borderRadius:20,background:`linear-gradient(140deg,${s.color}1F,${s.color}3A)`,border:`1px solid ${s.color}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:46}}>{s.emoji}</div>
                   <div style={{fontFamily:G.serif,fontWeight:600,fontSize:15,color:G.ink,textAlign:"center",lineHeight:1.2,letterSpacing:-.2}}>{lang==="sv"?s.sv:s.en}</div>
                   <div style={{fontFamily:G.font,fontWeight:600,fontSize:10,color:s.color,textAlign:"center",marginTop:7,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
@@ -2105,7 +2303,7 @@ function BreathingExercise({onClose,t}){
       <div style={{position:"fixed",inset:0,zIndex:9000,background:"#FFFFFF",backgroundImage:`linear-gradient(165deg,${BLUE}14,#FFFFFF)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:30,gap:24,animation:"ftIn .4s ease"}}>
         <div style={{fontSize:80}}>🌿</div>
         <div style={{fontFamily:G.serif,fontWeight:600,fontSize:28,color:DEEP,textAlign:"center",letterSpacing:-.3}}>{t.breathDone}</div>
-        <button onClick={onClose} style={{padding:"15px 40px",borderRadius:18,border:"none",background:`linear-gradient(135deg,${BLUE},${DEEP})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:16,cursor:"pointer",boxShadow:sh.c(BLUE),marginTop:10}}>{t.cancel}</button>
+        <button onClick={onClose} style={{padding:"15px 40px",borderRadius:18,border:"none",background:`linear-gradient(135deg,${BLUE},${DEEP})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:16,cursor:"pointer",boxShadow:sh.c(BLUE),marginTop:10}}>{t.close}</button>
       </div>
     );
   }
@@ -2186,14 +2384,161 @@ function BreathingExercise({onClose,t}){
 }
 
 /* ═══ 5-4-3-2-1 grounding ═══ */
+/* ═══ Grounding sense illustrations — hand-drawn, animated ═══ */
+function GroundIcon({type,color,size=140}){
+  const st=2.8, lt=2.2;
+  return(
+    <div style={{width:size,height:size,borderRadius:36,background:`linear-gradient(140deg,${color}1A,${color}33)`,border:`1px solid ${color}40`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 12px 40px ${color}25`,overflow:"hidden",position:"relative"}}>
+      <style>{`
+        @keyframes gEyeBlink{0%,82%,100%{transform:scaleY(1)}88%,90%{transform:scaleY(0.08)}}
+        @keyframes gIrisLook{0%,25%,100%{transform:translateX(0)}45%{transform:translateX(-5px)}65%,75%{transform:translateX(5px)}}
+        @keyframes gWaveIn{0%{opacity:0;transform:translateX(-6px) scale(0.85)}35%{opacity:0.95;transform:translateX(0) scale(1)}100%{opacity:0;transform:translateX(6px) scale(1.05)}}
+        @keyframes gEarListen{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-3deg)}}
+        @keyframes gHandTap{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-4px) rotate(2deg)}}
+        @keyframes gTouchRipple{0%{opacity:0;transform:scale(0.3)}40%{opacity:0.9;transform:scale(1)}100%{opacity:0;transform:scale(1.8)}}
+        @keyframes gSniff{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+        @keyframes gFragRise{0%{opacity:0;transform:translateY(10px) scale(0.85)}25%{opacity:0.9;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-22px) scale(1.1)}}
+        @keyframes gMouthYum{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.06) rotate(-1deg)}}
+      `}</style>
+      <svg width={size*0.72} height={size*0.72} viewBox="0 0 100 100" style={{overflow:"visible"}}>
+        {type==="see"&&(<>
+          {/* Eyelashes — delicate, slightly curved */}
+          <g stroke={color} strokeWidth={lt-0.2} strokeLinecap="round" fill="none" opacity="0.8">
+            <path d="M 22 34 Q 20 28 17 22"/>
+            <path d="M 36 22 Q 35 16 33 9"/>
+            <path d="M 50 18 L 50 4"/>
+            <path d="M 64 22 Q 65 16 67 9"/>
+            <path d="M 78 34 Q 80 28 83 22"/>
+          </g>
+          {/* Eye — blinks slowly, deliberately */}
+          <g style={{transformOrigin:"50px 50px",animation:"gEyeBlink 4.5s ease-in-out infinite"}}>
+            {/* Almond shape */}
+            <path d="M 10 50 Q 50 18 90 50 Q 50 82 10 50 Z" fill="white" stroke={color} strokeWidth={st} strokeLinejoin="round"/>
+            {/* Iris — looks around */}
+            <g style={{transformOrigin:"50px 50px",animation:"gIrisLook 5s ease-in-out infinite"}}>
+              {/* Iris circle */}
+              <circle cx="50" cy="50" r="17" fill={color} opacity="0.85"/>
+              {/* Pupil */}
+              <circle cx="50" cy="50" r="7" fill="#1F1B2E"/>
+              {/* Highlight */}
+              <circle cx="45" cy="45" r="3" fill="white" opacity="0.95"/>
+            </g>
+          </g>
+        </>)}
+
+        {type==="hear"&&(<>
+          {/* Sound waves coming TOWARD ear — incoming */}
+          <g stroke={color} fill="none" strokeWidth={lt+0.3} strokeLinecap="round">
+            {/* Smallest, closest to ear */}
+            <path d="M 25 50 Q 19 50 19 44 Q 19 38 25 38"
+              style={{transformOrigin:"22px 44px",animation:"gWaveIn 2.4s ease-in-out infinite"}}/>
+            {/* Medium */}
+            <path d="M 17 58 Q 8 58 8 47 Q 8 36 17 36"
+              style={{transformOrigin:"12px 47px",animation:"gWaveIn 2.4s ease-in-out 0.5s infinite"}}/>
+            {/* Largest */}
+            <path d="M 11 68 Q -2 68 -2 50 Q -2 32 11 32"
+              style={{transformOrigin:"4px 50px",animation:"gWaveIn 2.4s ease-in-out 1s infinite"}}/>
+          </g>
+          {/* Ear — subtly tilts toward sound (listening posture) */}
+          <g style={{transformOrigin:"50px 90px",animation:"gEarListen 3.6s ease-in-out infinite"}}>
+            <path d="M 52 16 Q 78 16 78 42 Q 78 56 70 64 Q 60 70 60 80 Q 60 90 50 90 Q 36 90 32 78 Q 28 66 38 58 Q 50 52 50 42 Q 50 26 46 22 Q 49 16 52 16 Z" fill="white" stroke={color} strokeWidth={st} strokeLinejoin="round"/>
+            <path d="M 55 40 Q 65 40 65 52 Q 65 62 55 62" fill="none" stroke={color} strokeWidth={lt} strokeLinecap="round"/>
+            <circle cx="50" cy="82" r="2" fill={color} opacity="0.5"/>
+          </g>
+        </>)}
+
+        {type==="touch"&&(<>
+          {/* Touch surface — small circle at fingertip with ripple */}
+          <g>
+            {/* Ripple */}
+            <circle cx="55" cy="9" r="5" fill="none" stroke={color} strokeWidth={lt}
+              style={{transformOrigin:"55px 9px",animation:"gTouchRipple 2.4s ease-out infinite"}}/>
+            {/* Inner dot */}
+            <circle cx="55" cy="9" r="2.5" fill={color} opacity="0.5"/>
+          </g>
+          {/* Hand — gentle tap motion */}
+          <g style={{transformOrigin:"50px 88px",animation:"gHandTap 2.4s ease-in-out infinite"}}>
+            <path d="M 22 60
+                     L 22 38 Q 22 32 28 32 Q 34 32 34 38
+                     L 34 22 Q 34 14 41 14 Q 48 14 48 22
+                     L 48 16 Q 48 8 55 8 Q 62 8 62 16
+                     L 62 22 Q 62 14 69 14 Q 76 14 76 22
+                     L 76 38 Q 76 30 82 30 Q 88 30 88 36
+                     L 88 60 Q 88 78 74 88 L 38 88 Q 22 80 22 60 Z"
+              fill="white" stroke={color} strokeWidth={st} strokeLinejoin="round"/>
+            <path d="M 38 60 Q 48 65 60 60" fill="none" stroke={color} strokeWidth={1.2} strokeLinecap="round" opacity="0.4"/>
+          </g>
+        </>)}
+
+        {type==="smell"&&(<>
+          {/* Three clear curly fragrance lines rising — recognizable as scent */}
+          <g fill="none" stroke={color} strokeWidth={lt+0.6} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M 32 45 Q 28 39 32 33 Q 36 27 32 21 Q 28 15 32 9"
+              style={{transformOrigin:"32px 27px",animation:"gFragRise 3.2s ease-out infinite"}}/>
+            <path d="M 50 45 Q 46 39 50 33 Q 54 27 50 21 Q 46 15 50 9"
+              style={{transformOrigin:"50px 27px",animation:"gFragRise 3.2s ease-out 1.06s infinite"}}/>
+            <path d="M 68 45 Q 64 39 68 33 Q 72 27 68 21 Q 64 15 68 9"
+              style={{transformOrigin:"68px 27px",animation:"gFragRise 3.2s ease-out 2.12s infinite"}}/>
+          </g>
+          {/* Friendly cartoon nose — large, clear, rounded */}
+          <g style={{transformOrigin:"50px 78px",animation:"gSniff 3.2s ease-in-out infinite"}}>
+            {/* Main nose shape — rounded teardrop */}
+            <path d="M 50 50
+                     Q 42 50 38 62
+                     Q 34 76 36 84
+                     Q 38 92 44 93
+                     Q 50 94 56 93
+                     Q 62 92 64 84
+                     Q 66 76 62 62
+                     Q 58 50 50 50 Z"
+              fill="white" stroke={color} strokeWidth={st} strokeLinejoin="round" strokeLinecap="round"/>
+            {/* Nostrils — clear ovals */}
+            <ellipse cx="44" cy="83" rx="3.2" ry="4" fill={color} opacity="0.78"/>
+            <ellipse cx="56" cy="83" rx="3.2" ry="4" fill={color} opacity="0.78"/>
+            {/* Bridge highlight */}
+            <path d="M 48 60 Q 50 70 52 60" fill="none" stroke={color} strokeWidth={1.4} strokeLinecap="round" opacity="0.35"/>
+            {/* Tip highlight (cute cartoon detail) */}
+            <ellipse cx="46" cy="73" rx="2.5" ry="3" fill="white" opacity="0.5"/>
+          </g>
+        </>)}
+
+        {type==="taste"&&(
+          <g style={{transformOrigin:"50px 55px",animation:"gMouthYum 3.2s ease-in-out infinite"}}>
+            {/* Upper lip with clear cupid's bow */}
+            <path d="M 14 48
+                     Q 24 32 34 44
+                     Q 42 32 50 44
+                     Q 58 32 66 44
+                     Q 76 32 86 48"
+              fill="white" stroke={color} strokeWidth={st+0.2} strokeLinecap="round" strokeLinejoin="round"/>
+            {/* Lower lip — full, filled */}
+            <path d="M 14 48
+                     Q 30 82 50 84
+                     Q 70 82 86 48
+                     Q 50 64 14 48 Z"
+              fill={color} fillOpacity="0.42" stroke={color} strokeWidth={st+0.2} strokeLinecap="round" strokeLinejoin="round"/>
+            {/* Center line between lips */}
+            <path d="M 14 48 Q 50 58 86 48" fill="none" stroke={color} strokeWidth={lt} strokeLinecap="round" opacity="0.55"/>
+            {/* Lip line highlights for depth */}
+            <path d="M 22 50 Q 30 48 38 50" fill="none" stroke="white" strokeWidth={1.2} strokeLinecap="round" opacity="0.55"/>
+            <path d="M 62 50 Q 70 48 78 50" fill="none" stroke="white" strokeWidth={1.2} strokeLinecap="round" opacity="0.55"/>
+            {/* Lower lip highlight */}
+            <ellipse cx="50" cy="65" rx="14" ry="3" fill="white" opacity="0.3"/>
+          </g>
+        )}
+      </svg>
+    </div>
+  );
+}
+
 function GroundingExercise({onClose,t}){
   const S=SCREENS.calm;
   const steps=[
-    {emoji:"👁️",label:t.see5,count:5,color:S.h},
-    {emoji:"👂",label:t.hear4,count:4,color:"#A5C9B5"},
-    {emoji:"✋",label:t.touch3,count:3,color:"#D4B468"},
-    {emoji:"👃",label:t.smell2,count:2,color:"#D8A4C2"},
-    {emoji:"👅",label:t.taste1,count:1,color:"#C295D8"},
+    {type:"see",label:t.see5,count:5,color:S.h},
+    {type:"hear",label:t.hear4,count:4,color:"#A5C9B5"},
+    {type:"touch",label:t.touch3,count:3,color:"#D4B468"},
+    {type:"smell",label:t.smell2,count:2,color:"#D8A4C2"},
+    {type:"taste",label:t.taste1,count:1,color:"#C295D8"},
   ];
   const[idx,setIdx]=useState(-1); // -1 = intro
   const[checked,setChecked]=useState(0);
@@ -2201,9 +2546,71 @@ function GroundingExercise({onClose,t}){
   if(idx>=steps.length){
     return(
       <div style={{position:"fixed",inset:0,zIndex:9000,background:`#FFFFFF linear-gradient(165deg,${S.hb},#FFFFFF)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:30,gap:24,animation:"ftIn .4s ease"}}>
-        <div style={{fontSize:80}}>🌿</div>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color:S.deep,textAlign:"center",letterSpacing:-.3,maxWidth:300,lineHeight:1.3}}>{t.iAmHere}</div>
-        <button onClick={onClose} style={{padding:"15px 40px",borderRadius:18,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:16,cursor:"pointer",boxShadow:sh.c(S.h),marginTop:10}}>{t.cancel}</button>
+        <style>{`
+          @keyframes calmRipple{0%{transform:scale(0.3);opacity:0.7}80%{opacity:0.05}100%{transform:scale(2.4);opacity:0}}
+          @keyframes calmBreath{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.06);filter:brightness(1.1)}}
+          @keyframes calmRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+          @keyframes calmRotateRev{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+          @keyframes calmPetalFade1{0%,100%{opacity:.65}50%{opacity:.35}}
+          @keyframes calmPetalFade2{0%,100%{opacity:.35}50%{opacity:.7}}
+          @keyframes calmTextFade{0%,30%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+          @keyframes calmButtonFade{0%,50%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+        `}</style>
+        <div style={{width:140,height:140,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <svg width={140} height={140} viewBox="0 0 100 100" style={{overflow:"visible"}}>
+            <defs>
+              <radialGradient id="calmHalo" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={S.h} stopOpacity="0.4"/>
+                <stop offset="60%" stopColor={S.h} stopOpacity="0.12"/>
+                <stop offset="100%" stopColor={S.h} stopOpacity="0"/>
+              </radialGradient>
+              <radialGradient id="calmCore" cx="35%" cy="30%" r="70%">
+                <stop offset="0%" stopColor="#FFFFFF"/>
+                <stop offset="22%" stopColor="#FFFAF0" stopOpacity="0.95"/>
+                <stop offset="58%" stopColor={S.h}/>
+                <stop offset="100%" stopColor={S.deep}/>
+              </radialGradient>
+            </defs>
+            {/* Outer soft halo */}
+            <circle cx="50" cy="50" r="45" fill="url(#calmHalo)"/>
+            {/* Three concentric ripples expanding outward */}
+            <circle cx="50" cy="50" r="18" fill="none" stroke={S.h} strokeWidth="1.5" opacity="0.55"
+              style={{transformOrigin:"50px 50px",animation:"calmRipple 4.5s ease-out infinite"}}/>
+            <circle cx="50" cy="50" r="18" fill="none" stroke={S.h} strokeWidth="1.5" opacity="0.55"
+              style={{transformOrigin:"50px 50px",animation:"calmRipple 4.5s ease-out 1.5s infinite"}}/>
+            <circle cx="50" cy="50" r="18" fill="none" stroke={S.h} strokeWidth="1.5" opacity="0.55"
+              style={{transformOrigin:"50px 50px",animation:"calmRipple 4.5s ease-out 3s infinite"}}/>
+            {/* Outer petals — slowly rotating clockwise */}
+            <g style={{transformOrigin:"50px 50px",animation:"calmRotate 28s linear infinite"}}>
+              {Array.from({length:8}).map((_,i)=>{
+                const ang=(i/8)*2*Math.PI;
+                const isLong=i%2===0;
+                const r1=20, r2=isLong?29:25;
+                const x1=50+r1*Math.sin(ang), y1=50-r1*Math.cos(ang);
+                const x2=50+r2*Math.sin(ang), y2=50-r2*Math.cos(ang);
+                return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={S.h} strokeWidth={isLong?2:1.4} strokeLinecap="round"
+                  style={{animation:`${i%2===0?"calmPetalFade1":"calmPetalFade2"} ${3+i*0.2}s ease-in-out infinite`}}/>;
+              })}
+            </g>
+            {/* Inner ring of small dots — counter-rotating (creates depth) */}
+            <g style={{transformOrigin:"50px 50px",animation:"calmRotateRev 22s linear infinite"}}>
+              {Array.from({length:6}).map((_,i)=>{
+                const ang=((i+0.5)/6)*2*Math.PI;
+                const r=17.5;
+                const x=50+r*Math.sin(ang), y=50-r*Math.cos(ang);
+                return <circle key={i} cx={x} cy={y} r="1.4" fill={S.h} opacity="0.5"
+                  style={{animation:`calmPetalFade1 ${4+i*0.3}s ease-in-out ${i*0.4}s infinite`}}/>;
+              })}
+            </g>
+            {/* Inner breathing orb */}
+            <g style={{transformOrigin:"50px 50px",animation:"calmBreath 3.6s ease-in-out infinite"}}>
+              <circle cx="50" cy="50" r="13" fill="url(#calmCore)"/>
+              <circle cx="46" cy="46" r="3.2" fill="#FFFFFF" opacity="0.85"/>
+            </g>
+          </svg>
+        </div>
+        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color:S.deep,textAlign:"center",letterSpacing:-.3,maxWidth:300,lineHeight:1.3,animation:"calmTextFade 1.4s ease-out both"}}>{t.iAmHere}</div>
+        <button onClick={onClose} style={{padding:"15px 40px",borderRadius:18,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:16,cursor:"pointer",boxShadow:sh.c(S.h),marginTop:10,animation:"calmButtonFade 1.8s ease-out both"}}>{t.close}</button>
       </div>
     );
   }
@@ -2228,7 +2635,7 @@ function GroundingExercise({onClose,t}){
         <button onClick={onClose} style={{width:40,height:40,borderRadius:20,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:18,cursor:"pointer",boxShadow:sh.sm}}>✕</button>
       </div>
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:36,padding:"0 20px"}}>
-        <div style={{width:140,height:140,borderRadius:36,background:`linear-gradient(140deg,${cur.color}26,${cur.color}48)`,border:`1px solid ${cur.color}40`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:70,boxShadow:`0 12px 40px ${cur.color}30`}}>{cur.emoji}</div>
+        <GroundIcon type={cur.type} color={cur.color} size={140}/>
         <div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color:G.ink,textAlign:"center",lineHeight:1.25,letterSpacing:-.3}}>{cur.label}</div>
         {/* Counter dots — tappa för att kryssa av */}
         <div style={{display:"flex",gap:14,flexWrap:"wrap",justifyContent:"center",maxWidth:300}}>
@@ -2356,14 +2763,14 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor}){
         {isEmpty&&!isEditor?(
           <div style={{textAlign:"center",padding:"60px 24px"}}>
             <div style={{fontSize:64,marginBottom:18}}>🪪</div>
-            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:22,color:G.ink,letterSpacing:-.3,marginBottom:8}}>Kortet är tomt</div>
-            <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.5,maxWidth:280,margin:"0 auto"}}>Be någon vuxen att fylla i kortet i Redaktör så att det är redo om du behöver det.</div>
+            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:22,color:G.ink,letterSpacing:-.3,marginBottom:8}}>Kortet är inte ifyllt än</div>
+            <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.5,maxWidth:300,margin:"0 auto"}}>Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Öppna Redaktör för att fylla i det.</div>
           </div>
         ):isEmpty&&isEditor?(
           <div style={{textAlign:"center",padding:"40px 24px",background:G.white,borderRadius:24,border:`1px dashed ${S.h}66`}}>
             <div style={{fontSize:48,marginBottom:14}}>🪪</div>
             <div style={{fontFamily:G.serif,fontWeight:600,fontSize:18,color:G.ink,marginBottom:6}}>Skapa mitt-mig-kortet</div>
-            <div style={{fontFamily:G.font,fontSize:13,color:G.ink2,lineHeight:1.5,marginBottom:18,maxWidth:280,margin:"0 auto 18px"}}>Kortet visar viktig information om användaren till någon som vill hjälpa till.</div>
+            <div style={{fontFamily:G.font,fontSize:13,color:G.ink2,lineHeight:1.5,marginBottom:18,maxWidth:300,margin:"0 auto 18px"}}>Sammanfattar viktig information — namn, kontaktpersoner, och vad som hjälper i pressade situationer. Visas vid behov.</div>
             <button onClick={()=>setShowEdit(true)} style={{padding:"13px 28px",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:sh.c(S.h)}}>+ {t.editCard}</button>
           </div>
         ):(<>
@@ -2481,21 +2888,35 @@ function SupervisorDemo({onClose,onOpenClient,lang}){
       {/* Top bar */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 28px",borderBottom:`1px solid ${G.border}`,background:G.white,boxShadow:sh.xs,position:"sticky",top:0,zIndex:5}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <svg width={22} height={22} viewBox="0 0 18 18">
+          <svg width={28} height={28} viewBox="0 0 26 26" style={{overflow:"visible"}}>
             <defs>
-              <radialGradient id="svGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={S.h} stopOpacity="0.5"/>
-                <stop offset="60%" stopColor={S.h} stopOpacity="0.15"/>
-                <stop offset="100%" stopColor={S.h} stopOpacity="0"/>
-              </radialGradient>
-              <radialGradient id="svCore" cx="35%" cy="32%" r="65%">
+              <radialGradient id="svCoreV2" cx="35%" cy="30%" r="70%">
                 <stop offset="0%" stopColor="#FFFFFF"/>
+                <stop offset="20%" stopColor="#FFFAF0" stopOpacity="0.95"/>
                 <stop offset="55%" stopColor={S.h}/>
                 <stop offset="100%" stopColor={S.deep}/>
               </radialGradient>
+              <radialGradient id="svOuterV2" cx="50%" cy="50%" r="50%">
+                <stop offset="40%" stopColor={S.h} stopOpacity="0"/>
+                <stop offset="70%" stopColor={S.h} stopOpacity="0.18"/>
+                <stop offset="100%" stopColor={S.h} stopOpacity="0"/>
+              </radialGradient>
             </defs>
-            <circle cx="9" cy="9" r="9" fill="url(#svGlow)"/>
-            <circle cx="9" cy="9" r="4.5" fill="url(#svCore)"/>
+            <circle cx="13" cy="13" r="13" fill="url(#svOuterV2)"/>
+            <g style={{transformOrigin:"13px 13px",animation:"lumaRotate 22s linear infinite"}}>
+              {Array.from({length:8}).map((_,i)=>{
+                const ang=(i/8)*2*Math.PI;
+                const isLong=i%2===0;
+                const r1=8.5, r2=isLong?12.2:11;
+                const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
+                const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
+                return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={S.h} strokeWidth={isLong?1.6:1.1} strokeLinecap="round"/>;
+              })}
+            </g>
+            <g style={{transformOrigin:"13px 13px",animation:"lumaCoreBreath 3.4s ease-in-out infinite"}}>
+              <circle cx="13" cy="13" r="6.5" fill="url(#svCoreV2)"/>
+              <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
+            </g>
           </svg>
           <span style={{fontFamily:G.serif,fontWeight:600,fontSize:17,color:G.ink,letterSpacing:0.3}}>Luma</span>
           <span style={{fontFamily:G.font,fontWeight:600,fontSize:10,color:S.deep,background:S.hl,borderRadius:6,padding:"3px 8px",letterSpacing:1.2,textTransform:"uppercase"}}>{lang==="sv"?"Stödperson":"Caregiver"}</span>
@@ -2606,6 +3027,13 @@ export default function App(){
       return()=>clearTimeout(t);
     }
   },[hasOnboarded]);
+  // One-time migration: force old peach default timer color to new blue
+  useEffect(()=>{
+    if(cfg.timerCfg?.defaultColor==="#E89B89"){
+      setCfg(c=>({...c,timerCfg:{...c.timerCfg,defaultColor:"#8AAFD2"}}));
+    }
+  // eslint-disable-next-line
+  },[]);
   const finishOnboarding=()=>{setShowOnboarding(false);setHasOnboarded(true);};
   const openSupervisor=()=>{setShowSet(false);setShowSupervisor(true);};
   const openClient=(client)=>{
@@ -2713,30 +3141,65 @@ export default function App(){
     {key:"idcard",icon:"🪪",label:t.idcard,always:false,S:SCREENS.idcard},
   ].filter(n=>n.always||cfg.tools[n.key]||isEd);
   const curS=SCREENS[screen]||SCREENS.home;
+  // Subtle time-of-day tint that gently blends with screen background.
+  // Morning: cool sunrise hint. Day: neutral. Evening: warm amber. Night: deep dusk.
+  const hour=now?.getHours?.()??new Date().getHours();
+  const ambientTint=(()=>{
+    if(hour>=5&&hour<9) return "rgba(255, 220, 180, 0.18)";   // sunrise warmth
+    if(hour>=9&&hour<17) return "rgba(255, 255, 255, 0)";       // neutral day
+    if(hour>=17&&hour<20) return "rgba(255, 180, 130, 0.22)";   // sunset
+    if(hour>=20&&hour<23) return "rgba(120, 110, 180, 0.18)";   // dusk
+    return "rgba(60, 70, 120, 0.22)";                            // night
+  })();
   return(
     <div style={{height:"100vh",background:curS.hb,fontFamily:G.font,display:"flex",flexDirection:"column",maxWidth:480,margin:"0 auto",overflow:"hidden",position:"relative",transition:"background .4s",color:G.ink}}>
+      {/* Ambient time-of-day overlay — extremely subtle, sits above background */}
+      <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg, ${ambientTint} 0%, transparent 60%)`,pointerEvents:"none",zIndex:0,transition:"background 2s ease"}}/>
       {/* HEADER */}
       <div style={{background:`linear-gradient(170deg,${curS.hl} 0%,${G.white} 100%)`,padding:"14px 22px 12px",borderBottom:`1px solid ${G.border}`,flexShrink:0,position:"relative",overflow:"hidden",transition:"background .4s"}}>
         <div style={{position:"absolute",top:-50,right:-30,width:140,height:140,borderRadius:"50%",background:`radial-gradient(circle,${curS.soft}44,transparent 70%)`,pointerEvents:"none"}}/>
-        {/* Luma wordmark */}
-        <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:8,position:"relative"}}>
-          <svg width={18} height={18} viewBox="0 0 18 18" style={{flexShrink:0}}>
+        {/* Luma wordmark — stylized sun with rays */}
+        <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:8,position:"relative"}}>
+          <style>{`
+            @keyframes lumaRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+            @keyframes lumaCoreBreath{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.04);filter:brightness(1.08)}}
+            @keyframes rayFade1{0%,100%{opacity:.7}50%{opacity:.4}}
+            @keyframes rayFade2{0%,100%{opacity:.4}50%{opacity:.75}}
+          `}</style>
+          <svg width={26} height={26} viewBox="0 0 26 26" style={{flexShrink:0,overflow:"visible"}}>
             <defs>
-              <radialGradient id="lumaGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={curS.h} stopOpacity="0.5"/>
-                <stop offset="60%" stopColor={curS.h} stopOpacity="0.15"/>
-                <stop offset="100%" stopColor={curS.h} stopOpacity="0"/>
-              </radialGradient>
-              <radialGradient id="lumaCore" cx="35%" cy="32%" r="65%">
+              <radialGradient id="lumaCore" cx="35%" cy="30%" r="70%">
                 <stop offset="0%" stopColor="#FFFFFF"/>
+                <stop offset="20%" stopColor="#FFFAF0" stopOpacity="0.95"/>
                 <stop offset="55%" stopColor={curS.h}/>
                 <stop offset="100%" stopColor={curS.deep}/>
               </radialGradient>
+              <radialGradient id="lumaOuterGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="40%" stopColor={curS.h} stopOpacity="0"/>
+                <stop offset="70%" stopColor={curS.h} stopOpacity="0.18"/>
+                <stop offset="100%" stopColor={curS.h} stopOpacity="0"/>
+              </radialGradient>
             </defs>
-            <circle cx="9" cy="9" r="9" fill="url(#lumaGlow)"/>
-            <circle cx="9" cy="9" r="4.5" fill="url(#lumaCore)"/>
+            {/* Outer soft glow */}
+            <circle cx="13" cy="13" r="13" fill="url(#lumaOuterGlow)"/>
+            {/* Rotating ray group — 8 rays, alternating long/short */}
+            <g style={{transformOrigin:"13px 13px",animation:"lumaRotate 22s linear infinite"}}>
+              {Array.from({length:8}).map((_,i)=>{
+                const ang=(i/8)*2*Math.PI;
+                const isLong=i%2===0;
+                const r1=8.5, r2=isLong?12.2:11;
+                const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
+                const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
+                return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={curS.h} strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"rayFade1":"rayFade2"} ${3+i*0.18}s ease-in-out infinite`}}/>;
+              })}
+            </g>
+            {/* Core orb */}
+            <g style={{transformOrigin:"13px 13px",animation:"lumaCoreBreath 3.4s ease-in-out infinite"}}>
+              <circle cx="13" cy="13" r="6.5" fill="url(#lumaCore)"/>
+              <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
+            </g>
           </svg>
-          <span style={{fontFamily:G.serif,fontWeight:600,fontSize:14,color:curS.deep,letterSpacing:0.4,lineHeight:1}}>Luma</span>
+          <span style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:curS.deep,letterSpacing:0.8,lineHeight:1}}>Luma</span>
         </div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,position:"relative",gap:12}}>
           <div style={{flex:1,minWidth:0}}>
@@ -2751,7 +3214,8 @@ export default function App(){
             {screen==="home"&&!isEd&&cfg.schedView!=="card"&&<TabB active={effView==="list"} onClick={()=>setView("list")} color={curS.h} deep={curS.deep}>☰ {t.list}</TabB>}
             {screen==="home"&&!isEd&&cfg.schedView!=="list"&&<TabB active={effView==="card"} onClick={()=>setView("card")} color={curS.h} deep={curS.deep}>⊞ {t.card}</TabB>}
             {screen==="home"&&<TabB active={isEd} gold={isEd} onClick={()=>setIsEd(e=>!e)} color={curS.h} deep={curS.deep} flex={isEd?2:1}>{isEd?`✓ ${t.editorClose}`:`✏️ ${t.editorOpen}`}</TabB>}
-            {screen!=="home"&&<div style={{flex:1,padding:"6px 12px",fontFamily:G.font,fontWeight:600,fontSize:11,color:curS.deep,display:"flex",alignItems:"center",gap:7}}><span style={{width:7,height:7,borderRadius:"50%",background:curS.h,boxShadow:`0 0 6px ${curS.h}88`}}/>{navItems.find(n=>n.key===screen)?.label}</div>}
+            {screen!=="home"&&!isEd&&<div style={{flex:1,padding:"6px 12px",fontFamily:G.font,fontWeight:600,fontSize:11,color:curS.deep,display:"flex",alignItems:"center",gap:7}}><span style={{width:7,height:7,borderRadius:"50%",background:curS.h,boxShadow:`0 0 6px ${curS.h}88`}}/>{navItems.find(n=>n.key===screen)?.label}</div>}
+            {screen!=="home"&&isEd&&<TabB active={true} gold={true} onClick={()=>setIsEd(false)} color={curS.h} deep={curS.deep} flex={1}>{`✓ ${t.editorClose}`}</TabB>}
           </div>
         </div>
       </div>
@@ -2820,11 +3284,14 @@ export default function App(){
       )}
       {/* BOTTOM NAV */}
       <div style={{background:G.white,borderTop:`1px solid ${G.border}`,display:"flex",padding:"10px 0 26px",boxShadow:"0 -6px 24px rgba(31,27,46,0.06)",flexShrink:0,zIndex:20,overflowX:"auto"}}>
+        <style>{`@keyframes navUnder{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}@keyframes navIcon{from{transform:scale(.92) translateY(2px)}to{transform:scale(1) translateY(0)}}`}</style>
         {navItems.map(({key,icon,label,S})=>{const on=screen===key;return(
-          <button key={key} onClick={()=>{setScreen(key);}} style={{flex:navItems.length<=5?1:"0 0 auto",minWidth:navItems.length<=5?0:72,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"4px 6px"}}>
-            <span style={{fontSize:22,opacity:on?1:0.55,transition:"opacity .2s"}}>{icon}</span>
-            <span style={{fontFamily:G.font,fontWeight:600,fontSize:11,color:on?S.deep:G.ink3,transition:"color .2s",whiteSpace:"nowrap"}}>{label}</span>
-            {on&&<div style={{width:22,height:3,borderRadius:2,background:S.h,marginTop:2}}/>}
+          <button key={key} onClick={()=>{setScreen(key);}} style={{flex:navItems.length<=5?1:"0 0 auto",minWidth:navItems.length<=5?0:72,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 6px",position:"relative",transition:"transform .15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.92)"} onMouseUp={e=>e.currentTarget.style.transform=""} onMouseLeave={e=>e.currentTarget.style.transform=""}>
+            {/* Glow halo behind icon when active */}
+            {on&&<div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:42,height:42,borderRadius:21,background:`radial-gradient(circle, ${S.h}28 0%, ${S.h}00 70%)`,pointerEvents:"none"}}/>}
+            <span style={{fontSize:on?24:21,opacity:on?1:0.5,transition:"opacity .25s, font-size .25s, filter .25s",filter:on?`drop-shadow(0 2px 4px ${S.h}66)`:"none",animation:on?"navIcon .25s ease":"none",position:"relative"}}>{icon}</span>
+            <span style={{fontFamily:G.font,fontWeight:on?700:600,fontSize:11,color:on?S.deep:G.ink3,transition:"color .25s, font-weight .25s",whiteSpace:"nowrap",position:"relative"}}>{label}</span>
+            {on&&<div style={{width:24,height:3,borderRadius:2,background:`linear-gradient(90deg,${S.h},${S.deep})`,marginTop:2,boxShadow:`0 2px 8px ${S.h}80`,animation:"navUnder .3s cubic-bezier(.2,.7,.2,1) both",transformOrigin:"center"}}/>}
           </button>
         );})}
       </div>
@@ -2835,25 +3302,39 @@ export default function App(){
       {showOnboarding&&(
         <div style={{position:"fixed",inset:0,zIndex:9500,background:"rgba(31,27,46,0.5)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24,animation:"ftIn .3s ease"}} onClick={finishOnboarding}>
           <div onClick={e=>e.stopPropagation()} style={{maxWidth:380,width:"100%",background:G.white,borderRadius:28,padding:"32px 26px 26px",boxShadow:"0 24px 60px rgba(0,0,0,0.25)",border:`1px solid ${G.border}`,position:"relative"}}>
-            {/* Luma mark */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:9,marginBottom:18}}>
-              <svg width={28} height={28} viewBox="0 0 18 18">
+            {/* Luma mark — animated sun */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:13,marginBottom:18}}>
+              <svg width={48} height={48} viewBox="0 0 26 26" style={{overflow:"visible"}}>
                 <defs>
-                  <radialGradient id="onbGlow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor={SCREENS.home.h} stopOpacity="0.55"/>
-                    <stop offset="60%" stopColor={SCREENS.home.h} stopOpacity="0.18"/>
-                    <stop offset="100%" stopColor={SCREENS.home.h} stopOpacity="0"/>
-                  </radialGradient>
-                  <radialGradient id="onbCore" cx="35%" cy="32%" r="65%">
+                  <radialGradient id="onbCore" cx="35%" cy="30%" r="70%">
                     <stop offset="0%" stopColor="#FFFFFF"/>
+                    <stop offset="20%" stopColor="#FFFAF0" stopOpacity="0.95"/>
                     <stop offset="55%" stopColor={SCREENS.home.h}/>
                     <stop offset="100%" stopColor={SCREENS.home.deep}/>
                   </radialGradient>
+                  <radialGradient id="onbOuter" cx="50%" cy="50%" r="50%">
+                    <stop offset="40%" stopColor={SCREENS.home.h} stopOpacity="0"/>
+                    <stop offset="70%" stopColor={SCREENS.home.h} stopOpacity="0.18"/>
+                    <stop offset="100%" stopColor={SCREENS.home.h} stopOpacity="0"/>
+                  </radialGradient>
                 </defs>
-                <circle cx="9" cy="9" r="9" fill="url(#onbGlow)"/>
-                <circle cx="9" cy="9" r="4.5" fill="url(#onbCore)"/>
+                <circle cx="13" cy="13" r="13" fill="url(#onbOuter)"/>
+                <g style={{transformOrigin:"13px 13px",animation:"lumaRotate 22s linear infinite"}}>
+                  {Array.from({length:8}).map((_,i)=>{
+                    const ang=(i/8)*2*Math.PI;
+                    const isLong=i%2===0;
+                    const r1=8.5, r2=isLong?12.2:11;
+                    const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
+                    const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
+                    return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={SCREENS.home.h} strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"rayFade1":"rayFade2"} ${3+i*0.18}s ease-in-out infinite`}}/>;
+                  })}
+                </g>
+                <g style={{transformOrigin:"13px 13px",animation:"lumaCoreBreath 3.4s ease-in-out infinite"}}>
+                  <circle cx="13" cy="13" r="6.5" fill="url(#onbCore)"/>
+                  <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
+                </g>
               </svg>
-              <span style={{fontFamily:G.serif,fontWeight:600,fontSize:22,color:G.ink,letterSpacing:0.3}}>Luma</span>
+              <span style={{fontFamily:G.serif,fontWeight:600,fontSize:30,color:G.ink,letterSpacing:0.6}}>Luma</span>
             </div>
             <div style={{fontFamily:G.serif,fontWeight:600,fontSize:20,color:G.ink,textAlign:"center",letterSpacing:-.3,marginBottom:8,lineHeight:1.25}}>{lang==="sv"?"Välkommen":"Welcome"}</div>
             <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,textAlign:"center",lineHeight:1.5,marginBottom:22}}>
