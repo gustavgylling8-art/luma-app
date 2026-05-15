@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, Fragment } from "react";
 
 (() => {
   // Inter from Google Fonts
@@ -23,6 +23,7 @@ const SCREENS = {
   calm:    { h:"#A8C9B0", hl:"#EFF5F0", hll:"#F8FBF8", hb:"#F4F9F4", soft:"#CFDED2", deep:"#688D72" },
   idcard:  { h:"#D88B8B", hl:"#FAEAEA", hll:"#FDF5F5", hb:"#FCF3F3", soft:"#EDB8B8", deep:"#A35858" },
   tools:   { h:"#D9886B", hl:"#F8ECE5", hll:"#FCF7F3", hb:"#FBF5EE", soft:"#EDC1AE", deep:"#A2604A" },
+  week:    { h:"#A8B5C9", hl:"#EEF0F5", hll:"#F7F8FB", hb:"#F5F6FA", soft:"#C9D2DE", deep:"#5D6B82" },
 };
 
 const G = {
@@ -40,8 +41,8 @@ const sh = {
   c: col=>`0 2px 5px ${col}1A, 0 10px 26px ${col}3D, 0 4px 10px ${col}22`,
 };
 
-const ACT_C=["#E89B89","#C2607A","#8FBFA1","#9683C2","#D9B868","#8AAFD2","#B58CD0","#E89A9A","#7CB8A0","#8E92D2"];
-const TMR_C=["#E89B89","#C2607A","#D9B868","#8FBFA1","#9683C2","#8AAFD2","#B58CD0","#E89A9A","#1F1B2E"];
+const ACT_C=["#E89B89","#C2607A","#8FBFA1","#9683C2","#D9B868","#8AAFD2","#B58CD0","#E89A9A","#7CB8A0","#8E92D2","#F0B5C8"];
+const TMR_C=["#E89B89","#C2607A","#D9B868","#8FBFA1","#9683C2","#8AAFD2","#B58CD0","#E89A9A","#F0B5C8","#1F1B2E"];
 
 const EMOJIS=["🌅","🍳","🥐","🥪","🍎","🍕","🎒","🚌","✈️","🚲","📚","✏️","🎨","💻","⚽","🏊","🏃","🚴","🎵","🎸","🎮","🛁","🛏️","🌙","💊","🐶","🐱","🐻","🦁","🐼","🌺","🌈","⭐","🎉","🎁","💧","☕","🧁","🎂","👟","👕","🔑","🏠","🏫","🌳","🌻","🎯","🧩","🏋️","🤸","🧘","🍜","🥗","📝","📱","🎹","🎭","🎬","🦋","🌸","🏖️","🌲","🌟","✨","🍓","🍌","🍊","🧃","🥤","🍦","🍫","🏀","🎾","🚗","🛵","🐸","🐨","🦊","🥞","🧇","🫐"];
 const STEP_E=["👟","👕","👖","🧴","🎒","💧","🧹","📖","✅","🍌","🎵","🛁","🛏️","🪥","🧦","🔑","🏃","🍳","🥤","📋","🖊️","🎯","⭐","☀️","🌙"];
@@ -136,15 +137,111 @@ const RP0=[
   ]},
 ];
 
-const CFG0={cardStyle:"normal",schedView:"both",showSigvard:true,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,tools:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","lava"],defaultType:"sector",defaultMin:5,defaultColor:"#8AAFD2"},visibleEmotions:[1,2,3,4,5],calmTools:{breath:true,grounding:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]},toolsVisible:{firstthen:true,choices:true,rewards:true,recipes:true}};
+// Sigvard weekday colors — index by JS day (0=Sun ... 6=Sat).
+// Classic Swedish standard: Mon green, Tue light blue, Wed brown, Thu white,
+// Fri yellow, Sat pink, Sun red. Slightly desaturated for app palette harmony
+// but kept identifiably classic.
+const SIGVARD0=["#E26B6B","#7AC178","#82BFD6","#A87E58","#FFFFFF","#F5E26B","#F5B7CC"];
+
+// Curated palette for weekday color editor — classics first, then alternates
+const DAY_PALETTE=[
+  // Classic Sigvard hues
+  "#E26B6B","#7AC178","#82BFD6","#A87E58","#FFFFFF","#F5E26B","#F5B7CC",
+  // Warm reds + corals
+  "#D88B8B","#E89B89","#D9886B",
+  // Yellows + honeys
+  "#E8D178","#D9B868","#C9A875",
+  // Greens
+  "#8FBFA1","#A8C9B0",
+  // Blues
+  "#9DC4D8","#8AAFD2","#A8B5C9",
+  // Purples + pinks
+  "#B89DC4","#E0AFC7","#D8B0C7",
+  // Neutrals
+  "#F5F2EE",
+];
+
+const CFG0={cardStyle:"normal",schedView:"both",showSigvard:true,weekColors:SIGVARD0,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,tools:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","lava"],defaultType:"wave",defaultMin:5,defaultColor:"#8AAFD2"},visibleEmotions:[1,2,3,4,5],calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]},toolsVisible:{firstthen:true,choices:true,rewards:true,recipes:true}};
 
 const TR={
-  sv:{other:"EN",myDay:"Min dag",editorOpen:"Redaktör",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Inga aktiviteter – öppna Redaktör",addAct:"+ Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Sol",lava:"Lava",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redaktör & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Hem",comm:"Tala",sigvardOn:"Sigvard-lampor",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – öppna Redaktör för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat 🌿",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng"},
-  en:{other:"SV",myDay:"My Day",editorOpen:"Editor",editorClose:"Close",list:"List",card:"Cards",noActs:"No activities – open Editor",addAct:"+ New activity",save:"Save",cancel:"Cancel",actName:"Activity name",actTime:"Time",pickEmoji:"Pick emoji",pickColor:"Colour",steps:"Checklist",stepPH:"e.g. Put on shoes",timerAct:"Timer – activity",timerType:"Timer type",timerMin:"Minutes",timerColor:"Timer colour",sector:"Time Timer",ring:"Ring",dots:"Dot timer",wave:"Wave",sun:"Sun",lava:"Lava",pause:"Pause",resume:"Start",reset:"Reset",next:"Next",prev:"Back",min:"min",settings:"Settings",cardStyle:"Card style",styleNormal:"Normal",styleCompact:"Compact",styleBig:"Large",syncTitle:"Sharing",sameDevice:"Same device",syncMode:"Via code",sameDeviceDesc:"Editor & user view on same device.",syncModeDesc:"Share schedule via code.",yourCode:"Your code",codeHint:"Give this code to the user",enterCode:"Enter code",connect:"Connect",wrongCode:"Not found.",copied:"Copied ✓",openTimer:"Start timer",allDoneMsg:"Great job! 🌟",emotions:"How are you?",emotionSaved:"Saved! ✓",emotionReason:"Why?",emotionHistory:"History",noHistory:"No history",toolsTimer:"Timer",toolsEmotion:"Mood",home:"Home",comm:"Talk",sigvardOn:"Sigvard lamps",visibleTools:"Visible tools",schedView:"Schedule view",viewBoth:"List + Cards",viewList:"List only",viewCard:"Cards only",addCard:"+ New card",addCat:"+ New category",catName:"Category name",autoTimer:"Syncs with start time",preview:"Preview",startTimer:"Start",timerSettings:"Timer settings for user view",allowedTimers:"Allowed timers",defaultTimer:"Default timer",visibleEmotions:"Visible emotions",enlarge:"Enlarge",cardImage:"Image",uploadPhoto:"Upload photo",useEmoji:"Use emoji instead",stories:"Stories",newStory:"New story",storyTitle:"Title",pages:"Pages",addPage:"+ Add page",pageNum:"Page",storyText:"Page text",noStories:"No stories – open Editor to create",renameCat:"Rename category",calm:"Calm",calmTitle:"Find calm",breathing:"Breathe",grounding:"54321",breathIn:"Breathe in",breathHold:"Hold",breathOut:"Breathe out",breathDone:"Well done 🌿",groundIntro:"Pause. Let's do this together.",groundStart:"Begin",see5:"5 things you can see",hear4:"4 things you can hear",touch3:"3 things you can touch",smell2:"2 things you can smell",taste1:"1 thing you can taste",iAmHere:"I am here. I am safe.",roundsDone:"Done",calmSettings:"Calm – exercises",idcard:"My card",myName:"My name",myAge:"Age",aboutMe:"About me",myTriggers:"This can be hard",whatHelps:"This helps me",emergencyContacts:"Call",contactName:"Name",contactPhone:"Phone",contactRelation:"Relation",addContact:"+ Add contact",call:"Call",idHint:"Show this to someone who wants to help","editCard":"Edit my card",tools:"Tools",firstthen:"First-Then",choices:"Choices",rewards:"Reward",recipes:"Recipes",first:"First",then:"Then",ftDone:"Done!",chQuestion:"What do you want?",chTap:"Tap to choose",stars:"stars",goalReached:"You've earned your reward! 🎉",reward:"Reward",starsGoal:"Goal – number of stars",addChoice:"+ New choice",newCategory:"+ New category",rewardEmoji:"Emoji",rewardText:"Reward",ingredients:"Ingredients",instructions:"How to make it",servings:"Servings",time:"Time",newRecipe:"New recipe",step:"Step",addStep:"+ Add step",useReward:"Give star when done",resetStars:"Reset stars",starsEarned:"Stars earned",bannerNowOngoing:"Happening now",bannerNextUp:"Next up",bannerDayLabel:"Today",bannerNoActsLeft:"Nothing left today",close:"Close"},
+  sv:{other:"EN",myDay:"Min dag",editorOpen:"Redigera",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Inga aktiviteter – tryck Redigera",addAct:"+ Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Solnedgång",lava:"Lava",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redigering & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Hem",comm:"Tala",sigvardOn:"Sigvard-lampor",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – tryck Redigera för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng",week:"Vecka",myWeek:"Min vecka",weekEmpty:"Inga aktiviteter den här veckan",weekAdd:"Lägg till aktivitet",dayColors:"Veckodagsfärger",dayColorsHint:"Tryck på en dag för att välja färg",resetColors:"Återställ till standard",monday:"Måndag",tuesday:"Tisdag",wednesday:"Onsdag",thursday:"Torsdag",friday:"Fredag",saturday:"Lördag",sunday:"Söndag",skylight:"Himmel",skyHint:"Låt blicken vila",notTodayHint:"Du tittar på en annan dag. Stegen kan inte bockas av nu.",editStory:"Redigera berättelse",storyType:"Typ",typeSeq:"Steg-för-steg",typeSeqDesc:"Flera sidor",typeFT:"Först-Sedan",typeFTDesc:"Först → Sedan",coverImage:"Huvudbild",camera:"Kamera",gallery:"Galleri",emoji:"Emoji",removePhoto:"Ta bort foto",storyPlacehSeq:"t.ex. Städa rummet",storyPlacehFT:"t.ex. Först läxor, sedan TV",ftLabels:"Etiketter (visas över korten)",ftSection:"Först och Sedan",pageImage:"Bild på sidan",pageTextPH:"Skriv vad som händer på sidan…",pageTimer:"Timer på sidan",off:"Av",sunset:"Solnedgång",editingLabel:"Redigerar",duEditing:"Du redigerar",cover:"Huvudbild",schedule:"Schema",doneTitle:"Klart",doneSub:"Du kan vila en stund.",dayOpen:"Din dag är öppen",allActsDoneTitle:"Alla aktiviteter är klara",allActsDoneSub:"Du kan vila resten av dagen.",windDown:"Vi byter snart",lampOne:"1 lampa = 1 minut",lampMany:"1 lampa = {n} minuter",stepCountOne:"1 steg",stepCountMany:"{n} steg",noName:"(Utan namn)",overlapTitle:"Tidskrock",overlapDesc:"Den nya aktiviteten {t} överlappar:",goBack:"Gå tillbaka",saveAnyway:"Spara ändå"},
+  en:{other:"SV",myDay:"My Day",editorOpen:"Edit",editorClose:"Close",list:"List",card:"Cards",noActs:"No activities – tap Edit",addAct:"+ New activity",save:"Save",cancel:"Cancel",actName:"Activity name",actTime:"Time",pickEmoji:"Pick emoji",pickColor:"Colour",steps:"Checklist",stepPH:"e.g. Put on shoes",timerAct:"Timer – activity",timerType:"Timer type",timerMin:"Minutes",timerColor:"Timer colour",sector:"Time Timer",ring:"Ring",dots:"Dot timer",wave:"Wave",sun:"Sunset",lava:"Lava",pause:"Pause",resume:"Start",reset:"Reset",next:"Next",prev:"Back",min:"min",settings:"Settings",cardStyle:"Card style",styleNormal:"Normal",styleCompact:"Compact",styleBig:"Large",syncTitle:"Sharing",sameDevice:"Same device",syncMode:"Via code",sameDeviceDesc:"Edit & user view on same device.",syncModeDesc:"Share schedule via code.",yourCode:"Your code",codeHint:"Give this code to the user",enterCode:"Enter code",connect:"Connect",wrongCode:"Not found.",copied:"Copied ✓",openTimer:"Start timer",allDoneMsg:"Great job! 🌟",emotions:"How are you?",emotionSaved:"Saved! ✓",emotionReason:"Why?",emotionHistory:"History",noHistory:"No history",toolsTimer:"Timer",toolsEmotion:"Mood",home:"Home",comm:"Talk",sigvardOn:"Sigvard lamps",visibleTools:"Visible tools",schedView:"Schedule view",viewBoth:"List + Cards",viewList:"List only",viewCard:"Cards only",addCard:"+ New card",addCat:"+ New category",catName:"Category name",autoTimer:"Syncs with start time",preview:"Preview",startTimer:"Start",timerSettings:"Timer settings for user view",allowedTimers:"Allowed timers",defaultTimer:"Default timer",visibleEmotions:"Visible emotions",enlarge:"Enlarge",cardImage:"Image",uploadPhoto:"Upload photo",useEmoji:"Use emoji instead",stories:"Stories",newStory:"New story",storyTitle:"Title",pages:"Pages",addPage:"+ Add page",pageNum:"Page",storyText:"Page text",noStories:"No stories – tap Edit to create",renameCat:"Rename category",calm:"Calm",calmTitle:"Find calm",breathing:"Breathe",grounding:"54321",breathIn:"Breathe in",breathHold:"Hold",breathOut:"Breathe out",breathDone:"Well done",groundIntro:"Pause. Let's do this together.",groundStart:"Begin",see5:"5 things you can see",hear4:"4 things you can hear",touch3:"3 things you can touch",smell2:"2 things you can smell",taste1:"1 thing you can taste",iAmHere:"I am here. I am safe.",roundsDone:"Done",calmSettings:"Calm – exercises",idcard:"My card",myName:"My name",myAge:"Age",aboutMe:"About me",myTriggers:"This can be hard",whatHelps:"This helps me",emergencyContacts:"Call",contactName:"Name",contactPhone:"Phone",contactRelation:"Relation",addContact:"+ Add contact",call:"Call",idHint:"Show this to someone who wants to help","editCard":"Edit my card",tools:"Tools",firstthen:"First-Then",choices:"Choices",rewards:"Reward",recipes:"Recipes",first:"First",then:"Then",ftDone:"Done!",chQuestion:"What do you want?",chTap:"Tap to choose",stars:"stars",goalReached:"You've earned your reward! 🎉",reward:"Reward",starsGoal:"Goal – number of stars",addChoice:"+ New choice",newCategory:"+ New category",rewardEmoji:"Emoji",rewardText:"Reward",ingredients:"Ingredients",instructions:"How to make it",servings:"Servings",time:"Time",newRecipe:"New recipe",step:"Step",addStep:"+ Add step",useReward:"Give star when done",resetStars:"Reset stars",starsEarned:"Stars earned",bannerNowOngoing:"Happening now",bannerNextUp:"Next up",bannerDayLabel:"Today",bannerNoActsLeft:"Nothing left today",close:"Close",week:"Week",myWeek:"My week",weekEmpty:"No activities this week",weekAdd:"Add activity",dayColors:"Day colours",dayColorsHint:"Tap a day to pick a colour",resetColors:"Reset to default",monday:"Monday",tuesday:"Tuesday",wednesday:"Wednesday",thursday:"Thursday",friday:"Friday",saturday:"Saturday",sunday:"Sunday",skylight:"Sky",skyHint:"Let your gaze rest",notTodayHint:"You're viewing a different day. Steps can't be checked off now.",editStory:"Edit story",storyType:"Type",typeSeq:"Step-by-step",typeSeqDesc:"Multiple pages",typeFT:"First-Then",typeFTDesc:"First → Then",coverImage:"Cover image",camera:"Camera",gallery:"Gallery",emoji:"Emoji",removePhoto:"Remove photo",storyPlacehSeq:"e.g. Clean the room",storyPlacehFT:"e.g. First homework, then TV",ftLabels:"Labels (shown above the cards)",ftSection:"First and Then",pageImage:"Page image",pageTextPH:"Write what happens on this page…",pageTimer:"Page timer",off:"Off",sunset:"Sunset",editingLabel:"Editing",duEditing:"Editing",cover:"Cover",schedule:"Schedule",doneTitle:"Done",doneSub:"Take a moment to rest.",dayOpen:"Your day is open",allActsDoneTitle:"All activities done",allActsDoneSub:"You can rest the rest of the day.",windDown:"Almost done",lampOne:"1 lamp = 1 minute",lampMany:"1 lamp = {n} minutes",stepCountOne:"1 step",stepCountMany:"{n} steps",noName:"(No name)",overlapTitle:"Time conflict",overlapDesc:"The new activity {t} overlaps:",goBack:"Go back",saveAnyway:"Save anyway"},
 };
 
 const TTYPES=["sector","ring","dots","wave","sun","lava"];
+
+// Get localized story/page text — falls back to whichever language has content
+const lsText=(obj,lang)=>{
+  if(!obj) return "";
+  if(lang==="en") return obj.en||obj.sv||"";
+  return obj.sv||obj.en||"";
+};
+
 const TICON={sector:"🕐",ring:"⭕",dots:"⚫",wave:"🌊",sun:"☀️",lava:"🌋"};
+// Clean SVG icons for timer types — replace emoji in UI menus.
+// Stroke-based for consistency, accepts color and size props.
+function TimerIcon({type,size=22,color="currentColor"}){
+  const s={width:size,height:size,display:"block"};
+  const sw=1.6;
+  switch(type){
+    case "sector": return(
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={s}>
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 12L12 6" />
+        <path d="M12 12L16 12" />
+      </svg>
+    );
+    case "ring": return(
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw+0.4} strokeLinecap="round" style={s}>
+        <circle cx="12" cy="12" r="8.5"/>
+      </svg>
+    );
+    case "dots": return(
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" style={s}>
+        <rect x="9" y="4" width="6" height="4" rx="1" fill={color}/>
+        <rect x="9" y="16" width="6" height="4" rx="1" fill={color}/>
+        <path d="M10 8 L10 11 L14 13 L14 16 M14 8 L14 11 L10 13 L10 16"/>
+      </svg>
+    );
+    case "wave": return(
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={s}>
+        <path d="M2 13 Q5 9 8 13 T14 13 T20 13 T22 13"/>
+        <path d="M2 17 Q5 13 8 17 T14 17 T20 17 T22 17" opacity="0.55"/>
+      </svg>
+    );
+    case "sun": return(
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={s}>
+        {/* Sun half-disk sitting on horizon */}
+        <path d="M6 16 Q6 11 12 11 Q18 11 18 16 Z" fill={color} fillOpacity="0.18"/>
+        <path d="M6 16 Q6 11 12 11 Q18 11 18 16"/>
+        {/* Rays going up */}
+        <path d="M12 8 L12 6.5" opacity="0.7"/>
+        <path d="M7 10 L6 9" opacity="0.7"/>
+        <path d="M17 10 L18 9" opacity="0.7"/>
+        <path d="M4.5 12.5 L3 12.5" opacity="0.5"/>
+        <path d="M19.5 12.5 L21 12.5" opacity="0.5"/>
+        {/* Horizon line */}
+        <path d="M3 16 L21 16"/>
+        {/* Reflection line below */}
+        <path d="M7 19 L17 19" opacity="0.4"/>
+      </svg>
+    );
+    case "lava": return(
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={s}>
+        <path d="M8 4 L8 9 Q5 14 5 17 Q5 20 8 20 L16 20 Q19 20 19 17 Q19 14 16 9 L16 4 Z"/>
+        <path d="M8 4 L16 4" strokeWidth={sw+0.2}/>
+        <circle cx="11" cy="15" r="1.3" fill={color} stroke="none"/>
+        <circle cx="14" cy="13" r="0.9" fill={color} stroke="none"/>
+      </svg>
+    );
+    default: return(
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" style={s}>
+        <circle cx="12" cy="13" r="8"/>
+        <path d="M12 13 L12 8"/>
+      </svg>
+    );
+  }
+}
 const tlbl=(k,t)=>({sector:t.sector,ring:t.ring,dots:t.dots,wave:t.wave,sun:t.sun,lava:t.lava}[k]||k);
 
 const SYNC_DB={};
@@ -174,6 +271,21 @@ function usePersistentState(key,initial){
 }
 
 const hm=s=>parseInt(s)*60+parseInt(s.split(":")[1]);
+// Format a "HH:MM" string for display. English uses 12-hour am/pm; Swedish keeps 24-hour.
+// Accepts either a lang string ("en"/"sv") or the t translation object.
+const fmtT=(s,langOrT)=>{
+  if(!s||typeof s!=="string"||!s.includes(":")) return s||"";
+  const isEn=typeof langOrT==="string"
+    ? langOrT==="en"
+    : (langOrT&&langOrT.myDay==="My Day");
+  if(!isEn) return s;
+  const[hStr,mStr]=s.split(":");
+  const h=parseInt(hStr,10), m=parseInt(mStr,10);
+  if(isNaN(h)||isNaN(m)) return s;
+  const period=h<12?"AM":"PM";
+  const h12=h===0?12:h>12?h-12:h;
+  return`${h12}:${String(m).padStart(2,"0")} ${period}`;
+};
 const clockLeft=(at,m)=>{const n=new Date(),e=(n.getHours()*60+n.getMinutes()-hm(at))*60+n.getSeconds();return e<0?m*60:Math.max(0,m*60-e);};
 
 function chime(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[[523,0],[659,.2],[784,.38],[1047,.56]].forEach(([f,d])=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;o.type="sine";g.gain.setValueAtTime(0,ctx.currentTime+d);g.gain.linearRampToValueAtTime(.13,ctx.currentTime+d+.07);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d+.7);o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+.8);});}catch(_){}}
@@ -190,23 +302,98 @@ function useTimer(initSec,autoRun=false){
   return{secs,run,setRun,label:`${mm}:${ss}`,done:secs<=0,pct:total.current>0?secs/total.current:0,reset:()=>{setSecs(total.current);setRun(autoRun);setRang(false);}};
 }
 
-function TCtrl({c,color,t}){
+function WindDownHint({secs,color,t}){
+  // Visible during last 15s, breathing slow to soften the approach to zero
+  if(secs<=0||secs>15) return null;
+  const label=t?.windDown||"Vi byter snart";
   return(
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,width:"100%",maxWidth:280,marginTop:20}}>
-      <style>{`@keyframes runPulse{0%,100%{box-shadow:0 8px 24px ${color}55, 0 2px 6px ${color}33}50%{box-shadow:0 12px 36px ${color}77, 0 4px 12px ${color}44}}`}</style>
-      {!c.done&&<button onClick={()=>c.setRun(r=>!r)} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform=""} onMouseLeave={e=>e.currentTarget.style.transform=""} style={{width:"100%",padding:"15px 0",borderRadius:16,border:"none",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",background:c.run?`linear-gradient(135deg,${color},${color}DC)`:G.ink,color:"#fff",boxShadow:c.run?sh.c(color):sh.sm,transition:"transform .15s, background .25s",animation:c.run?"runPulse 2.6s ease-in-out infinite":"none"}}>{c.run?`⏸ ${t.pause}`:`▶ ${t.resume}`}</button>}
-      <button onClick={c.reset} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform=""} onMouseLeave={e=>e.currentTarget.style.transform=""} style={{width:"100%",padding:"12px 0",borderRadius:16,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",transition:"transform .15s, background .2s, border-color .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=`${color}66`;e.currentTarget.style.color=color;}}>↺ {t.reset}</button>
+    <div style={{
+      display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+      marginTop:-6,marginBottom:2,
+      opacity:0,
+      animation:"wdHintIn 0.9s cubic-bezier(0.32, 0.72, 0, 1) forwards",
+      pointerEvents:"none",
+    }}>
+      <style>{`
+        @keyframes wdHintIn{0%{opacity:0;transform:translateY(4px)}100%{opacity:0.85;transform:translateY(0)}}
+        @keyframes wdDotBreath{0%,100%{opacity:0.35;transform:scale(0.85)}50%{opacity:0.85;transform:scale(1)}}
+      `}</style>
+      <span style={{width:6,height:6,borderRadius:"50%",background:color,opacity:0.7,animation:"wdDotBreath 2.4s ease-in-out infinite",display:"inline-block"}}/>
+      <span style={{fontFamily:G.font,fontWeight:500,fontSize:12.5,color:G.ink2,letterSpacing:.4}}>{label}</span>
     </div>
   );
 }
 
-function DoneBadge({color}){return(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:18,padding:"40px 0"}}><style>{`@keyframes scUp{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}@keyframes dsh{from{stroke-dashoffset:302}to{stroke-dashoffset:0}}@keyframes chk{from{stroke-dashoffset:70}to{stroke-dashoffset:0}}@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}`}</style><svg width={120} height={120} style={{animation:"scUp .5s cubic-bezier(.34,1.56,.64,1),pulse 2s ease-in-out .6s infinite"}}><defs><radialGradient id="dg"><stop offset="0%" stopColor={`${color}26`}/><stop offset="100%" stopColor={`${color}08`}/></radialGradient></defs><circle cx={60} cy={60} r={56} fill="url(#dg)"/><circle cx={60} cy={60} r={48} fill="none" stroke={color} strokeWidth={2.5} strokeDasharray={302} style={{animation:"dsh .7s ease forwards"}}/><path d="M38,60 L52,75 L82,42" stroke={color} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" fill="none" strokeDasharray={70} style={{animation:"chk .45s .25s ease forwards"}}/></svg><div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color}}>Klar! 🎉</div></div>);}
+function TCtrl({c,color,t}){
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,width:"100%",maxWidth:280,marginTop:20}}>
+      <style>{`@keyframes runPulse{0%,100%{box-shadow:0 8px 24px ${color}55, 0 2px 6px ${color}33}50%{box-shadow:0 12px 36px ${color}77, 0 4px 12px ${color}44}}`}</style>
+      {!c.done&&(
+        <button onClick={()=>c.setRun(r=>!r)} className="lt-press" style={{width:"100%",padding:"15px 0",borderRadius:16,border:"none",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",background:c.run?`linear-gradient(135deg,${color},${color}DC)`:G.ink,color:"#fff",boxShadow:c.run?sh.c(color):sh.sm,transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1), background .25s",animation:c.run?"runPulse 2.6s ease-in-out infinite":"none",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          {c.run?(
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+              <span>{t.pause}</span>
+            </>
+          ):(
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5 L19 12 L8 19 Z"/></svg>
+              <span>{t.resume}</span>
+            </>
+          )}
+        </button>
+      )}
+      <button onClick={c.reset} className="lt-press" style={{width:"100%",padding:"12px 0",borderRadius:16,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1), background .2s, border-color .2s",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7}} onMouseEnter={e=>{e.currentTarget.style.borderColor=`${color}66`;e.currentTarget.style.color=color;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=G.border;e.currentTarget.style.color=G.ink2;}}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 9 8 9"/></svg>
+        <span>{t.reset}</span>
+      </button>
+    </div>
+  );
+}
+
+function DoneBadge({color,t}){
+  // Fallback strings if no translation context — keeps DoneBadge useful in any caller
+  const doneTxt=t?.doneTitle||"Klart";
+  const restTxt=t?.doneSub||"Du kan vila en stund.";
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,padding:"40px 0"}}>
+      <style>{`
+        @keyframes dbCircleIn{0%{opacity:0;transform:scale(0.92)}100%{opacity:1;transform:scale(1)}}
+        @keyframes dbBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.022)}}
+        @keyframes dbCheckDraw{from{stroke-dashoffset:70}to{stroke-dashoffset:0}}
+        @keyframes dbTextIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+      `}</style>
+      {/* Soft breathing circle — no rays, no pulse glow */}
+      <div style={{animation:"dbCircleIn 1.1s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+        <svg width={110} height={110} style={{display:"block",animation:"dbBreath 4.2s ease-in-out 0.9s infinite"}}>
+          <defs>
+            <radialGradient id="dbFace" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stopColor="#FFFFFF"/>
+              <stop offset="55%" stopColor={`${color}1A`}/>
+              <stop offset="100%" stopColor={`${color}33`}/>
+            </radialGradient>
+          </defs>
+          {/* Subtle outer ring — very thin, low contrast */}
+          <circle cx={55} cy={55} r={52} fill="none" stroke={`${color}30`} strokeWidth={1}/>
+          {/* Soft inner face */}
+          <circle cx={55} cy={55} r={48} fill="url(#dbFace)"/>
+          {/* Quiet checkmark — drawn slow */}
+          <path d="M36,55 L49,68 L74,40" stroke={color} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" fill="none" strokeDasharray={70} style={{animation:"dbCheckDraw 0.9s 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards",strokeDashoffset:70,opacity:0.85}}/>
+        </svg>
+      </div>
+      {/* Primary text — settled, no exclamation */}
+      <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.ink,letterSpacing:-.2,animation:"dbTextIn 0.7s 0.7s cubic-bezier(0.32, 0.72, 0, 1) both"}}>{doneTxt}</div>
+      {/* Subtitle — a gentle handover to whatever's next */}
+      <div style={{fontFamily:G.font,fontWeight:500,fontSize:13,color:G.ink3,letterSpacing:.3,animation:"dbTextIn 0.7s 1.1s cubic-bezier(0.32, 0.72, 0, 1) both"}}>{restTxt}</div>
+    </div>
+  );
+}
 
 /* ═══ SECTOR TIME TIMER (numbers CCW from top — like a real Time Timer) ═══ */
 function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const c=useTimer(totalSec,autoRun);
-  if(c.done) return <DoneBadge color={color}/>;
-  const cx=size/2, cy=size/2, R=size/2-24;
+  if(c.done) return <DoneBadge color={color} t={t}/>;
+  const cx=size/2, cy=size/2, R=size/2-38;
   // Time Timer behavior: sector shrinks counter-clockwise (matches the red disc
   // that disappears as time passes). c.pct = remaining.
   // Number scale: pick clean step based on duration
@@ -285,6 +472,7 @@ function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
         </div>
       </div>
       <div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
+      <WindDownHint secs={c.secs} color={color} t={t}/>
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
@@ -293,9 +481,9 @@ function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
 /* ═══ RING (Minee-style donut) ═══ */
 function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const c=useTimer(totalSec,autoRun);
-  if(c.done) return <DoneBadge color={color}/>;
+  if(c.done) return <DoneBadge color={color} t={t}/>;
   const cx=size/2, cy=size/2;
-  const Ro=size/2-22;       // outer radius
+  const Ro=size/2-38;       // outer radius (extra padding for end-marker dot to stay inside)
   const Ri=Ro*0.58;         // inner radius (hollow center)
   // Time Timer behavior: donut starts FULL and shrinks counter-clockwise (matches SectorTimer).
   // c.pct = remaining (1 → 0). End point is on the LEFT side (counter-clockwise from 12).
@@ -350,6 +538,7 @@ function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
         </svg>
       </div>
       <div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
+      <WindDownHint secs={c.secs} color={color} t={t}/>
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
@@ -358,7 +547,7 @@ function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
 /* ═══ DOTS / Timstock 2.0 — premium horizontal LED row, color from user ═══ */
 function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const c=useTimer(totalSec,autoRun);
-  if(c.done) return <DoneBadge color={color}/>;
+  if(c.done) return <DoneBadge color={color} t={t}/>;
   const totalMin=Math.max(1,Math.round(totalSec/60));
   // Adaptive minutes-per-lamp
   let mpl;
@@ -383,7 +572,9 @@ function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const led = Math.max(minLed, Math.min(maxLed, idealLed));
   const gap = Math.max(4, Math.round(led*0.45));
   const padV=Math.max(14, Math.round(led*0.7)), padH=Math.max(14, Math.round(led*0.7));
-  const lampLabel = mpl===1 ? "1 lampa = 1 minut" : `1 lampa = ${mpl} minuter`;
+  const lampLabel = mpl===1
+    ? (t?.lampOne||"1 lampa = 1 minut")
+    : (t?.lampMany||"1 lampa = {n} minuter").replace("{n}", String(mpl));
 
   return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:18,width:"100%"}}>
@@ -426,6 +617,7 @@ function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
       <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:G.ink3,letterSpacing:.8,textTransform:"uppercase"}}>{lampLabel}</div>
       {/* Tid kvar */}
       <div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
+      <WindDownHint secs={c.secs} color={color} t={t}/>
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
@@ -434,257 +626,586 @@ function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
 /* ═══ WAVE ═══ */
 function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const c=useTimer(totalSec,autoRun);
-  if(c.done) return <DoneBadge color={color}/>;
   const W=size, H=Math.round(size*0.65);
-  const fillY=H*(1-c.pct);
-  const phase=useRef(0);
-  const[,tick]=useState(0);
-  useEffect(()=>{if(!c.run)return;const id=setInterval(()=>{phase.current+=0.08;tick(x=>x+1);},50);return()=>clearInterval(id);},[c.run]);
-  const wave=(o,a)=>{let d=`M0,${fillY+o}`;for(let x=0;x<=W;x+=3)d+=` L${x},${fillY+o+Math.sin(x*0.05+phase.current+o*0.1)*a}`;return d+` L${W},${H} L0,${H} Z`;};
+  const fillY=c.done?H*0.05:H*(1-c.pct);
+
+  // Wave frequencies — each layer has its own wavelength.
+  // Critical: animation shift distance MUST equal the wavelength (2π/freq)
+  // so the path returns to identical position → seamless loop, no jumps.
+  const freqBack=0.024, freqMid=0.042, freqFront=0.05;
+  const waveLenBack=Math.round(2*Math.PI/freqBack);    // ≈ 262px
+  const waveLenMid=Math.round(2*Math.PI/freqMid);      // ≈ 150px
+  const waveLenFront=Math.round(2*Math.PI/freqFront);  // ≈ 126px
+
+  // Bubble configuration — bubbles emerge from the bottom and rise harmoniously.
+  // Deterministic seed (not Math.random) keeps positions stable between renders.
+  const bubbles=useMemo(()=>Array.from({length:12}).map((_,i)=>{
+    const seed=i*97;
+    // Distribute starting X positions evenly across the width with some jitter,
+    // so bubbles emerge from many points along the floor — not clustered
+    const xJitter=((seed*13)%80)/80; // 0..1
+    const xSegment=W/12;
+    return {
+      x: Math.round(xSegment*i+xSegment*0.5+xJitter*xSegment*0.6-xSegment*0.3),
+      r: 1.8+((seed*7)%14)/14*2.4,    // 1.8–4.2 px — varied but never tiny
+      duration: 7+((seed*11)%55)/10,  // 7–12.5s rise — slow & calming
+      // Stagger starts evenly so bubbles emerge in a rhythm, not all at once.
+      // Negative delays mean some are already mid-rise when timer starts.
+      delay: -((i*1.2+((seed*17)%30)/10)),
+      swayDur: 3+((seed*5)%24)/10,    // 3–5.4s sway period
+      swayAmp: 2.5+((seed*3)%30)/10,  // 2.5–5.5 px horizontal sway
+    };
+  }),[W]);
+
+  if(c.done) return <DoneBadge color={color} t={t}/>;
+
+  // Build a wave path wide enough to span >2× viewport so when we shift it left
+  // by exactly one wavelength, the remaining visible section is identical.
+  // Path extends from x=-W to x=2W (total width 3W) covering all visible positions.
+  const makeWavePath=(amp,freq,phaseOff,detail=0.3)=>{
+    const xStart=-W, xEnd=2*W;
+    let d=`M${xStart},0`;
+    for(let x=xStart;x<=xEnd;x+=2){
+      const y=Math.sin(x*freq+phaseOff)*amp
+        +Math.sin(x*freq*2.4+phaseOff*1.3)*amp*detail;
+      d+=` L${x},${y}`;
+    }
+    return d+` L${xEnd},${H*1.5} L${xStart},${H*1.5} Z`;
+  };
+  const makeCrestPath=()=>{
+    const xStart=-W, xEnd=2*W;
+    let d="";
+    for(let x=xStart;x<=xEnd;x+=2){
+      const y=Math.sin(x*freqFront)*9+Math.sin(x*freqFront*2.4)*2.7-2;
+      d+=`${x===xStart?'M':'L'}${x},${y}`;
+    }
+    return d;
+  };
+
   return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:18}}>
-      <div style={{position:"relative",borderRadius:24,overflow:"hidden",width:W,height:H,background:`linear-gradient(180deg,${color}08,${color}14)`,border:`1px solid ${color}30`,boxShadow:sh.md}}>
-        <svg width={W} height={H} style={{position:"absolute",inset:0}}>
+      <style>{`
+        @keyframes waveShiftBack${size} {
+          from { transform: translate3d(0, 0, 0); }
+          to { transform: translate3d(-${waveLenBack}px, 0, 0); }
+        }
+        @keyframes waveShiftMid${size} {
+          from { transform: translate3d(0, 0, 0); }
+          to { transform: translate3d(-${waveLenMid}px, 0, 0); }
+        }
+        @keyframes waveShiftFront${size} {
+          from { transform: translate3d(0, 0, 0); }
+          to { transform: translate3d(-${waveLenFront}px, 0, 0); }
+        }
+        @keyframes waveBubbleRise${size} {
+          0% { transform: translate3d(0, ${H-4}px, 0); opacity: 0; }
+          10% { opacity: 0.7; }
+          90% { opacity: 0.7; }
+          100% { transform: translate3d(0, ${H*0.05}px, 0); opacity: 0; }
+        }
+        @keyframes waveBubbleSwayA${size} {
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(var(--sway-amp, 3px), 0, 0); }
+        }
+        @keyframes waveBubbleSwayB${size} {
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(calc(var(--sway-amp, 3px) * -1), 0, 0); }
+        }
+        @keyframes waveSwell${size} {
+          0%, 100% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(0, -2.5px, 0); }
+        }
+      `}</style>
+      <div style={{position:"relative",borderRadius:28,overflow:"hidden",width:W,height:H,background:`linear-gradient(180deg, ${color}06 0%, ${color}12 50%, ${color}1F 100%)`,border:`1px solid ${color}33`,boxShadow:`${sh.md}, inset 0 2px 5px rgba(255,255,255,0.55), inset 0 -3px 8px ${color}22`}}>
+        <svg width={W} height={H} style={{position:"absolute",inset:0,overflow:"hidden"}}>
           <defs>
-            <linearGradient id={`wg${size}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity="0.5"/><stop offset="100%" stopColor={color} stopOpacity="0.9"/></linearGradient>
-            <linearGradient id={`wg2${size}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity="0.3"/><stop offset="100%" stopColor={color} stopOpacity="0.7"/></linearGradient>
+            <linearGradient id={`wgBack${size}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.22"/>
+              <stop offset="100%" stopColor={color} stopOpacity="0.45"/>
+            </linearGradient>
+            <linearGradient id={`wgMid${size}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.42"/>
+              <stop offset="100%" stopColor={color} stopOpacity="0.72"/>
+            </linearGradient>
+            <linearGradient id={`wgFront${size}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.7"/>
+              <stop offset="55%" stopColor={color} stopOpacity="0.92"/>
+              <stop offset="100%" stopColor={color}/>
+            </linearGradient>
+            <linearGradient id={`wgCrest${size}`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.15"/>
+              <stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.6"/>
+              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.15"/>
+            </linearGradient>
+            {/* Premium bubble — multi-stop radial with highlight, soft edge */}
+            <radialGradient id={`wgBubble${size}`} cx="32%" cy="28%" r="68%">
+              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.98"/>
+              <stop offset="35%" stopColor="#FFFFFF" stopOpacity="0.75"/>
+              <stop offset="75%" stopColor="#FFFFFF" stopOpacity="0.35"/>
+              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.12"/>
+            </radialGradient>
+            {/* Bubble rim — subtle outer highlight for 3D feel */}
+            <radialGradient id={`wgBubbleRim${size}`} cx="50%" cy="50%" r="50%">
+              <stop offset="80%" stopColor="#FFFFFF" stopOpacity="0"/>
+              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.4"/>
+            </radialGradient>
           </defs>
-          <path d={wave(6,8)} fill={`url(#wg2${size})`}/>
-          <path d={wave(0,9)} fill={`url(#wg${size})`}/>
+
+          {/* Water level — moves down smoothly as timer ticks (1s transition between integer ticks).
+              Inner wrapper adds gentle vertical "swell" — barely-perceptible 2.5px breath that makes
+              the water feel alive without distraction. */}
+          <g style={{transform:`translate3d(0, ${fillY}px, 0)`,transition:"transform 1s linear",willChange:"transform"}}>
+            <g style={{animation:c.run?`waveSwell${size} 6.5s ease-in-out infinite`:"none",willChange:"transform"}}>
+              {/* Back wave — slowest, deepest */}
+              <g style={{animation:c.run?`waveShiftBack${size} 22s linear infinite`:"none",willChange:"transform"}}>
+                <path d={makeWavePath(7,freqBack,0.4)} fill={`url(#wgBack${size})`} transform={`translate(0, 14)`}/>
+              </g>
+              {/* Mid wave */}
+              <g style={{animation:c.run?`waveShiftMid${size} 13s linear infinite`:"none",willChange:"transform"}}>
+                <path d={makeWavePath(8.5,freqMid,1.7)} fill={`url(#wgMid${size})`} transform={`translate(0, 7)`}/>
+              </g>
+              {/* Front wave (visible top edge) */}
+              <g style={{animation:c.run?`waveShiftFront${size} 9s linear infinite`:"none",willChange:"transform"}}>
+                <path d={makeWavePath(9,freqFront,0)} fill={`url(#wgFront${size})`}/>
+                {/* Glossy crest highlight follows the front wave exactly */}
+                <path d={makeCrestPath()} fill="none" stroke={`url(#wgCrest${size})`} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </g>
+            </g>
+          </g>
+
+          {/* Bubbles — three-layer structure so animations don't fight each other:
+              Layer 1 (outer): static X position
+              Layer 2 (middle): rise animation — translateY from bottom (H-4) up to (H*0.05)
+              Layer 3 (inner): horizontal sway for organic motion
+              All on GPU via translate3d + will-change. */}
+          {bubbles.map((b,i)=>(
+            <g key={i} transform={`translate(${b.x}, 0)`}>
+              <g
+                style={{
+                  animation:`waveBubbleRise${size} ${b.duration}s linear ${b.delay}s infinite`,
+                  willChange:"transform, opacity",
+                }}
+              >
+                <g
+                  style={{
+                    "--sway-amp":`${b.swayAmp}px`,
+                    animation:`${i%2===0?`waveBubbleSwayA${size}`:`waveBubbleSwayB${size}`} ${b.swayDur}s ease-in-out infinite`,
+                    willChange:"transform",
+                  }}
+                >
+                  {/* Main soft sphere */}
+                  <circle cx={0} cy={0} r={b.r} fill={`url(#wgBubble${size})`}/>
+                  {/* Subtle outer rim for depth */}
+                  <circle cx={0} cy={0} r={b.r} fill={`url(#wgBubbleRim${size})`}/>
+                  {/* Soft highlight dot — much gentler now (was rgba 0.95) so bubbles read as gentle, not jarring */}
+                  <circle cx={-b.r*0.34} cy={-b.r*0.40} r={b.r*0.22} fill="rgba(255,255,255,0.65)"/>
+                </g>
+              </g>
+            </g>
+          ))}
         </svg>
         <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <span style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.14,color:c.pct>0.38?"#fff":G.ink,textShadow:c.pct>0.38?"0 2px 8px rgba(0,0,0,.2)":"none",fontVariantNumeric:"tabular-nums"}}>{c.label}</span>
+          <span style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.14,color:c.pct>0.42?"#fff":G.ink,textShadow:c.pct>0.42?"0 2px 14px rgba(0,0,0,.28)":"0 1px 3px rgba(255,255,255,0.6)",fontVariantNumeric:"tabular-nums",transition:"color .6s ease"}}>{c.label}</span>
         </div>
       </div>
+      <WindDownHint secs={c.secs} color={color} t={t}/>
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
 }
 
-/* ═══ SUN ═══ */
+/* ═══ SUN — Pastel clean sunset ═══
+   Minimal aesthetic: soft pastel gradients, no clouds/birds/stars clutter.
+   Just sky + sun + horizon + water + gentle reflection.
+   All motion via CSS keyframes on GPU; React state updates only at timer ticks.
+═══ */
 function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const c=useTimer(totalSec,autoRun);
-  // Smooth animation tick via rAF so the sun moves continuously, not stepwise
-  const[,tick]=useState(0);
-  const rafRef=useRef(null);
-  useEffect(()=>{
-    if(c.done){if(rafRef.current)cancelAnimationFrame(rafRef.current);return;}
-    const loop=()=>{tick(x=>x+1);rafRef.current=requestAnimationFrame(loop);};
-    rafRef.current=requestAnimationFrame(loop);
-    return()=>{if(rafRef.current)cancelAnimationFrame(rafRef.current);};
-  },[c.done]);
-  if(c.done) return <DoneBadge color={color}/>;
+
+  if(c.done) return <DoneBadge color={color} t={t}/>;
 
   const W=size, H=Math.round(size*0.85);
-  const gY=H-Math.round(H*0.14); // horizon line
+  const horizonY=Math.round(H*0.62);
 
-  // ease the pct curve so the sun drops faster at the end
-  const raw=c.pct; // 1 → 0
-  // Most of time: gentle descent. Final 8%: rapid plunge.
-  const elapsed=1-raw;
+  // Progress: 0 → 1 across full duration
+  const elapsed = 1 - c.pct;
   let progress;
-  if(elapsed<0.92){
-    // gentle phase: ease-in-out cubic
-    const e=elapsed/0.92;
-    progress=e*e*(3-2*e)*0.85;
+  if(elapsed<0.94){
+    const e=elapsed/0.94;
+    progress=e*e*(3-2*e)*0.88;
   } else {
-    // plunge phase — last 8% takes sun the remaining 15% of the screen
-    const e=(elapsed-0.92)/0.08;
-    progress=0.85+Math.pow(e,1.5)*0.15;
+    const e=(elapsed-0.94)/0.06;
+    progress=0.88+Math.pow(e,1.4)*0.12;
   }
 
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const phaseT=(start,end)=>Math.max(0,Math.min(1,(progress-start)/(end-start)));
+
+  // PASTEL palette — soft, muted, never saturated.
+  // Phases: pale day → soft peach → dusty rose → lavender dusk → indigo night
+  // Sky top color
+  let skyTopH, skyTopS, skyTopL;
+  if(progress<0.30){
+    const p=progress/0.30;
+    skyTopH=lerp(210,32,p); skyTopS=lerp(45,40,p); skyTopL=lerp(91,90,p);
+  } else if(progress<0.55){
+    const p=phaseT(0.30,0.55);
+    skyTopH=lerp(32,18,p); skyTopS=lerp(40,42,p); skyTopL=lerp(90,86,p);
+  } else if(progress<0.78){
+    const p=phaseT(0.55,0.78);
+    skyTopH=lerp(18,340,p); skyTopS=lerp(42,38,p); skyTopL=lerp(86,78,p);
+  } else if(progress<0.92){
+    const p=phaseT(0.78,0.92);
+    skyTopH=lerp(340,260,p); skyTopS=lerp(38,32,p); skyTopL=lerp(78,55,p);
+  } else {
+    const p=phaseT(0.92,1.0);
+    skyTopH=lerp(260,235,p); skyTopS=lerp(32,38,p); skyTopL=lerp(55,28,p);
+  }
+
+  // Sky bottom (near horizon) — always slightly warmer/lighter than top
+  let skyBotH, skyBotS, skyBotL;
+  if(progress<0.30){
+    const p=progress/0.30;
+    skyBotH=lerp(38,28,p); skyBotS=lerp(55,60,p); skyBotL=lerp(92,90,p);
+  } else if(progress<0.55){
+    const p=phaseT(0.30,0.55);
+    skyBotH=lerp(28,18,p); skyBotS=lerp(60,68,p); skyBotL=lerp(90,84,p);
+  } else if(progress<0.78){
+    const p=phaseT(0.55,0.78);
+    skyBotH=lerp(18,8,p); skyBotS=lerp(68,55,p); skyBotL=lerp(84,72,p);
+  } else if(progress<0.92){
+    const p=phaseT(0.78,0.92);
+    skyBotH=lerp(8,310,p); skyBotS=lerp(55,40,p); skyBotL=lerp(72,50,p);
+  } else {
+    const p=phaseT(0.92,1.0);
+    skyBotH=lerp(310,250,p); skyBotS=lerp(40,38,p); skyBotL=lerp(50,30,p);
+  }
+
+  const skyTop=`hsl(${skyTopH},${skyTopS}%,${skyTopL}%)`;
+  const skyBot=`hsl(${skyBotH},${skyBotS}%,${skyBotL}%)`;
+
+  // Water — blue ocean at start, transitions to warmer reflective tones as sun sets
+  // Phases: blue → soft teal → muted peach → dusky rose → indigo night
+  let waterH, waterS, waterL;
+  if(progress<0.30){
+    const p=progress/0.30;
+    // Start: clear cool blue ocean
+    waterH=lerp(205,200,p); waterS=lerp(58,52,p); waterL=lerp(62,60,p);
+  } else if(progress<0.55){
+    const p=phaseT(0.30,0.55);
+    // Afternoon: blue softening toward teal
+    waterH=lerp(200,190,p); waterS=lerp(52,42,p); waterL=lerp(60,55,p);
+  } else if(progress<0.78){
+    const p=phaseT(0.55,0.78);
+    // Sunset: teal warms to muted peach as sky reflects
+    waterH=lerp(190,20,p); waterS=lerp(42,38,p); waterL=lerp(55,50,p);
+  } else if(progress<0.92){
+    const p=phaseT(0.78,0.92);
+    // Dusk: muted peach into rose-violet
+    waterH=lerp(20,290,p); waterS=lerp(38,32,p); waterL=lerp(50,38,p);
+  } else {
+    const p=phaseT(0.92,1.0);
+    // Night: deep indigo
+    waterH=lerp(290,235,p); waterS=lerp(32,38,p); waterL=lerp(38,22,p);
+  }
+  const waterTop=`hsl(${waterH},${waterS}%,${waterL}%)`;
+  const waterBot=`hsl(${waterH-5},${Math.max(20,waterS-10)}%,${Math.max(15,waterL-18)}%)`;
+
+  // Sun — soft and pastel, never harsh yellow
   const sunR=Math.round(size*0.13);
-  // Sun position: starts above near top, ends well below horizon
-  const skyTopMargin=Math.round(size*0.10);
-  const horizonY=gY;
-  // sun centre travels from skyTopMargin to (horizonY + sunR*1.8) — disappears under horizon
-  const sunCenterY=skyTopMargin+progress*(horizonY+sunR*1.8-skyTopMargin);
-  // visible sun portion (clipped at horizon)
+  const skyTopMargin=Math.round(size*0.12);
+  const sunCenterY=skyTopMargin+progress*(horizonY+sunR*1.4-skyTopMargin);
   const sunVisible=sunCenterY<horizonY+sunR;
 
-  // Sun color warms as it descends (yellow → orange → red)
-  const warmth=Math.min(1,Math.max(0,(progress-0.4)/0.5));
-  // Sun core stays bright, edge warms up
-  const sunCenterColor="#FFF6D8";
-  const sunMidColor=`rgb(${255},${Math.round(220-warmth*70)},${Math.round(140-warmth*100)})`;
-  const sunEdgeColor=`rgb(${255-Math.round(warmth*20)},${Math.round(170-warmth*70)},${Math.round(80-warmth*60)})`;
+  // Soft pastel sun: pale cream → peach → rose
+  const warmth=Math.min(1,Math.max(0,(progress-0.35)/0.45));
+  const sunCenter=`hsl(${42-warmth*8},${60+warmth*15}%,${96-warmth*4}%)`;
+  const sunMid=`hsl(${32-warmth*12},${55+warmth*15}%,${86-warmth*12}%)`;
+  const sunEdge=`hsl(${22-warmth*10},${50+warmth*10}%,${72-warmth*14}%)`;
 
-  // Sky gradient transitions through the day
-  // 0 (start, full day): light blue → soft blue
-  // 0.4 (afternoon): warm yellow tint → blue
-  // 0.7 (sunset): orange → pink → purple
-  // 0.95+ (night): deep blue → indigo
-  const skyTopHue=(()=>{
-    if(progress<0.4) return `hsl(208,70%,${72-progress*8}%)`;
-    if(progress<0.7) return `hsl(${Math.round(208-(progress-0.4)*180)},75%,${68-progress*15}%)`;
-    if(progress<0.92) return `hsl(${Math.round(28-(progress-0.7)*60)},75%,${58-(progress-0.7)*30}%)`;
-    return `hsl(${Math.round(265-progress*20)},55%,${28-progress*15}%)`;
-  })();
-  const skyBotHue=(()=>{
-    if(progress<0.4) return `hsl(${Math.round(38-progress*10)},90%,${85-progress*5}%)`;
-    if(progress<0.7) return `hsl(${Math.round(32-(progress-0.4)*10)},92%,${82-(progress-0.4)*25}%)`;
-    if(progress<0.92) return `hsl(${Math.round(20-(progress-0.7)*15)},88%,${68-(progress-0.7)*40}%)`;
-    return `hsl(${Math.round(280-progress*20)},45%,${35-progress*15}%)`;
-  })();
+  // Glow halo — soft, large, never burning
+  const glowR=sunR*(2.2+warmth*0.6);
+  const glowOpacity=Math.max(0.12,(1-progress*0.5)*0.55);
 
-  // Water (instead of grass) — calm sea reflecting sky
-  const waterTop=progress<0.7
-    ?`hsl(${200-progress*5},55%,${52-progress*10}%)`
-    :`hsl(${Math.round(220-progress*10)},45%,${30-(progress-0.7)*55}%)`;
-  const waterBot=progress<0.7
-    ?`hsl(${210-progress*5},65%,${38-progress*15}%)`
-    :`hsl(${Math.round(225-progress*5)},55%,${15-(progress-0.7)*40}%)`;
+  // Reflection on water — only when sun is near horizon
+  const showReflection=sunCenterY>horizonY-sunR*3 && progress<0.94;
+  const reflectionStrength=showReflection?Math.min(1,Math.max(0,1-Math.abs(sunCenterY-horizonY)/(sunR*3.5))):0;
 
-  // Glow around sun — gets warmer/larger as it descends
-  const glowR=sunR*(2.4+warmth*1.0);
-  const glowOpacity=Math.max(0.18,(1-progress*0.35)*0.8);
+  // Subtle horizon glow band — peaks at sunset
+  const horizonGlow=progress>0.45&&progress<0.94?Math.min(1,(progress-0.45)/0.25)*(1-(progress-0.85)/0.09):0;
 
-  // Stars appear in the final phase
-  const starOpacity=Math.max(0,(progress-0.78)/0.22);
-  const stars=[
-    {x:0.12,y:0.10},{x:0.22,y:0.22},{x:0.35,y:0.08},{x:0.48,y:0.18},
-    {x:0.62,y:0.10},{x:0.74,y:0.24},{x:0.85,y:0.12},{x:0.92,y:0.30},
-    {x:0.18,y:0.36},{x:0.55,y:0.30},{x:0.78,y:0.42},
-  ];
+  // Birds fade with day progress — visible while sun is high
+  const birdOpacity=Math.max(0,1-progress*1.4)*0.55;
 
-  // Sun's reflection on water — a vertical shimmering streak from horizon to bottom
-  const showReflection=sunCenterY>horizonY-sunR*3 && progress<0.96;
-  // Reflection grows brighter as sun nears horizon
-  const reflectionStrength=showReflection
-    ?Math.min(1,Math.max(0,1-Math.abs(sunCenterY-horizonY)/(sunR*4)))
-    :0;
+  // Sun rays — visible during the day, soft pastel pulse
+  const raysOpacity=progress<0.78?Math.max(0,(1-progress*0.85))*0.65:0;
 
-  // Clouds — soft horizontal wisps that drift through the sky
-  // We use sin-waves to subtly animate position
-  const now=Date.now()/1000;
-  const cloudColor=progress<0.45
-    ?"rgba(255,255,255,0.85)"
-    :progress<0.75
-      ?`hsla(${Math.round(30-(progress-0.45)*15)},75%,80%,0.82)`
-      :`hsla(${Math.round(285-progress*15)},25%,55%,0.45)`;
-
-  // Subtle horizon shimmer (orange band)
-  const horizonGlow=progress>0.5&&progress<0.95?Math.min(1,(progress-0.5)/0.25)*(1-(progress-0.85)/0.1):0;
+  // A few quiet stars only at deep dusk — minimal
+  const starOpacity=Math.max(0,(progress-0.82)/0.18);
+  const stars=starOpacity>0.05?[
+    {x:0.12,y:0.14,br:0.85},{x:0.28,y:0.08,br:1.0},{x:0.42,y:0.16,br:0.7},
+    {x:0.58,y:0.10,br:0.9},{x:0.72,y:0.18,br:0.75},{x:0.86,y:0.12,br:1.0},
+    {x:0.20,y:0.30,br:0.7},{x:0.50,y:0.34,br:0.85},{x:0.78,y:0.32,br:0.7},
+  ]:[];
 
   const uid=`s${size}`;
+  // 1Hz color/position transitions — smooths the gap between timer ticks
+  const tCol="fill 1s linear, stroke 1s linear, opacity 1s linear, stop-color 1s linear";
+
   return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
-      <svg width={W} height={H} style={{borderRadius:24,overflow:"hidden",boxShadow:sh.md,border:`1px solid ${G.border}`}}>
+      <style>{`
+        @keyframes sunPastelBreath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+        @keyframes sunPastelHalo { 0%, 100% { transform: scale(1); opacity: 0.95; } 50% { transform: scale(1.08); opacity: 1; } }
+        @keyframes sunPastelTwinkle { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        @keyframes sunPastelRipple0 { 0%, 100% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(2px, 0, 0); } }
+        @keyframes sunPastelRipple1 { 0%, 100% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(-2px, 0, 0); } }
+        @keyframes sunPastelRefl { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(1.05); opacity: 0.92; } }
+        @keyframes sunRaysSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes sunRaysPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.85; } }
+        @keyframes sunBirdGlide0 { from { transform: translateX(-12%); } to { transform: translateX(112%); } }
+        @keyframes sunBirdGlide1 { from { transform: translateX(-18%); } to { transform: translateX(108%); } }
+        @keyframes sunBirdGlide2 { from { transform: translateX(-8%); } to { transform: translateX(116%); } }
+        @keyframes sunBirdBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.5px); } }
+      `}</style>
+
+      <svg width={W} height={H} style={{borderRadius:24,overflow:"hidden",boxShadow:"0 12px 40px rgba(31,27,46,0.08), 0 2px 8px rgba(31,27,46,0.04)",border:`1px solid ${G.border}`,display:"block"}}>
         <defs>
+          {/* Sky gradient — soft pastel transition */}
           <linearGradient id={`sky${uid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={skyTopHue}/>
-            <stop offset="55%" stopColor={skyTopHue}/>
-            <stop offset="100%" stopColor={skyBotHue}/>
+            <stop offset="0%" stopColor={skyTop} style={{transition:"stop-color 1s linear"}}/>
+            <stop offset="100%" stopColor={skyBot} style={{transition:"stop-color 1s linear"}}/>
           </linearGradient>
-          <linearGradient id={`gnd${uid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={waterTop}/>
-            <stop offset="100%" stopColor={waterBot}/>
+          {/* Water gradient */}
+          <linearGradient id={`wtr${uid}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={waterTop} style={{transition:"stop-color 1s linear"}}/>
+            <stop offset="100%" stopColor={waterBot} style={{transition:"stop-color 1s linear"}}/>
           </linearGradient>
-          <radialGradient id={`sun${uid}`}>
-            <stop offset="0%" stopColor={sunCenterColor} stopOpacity="1"/>
-            <stop offset="45%" stopColor={sunMidColor} stopOpacity="1"/>
-            <stop offset="100%" stopColor={sunEdgeColor} stopOpacity="1"/>
+          {/* Sun — radial with off-center highlight for soft 3D */}
+          <radialGradient id={`sun${uid}`} cx="42%" cy="38%" r="62%">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95"/>
+            <stop offset="35%" stopColor={sunCenter}/>
+            <stop offset="75%" stopColor={sunMid}/>
+            <stop offset="100%" stopColor={sunEdge}/>
           </radialGradient>
-          <radialGradient id={`glow${uid}`}>
-            <stop offset="0%" stopColor={sunMidColor} stopOpacity={glowOpacity}/>
-            <stop offset="40%" stopColor={sunEdgeColor} stopOpacity={glowOpacity*0.5}/>
-            <stop offset="100%" stopColor={sunEdgeColor} stopOpacity="0"/>
+          {/* Halo — pure soft glow */}
+          <radialGradient id={`glow${uid}`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={sunMid} stopOpacity={glowOpacity}/>
+            <stop offset="50%" stopColor={sunEdge} stopOpacity={glowOpacity*0.4}/>
+            <stop offset="100%" stopColor={sunEdge} stopOpacity="0"/>
           </radialGradient>
+          {/* Horizon glow strip */}
           <linearGradient id={`hg${uid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="hsl(28,90%,70%)" stopOpacity="0"/>
-            <stop offset="100%" stopColor="hsl(20,95%,65%)" stopOpacity={horizonGlow*0.6}/>
+            <stop offset="0%" stopColor={`hsl(${skyBotH+6},${Math.max(35,skyBotS-15)}%,${Math.min(92,skyBotL+8)}%)`} stopOpacity="0"/>
+            <stop offset="100%" stopColor={`hsl(${skyBotH},${Math.max(45,skyBotS-5)}%,${Math.min(85,skyBotL+2)}%)`} stopOpacity={horizonGlow*0.65}/>
           </linearGradient>
-          <linearGradient id={`reflect${uid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={sunMidColor} stopOpacity={reflectionStrength*0.55}/>
-            <stop offset="100%" stopColor={sunMidColor} stopOpacity="0"/>
+          {/* Reflection gradient */}
+          <linearGradient id={`refl${uid}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={sunMid} stopOpacity={reflectionStrength*0.5}/>
+            <stop offset="100%" stopColor={sunMid} stopOpacity="0"/>
           </linearGradient>
-          <clipPath id={`sc${uid}`}>
-            <rect x={0} y={0} width={W} height={horizonY}/>
-          </clipPath>
-          <clipPath id={`wc${uid}`}>
-            <rect x={0} y={horizonY} width={W} height={H-horizonY}/>
-          </clipPath>
-          <filter id={`blur${uid}`} x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation={Math.max(2,size*0.012)}/>
-          </filter>
+          <clipPath id={`sc${uid}`}><rect x={0} y={0} width={W} height={horizonY}/></clipPath>
+          <clipPath id={`wc${uid}`}><rect x={0} y={horizonY} width={W} height={H-horizonY}/></clipPath>
         </defs>
 
-        {/* Sky */}
-        <rect x={0} y={0} width={W} height={horizonY} fill={`url(#sky${uid})`}/>
+        {/* Sky — solid pastel gradient */}
+        <rect x={0} y={0} width={W} height={horizonY} fill={`url(#sky${uid})`} style={{transition:tCol}}/>
 
-        {/* Horizon glow band */}
-        {horizonGlow>0&&<rect x={0} y={horizonY-Math.round(H*0.22)} width={W} height={Math.round(H*0.22)} fill={`url(#hg${uid})`}/>}
+        {/* Horizon glow band — subtle peach near horizon during sunset */}
+        {horizonGlow>0&&(
+          <rect x={0} y={horizonY-Math.round(H*0.22)} width={W} height={Math.round(H*0.22)} fill={`url(#hg${uid})`} style={{transition:"opacity 1s linear"}}/>
+        )}
 
-        {/* Soft drifting clouds */}
-        <g clipPath={`url(#sc${uid})`} opacity={Math.max(0.35,1-progress*0.6)}>
-          {[
-            {y:0.18,w:0.45,h:0.045,seed:0.3,speed:0.015},
-            {y:0.28,w:0.32,h:0.038,seed:0.7,speed:0.022},
-            {y:0.42,w:0.38,h:0.042,seed:0.15,speed:0.018},
-          ].map((c,i)=>{
-            const driftX=((now*c.speed+c.seed)%1.4-0.2);
-            const cx=driftX*W;
-            const cy=c.y*horizonY;
-            const cw=c.w*W, ch=c.h*horizonY;
-            return(
-              <g key={i} fill={cloudColor} filter={`url(#blur${uid})`}>
-                <ellipse cx={cx} cy={cy} rx={cw*0.35} ry={ch}/>
-                <ellipse cx={cx+cw*0.25} cy={cy-ch*0.2} rx={cw*0.3} ry={ch*0.9}/>
-                <ellipse cx={cx+cw*0.5} cy={cy+ch*0.1} rx={cw*0.32} ry={ch*0.85}/>
-                <ellipse cx={cx+cw*0.7} cy={cy-ch*0.1} rx={cw*0.25} ry={ch*0.8}/>
+        {/* Quiet stars at deep dusk only */}
+        {starOpacity>0&&(
+          <g style={{opacity:starOpacity,transition:"opacity 1s linear"}}>
+            {stars.map((s,i)=>{
+              const baseR=0.9*s.br;
+              const dur=3+(i%4)*0.5;
+              const delay=-(i*0.4)%dur;
+              return(
+                <circle
+                  key={i}
+                  cx={s.x*W}
+                  cy={s.y*horizonY}
+                  r={baseR}
+                  fill="#FFFFFF"
+                  opacity={s.br*0.85}
+                  style={{
+                    animation:`sunPastelTwinkle ${dur}s ease-in-out ${delay}s infinite`,
+                    willChange:"opacity",
+                  }}
+                />
+              );
+            })}
+          </g>
+        )}
+
+        {/* Birds — gentle silhouettes gliding across the sky during the day */}
+        {birdOpacity>0.05&&(
+          <g clipPath={`url(#sc${uid})`} style={{opacity:birdOpacity,transition:"opacity 1s linear"}}>
+            {[
+              {dur:62,delay:-12,y:0.26,sz:7,glide:0,bobDelay:0},
+              {dur:78,delay:-38,y:0.34,sz:6,glide:1,bobDelay:-1.2},
+              {dur:54,delay:-26,y:0.20,sz:8,glide:2,bobDelay:-0.5},
+            ].map((b,i)=>{
+              const by=b.y*horizonY;
+              return(
+                <g key={i} style={{animation:`sunBirdGlide${b.glide} ${b.dur}s linear ${b.delay}s infinite`,willChange:"transform"}}>
+                  <g style={{animation:`sunBirdBob 5s ease-in-out ${b.bobDelay}s infinite`,willChange:"transform"}}>
+                    <path
+                      d={`M${-b.sz},${by} Q${-b.sz*0.5},${by-b.sz*0.42} 0,${by} Q${b.sz*0.5},${by-b.sz*0.42} ${b.sz},${by}`}
+                      fill="none"
+                      stroke="rgba(40,30,60,0.55)"
+                      strokeWidth={1.3}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </g>
+                </g>
+              );
+            })}
+          </g>
+        )}
+
+        {/* Sun system — rays + halo + disc all positioned via transform on wrapper.
+            Solving position changes by translating wrapper group means SVG attributes
+            (cx, cy, x1, y1, etc.) stay static — they never need CSS transitions, which
+            iOS Safari does not reliably support on SVG geometry attributes. */}
+        <g clipPath={`url(#sc${uid})`}>
+          <g style={{
+            transform:`translate(${W/2}px, ${sunCenterY}px)`,
+            transition:"transform 1s linear",
+            willChange:"transform",
+          }}>
+            {/* Sun rays — clear visible beams radiating from the sun */}
+            {raysOpacity>0&&sunVisible&&(
+              <g style={{opacity:raysOpacity,transition:"opacity 1s linear"}}>
+                <g style={{
+                  animation:"sunRaysSlow 280s linear infinite, sunRaysPulse 6s ease-in-out infinite",
+                  transformOrigin:"0 0",
+                  willChange:"transform, opacity",
+                }}>
+                  {Array.from({length:12}).map((_,i)=>{
+                    const ang=(i/12)*Math.PI*2;
+                    const r1=sunR*1.35;
+                    const r2=sunR*(2.55+(i%3)*0.25);
+                    return(
+                      <line
+                        key={i}
+                        x1={r1*Math.cos(ang)}
+                        y1={r1*Math.sin(ang)}
+                        x2={r2*Math.cos(ang)}
+                        y2={r2*Math.sin(ang)}
+                        stroke={sunMid}
+                        strokeWidth={i%2===0?2:1.4}
+                        strokeLinecap="round"
+                        opacity={0.85}
+                      />
+                    );
+                  })}
+                </g>
               </g>
+            )}
+
+            {/* Sun halo — soft breathing */}
+            <g style={{animation:"sunPastelHalo 7s ease-in-out infinite",transformOrigin:"0 0",willChange:"transform, opacity"}}>
+              <circle cx={0} cy={0} r={glowR} fill={`url(#glow${uid})`}/>
+            </g>
+
+            {/* Sun disc — quiet breathing */}
+            {sunVisible&&(
+              <g style={{animation:"sunPastelBreath 8s ease-in-out infinite",transformOrigin:"0 0",willChange:"transform"}}>
+                <circle cx={0} cy={0} r={sunR} fill={`url(#sun${uid})`}/>
+              </g>
+            )}
+          </g>
+        </g>
+
+        {/* Water — clean gradient */}
+        <rect x={0} y={horizonY} width={W} height={H-horizonY} fill={`url(#wtr${uid})`} style={{transition:tCol}}/>
+
+        {/* Three minimal horizontal ripple lines — barely-there texture */}
+        <g clipPath={`url(#wc${uid})`} opacity={0.35}>
+          {[0.25, 0.50, 0.75].map((y,i)=>{
+            const yy=horizonY+(H-horizonY)*y;
+            return(
+              <line
+                key={i}
+                x1={W*0.08}
+                y1={yy}
+                x2={W*0.92}
+                y2={yy}
+                stroke={progress<0.78?"rgba(255,255,255,0.55)":"rgba(220,225,240,0.4)"}
+                strokeWidth={0.6}
+                strokeLinecap="round"
+                opacity={0.7-i*0.18}
+                style={{
+                  animation:`${i%2===0?"sunPastelRipple0":"sunPastelRipple1"} ${5+i*0.6}s ease-in-out ${-i*0.4}s infinite`,
+                  willChange:"transform",
+                  transition:"stroke 1s linear",
+                }}
+              />
             );
           })}
         </g>
 
-        {/* Stars (above horizon) */}
-        {starOpacity>0&&stars.map((s,i)=>(
-          <circle key={i} cx={s.x*W} cy={s.y*horizonY} r={0.9+((i*7)%3)*0.4} fill="#FFFFFF" opacity={starOpacity*(0.5+((i*13)%5)/10)}/>
-        ))}
-
-        {/* Sun glow halo (clipped to sky for clean horizon) */}
-        <g clipPath={`url(#sc${uid})`}>
-          <circle cx={W/2} cy={sunCenterY} r={glowR} fill={`url(#glow${uid})`}/>
-        </g>
-
-        {/* Water */}
-        <rect x={0} y={horizonY} width={W} height={H-horizonY} fill={`url(#gnd${uid})`}/>
-
-        {/* Sun's reflection on water — a shimmering vertical streak from horizon downwards */}
+        {/* Sun reflection on water — appears when sun nears horizon */}
         {reflectionStrength>0&&(
-          <g clipPath={`url(#wc${uid})`}>
-            <rect x={W/2-sunR*1.3} y={horizonY} width={sunR*2.6} height={H-horizonY} fill={`url(#reflect${uid})`}/>
-            {/* Horizontal water shimmer lines */}
-            {Array.from({length:7}).map((_,i)=>{
-              const yy=horizonY+(i+1)*((H-horizonY)/8);
-              const width=sunR*2.2*(1+i*0.18);
-              const shimmerOffset=Math.sin(now*1.5+i)*sunR*0.15;
-              return <line key={i} x1={W/2-width/2+shimmerOffset} y1={yy} x2={W/2+width/2+shimmerOffset} y2={yy} stroke={sunCenterColor} strokeWidth={0.8+i*0.1} strokeLinecap="round" opacity={reflectionStrength*(0.45-i*0.045)}/>;
-            })}
+          <g clipPath={`url(#wc${uid})`} style={{opacity:reflectionStrength,transition:"opacity 1s linear"}}>
+            <g style={{animation:"sunPastelRefl 4s ease-in-out infinite",transformOrigin:`${W/2}px ${horizonY+sunR}px`,willChange:"transform, opacity"}}>
+              {/* Vertical reflection column — soft and clean */}
+              <ellipse
+                cx={W/2}
+                cy={horizonY+sunR*0.9}
+                rx={sunR*0.85}
+                ry={sunR*1.2}
+                fill={`url(#refl${uid})`}
+              />
+              {/* Two soft horizontal shimmers within the reflection */}
+              <line
+                x1={W/2-sunR*0.8}
+                y1={horizonY+sunR*0.5}
+                x2={W/2+sunR*0.8}
+                y2={horizonY+sunR*0.5}
+                stroke={sunCenter}
+                strokeWidth={1.2}
+                strokeLinecap="round"
+                opacity={0.55}
+                style={{transition:"stroke 1s linear"}}
+              />
+              <line
+                x1={W/2-sunR*0.6}
+                y1={horizonY+sunR*1.0}
+                x2={W/2+sunR*0.6}
+                y2={horizonY+sunR*1.0}
+                stroke={sunCenter}
+                strokeWidth={0.9}
+                strokeLinecap="round"
+                opacity={0.35}
+                style={{transition:"stroke 1s linear"}}
+              />
+            </g>
           </g>
         )}
 
-        {/* Sun rays — subtle radial lines around sun */}
-        {progress<0.85&&sunVisible&&(
-          <g clipPath={`url(#sc${uid})`} opacity={Math.max(0.25,(1-progress*0.6))*0.55}>
-            {Array.from({length:12}).map((_,i)=>{
-              const ang=(i/12)*Math.PI*2+(now*0.05);
-              const r1=sunR*1.3, r2=sunR*(1.9+Math.sin(now*0.8+i)*0.08);
-              return <line key={i} x1={W/2+r1*Math.cos(ang)} y1={sunCenterY+r1*Math.sin(ang)} x2={W/2+r2*Math.cos(ang)} y2={sunCenterY+r2*Math.sin(ang)} stroke={sunMidColor} strokeWidth={1.5} strokeLinecap="round"/>;
-            })}
-          </g>
-        )}
+        {/* Soft horizon hairline — barely visible separator */}
+        <line x1={0} y1={horizonY} x2={W} y2={horizonY} stroke="rgba(31,27,46,0.06)" strokeWidth={0.5}/>
 
-        {/* Sun itself */}
-        <g clipPath={`url(#sc${uid})`}>
-          {sunVisible&&<circle cx={W/2} cy={sunCenterY} r={sunR} fill={`url(#sun${uid})`}/>}
-        </g>
-
-        {/* Slim horizon line — a hint of where water meets sky */}
-        <line x1={0} y1={horizonY} x2={W} y2={horizonY} stroke="rgba(0,0,0,0.10)" strokeWidth={0.6}/>
-
-        {/* Time label — adapts color so it's always readable */}
-        <text x={W/2} y={H-10} textAnchor="middle" style={{fontSize:Math.round(size*0.062),fontWeight:600,fill:progress<0.65?"#1F1B2E":"#FFFFFF",fontFamily:G.serif,fontVariantNumeric:"tabular-nums"}}>{c.label}</text>
+        {/* Time label */}
+        <text
+          x={W/2} y={H-12}
+          textAnchor="middle"
+          style={{
+            fontSize:Math.round(size*0.065),
+            fontWeight:500,
+            fill:progress<0.7?"rgba(31,27,46,0.55)":"rgba(255,255,255,0.85)",
+            fontFamily:G.serif,
+            fontVariantNumeric:"tabular-nums",
+            letterSpacing:0.5,
+            transition:"fill 1s linear",
+          }}
+        >{c.label}</text>
       </svg>
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
@@ -694,7 +1215,7 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
 /* ═══ LAVA ═══ */
 function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const c=useTimer(totalSec,autoRun);
-  if(c.done) return <DoneBadge color={color}/>;
+  if(c.done) return <DoneBadge color={color} t={t}/>;
   const W=Math.round(size*0.52), H=size;
   const lavaTop=H*(1-c.pct);
   const[blobs,setBlobs]=useState([{id:1,x:.5,y:.72,r:.2,vx:.003,vy:-.004},{id:2,x:.32,y:.55,r:.16,vx:.004,vy:.003},{id:3,x:.68,y:.62,r:.13,vx:-.003,vy:-.003},{id:4,x:.5,y:.86,r:.11,vx:.002,vy:-.002}]);
@@ -719,6 +1240,7 @@ function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
         <rect x={W*.27} y={H*.92} width={W*.46} height={H*.06} rx={4} fill="#C4BFDB"/>
       </svg>
       <div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.085,color:G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
+      <WindDownHint secs={c.secs} color={color} t={t}/>
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
@@ -730,12 +1252,63 @@ function TimerComp({type,totalSec,color,t,autoRun=false,size=240,showCtrl=true})
   return <Comp totalSec={totalSec} color={color} t={t} autoRun={autoRun} size={size} showCtrl={showCtrl}/>;
 }
 
-function FullTimer({type,totalSec,color,t,autoRun,onClose}){
+function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
+  // Compute size from actual rendered viewport — if FullTimer's fixed positioning
+  // is constrained by a parent with transform/will-change, it inherits that container.
+  // Be defensive: measure actual viewport AND deduct header/nav heights generously.
+  // When activity header is shown, deduct extra ~80px for emoji + name + spacing.
+  const headerSpace=activity?80:0;
+  const[size,setSize]=useState(()=>{
+    if(typeof window==="undefined") return 220;
+    const vw=Math.min(window.innerWidth, 480); // app is capped at 480
+    const vh=window.innerHeight;
+    // Reservations: header (~110) + digits (~70) + controls (~110) + paddings (~80) + optional activity card
+    const maxByHeight=Math.max(160,vh-380-headerSpace);
+    const maxByWidth=Math.max(160,vw-72);
+    return Math.min(300, Math.min(maxByHeight,maxByWidth));
+  });
+  useEffect(()=>{
+    const onResize=()=>{
+      const vw=Math.min(window.innerWidth, 480);
+      const vh=window.innerHeight;
+      const maxByHeight=Math.max(160,vh-380-headerSpace);
+      const maxByWidth=Math.max(160,vw-72);
+      setSize(Math.min(300, Math.min(maxByHeight,maxByWidth)));
+    };
+    window.addEventListener("resize",onResize);
+    window.addEventListener("orientationchange",onResize);
+    return()=>{
+      window.removeEventListener("resize",onResize);
+      window.removeEventListener("orientationchange",onResize);
+    };
+  },[headerSpace]);
   return(
-    <div style={{position:"fixed",inset:0,zIndex:9000,background:"#FFFFFF",backgroundImage:`linear-gradient(165deg,${SCREENS.timer.hb} 0%,#FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,gap:28,animation:"ftIn .25s ease"}}>
-      <style>{`@keyframes ftIn{from{opacity:0}to{opacity:1}}`}</style>
-      <button onClick={onClose} style={{position:"absolute",top:24,right:24,width:48,height:48,borderRadius:24,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:22,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm}}>✕</button>
-      <TimerComp type={type} totalSec={totalSec} color={color} t={t} autoRun={autoRun} size={300}/>
+    <div style={{position:"fixed",inset:0,zIndex:9700,background:"#FFFFFF",backgroundImage:`linear-gradient(165deg,${SCREENS.timer.hb} 0%,#FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"60px 20px 36px",gap:22,animation:"ftIn .25s ease"}}>
+      <style>{`
+        @keyframes ftIn{from{opacity:0}to{opacity:1}}
+        @keyframes ftActIn{0%{opacity:0;transform:translateY(-8px) scale(0.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
+      `}</style>
+      <button onClick={onClose} style={{position:"absolute",top:20,right:20,width:42,height:42,borderRadius:21,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:2}}>✕</button>
+      {/* Activity context — emoji + name shown above the timer so the user always knows what they're timing */}
+      {activity&&(
+        <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 18px 12px 14px",background:G.white,borderRadius:22,boxShadow:`0 8px 22px ${activity.color}1F, 0 2px 6px rgba(31,27,46,0.06)`,border:`1px solid ${activity.color}30`,maxWidth:"calc(100% - 40px)",animation:"ftActIn 0.5s 0.15s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+          <div style={{
+            width:42,height:42,borderRadius:13,
+            background:activity.photo?"transparent":`linear-gradient(140deg,${activity.color}25,${activity.color}45)`,
+            border:`1px solid ${activity.color}30`,
+            overflow:"hidden",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:24,flexShrink:0,
+          }}>
+            {activity.photo?<img src={activity.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:activity.emoji}
+          </div>
+          <div style={{minWidth:0,flex:1}}>
+            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:15,color:G.ink,letterSpacing:-.2,lineHeight:1.15,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activity.name}</div>
+            <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:activity.color,marginTop:2,letterSpacing:.3}}>{fmtT(activity.time,t)}</div>
+          </div>
+        </div>
+      )}
+      <TimerComp type={type} totalSec={totalSec} color={color} t={t} autoRun={autoRun} size={size}/>
     </div>
   );
 }
@@ -836,15 +1409,73 @@ function TimerThumb({type,color,size=120,min=30}){
   }
   if(type==="sun"){
     const W=size, H=Math.round(size*0.78);
-    const gY=H-Math.round(H*0.16);
-    const sunR=Math.round(size*0.1), sunY=Math.round(size*0.32);
+    const horizonY=Math.round(H*0.62);
+    const sunR=Math.round(size*0.13);
+    const sunY=Math.round(H*0.46);
     return(
-      <svg width={W} height={H} style={{borderRadius:18,overflow:"hidden",border:`1px solid ${G.border}`}}>
-        <defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(220,65%,72%)"/><stop offset="100%" stopColor="hsl(245,55%,82%)"/></linearGradient><radialGradient id="sn"><stop offset="0%" stopColor="#FFF8E0"/><stop offset="100%" stopColor="#F5B040"/></radialGradient></defs>
-        <rect x={0} y={0} width={W} height={gY} fill="url(#sk)"/>
-        <rect x={0} y={gY} width={W} height={H-gY} fill="#94CFA8"/>
-        {Array.from({length:10}).map((_,i)=>{const a=(i/10)*Math.PI*2;return <line key={i} x1={W/2+sunR*1.3*Math.cos(a)} y1={sunY+sunR*1.3*Math.sin(a)} x2={W/2+sunR*1.8*Math.cos(a)} y2={sunY+sunR*1.8*Math.sin(a)} stroke="#FFE38A" strokeWidth={2} strokeLinecap="round"/>;})}
-        <circle cx={W/2} cy={sunY} r={sunR} fill="url(#sn)"/>
+      <svg width={W} height={H} style={{borderRadius:18,overflow:"hidden",border:`1px solid ${G.border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.08), 0 2px 6px rgba(31,27,46,0.04)"}}>
+        <defs>
+          {/* Soft pastel sky — peach to dusty rose */}
+          <linearGradient id={`thumbSky${size}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(30, 50%, 88%)"/>
+            <stop offset="60%" stopColor="hsl(20, 55%, 82%)"/>
+            <stop offset="100%" stopColor="hsl(10, 50%, 76%)"/>
+          </linearGradient>
+          {/* Sun — soft pastel disc */}
+          <radialGradient id={`thumbSun${size}`} cx="42%" cy="38%" r="62%">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95"/>
+            <stop offset="35%" stopColor="hsl(38, 70%, 92%)"/>
+            <stop offset="75%" stopColor="hsl(28, 62%, 80%)"/>
+            <stop offset="100%" stopColor="hsl(18, 55%, 68%)"/>
+          </radialGradient>
+          {/* Halo — pure soft glow */}
+          <radialGradient id={`thumbGlow${size}`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="hsl(28, 62%, 80%)" stopOpacity="0.4"/>
+            <stop offset="50%" stopColor="hsl(18, 55%, 68%)" stopOpacity="0.15"/>
+            <stop offset="100%" stopColor="hsl(18, 55%, 68%)" stopOpacity="0"/>
+          </radialGradient>
+          {/* Water — desaturated pastel */}
+          <linearGradient id={`thumbWater${size}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(10, 30%, 60%)"/>
+            <stop offset="100%" stopColor="hsl(15, 25%, 42%)"/>
+          </linearGradient>
+          {/* Reflection */}
+          <linearGradient id={`thumbRefl${size}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(28, 62%, 80%)" stopOpacity="0.5"/>
+            <stop offset="100%" stopColor="hsl(28, 62%, 80%)" stopOpacity="0"/>
+          </linearGradient>
+          {/* Subtle horizon glow */}
+          <linearGradient id={`thumbHGlow${size}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(20, 60%, 82%)" stopOpacity="0"/>
+            <stop offset="100%" stopColor="hsl(14, 65%, 76%)" stopOpacity="0.55"/>
+          </linearGradient>
+        </defs>
+
+        {/* Sky */}
+        <rect x={0} y={0} width={W} height={horizonY} fill={`url(#thumbSky${size})`}/>
+
+        {/* Horizon glow band */}
+        <rect x={0} y={horizonY-H*0.18} width={W} height={H*0.18} fill={`url(#thumbHGlow${size})`}/>
+
+        {/* Sun glow halo */}
+        <circle cx={W/2} cy={sunY} r={sunR*2.2} fill={`url(#thumbGlow${size})`}/>
+
+        {/* The sun — minimal, clean disc */}
+        <circle cx={W/2} cy={sunY} r={sunR} fill={`url(#thumbSun${size})`}/>
+
+        {/* Water */}
+        <rect x={0} y={horizonY} width={W} height={H-horizonY} fill={`url(#thumbWater${size})`}/>
+
+        {/* Sun reflection — soft column */}
+        <ellipse cx={W/2} cy={horizonY+H*0.06} rx={sunR*0.85} ry={H*0.07} fill={`url(#thumbRefl${size})`}/>
+
+        {/* Three minimal water ripple lines */}
+        <line x1={W*0.20} y1={horizonY+H*0.10} x2={W*0.80} y2={horizonY+H*0.10} stroke="rgba(255,255,255,0.4)" strokeWidth={0.6} strokeLinecap="round"/>
+        <line x1={W*0.15} y1={horizonY+H*0.17} x2={W*0.85} y2={horizonY+H*0.17} stroke="rgba(255,255,255,0.3)" strokeWidth={0.6} strokeLinecap="round"/>
+        <line x1={W*0.25} y1={horizonY+H*0.24} x2={W*0.75} y2={horizonY+H*0.24} stroke="rgba(255,255,255,0.2)" strokeWidth={0.6} strokeLinecap="round"/>
+
+        {/* Soft horizon hairline */}
+        <line x1={0} y1={horizonY} x2={W} y2={horizonY} stroke="rgba(31,27,46,0.06)" strokeWidth={0.5}/>
       </svg>
     );
   }
@@ -1008,7 +1639,7 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now}){
       {/* Sticky "Nu" banner */}
       {!isEd&&(
         <div style={{position:"sticky",top:0,zIndex:10,maxHeight:scrolled?0:90,opacity:scrolled?0:1,overflow:"hidden",transition:"max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease",pointerEvents:scrolled?"none":"auto"}}>
-        <button onClick={jumpToTarget} style={{margin:"10px 14px 0",padding:"10px 14px",borderRadius:14,border:`1px solid ${G.border}`,background:"linear-gradient(135deg,#FFFFFF 0%, #FCFAFE 60%, #F8F5FC 100%)",boxShadow:"0 4px 14px rgba(31,27,46,0.05), inset 0 1px 0 rgba(255,255,255,0.95)",display:"flex",alignItems:"center",gap:10,cursor:"pointer",textAlign:"left",transition:"transform .15s ease, box-shadow .2s",overflow:"hidden",width:"calc(100% - 28px)"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.985)"} onMouseUp={e=>e.currentTarget.style.transform=""} onMouseLeave={e=>e.currentTarget.style.transform=""}>
+        <button onClick={jumpToTarget} className="lt-press-soft" style={{margin:"10px 14px 0",padding:"10px 14px",borderRadius:14,border:`1px solid ${G.border}`,background:"linear-gradient(135deg,#FFFFFF 0%, #FCFAFE 60%, #F8F5FC 100%)",boxShadow:"0 4px 14px rgba(31,27,46,0.05), inset 0 1px 0 rgba(255,255,255,0.95)",display:"flex",alignItems:"center",gap:10,cursor:"pointer",textAlign:"left",transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .2s",overflow:"hidden",width:"calc(100% - 28px)"}}>
           <style>{`@keyframes bannerSweep{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}`}</style>
           {/* Subtle shimmer overlay */}
           <div style={{position:"absolute",inset:0,background:`linear-gradient(105deg, transparent 30%, ${SCREENS.home.h}0D 50%, transparent 70%)`,animation:"bannerSweep 6s ease-in-out infinite",pointerEvents:"none"}}/>
@@ -1036,10 +1667,10 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now}){
       )}
       <div ref={scrollRef} style={{flex:1,display:"flex",overflowY:"auto",padding:"14px 14px 30px 6px",position:"relative"}}>
       {!isEd&&(
-        <div style={{flexShrink:0,position:"relative",width:38,height:totalContentH}}>
+        <div style={{flexShrink:0,position:"relative",width:t?.myDay==="My Day"?56:38,height:totalContentH}}>
           {positions.map(({item,y})=>(
             <div key={`tl-${item.id}`} style={{position:"absolute",top:y+2,right:6,fontFamily:G.font,fontWeight:700,fontSize:11,color:item.color,letterSpacing:0.3,fontVariantNumeric:"tabular-nums",whiteSpace:"nowrap",lineHeight:1}}>
-              {item.time}
+              {fmtT(item.time,t)}
             </div>
           ))}
         </div>
@@ -1063,11 +1694,16 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now}){
           const yBot=endM?yForTime(endM):yForTime(startM);
           const barH=Math.max(0,yBot-yForTime(startM));
           const offset=y-naturalY;
+          // Compute lifeState: past (finished) | now (current) | future (later today)
+          const itemEnd=endM||startM+30;
+          const lifeState = itemEnd<=nowM ? "past"
+                          : startM<=nowM ? "now"
+                          : "future";
           return(
             <div key={item.id}>
-              <div ref={el=>{cardRefs.current[item.id]=el; if(el) el.setAttribute("data-act-id",item.id);}} style={{position:"absolute",top:y,left:0,right:0,zIndex:2+i}}>
-                <ActRow item={item} cardStyle={cfg.cardStyle||"normal"} isEditor={isEd} onEdit={onEdit} onTap={onTap} onMarkDone={onMarkDone} idx={i}/>
-                {barH>20&&offset<=14&&<div style={{position:"absolute",left:-8,top:4,width:3,height:barH,background:`linear-gradient(180deg,${item.color},${item.color}66)`,borderRadius:2,opacity:0.7}}/>}
+              <div ref={el=>{cardRefs.current[item.id]=el; if(el) el.setAttribute("data-act-id",item.id);}} style={{position:"absolute",top:y,left:0,right:0,zIndex:lifeState==="now"?20:2+i,transition:"z-index 0s"}}>
+                <ActRow item={item} cardStyle={cfg.cardStyle||"normal"} isEditor={isEd} onEdit={onEdit} onTap={onTap} onMarkDone={onMarkDone} idx={i} lifeState={lifeState} t={t}/>
+                {barH>20&&offset<=14&&<div style={{position:"absolute",left:-8,top:4,width:3,height:barH,background:`linear-gradient(180deg,${item.color},${item.color}66)`,borderRadius:2,opacity:lifeState==="past"?0.25:0.7,transition:"opacity .6s cubic-bezier(0.32, 0.72, 0, 1)"}}/>}
               </div>
             </div>
           );
@@ -1085,7 +1721,7 @@ function TimerSep({timer,isEditor,onOpen,t}){
     <div onClick={!isEditor?onOpen:undefined} style={{display:"flex",alignItems:"center",gap:10,padding:"4px 0",cursor:isEditor?"default":"pointer"}}>
       <div style={{flex:1,height:1,background:`${tc}25`}}/>
       <div style={{display:"flex",alignItems:"center",gap:7,background:G.white,borderRadius:20,padding:"7px 16px",boxShadow:sh.xs,border:`1px solid ${tc}30`}}>
-        <span style={{fontSize:13}}>{TICON[timer.type]}</span>
+        <TimerIcon type={timer.type} size={13} color={tc}/>
         <span style={{fontFamily:G.font,fontWeight:600,fontSize:12,color:tc}}>{tlbl(timer.type,t)} · {timer.min} {t.min}</span>
         {!isEditor&&<span style={{color:tc,opacity:0.5,fontSize:11}}>▶</span>}
       </div>
@@ -1100,56 +1736,85 @@ function Confetti(){
 }
 
 /* ═══ Activity detail ═══ */
-function ActivityDetail({item,onClose,onCheck,t}){
-  const[local,setLocal]=useState(item.stepsDone||{});
-  const[showTmr,setShowTmr]=useState(false);
+function ActivityDetail({item,stepsDone,readOnly,onClose,onCheck,t}){
+  const[local,setLocal]=useState(stepsDone||{});
   const[fullTmr,setFullTmr]=useState(false);
   const[celebrate,setCelebrate]=useState(false);
-  const tmrRef=useRef(null);
   const tc=item.timer?.color||"#E89B89";
   const secsLeft=item.timer?.on?clockLeft(item.time,item.timer.min):(item.timer?.min||5)*60;
-  const autoRun=item.timer?.on&&secsLeft<item.timer?.min*60;
   const allDone=item.steps.length>0&&item.steps.every(s=>local[s.id]);
-  useEffect(()=>{if(allDone&&item.steps.length>0){setCelebrate(true);setTimeout(()=>setCelebrate(false),2800);}},[allDone]);
-  useEffect(()=>{if(showTmr&&tmrRef.current){setTimeout(()=>tmrRef.current?.scrollIntoView({behavior:"smooth",block:"center"}),60);}},[showTmr]);
-  const toggle=id=>{const n={...local,[id]:!local[id]};setLocal(n);onCheck&&onCheck(item.id,n);};
+  useEffect(()=>{setLocal(stepsDone||{});},[stepsDone]);
+  useEffect(()=>{if(allDone&&item.steps.length>0&&!readOnly){setCelebrate(true);setTimeout(()=>setCelebrate(false),2800);}},[allDone,readOnly]);
+  const toggle=id=>{
+    if(readOnly) return;
+    const n={...local,[id]:!local[id]};
+    setLocal(n);
+    onCheck&&onCheck(item.id,n);
+  };
   return(
     <>
       {celebrate&&<Confetti/>}
-      {fullTmr&&<FullTimer type={item.timer.type} totalSec={secsLeft} color={tc} t={t} autoRun={autoRun} onClose={()=>setFullTmr(false)}/>}
+      {fullTmr&&<FullTimer type={item.timer.type} totalSec={secsLeft} color={tc} t={t} autoRun={true} onClose={()=>setFullTmr(false)} activity={item}/>}
       <Overlay onClose={onClose}>
         <Sheet scroll>
-          <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:18}}>
+          <style>{`
+            @keyframes adSection{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+          `}</style>
+          <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:26,animation:"adSection 0.5s 0.08s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
             <div style={{fontSize:46,lineHeight:1,padding:14,borderRadius:18,background:`linear-gradient(140deg,${item.color}1A,${item.color}30)`,border:`1px solid ${item.color}25`}}>{item.emoji}</div>
             <div style={{flex:1,paddingTop:4}}>
-              <div style={{fontFamily:G.serif,fontWeight:600,fontSize:23,color:G.ink,lineHeight:1.1,letterSpacing:-.3}}>{item.name}</div>
-              <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:item.color,marginTop:6}}>{item.time}</div>
+              <div style={{fontFamily:G.serif,fontWeight:500,fontSize:25,color:G.ink,lineHeight:1.05,letterSpacing:-.5}}>{item.name}</div>
+              <div style={{fontFamily:G.font,fontWeight:500,fontSize:12,color:item.color,marginTop:7,letterSpacing:.4}}>{fmtT(item.time,t)}</div>
             </div>
-            <button onClick={onClose} style={{width:36,height:36,borderRadius:12,border:`1px solid ${G.border}`,background:G.cream,color:G.ink2,fontSize:16,cursor:"pointer"}}>✕</button>
+            <button onClick={onClose} className="lt-press" style={{width:36,height:36,borderRadius:12,border:`1px solid ${G.border}`,background:G.cream,color:G.ink2,fontSize:16,cursor:"pointer"}}>✕</button>
           </div>
+          {readOnly&&(
+            <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:12,background:`${item.color}10`,border:`1px solid ${item.color}25`,marginBottom:18,animation:"adSection 0.5s 0.16s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+              <div style={{width:6,height:6,borderRadius:"50%",background:item.color,flexShrink:0}}/>
+              <span style={{fontFamily:G.font,fontWeight:500,fontSize:12.5,color:G.ink2,letterSpacing:.2,lineHeight:1.3}}>{t.notTodayHint}</span>
+            </div>
+          )}
           {item.steps.length>0&&(
-            <div style={{marginBottom:22}}>
-              <SLabel>📋 {t.steps}</SLabel>
-              {item.steps.map(s=>{const done=!!local[s.id];return(
-                <div key={s.id} onClick={()=>toggle(s.id)} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",borderRadius:14,cursor:"pointer",marginBottom:8,transition:"all .22s",background:done?`${item.color}10`:G.cream,border:`1px solid ${done?item.color:G.border}`}}>
-                  <div style={{width:26,height:26,borderRadius:"50%",flexShrink:0,border:`2px solid ${done?item.color:G.ink3}`,background:done?item.color:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .22s"}}>{done&&<span style={{color:"#fff",fontSize:13,fontWeight:900}}>✓</span>}</div>
+            <div style={{marginBottom:22,animation:"adSection 0.5s 0.22s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+              <SLabel>{t.steps}</SLabel>
+              {item.steps.map((s,si)=>{const done=!!local[s.id];return(
+                <div key={s.id} onClick={()=>toggle(s.id)} className={readOnly?"":"lt-press-soft"} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",borderRadius:14,cursor:readOnly?"default":"pointer",marginBottom:8,transition:"background .28s cubic-bezier(0.32, 0.72, 0, 1), border-color .28s cubic-bezier(0.32, 0.72, 0, 1), transform .26s cubic-bezier(0.32, 0.72, 0, 1)",background:done?`${item.color}10`:G.cream,border:`1px solid ${done?item.color:G.border}`,opacity:readOnly?0.72:1,animation:`adSection 0.45s ${0.28+si*0.06}s cubic-bezier(0.32, 0.72, 0, 1) both`}}>
+                  <div style={{width:26,height:26,borderRadius:"50%",flexShrink:0,border:`2px solid ${done?item.color:G.ink3}`,background:done?item.color:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .3s cubic-bezier(0.34, 1.56, 0.64, 1)"}}>{done&&<span style={{color:"#fff",fontSize:13,fontWeight:900}}>✓</span>}</div>
                   <span style={{fontSize:20}}>{s.emoji}</span>
-                  <span style={{fontFamily:G.font,fontWeight:600,fontSize:15,flex:1,color:done?item.color:G.ink,textDecoration:done?"line-through":"none"}}>{s.text}</span>
+                  <span style={{fontFamily:G.font,fontWeight:600,fontSize:15,flex:1,color:done?item.color:G.ink,textDecoration:done?"line-through":"none",transition:"color .25s ease"}}>{s.text}</span>
                 </div>
               );})}
-              {allDone&&<div style={{padding:16,borderRadius:14,textAlign:"center",background:`linear-gradient(135deg,${SCREENS.home.hl},${SCREENS.emotion.hl})`,border:`1px solid ${SCREENS.emotion.h}44`}}><div style={{fontSize:38}}>🌟</div><div style={{fontFamily:G.serif,fontWeight:600,fontSize:18,color:SCREENS.emotion.deep,marginTop:6}}>{t.allDoneMsg}</div></div>}
+              {allDone&&!readOnly&&(
+                <div style={{display:"flex",justifyContent:"center",padding:"4px 0 8px"}}>
+                  <style>{`
+                    @keyframes ckStarBounce{0%{opacity:0;transform:scale(0) translateY(-10px)}55%{opacity:1;transform:scale(1.15) translateY(0)}75%{transform:scale(0.96) translateY(0)}100%{transform:scale(1) translateY(0)}}
+                  `}</style>
+                  <div style={{width:78,height:78,animation:"ckStarBounce 0.7s cubic-bezier(.34,1.56,.64,1) both",filter:`drop-shadow(0 8px 18px ${item.color}55) drop-shadow(0 2px 5px rgba(31,27,46,0.12))`}}>
+                    <svg width="78" height="78" viewBox="0 0 88 88" style={{display:"block"}}>
+                      <defs>
+                        <radialGradient id="ckStarFill" cx="38%" cy="28%" r="80%">
+                          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.75"/>
+                          <stop offset="30%" stopColor={item.color}/>
+                          <stop offset="100%" stopColor={item.color}/>
+                        </radialGradient>
+                      </defs>
+                      <path
+                        d="M 44,14 L 51.64,33.49 L 72.53,34.73 L 56.36,48.02 L 61.63,68.27 L 44,57 L 26.37,68.27 L 31.64,48.02 L 15.47,34.73 L 36.36,33.49 Z"
+                        fill="url(#ckStarFill)"
+                        stroke={item.color}
+                        strokeWidth="8"
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {item.timer?.on&&(<>
-            <div style={{height:1,background:G.border,marginBottom:18}}/>
-            {!showTmr?(
-              <button onClick={()=>setShowTmr(true)} style={{width:"100%",padding:"16px 0",borderRadius:16,border:"none",background:`linear-gradient(140deg,${tc},${tc}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(tc)}}>{TICON[item.timer.type]} &nbsp;{t.openTimer} · {item.timer.min} {t.min}</button>
-            ):(
-              <div ref={tmrRef} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
-                <TimerComp type={item.timer.type} totalSec={secsLeft} color={tc} t={t} autoRun={autoRun} size={210}/>
-                <button onClick={()=>setFullTmr(true)} style={{padding:"10px 28px",borderRadius:14,border:`1px solid ${G.border}`,background:G.cream,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer"}}>⤢ {t.enlarge}</button>
-              </div>
-            )}
+            <div style={{height:1,background:G.border,marginBottom:18,animation:"adSection 0.5s 0.42s cubic-bezier(0.32, 0.72, 0, 1) both"}}/>
+            <button onClick={()=>!readOnly&&setFullTmr(true)} disabled={readOnly} className={readOnly?"":"lt-press-soft"} style={{width:"100%",padding:"16px 0",borderRadius:16,border:"none",background:readOnly?`linear-gradient(140deg,${tc}50,${tc}38)`:`linear-gradient(140deg,${tc},${tc}DC)`,color:readOnly?"rgba(255,255,255,0.7)":"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:readOnly?"default":"pointer",boxShadow:readOnly?"none":sh.c(tc),opacity:readOnly?0.65:1,animation:"adSection 0.55s 0.5s cubic-bezier(0.32, 0.72, 0, 1) both",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:9}}><TimerIcon type={item.timer.type} size={18} color={readOnly?"rgba(255,255,255,0.7)":"#fff"}/><span>{t.openTimer} · {item.timer.min} {t.min}</span></button>
           </>)}
         </Sheet>
       </Overlay>
@@ -1179,7 +1844,7 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
   const[epage,setEpage]=useState(0);
   const pp=40, esl=EMOJIS.slice(epage*pp,(epage+1)*pp);
   const addStep=()=>{if(!stepTxt.trim())return;setSteps(s=>[...s,{id:Date.now(),emoji:stepEmoji,text:stepTxt.trim()}]);setStepTxt("");};
-  const buildSaved=()=>({id:item?.id||Date.now(),name:name||"(Utan namn)",time,endTime:endTime||undefined,emoji,photo,color,done:false,stepsDone:{},steps,timer:{on:timerOn,type:timerType,min:timerMin,color:timerCol},repeat});
+  const buildSaved=()=>({id:item?.id||Date.now(),name:name||(t?.noName||"(Utan namn)"),time,endTime:endTime||undefined,emoji,photo,color,done:false,stepsDone:{},steps,timer:{on:timerOn,type:timerType,min:timerMin,color:timerCol},repeat});
   const findConflicts=()=>{
     const newStart=hm(time);
     const newEnd=endTime?hm(endTime):newStart;
@@ -1207,7 +1872,7 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
   return(
     <Overlay onClose={onClose}>
       <Sheet scroll>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:21,color:G.ink,marginBottom:22}}>{item?.id?"Redigera aktivitet":"Ny aktivitet"}</div>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:28,letterSpacing:-.5,lineHeight:1.1}}>{item?.id?"Redigera aktivitet":"Ny aktivitet"}</div>
 
         <SLabel>{t.cardImage}</SLabel>
         <div style={{display:"flex",gap:12,marginBottom:18,alignItems:"flex-start"}}>
@@ -1247,23 +1912,23 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
           {Array.from({length:Math.ceil(EMOJIS.length/pp)}).map((_,i)=><button key={i} onClick={()=>setEpage(i)} style={{padding:"3px 10px",borderRadius:8,fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",border:`1px solid ${i===epage?S.h:G.border}`,background:i===epage?S.h:"transparent",color:i===epage?"#fff":G.ink2}}>{i+1}</button>)}
         </div>
         <SLabel>{t.actName}</SLabel>
-        <input value={name} onChange={e=>setName(e.target.value)} style={INP} placeholder="t.ex. Frukost"/>
+        <input value={name} onChange={e=>setName(e.target.value)} className="lt-input" style={INP} placeholder="t.ex. Frukost"/>
         <SLabel>{t.actTime}</SLabel>
         <div style={{display:"flex",gap:10,marginBottom:16}}>
           <div style={{flex:1}}>
             <div style={{fontFamily:G.font,fontWeight:500,fontSize:10,color:G.ink3,letterSpacing:.5,marginBottom:4}}>Start</div>
-            <input type="time" value={time} onChange={e=>setTime(e.target.value)} style={{...INP,marginBottom:0}}/>
+            <input type="time" value={time} onChange={e=>setTime(e.target.value)} className="lt-input" style={{...INP,marginBottom:0}}/>
           </div>
           <div style={{flex:1}}>
             <div style={{fontFamily:G.font,fontWeight:500,fontSize:10,color:G.ink3,letterSpacing:.5,marginBottom:4}}>Slut (frivilligt)</div>
-            <input type="time" value={endTime} onChange={e=>setEndTime(e.target.value)} style={{...INP,marginBottom:0}}/>
+            <input type="time" value={endTime} onChange={e=>setEndTime(e.target.value)} className="lt-input" style={{...INP,marginBottom:0}}/>
           </div>
         </div>
         <SLabel>{t.pickColor}</SLabel>
         <div style={{display:"flex",gap:9,marginBottom:22,flexWrap:"wrap"}}>
           {ACT_C.map(col=><div key={col} onClick={()=>setColor(col)} style={{width:32,height:32,borderRadius:"50%",background:col,cursor:"pointer",outline:color===col?`3px solid ${col}`:"none",outlineOffset:2,boxShadow:color===col?sh.c(col):"none"}}/>)}
         </div>
-        <SLabel>🔁 Upprepa</SLabel>
+        <SLabel>Upprepa</SLabel>
         <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:7,marginBottom:10}}>
           {[
             {k:"none",l:"Endast idag"},
@@ -1293,7 +1958,7 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
         ))}
         <div style={{display:"flex",gap:7,marginBottom:22}}>
           <button onClick={()=>setShowStepE(true)} style={{fontSize:22,border:`1px solid ${G.border}`,borderRadius:11,padding:"6px 12px",background:G.white,cursor:"pointer",minWidth:50}}>{stepEmoji}</button>
-          <input value={stepTxt} onChange={e=>setStepTxt(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addStep()} style={{...INP,marginBottom:0,flex:1}} placeholder={t.stepPH}/>
+          <input value={stepTxt} onChange={e=>setStepTxt(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addStep()} className="lt-input" style={{...INP,marginBottom:0,flex:1}} placeholder={t.stepPH}/>
           <button onClick={addStep} style={{padding:"0 16px",borderRadius:12,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,cursor:"pointer",fontSize:18}}>+</button>
         </div>
         {showStepE&&(
@@ -1318,7 +1983,7 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
             <div style={{fontFamily:G.font,fontSize:12,color:SCREENS.timer.deep,background:SCREENS.timer.hl,borderRadius:10,padding:"8px 12px",marginBottom:14}}>⏰ {t.autoTimer}</div>
             <SLabel>{t.timerType}</SLabel>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:16}}>
-              {TTYPES.map(k=><button key={k} onClick={()=>setTType(k)} style={{padding:"12px 4px",borderRadius:13,border:"1px solid",fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",borderColor:timerType===k?timerCol:G.border,background:timerType===k?timerCol:"transparent",color:timerType===k?"#fff":G.ink2}}><div style={{fontSize:18}}>{TICON[k]}</div><div style={{marginTop:4}}>{tlbl(k,t)}</div></button>)}
+              {TTYPES.map(k=><button key={k} onClick={()=>setTType(k)} style={{padding:"14px 4px 10px",borderRadius:13,border:"1px solid",fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",borderColor:timerType===k?timerCol:G.border,background:timerType===k?timerCol:"transparent",color:timerType===k?"#fff":G.ink2,display:"flex",flexDirection:"column",alignItems:"center",gap:6,transition:"all .2s"}}><TimerIcon type={k} size={18} color={timerType===k?"#fff":G.ink2}/><div>{tlbl(k,t)}</div></button>)}
             </div>
             <SLabel>{t.timerMin}</SLabel>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
@@ -1344,8 +2009,8 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
             <Sheet>
               <div style={{textAlign:"center",marginBottom:18}}>
                 <div style={{width:64,height:64,borderRadius:20,background:"linear-gradient(140deg,#FEF3E7,#FDE6D0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,margin:"0 auto 14px"}}>⚠️</div>
-                <div style={{fontFamily:G.serif,fontWeight:600,fontSize:21,color:G.ink,letterSpacing:-.2,marginBottom:6}}>Tidskrock</div>
-                <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.45,maxWidth:320,margin:"0 auto"}}>Den nya aktiviteten {time}{endTime?` – ${endTime}`:""} överlappar:</div>
+                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:24,color:G.ink,letterSpacing:-.4,marginBottom:8,lineHeight:1.1}}>{t.overlapTitle}</div>
+                <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.45,maxWidth:320,margin:"0 auto"}}>{(t.overlapDesc||"Den nya aktiviteten {t} överlappar:").replace("{t}",`${fmtT(time,t)}${endTime?` – ${fmtT(endTime,t)}`:""}`)}</div>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:18}}>
                 {conflicts.map(a=>(
@@ -1353,14 +2018,14 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
                     <div style={{width:42,height:42,borderRadius:12,background:`linear-gradient(140deg,${a.color}25,${a.color}40)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{a.emoji}</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontFamily:G.serif,fontWeight:600,fontSize:15,color:G.ink,lineHeight:1.2}}>{a.name}</div>
-                      <div style={{fontFamily:G.font,fontSize:12,color:a.color,fontWeight:600,marginTop:2,letterSpacing:.3}}>{a.time}{a.endTime?` – ${a.endTime}`:""}</div>
+                      <div style={{fontFamily:G.font,fontSize:12,color:a.color,fontWeight:600,marginTop:2,letterSpacing:.3}}>{fmtT(a.time,t)}{a.endTime?` – ${fmtT(a.endTime,t)}`:""}</div>
                     </div>
                   </div>
                 ))}
               </div>
               <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>setConflicts(null)} style={{flex:1,...GHOST}}>Gå tillbaka</button>
-                <button onClick={confirmConflictSave} style={{flex:1,padding:"13px 0",borderRadius:14,border:"none",background:"#F59E42",color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:"0 4px 12px rgba(245,158,66,0.35)"}}>Spara ändå</button>
+                <button onClick={()=>setConflicts(null)} style={{flex:1,...GHOST}}>{t.goBack}</button>
+                <button onClick={confirmConflictSave} style={{flex:1,padding:"13px 0",borderRadius:14,border:"none",background:"#F59E42",color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:"0 4px 12px rgba(245,158,66,0.35)"}}>{t.saveAnyway}</button>
               </div>
             </Sheet>
           </Overlay>
@@ -1371,10 +2036,16 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
 }
 
 /* ═══ Settings ═══ */
-function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor}){
+function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onOpenDemo}){
   const[cs,setCs]=useState(cfg.cardStyle);
   const[sv,setSv]=useState(cfg.schedView);
   const[sig,setSig]=useState(cfg.showSigvard);
+  const[wc,setWc]=useState(()=>{
+    const base=Array.isArray(cfg.weekColors)?cfg.weekColors:SIGVARD0;
+    // Ensure 7 entries — fall back to SIGVARD0 for any missing index
+    return [0,1,2,3,4,5,6].map(i=>base[i]||SIGVARD0[i]);
+  });
+  const[expDay,setExpDay]=useState(null);
   const[tools,setTools]=useState({...cfg.tools});
   const[tc,setTc]=useState({...cfg.timerCfg});
   const[vEmos,setVEmos]=useState([...(cfg.visibleEmotions||[1,2,3,4,5])]);
@@ -1384,13 +2055,16 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor}){
   const[err,setErr]=useState("");
   const copy=()=>{navigator.clipboard?.writeText(shareCode).catch(()=>{});setCp(true);setTimeout(()=>setCp(false),2200);};
   const conn=()=>{const c=code.toUpperCase().trim();if(SYNC_DB[c]){setCfg(x=>({...x,childCode:c,isChild:true}));onClose();}else setErr(t.wrongCode);};
-  const save=()=>{setCfg(x=>({...x,cardStyle:cs,schedView:sv,showSigvard:sig,tools,timerCfg:tc,visibleEmotions:vEmos}));onClose();};
+  const save=()=>{setCfg(x=>({...x,cardStyle:cs,schedView:sv,showSigvard:sig,weekColors:wc,tools,timerCfg:tc,visibleEmotions:vEmos}));onClose();};
+  // Display order Mon→Sun mapped to JS day index (0=Sun)
+  const DAY_ORDER=[1,2,3,4,5,6,0];
+  const dayLabel=jsDay=>{const map=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];return t[map[jsDay]];};
   const S=SCREENS.home;
-  const TOOLLIST=[{k:"timer",i:"⏱",l:t.toolsTimer,s:SCREENS.timer},{k:"stories",i:"📖",l:t.stories,s:SCREENS.stories},{k:"emotion",i:"😊",l:t.toolsEmotion,s:SCREENS.emotion},{k:"calm",i:"🌿",l:t.calm,s:SCREENS.calm},{k:"comm",i:"💬",l:t.comm,s:SCREENS.comm},{k:"idcard",i:"🪪",l:t.idcard,s:SCREENS.idcard}];
+  const TOOLLIST=[{k:"week",t:"week",l:t.week,s:SCREENS.week},{k:"timer",t:"timer",l:t.toolsTimer,s:SCREENS.timer},{k:"stories",t:"stories",l:t.stories,s:SCREENS.stories},{k:"emotion",t:"emotion",l:t.toolsEmotion,s:SCREENS.emotion},{k:"calm",t:"calm",l:t.calm,s:SCREENS.calm},{k:"comm",t:"comm",l:t.comm,s:SCREENS.comm},{k:"idcard",t:"idcard",l:t.idcard,s:SCREENS.idcard}];
   return(
     <Overlay onClose={save}>
       <Sheet scroll>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:21,color:G.ink,marginBottom:24}}>⚙️ {t.settings}</div>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:30,letterSpacing:-.5,lineHeight:1.05}}>{t.settings}</div>
         <SLabel>{t.cardStyle}</SLabel>
         <div style={{display:"flex",gap:7,marginBottom:22}}>
           {[["normal",t.styleNormal],["compact",t.styleCompact],["big",t.styleBig]].map(([k,lb])=><button key={k} onClick={()=>setCs(k)} style={{flex:1,padding:"12px 0",borderRadius:13,border:`1px solid ${cs===k?S.h:G.border}`,background:cs===k?S.h:"transparent",color:cs===k?"#fff":G.ink2,fontFamily:G.font,fontWeight:600,cursor:"pointer",fontSize:13}}>{lb}</button>)}
@@ -1403,12 +2077,50 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor}){
           <Toggle on={sig} onChange={()=>setSig(s=>!s)} color="#E94040"/>
           <div><div style={{fontFamily:G.font,fontWeight:700,fontSize:14,color:G.ink}}>💡 {t.sigvardOn}</div><div style={{fontFamily:G.font,fontSize:12,color:G.ink2,marginTop:2}}>Röda lampor · tid till nästa aktivitet</div></div>
         </div>
+
+        {/* Day color editor — Sigvard weekday colours */}
+        <div style={{marginBottom:24}}>
+          <SLabel>{t.dayColors}</SLabel>
+          <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:"#9892AA",marginTop:-8,marginBottom:14,letterSpacing:.1,lineHeight:1.4}}>{t.dayColorsHint}</div>
+          <div style={{background:G.cream,borderRadius:16,border:`1px solid ${G.border}`,overflow:"hidden"}}>
+            {DAY_ORDER.map((jsDay,idx)=>{
+              const isOpen=expDay===jsDay;
+              const color=wc[jsDay]||SIGVARD0[jsDay];
+              return(
+                <div key={jsDay} style={{borderBottom:idx===6?"none":`1px solid ${G.border}`,background:isOpen?G.white:"transparent",transition:"background .3s ease"}}>
+                  <div onClick={()=>setExpDay(isOpen?null:jsDay)} className="lt-press-soft" style={{display:"flex",alignItems:"center",gap:14,padding:"12px 14px",cursor:"pointer"}}>
+                    <div style={{width:28,height:28,borderRadius:14,background:color,border:`1px solid ${color==="#FFFFFF"||color==="#F5F2EE"?"rgba(31,27,46,0.18)":"rgba(31,27,46,0.08)"}`,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.5)",flexShrink:0,transition:"transform .25s cubic-bezier(0.34, 1.56, 0.64, 1)",transform:isOpen?"scale(1.08)":"scale(1)"}}/>
+                    <span style={{flex:1,fontFamily:G.font,fontWeight:500,fontSize:14,color:G.ink,letterSpacing:.1}}>{dayLabel(jsDay)}</span>
+                    <span style={{fontFamily:G.font,fontSize:11,color:"#9892AA",transition:"transform .3s ease",transform:isOpen?"rotate(180deg)":"rotate(0deg)",display:"inline-block"}}>⌄</span>
+                  </div>
+                  {isOpen&&(
+                    <div style={{padding:"4px 14px 14px",animation:"adSection 0.35s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                        {DAY_PALETTE.map(c=>{
+                          const selected=c.toLowerCase()===color.toLowerCase();
+                          const isLight=c==="#FFFFFF"||c==="#F5F2EE";
+                          return(
+                            <button key={c} onClick={()=>{setWc(prev=>prev.map((x,i)=>i===jsDay?c:x));setTimeout(()=>setExpDay(null),200);}} className="lt-press" style={{width:34,height:34,borderRadius:17,background:c,border:selected?`2px solid ${G.ink}`:`1px solid ${isLight?"rgba(31,27,46,0.22)":"rgba(31,27,46,0.1)"}`,boxShadow:selected?`0 4px 12px ${c}66, inset 0 1px 0 rgba(255,255,255,0.5)`:"inset 0 1px 0 rgba(255,255,255,0.5)",cursor:"pointer",padding:0,transition:"transform .2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .2s ease, border .2s ease"}}/>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <button onClick={()=>{setWc([...SIGVARD0]);setExpDay(null);}} className="lt-press" style={{marginTop:12,padding:"8px 14px",borderRadius:11,border:`1px solid ${G.border}`,background:"transparent",color:G.ink2,fontFamily:G.font,fontWeight:500,fontSize:12,cursor:"pointer",letterSpacing:.2}}>{t.resetColors}</button>
+        </div>
         <div style={{background:G.cream,borderRadius:16,padding:18,border:`1px solid ${G.border}`,marginBottom:18}}>
           <SLabel>{t.visibleTools}</SLabel>
-          {TOOLLIST.map(tool=>(
-            <div key={tool.k} style={{display:"flex",alignItems:"center",gap:12,paddingBottom:11,marginBottom:11,borderBottom:`1px solid ${G.border}`}}>
+          {TOOLLIST.map((tool,idx)=>(
+            <div key={tool.k} style={{display:"flex",alignItems:"center",gap:14,paddingBottom:13,marginBottom:13,borderBottom:idx===TOOLLIST.length-1?"none":`1px solid ${G.border}`}}>
               <Toggle on={tools[tool.k]} color={tool.s.h} onChange={()=>setTools(tv=>({...tv,[tool.k]:!tv[tool.k]}))}/>
-              <span style={{fontFamily:G.font,fontWeight:600,color:G.ink,fontSize:14}}>{tool.i} {tool.l}</span>
+              <div style={{width:34,height:34,borderRadius:11,background:`linear-gradient(140deg, ${tool.s.h}1F, ${tool.s.h}33)`,border:`1px solid ${tool.s.h}30`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.5)`}}>
+                <NavIcon type={tool.t} active={true} color={tool.s.deep} size={20}/>
+              </div>
+              <span style={{fontFamily:G.font,fontWeight:500,color:G.ink,fontSize:14,letterSpacing:.1,flex:1}}>{tool.l}</span>
             </div>
           ))}
         </div>
@@ -1417,11 +2129,11 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor}){
             <SLabel>{t.timerSettings}</SLabel>
             <SLabel>{t.allowedTimers}</SLabel>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}}>
-              {TTYPES.map(k=>{const on=tc.allowedTypes.includes(k);return <button key={k} onClick={()=>setTc(x=>({...x,allowedTypes:on?x.allowedTypes.filter(a=>a!==k):[...x.allowedTypes,k]}))} style={{padding:"12px 4px",borderRadius:13,border:"1px solid",fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",borderColor:on?SCREENS.timer.h:G.border,background:on?SCREENS.timer.hl:"transparent",color:on?SCREENS.timer.deep:G.ink2}}><div style={{fontSize:18}}>{TICON[k]}</div><div style={{marginTop:4}}>{tlbl(k,t)}</div></button>;})}
+              {TTYPES.map(k=>{const on=tc.allowedTypes.includes(k);return <button key={k} onClick={()=>setTc(x=>({...x,allowedTypes:on?x.allowedTypes.filter(a=>a!==k):[...x.allowedTypes,k]}))} style={{padding:"14px 4px 10px",borderRadius:13,border:"1px solid",fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",borderColor:on?SCREENS.timer.h:G.border,background:on?SCREENS.timer.hl:"transparent",color:on?SCREENS.timer.deep:G.ink2,display:"flex",flexDirection:"column",alignItems:"center",gap:6,transition:"all .2s"}}><TimerIcon type={k} size={20} color={on?SCREENS.timer.deep:G.ink2}/><div>{tlbl(k,t)}</div></button>;})}
             </div>
             <SLabel>{t.defaultTimer}</SLabel>
             <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
-              {tc.allowedTypes.map(k=><button key={k} onClick={()=>setTc(x=>({...x,defaultType:k}))} style={{padding:"7px 13px",borderRadius:11,border:"1px solid",fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",borderColor:tc.defaultType===k?SCREENS.timer.h:G.border,background:tc.defaultType===k?SCREENS.timer.h:"transparent",color:tc.defaultType===k?"#fff":G.ink2}}>{TICON[k]} {tlbl(k,t)}</button>)}
+              {tc.allowedTypes.map(k=><button key={k} onClick={()=>setTc(x=>({...x,defaultType:k}))} style={{padding:"7px 12px 7px 10px",borderRadius:11,border:"1px solid",fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",borderColor:tc.defaultType===k?SCREENS.timer.h:G.border,background:tc.defaultType===k?SCREENS.timer.h:"transparent",color:tc.defaultType===k?"#fff":G.ink2,display:"flex",alignItems:"center",gap:6,transition:"all .2s"}}><TimerIcon type={k} size={14} color={tc.defaultType===k?"#fff":G.ink2}/>{tlbl(k,t)}</button>)}
             </div>
           </div>
         )}
@@ -1451,7 +2163,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor}){
             <div style={{fontFamily:G.font,fontSize:12,color:G.ink2,marginBottom:14}}>{t.codeHint}</div>
             <SLabel>{t.enterCode}</SLabel>
             <div style={{display:"flex",gap:7}}>
-              <input value={code} onChange={e=>setCode(e.target.value.toUpperCase())} maxLength={4} placeholder="AB3X" style={{...INP,marginBottom:0,textAlign:"center",fontFamily:G.serif,fontWeight:600,fontSize:20,letterSpacing:4,flex:1}}/>
+              <input value={code} onChange={e=>setCode(e.target.value.toUpperCase())} maxLength={4} placeholder="AB3X" className="lt-input" style={{...INP,marginBottom:0,textAlign:"center",fontFamily:G.serif,fontWeight:600,fontSize:20,letterSpacing:4,flex:1}}/>
               <button onClick={conn} style={{padding:"0 16px",borderRadius:12,border:"none",background:SCREENS.emotion.h,color:"#fff",fontFamily:G.font,fontWeight:700,cursor:"pointer"}}>{t.connect}</button>
             </div>
             {err&&<div style={{color:"#EF4444",fontFamily:G.font,fontSize:12,marginTop:6}}>{err}</div>}
@@ -1460,11 +2172,23 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor}){
         <button onClick={save} style={{marginTop:20,width:"100%",padding:"15px 0",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h)}}>{t.save}</button>
 
         {/* Caregiver demo entry */}
+        {onOpenDemo&&(
+          <div style={{marginTop:32,paddingTop:24,borderTop:`1px solid ${G.border}`}}>
+            <SLabel>{lang==="sv"?"Demo":"Demo"}</SLabel>
+            <div style={{fontFamily:G.font,fontSize:12,color:G.ink2,marginBottom:10,lineHeight:1.4}}>
+              {lang==="sv"?"En filmisk rundtur av Lumas verktyg. ~60 sekunder.":"A cinematic tour of Luma's features. ~60 seconds."}
+            </div>
+            <button onClick={onOpenDemo} style={{width:"100%",padding:"13px 0",borderRadius:13,border:"none",background:"linear-gradient(135deg,#1F1B2E,#3A3450)",color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:"0 8px 18px rgba(31,27,46,0.18)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              ▶ {lang==="sv"?"Visa demo":"Play demo"}
+            </button>
+          </div>
+        )}
+
         {onOpenSupervisor&&(
           <div style={{marginTop:32,paddingTop:24,borderTop:`1px solid ${G.border}`}}>
             <SLabel>{lang==="sv"?"Stödperson":"Caregiver"}</SLabel>
             <div style={{fontFamily:G.font,fontSize:12,color:G.ink2,marginBottom:10,lineHeight:1.4}}>
-              {lang==="sv"?"Förhandstitt på webbredaktören där pedagoger hanterar flera klienter på distans.":"Preview of the web editor where caregivers manage multiple clients remotely."}
+              {lang==="sv"?"Förhandstitt på webbverktyget där pedagoger hanterar flera klienter på distans.":"Preview of the web tool where caregivers manage multiple clients remotely."}
             </div>
             <button onClick={onOpenSupervisor} style={{width:"100%",padding:"13px 0",borderRadius:13,border:"none",background:`linear-gradient(135deg,${S.h},${S.deep})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:sh.c(S.h),display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
               🧑‍⚕️ {lang==="sv"?"Öppna stödpersonsvy":"Open caregiver view"}
@@ -1492,65 +2216,81 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor}){
 }
 
 /* ═══ Communication board ═══ */
-function CommBoard({lang,t,isEditor}){
-  const[cats,setCats]=usePersistentState("commCats",COMM0);
-  const[sel,setSel]=useState(0);
+function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
   const[spoken,setSpoken]=useState(null);
-  const[addC,setAddC]=useState(false);
-  const[addK,setAddK]=useState(false);
-  const[editCatId,setEditCatId]=useState(null);
-  const[editCatName,setEditCatName]=useState("");
-  const[newCN,setNewCN]=useState("");
-  const[newKE,setNewKE]=useState("😊");
-  const[newKT,setNewKT]=useState("");
-  const[newKP,setNewKP]=useState(null);
-  const[cepage,setCEpage]=useState(0);
-  const pp=40;
-  const fileRef=useRef(null);
+  const tabBarRef=useRef(null);
+  // When selection changes (e.g. after adding a new category), scroll the tab-bar
+  // horizontally so the active category is visible — otherwise new cats hide off-screen
+  useEffect(()=>{
+    if(!tabBarRef.current) return;
+    const bar=tabBarRef.current;
+    const activeBtn=bar.children[sel];
+    if(!activeBtn) return;
+    const left=activeBtn.offsetLeft;
+    const right=left+activeBtn.offsetWidth;
+    const viewLeft=bar.scrollLeft;
+    const viewRight=viewLeft+bar.clientWidth;
+    if(right>viewRight) bar.scrollTo({left:right-bar.clientWidth+12,behavior:"smooth"});
+    else if(left<viewLeft) bar.scrollTo({left:Math.max(0,left-12),behavior:"smooth"});
+  },[sel,cats.length]);
   const S=SCREENS.comm;
-  const onPhoto=e=>{
-    const f=e.target.files?.[0];
-    if(!f) return;
-    const r=new FileReader();
-    r.onload=()=>{
-      // Downscale to keep state size reasonable
-      const img=new Image();
-      img.onload=()=>{
-        const max=400;
-        const scale=Math.min(1,max/Math.max(img.width,img.height));
-        const w=img.width*scale, h=img.height*scale;
-        const cv=document.createElement("canvas");
-        cv.width=w; cv.height=h;
-        cv.getContext("2d").drawImage(img,0,0,w,h);
-        setNewKP(cv.toDataURL("image/jpeg",0.82));
-      };
-      img.src=r.result;
-    };
-    r.readAsDataURL(f);
-  };
   const speak=card=>{setSpoken(card.id);setTimeout(()=>setSpoken(null),1400);if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(lang==="sv"?card.sv:card.en);u.lang=lang==="sv"?"sv-SE":"en-US";window.speechSynthesis.speak(u);}};
   const cat=cats[sel];
   if(!cat) return null;
   return(
+    <>
     <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:S.hb}}>
-      <div style={{padding:"16px 16px 0",display:"flex",gap:8,overflowX:"auto",alignItems:"center"}}>
+      <div ref={tabBarRef} style={{padding:"16px 16px 0",display:"flex",gap:8,overflowX:"auto",alignItems:"center",scrollBehavior:"smooth"}}>
         {cats.map((c,i)=>{
           const active=sel===i;
           return(
             <div key={c.id} style={{position:"relative",flexShrink:0,paddingTop:isEditor?6:0}}>
-              <button onClick={()=>{if(active&&isEditor){setEditCatId(c.id);setEditCatName(lang==="sv"?c.sv:c.en);}else{setSel(i);}}} style={{padding:"9px 18px",borderRadius:22,border:"1px solid",borderColor:active?c.color:G.border,background:active?c.color:G.white,color:active?"#fff":G.ink2,fontFamily:G.font,fontWeight:700,fontSize:13,cursor:"pointer",whiteSpace:"nowrap",boxShadow:active?sh.c(c.color):sh.xs}}>
-                {lang==="sv"?c.sv:c.en}
-                {active&&isEditor&&<span style={{marginLeft:7,opacity:.75,fontSize:11}}>✏️</span>}
+              <button onClick={()=>{if(active&&isEditor){openModal({type:"editCat",catId:c.id});}else{setSel(i);}}} style={{padding:"9px 18px",borderRadius:22,border:"1px solid",borderColor:active?c.color:G.border,background:active?c.color:G.white,color:active?"#fff":G.ink2,fontFamily:G.font,fontWeight:700,fontSize:13,cursor:"pointer",whiteSpace:"nowrap",boxShadow:active?sh.c(c.color):sh.xs,display:"inline-flex",alignItems:"center",gap:active&&isEditor?6:0}}>
+                <span>{lang==="sv"?c.sv:c.en}</span>
+                {active&&isEditor&&(
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.8}}>
+                    <path d="M11 4 H4 a2 2 0 0 0 -2 2 v14 a2 2 0 0 0 2 2 h14 a2 2 0 0 0 2 -2 v-7"/>
+                    <path d="M18.5 2.5 a2.121 2.121 0 0 1 3 3 L12 15 l-4 1 1 -4 z"/>
+                  </svg>
+                )}
               </button>
               {isEditor&&cats.length>1&&(
-                <button onClick={()=>{setCats(cs=>cs.filter(x=>x.id!==c.id));if(sel>=i&&sel>0)setSel(s=>Math.max(0,s-1));}} style={{position:"absolute",top:0,right:-4,width:20,height:20,borderRadius:"50%",border:`1.5px solid ${G.white}`,background:"#1F1B2E",color:"#fff",fontSize:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,zIndex:2}}>✕</button>
+                <button onClick={e=>{e.stopPropagation();openModal({type:"confirmDel",catId:c.id});}} className="lt-press-soft" style={{position:"absolute",top:-2,right:-6,width:22,height:22,borderRadius:"50%",border:`1.5px solid ${G.white}`,background:"rgba(31,27,46,0.78)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,zIndex:2,boxShadow:"0 2px 6px rgba(31,27,46,0.18)"}}>
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
               )}
             </div>
           );
         })}
-        {isEditor&&<button onClick={()=>setAddC(true)} style={{padding:"8px 14px",borderRadius:22,border:`1px dashed ${G.border2}`,background:"transparent",color:G.ink3,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",flexShrink:0}}>+</button>}
+        {isEditor&&(
+          <button onClick={()=>openModal({type:"addCat"})} className="lt-press-soft" style={{padding:"7px 12px",borderRadius:22,border:`1px dashed ${G.border2}`,background:"transparent",color:G.ink3,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",flexShrink:0,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,height:34}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+        )}
       </div>
       <div style={{flex:1,padding:14,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,overflowY:"auto",alignContent:"start"}}>
+        {cat.cards.length===0&&!isEditor&&(
+          <div style={{gridColumn:"1 / -1",padding:"50px 24px",textAlign:"center"}}>
+            <style>{`@keyframes commEmpty{0%,100%{transform:translateY(0);opacity:0.85}50%{transform:translateY(-3px);opacity:1}}`}</style>
+            <svg width="56" height="56" viewBox="0 0 64 64" style={{display:"block",margin:"0 auto 14px",animation:"commEmpty 4.6s ease-in-out infinite"}}>
+              <rect x="13" y="18" width="38" height="28" rx="6" fill={`${cat.color}14`} stroke={`${cat.color}55`} strokeWidth="1.4"/>
+              <circle cx="22" cy="29" r="3" fill={`${cat.color}99`}/>
+              <path d="M16 40 l8-8 l6 5 l8-10 l8 13" fill="none" stroke={`${cat.color}99`} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:18,color:G.ink,letterSpacing:-.3,lineHeight:1.2,marginBottom:6}}>
+              {lang==="sv"?"Inga kort än":"No cards yet"}
+            </div>
+            <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",lineHeight:1.4}}>
+              {lang==="sv"?`Aktivera redigering för att lägga till kort i "${cat.sv}".`:`Enable editing to add cards to "${cat.en}".`}
+            </div>
+          </div>
+        )}
         {cat.cards.map(card=>{const active=spoken===card.id;return(
           <div key={card.id} style={{position:"relative"}}>
             <div onClick={()=>speak(card)} style={{background:active?cat.color:G.white,borderRadius:20,padding:card.photo?"6px 6px 12px":"20px 8px 16px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:card.photo?6:10,border:`1px solid ${active?cat.color:G.border}`,boxShadow:active?sh.c(cat.color):sh.xs,transform:active?"scale(0.94)":"scale(1)",transition:"all .18s ease"}}>
@@ -1559,83 +2299,386 @@ function CommBoard({lang,t,isEditor}){
                 : <span style={{fontSize:38}}>{card.emoji}</span>}
               <span style={{fontFamily:G.font,fontWeight:700,fontSize:12,textAlign:"center",color:active?"#fff":G.ink,lineHeight:1.2}}>{lang==="sv"?card.sv:card.en}</span>
             </div>
-            {isEditor&&<button onClick={()=>setCats(cs=>cs.map((c,i)=>i!==sel?c:{...c,cards:c.cards.filter(x=>x.id!==card.id)}))} style={{position:"absolute",top:4,right:4,width:22,height:22,borderRadius:"50%",border:"none",background:"rgba(0,0,0,.42)",color:"#fff",fontSize:10,cursor:"pointer"}}>✕</button>}
+            {isEditor&&<button onClick={()=>setCats(cs=>cs.map((c,i)=>i!==sel?c:{...c,cards:c.cards.filter(x=>x.id!==card.id)}))} className="lt-press-soft" style={{position:"absolute",top:5,right:5,width:24,height:24,borderRadius:"50%",border:`1.5px solid ${G.white}`,background:"rgba(31,27,46,0.55)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,zIndex:2,boxShadow:"0 2px 6px rgba(31,27,46,0.18)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)"}}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>}
           </div>
         );})}
-        {isEditor&&<div onClick={()=>{setNewKE("😊");setNewKT("");setNewKP(null);setAddK(true);}} style={{borderRadius:20,padding:"20px 8px 16px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:10,border:`1px dashed ${G.border2}`}}><span style={{fontSize:30,color:G.ink3}}>+</span><span style={{fontFamily:G.font,fontWeight:600,fontSize:11,color:G.ink3}}>{t.addCard}</span></div>}
+        {isEditor&&(
+          <button onClick={()=>openModal({type:"addCard",catIdx:sel})} className="lt-press-soft" style={{borderRadius:20,padding:"22px 8px 18px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:10,border:`1.5px dashed ${cat.color}55`,background:`linear-gradient(140deg, ${cat.color}06, ${cat.color}10)`,color:cat.color,fontFamily:G.font}}>
+            <div style={{width:34,height:34,borderRadius:"50%",background:`${cat.color}1A`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={cat.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </div>
+            <span style={{fontWeight:600,fontSize:11.5,letterSpacing:.1,color:cat.color}}>{t.addCard}</span>
+          </button>
+        )}
       </div>
-      {editCatId&&(
-        <Overlay onClose={()=>setEditCatId(null)}>
-          <Sheet>
-            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:19,color:G.ink,marginBottom:18}}>{t.renameCat}</div>
-            <SLabel>{t.catName}</SLabel>
-            <input value={editCatName} onChange={e=>setEditCatName(e.target.value)} style={INP} autoFocus/>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setEditCatId(null)} style={{flex:1,...GHOST}}>{t.cancel}</button>
-              <button onClick={()=>{if(!editCatName.trim())return;setCats(cs=>cs.map(c=>c.id!==editCatId?c:{...c,sv:editCatName,en:editCatName}));setEditCatId(null);}} style={{flex:2,padding:"13px 0",borderRadius:13,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,cursor:"pointer"}}>{t.save}</button>
-            </div>
-          </Sheet>
-        </Overlay>
-      )}
-      {addC&&(
-        <Overlay onClose={()=>setAddC(false)}>
-          <Sheet>
-            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:19,color:G.ink,marginBottom:18}}>{t.addCat}</div>
-            <SLabel>{t.catName}</SLabel>
-            <input value={newCN} onChange={e=>setNewCN(e.target.value)} style={INP} placeholder="t.ex. Mat"/>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setAddC(false)} style={{flex:1,...GHOST}}>{t.cancel}</button>
-              <button onClick={()=>{if(!newCN.trim())return;setCats(cs=>[...cs,{id:"c"+Date.now(),sv:newCN,en:newCN,color:ACT_C[cs.length%ACT_C.length],cards:[]}]);setSel(cats.length);setNewCN("");setAddC(false);}} style={{flex:2,padding:"13px 0",borderRadius:13,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,cursor:"pointer"}}>{t.save}</button>
-            </div>
-          </Sheet>
-        </Overlay>
-      )}
-      {addK&&(
-        <Overlay onClose={()=>setAddK(false)}>
-          <Sheet scroll>
-            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:19,color:G.ink,marginBottom:18}}>{t.addCard}</div>
-            <SLabel>{t.cardImage}</SLabel>
-            <div style={{display:"flex",gap:10,marginBottom:14}}>
-              {/* Preview */}
-              <div style={{width:72,height:72,borderRadius:14,background:newKP?"transparent":S.hll,border:`1px solid ${G.border}`,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0}}>
-                {newKP ? <img src={newKP} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : <span style={{fontSize:32}}>{newKE}</span>}
-              </div>
-              <div style={{flex:1,display:"flex",flexDirection:"column",gap:7}}>
-                <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{display:"none"}}/>
-                <button onClick={()=>fileRef.current?.click()} style={{padding:"10px 14px",borderRadius:11,border:`1px solid ${S.h}`,background:S.hl,color:S.deep,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer"}}>📷 {t.uploadPhoto}</button>
-                {newKP && <button onClick={()=>setNewKP(null)} style={{padding:"8px 12px",borderRadius:11,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer"}}>↺ {t.useEmoji}</button>}
-              </div>
-            </div>
-            {!newKP&&(<>
-              <SLabel>{t.pickEmoji}</SLabel>
-              <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
-                {EMOJIS.slice(cepage*pp,(cepage+1)*pp).map(e=><button key={e} onClick={()=>setNewKE(e)} style={{fontSize:22,background:newKE===e?S.hl:"transparent",border:newKE===e?`1px solid ${S.h}`:"1px solid transparent",borderRadius:8,padding:"2px 4px",cursor:"pointer"}}>{e}</button>)}
-              </div>
-              <div style={{display:"flex",gap:5,marginBottom:16}}>
-                {Array.from({length:Math.ceil(EMOJIS.length/pp)}).map((_,i)=><button key={i} onClick={()=>setCEpage(i)} style={{padding:"3px 10px",borderRadius:8,fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",border:`1px solid ${i===cepage?S.h:G.border}`,background:i===cepage?S.h:"transparent",color:i===cepage?"#fff":G.ink2}}>{i+1}</button>)}
-              </div>
-            </>)}
-            <SLabel>Text</SLabel>
-            <input value={newKT} onChange={e=>setNewKT(e.target.value)} style={INP} placeholder="t.ex. Vatten"/>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setAddK(false)} style={{flex:1,...GHOST}}>{t.cancel}</button>
-              <button onClick={()=>{if(!newKT.trim())return;setCats(cs=>cs.map((c,i)=>i!==sel?c:{...c,cards:[...c.cards,{id:"cc"+Date.now(),emoji:newKE,photo:newKP,sv:newKT,en:newKT}]}));setNewKT("");setNewKP(null);setAddK(false);}} style={{flex:2,padding:"13px 0",borderRadius:13,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,cursor:"pointer"}}>{t.save}</button>
-            </div>
-          </Sheet>
-        </Overlay>
-      )}
-    </div>
+      </div>
+    </>
   );
 }
 
+/* ═══ Comm modals — rendered at App level to escape body wrapper's overflow:hidden clip ═══ */
+function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
+  const S=SCREENS.comm;
+  const[name,setName]=useState("");
+  const[color,setColor]=useState(ACT_C[0]);
+  const[cardEmoji,setCardEmoji]=useState("😊");
+  const[cardText,setCardText]=useState("");
+  const[cardPhoto,setCardPhoto]=useState(null);
+  const[ePage,setEPage]=useState(0);
+  const fileRef=useRef(null);
+  const pp=40;
+
+  // Initialize fields when modal opens
+  useEffect(()=>{
+    if(!modal) return;
+    if(modal.type==="addCat"){setName("");setColor(ACT_C[0]);}
+    else if(modal.type==="editCat"){
+      const c=cats.find(x=>x.id===modal.catId);
+      if(c){setName(lang==="sv"?c.sv:c.en);setColor(c.color);}
+    }
+    else if(modal.type==="addCard"){
+      setCardEmoji("😊");setCardText("");setCardPhoto(null);setEPage(0);
+    }
+  // eslint-disable-next-line
+  },[modal]);
+
+  if(!modal) return null;
+  const cat=modal.catIdx!=null?cats[modal.catIdx]:(modal.catId?cats.find(c=>c.id===modal.catId):null);
+
+  const onPhoto=e=>{
+    const f=e.target.files?.[0];
+    if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=400;
+        const scale=Math.min(1,max/Math.max(img.width,img.height));
+        const w=img.width*scale, h=img.height*scale;
+        const cv=document.createElement("canvas");
+        cv.width=w; cv.height=h;
+        cv.getContext("2d").drawImage(img,0,0,w,h);
+        setCardPhoto(cv.toDataURL("image/jpeg",0.82));
+      };
+      img.src=r.result;
+    };
+    r.readAsDataURL(f);
+  };
+
+  if(modal.type==="confirmDel"){
+    const delCat=cats.find(c=>c.id===modal.catId);
+    if(!delCat) return null;
+    const delIdx=cats.findIndex(c=>c.id===modal.catId);
+    const cardCount=delCat.cards.length;
+    return(
+      <div onClick={onClose} style={{
+        position:"fixed",inset:0,
+        background:"rgba(31,27,46,0.55)",
+        display:"flex",alignItems:"center",justifyContent:"center",
+        zIndex:9700,padding:24,
+        animation:"ovlIn 0.32s cubic-bezier(0.32, 0.72, 0, 1) both",
+      }}>
+        <div onClick={e=>e.stopPropagation()} style={{
+          maxWidth:360,width:"100%",
+          background:G.white,borderRadius:24,
+          padding:"28px 24px 22px",
+          boxShadow:"0 24px 60px rgba(31,27,46,0.28), 0 6px 16px rgba(31,27,46,0.12)",
+          border:`1px solid ${G.border}`,
+          animation:"asaPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+          textAlign:"center",
+        }}>
+          <style>{`@keyframes asaPop{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}`}</style>
+          <div style={{
+            width:54,height:54,borderRadius:"50%",
+            background:`linear-gradient(140deg, ${delCat.color}22, ${delCat.color}44)`,
+            border:`1px solid ${delCat.color}55`,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            margin:"0 auto 16px",
+          }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={delCat.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6h18"/>
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              <path d="M19 6l-1.2 14a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 6"/>
+            </svg>
+          </div>
+          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.ink,letterSpacing:-.3,lineHeight:1.2,marginBottom:8}}>
+            {lang==="sv"?"Radera kategori?":"Delete category?"}
+          </div>
+          <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:G.ink2,lineHeight:1.45,marginBottom:22}}>
+            {lang==="sv"
+              ? <>Är du säker på att du vill radera <strong style={{color:G.ink,fontWeight:600}}>"{delCat.sv}"</strong>?{cardCount>0&&<> Detta tar också bort {cardCount} {cardCount===1?"kort":"kort"}.</>}</>
+              : <>Are you sure you want to delete <strong style={{color:G.ink,fontWeight:600}}>"{delCat.en}"</strong>?{cardCount>0&&<> This will also remove {cardCount} {cardCount===1?"card":"cards"}.</>}</>}
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={onClose} className="lt-press-soft" style={{flex:1,padding:"13px 0",borderRadius:13,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:14,cursor:"pointer"}}>
+              {t.cancel}
+            </button>
+            <button onClick={()=>{
+              setCats(cs=>cs.filter(x=>x.id!==modal.catId));
+              setSel(s=>{if(s>=delIdx&&s>0)return Math.max(0,s-1);return s;});
+              onClose();
+            }} className="lt-press" style={{flex:1.2,padding:"13px 0",borderRadius:13,border:"none",background:"#D45A5A",color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:"0 8px 20px rgba(212,90,90,0.45), 0 2px 6px rgba(212,90,90,0.25)"}}>
+              {lang==="sv"?"Radera":"Delete"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // editCat
+  if(modal.type==="editCat"){
+    return(
+      <Overlay onClose={onClose}>
+        <Sheet scroll>
+          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:6,letterSpacing:-.5}}>{t.renameCat}</div>
+          <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:G.ink3,marginBottom:24,lineHeight:1.4}}>{lang==="sv"?"Ändra namn och färg.":"Change name and color."}</div>
+          <SLabel>{t.catName}</SLabel>
+          <input value={name} onChange={e=>setName(e.target.value)} className="lt-input" style={INP} autoFocus/>
+          <div style={{height:18}}/>
+          <SLabel>{t.pickColor}</SLabel>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(46px, 1fr))",gap:10,marginBottom:24}}>
+            {ACT_C.map(col=>{
+              const active=color===col;
+              return(
+                <button key={col} onClick={()=>setColor(col)} className="lt-press-soft" style={{
+                  aspectRatio:"1/1",borderRadius:14,background:col,
+                  border:active?`3px solid ${G.ink}`:`1px solid ${col}55`,
+                  boxShadow:active?`0 6px 16px ${col}66`:`0 2px 6px ${col}22`,
+                  cursor:"pointer",
+                  transition:"transform .25s cubic-bezier(0.34, 1.56, 0.64, 1), border-width .2s, box-shadow .2s",
+                  transform:active?"scale(1.05)":"scale(1)",
+                  padding:0,position:"relative",
+                }}>
+                  {active&&(
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.3))"}}>
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{display:"flex",gap:10,marginTop:8}}>
+            <button onClick={onClose} className="lt-press-soft" style={{flex:1,...GHOST}}>{t.cancel}</button>
+            <button onClick={()=>{
+              if(!name.trim())return;
+              setCats(cs=>cs.map(c=>c.id!==modal.catId?c:{...c,sv:name,en:name,color}));
+              onClose();
+            }} className="lt-press" style={{flex:2,padding:"14px 0",borderRadius:14,border:"none",background:color,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:`0 8px 20px ${color}55, 0 2px 6px ${color}33`}}>{t.save}</button>
+          </div>
+        </Sheet>
+      </Overlay>
+    );
+  }
+
+  // addCat
+  if(modal.type==="addCat"){
+    return(
+      <Overlay onClose={onClose}>
+        <Sheet scroll>
+          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:6,letterSpacing:-.5}}>{t.addCat}</div>
+          <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:G.ink3,marginBottom:24,lineHeight:1.4}}>{lang==="sv"?"Skapa en ny kategori för dina kort.":"Create a new category for your cards."}</div>
+          <SLabel>{t.catName}</SLabel>
+          <input value={name} onChange={e=>setName(e.target.value)} className="lt-input" style={INP} placeholder="t.ex. Mat" autoFocus/>
+          <div style={{height:18}}/>
+          <SLabel>{t.pickColor}</SLabel>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(46px, 1fr))",gap:10,marginBottom:24}}>
+            {ACT_C.map(col=>{
+              const active=color===col;
+              return(
+                <button key={col} onClick={()=>setColor(col)} className="lt-press-soft" style={{
+                  aspectRatio:"1/1",borderRadius:14,background:col,
+                  border:active?`3px solid ${G.ink}`:`1px solid ${col}55`,
+                  boxShadow:active?`0 6px 16px ${col}66`:`0 2px 6px ${col}22`,
+                  cursor:"pointer",
+                  transition:"transform .25s cubic-bezier(0.34, 1.56, 0.64, 1), border-width .2s, box-shadow .2s",
+                  transform:active?"scale(1.05)":"scale(1)",
+                  padding:0,position:"relative",
+                }}>
+                  {active&&(
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",filter:"drop-shadow(0 1px 2px rgba(0,0,0,0.3))"}}>
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{display:"flex",gap:10,marginTop:8}}>
+            <button onClick={onClose} className="lt-press-soft" style={{flex:1,...GHOST}}>{t.cancel}</button>
+            <button onClick={()=>{
+              const n=name.trim();
+              if(!n)return;
+              const newId="c"+Date.now();
+              setCats(cs=>{
+                const next=[...cs,{id:newId,sv:n,en:n,color,cards:[]}];
+                setSel(next.length-1);
+                return next;
+              });
+              onClose();
+            }} className="lt-press" style={{flex:2,padding:"14px 0",borderRadius:14,border:"none",background:color,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:`0 8px 20px ${color}55, 0 2px 6px ${color}33`}}>{t.save}</button>
+          </div>
+        </Sheet>
+      </Overlay>
+    );
+  }
+
+  // addCard
+  if(modal.type==="addCard"){
+    if(!cat) return null;
+    return(
+      <Overlay onClose={onClose}>
+        <Sheet scroll>
+          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:6,letterSpacing:-.5}}>{t.addCard}</div>
+          <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:G.ink3,marginBottom:24,lineHeight:1.4}}>{lang==="sv"?`Skapa ett nytt kort i "${cat.sv}".`:`Add a new card to "${cat.en}".`}</div>
+
+          <SLabel>{t.cardImage}</SLabel>
+          <div style={{display:"flex",gap:12,marginBottom:22,alignItems:"flex-start"}}>
+            <div style={{
+              width:96,height:96,borderRadius:18,
+              background:cardPhoto?"transparent":`linear-gradient(140deg, ${cat.color}1A, ${cat.color}33)`,
+              border:`1px solid ${cat.color}30`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              overflow:"hidden",flexShrink:0,
+              boxShadow:`0 4px 14px ${cat.color}1F`,
+            }}>
+              {cardPhoto ? <img src={cardPhoto} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : <span style={{fontSize:48}}>{cardEmoji}</span>}
+            </div>
+            <div style={{flex:1,display:"flex",flexDirection:"column",gap:8}}>
+              <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{display:"none"}}/>
+              <button onClick={()=>fileRef.current?.click()} className="lt-press-soft" style={{padding:"11px 14px",borderRadius:12,border:`1px solid ${cat.color}66`,background:`${cat.color}10`,color:cat.color,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                <span>{t.uploadPhoto}</span>
+              </button>
+              {cardPhoto&&(
+                <button onClick={()=>setCardPhoto(null)} className="lt-press-soft" style={{padding:"10px 12px",borderRadius:12,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 9 8 9"/></svg>
+                  <span>{t.useEmoji}</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {!cardPhoto&&(<>
+            <SLabel>{t.pickEmoji}</SLabel>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(8, 1fr)",gap:6,marginBottom:12}}>
+              {EMOJIS.slice(ePage*pp,(ePage+1)*pp).map(e=>{
+                const active=cardEmoji===e;
+                return(
+                  <button key={e} onClick={()=>setCardEmoji(e)} className="lt-press-soft" style={{
+                    fontSize:24,
+                    background:active?cat.color:"transparent",
+                    border:active?`2px solid ${cat.color}`:"1px solid transparent",
+                    borderRadius:11,padding:"6px 4px",cursor:"pointer",
+                    aspectRatio:"1/1",
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    transition:"all .2s",
+                    boxShadow:active?`0 4px 12px ${cat.color}44`:"none",
+                  }}>{e}</button>
+                );
+              })}
+            </div>
+            <div style={{display:"flex",gap:6,marginBottom:24,justifyContent:"center"}}>
+              {Array.from({length:Math.ceil(EMOJIS.length/pp)}).map((_,i)=>(
+                <button key={i} onClick={()=>setEPage(i)} className="lt-press-soft" style={{
+                  minWidth:34,padding:"6px 10px",borderRadius:10,
+                  fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",
+                  border:`1px solid ${i===ePage?cat.color:G.border}`,
+                  background:i===ePage?cat.color:G.white,
+                  color:i===ePage?"#fff":G.ink2,
+                  transition:"all .2s",
+                }}>{i+1}</button>
+              ))}
+            </div>
+          </>)}
+
+          <SLabel>{lang==="sv"?"Vad ska kortet säga?":"What should the card say?"}</SLabel>
+          <input value={cardText} onChange={e=>setCardText(e.target.value)} className="lt-input" style={INP} placeholder={lang==="sv"?"t.ex. Vatten":"e.g. Water"}/>
+
+          <div style={{display:"flex",gap:10,marginTop:24}}>
+            <button onClick={onClose} className="lt-press-soft" style={{flex:1,...GHOST}}>{t.cancel}</button>
+            <button onClick={()=>{
+              if(!cardText.trim())return;
+              setCats(cs=>cs.map((c,i)=>i!==modal.catIdx?c:{...c,cards:[...c.cards,{id:"cc"+Date.now(),emoji:cardEmoji,photo:cardPhoto,sv:cardText,en:cardText}]}));
+              onClose();
+            }} className="lt-press" style={{flex:2,padding:"14px 0",borderRadius:14,border:"none",background:cat.color,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:`0 8px 20px ${cat.color}55, 0 2px 6px ${cat.color}33`}}>{t.save}</button>
+          </div>
+        </Sheet>
+      </Overlay>
+    );
+  }
+
+  return null;
+}
+
 /* ═══ Emotion screen ═══ */
-function EmotionScreen({lang,t,cfg}){
+function EmotionScreen({lang,t,cfg,isEditor,setCfg}){
   const[sel,setSel]=useState(null);
   const[reason,setReason]=useState("");
   const[saved,setSaved]=useState(false);
   const[hist,setHist]=usePersistentState("emotionHist",[]);
   const[showH,setShowH]=useState(false);
   const S=SCREENS.emotion;
+
+  // Editor view — toggle which emotions are visible
+  if(isEditor){
+    const visible=cfg.visibleEmotions||[1,2,3,4,5];
+    const toggle=(id)=>{
+      const has=visible.includes(id);
+      const next=has?visible.filter(x=>x!==id):[...visible,id].sort();
+      if(next.length===0) return; // need at least one
+      setCfg(x=>({...x,visibleEmotions:next}));
+    };
+    return(
+      <div style={{flex:1,overflowY:"auto",background:S.hb,padding:"24px 22px 120px",display:"flex",flexDirection:"column",gap:18}}>
+        <div style={{background:G.white,borderRadius:22,padding:"20px 20px 18px",border:`1px solid ${G.border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
+          <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,marginBottom:6,letterSpacing:.2}}>{lang==="en"?"Visible emotions":"Synliga känslor"}</div>
+          <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:G.ink2,lineHeight:1.5}}>{lang==="en"?"Choose which feelings the user can pick. Fewer options can make it easier to choose.":"Välj vilka känslor användaren kan välja mellan. Färre alternativ kan göra det lättare att bestämma."}</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {EMOS.map(e=>{
+            const on=visible.includes(e.id);
+            return(
+              <div key={e.id} onClick={()=>toggle(e.id)} className="lt-press-soft" style={{
+                background:G.white,borderRadius:18,padding:"14px 18px",cursor:"pointer",
+                border:`1px solid ${on?e.color+"66":"rgba(31,27,46,0.06)"}`,
+                boxShadow:on?`0 6px 18px ${e.color}22`:"0 1px 3px rgba(31,27,46,0.04)",
+                display:"flex",alignItems:"center",gap:14,
+                opacity:on?1:0.55,
+                transition:"all .25s ease",
+              }}>
+                <div style={{
+                  width:48,height:48,borderRadius:14,
+                  background:on?`linear-gradient(140deg,${e.color}40,${e.color}28)`:"#F4F2F8",
+                  border:`1px solid ${on?e.color+"33":"rgba(31,27,46,0.06)"}`,
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:26,flexShrink:0,
+                  filter:on?"none":"grayscale(0.7)",
+                }}>{e.emoji}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:G.serif,fontWeight:500,fontSize:16,color:G.ink,letterSpacing:-.1}}>{lang==="en"?e.en:e.sv}</div>
+                </div>
+                <Toggle on={on} onChange={()=>toggle(e.id)} color={e.color}/>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   const visibleEmos=EMOS.filter(e=>(cfg.visibleEmotions||[1,2,3,4,5]).includes(e.id));
   const doSave=()=>{if(!sel)return;const e={...sel,reason,time:new Date().toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"}),date:new Date().toLocaleDateString("sv-SE")};setHist(h=>[e,...h].slice(0,20));setSaved(true);setTimeout(()=>{setSaved(false);setSel(null);setReason("");},2200);};
   const R2=78, cx=120, cy=115;
@@ -1647,16 +2690,33 @@ function EmotionScreen({lang,t,cfg}){
   const np=ap(needleA);
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",overflowY:"auto",background:S.hb}}>
-      <div style={{padding:"20px 20px 4px",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:22,color:G.ink}}>{t.emotions}</div>
-        <button onClick={()=>setShowH(h=>!h)} style={{padding:"8px 16px",borderRadius:22,border:`1px solid ${G.border}`,background:showH?S.hl:G.white,color:showH?S.deep:G.ink2,fontFamily:G.font,fontWeight:600,cursor:"pointer",fontSize:13,boxShadow:sh.xs}}>📋 {t.emotionHistory}</button>
+      <div style={{padding:"30px 22px 4px",display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:22,gap:14}}>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:28,color:G.ink,letterSpacing:-.6,lineHeight:1.05}}>{t.emotions}</div>
+        <button onClick={()=>setShowH(h=>!h)} className="lt-press" style={{padding:"8px 14px",borderRadius:20,border:`1px solid ${G.border}`,background:showH?S.hl:"transparent",color:showH?S.deep:G.ink2,fontFamily:G.font,fontWeight:500,cursor:"pointer",fontSize:12,letterSpacing:.2}}>{t.emotionHistory}</button>
       </div>
       <div style={{flex:1,padding:"0 20px 20px",overflowY:"auto"}}>
-        {showH?(hist.length===0?<div style={{color:G.ink3,fontFamily:G.font,textAlign:"center",marginTop:40}}>{t.noHistory}</div>:hist.map((e,i)=>(
+        {showH?(hist.length===0?(
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"50px 30px 30px",gap:14}}>
+            <style>{`@keyframes empHistFloat{0%,100%{transform:translateY(0);opacity:0.85}50%{transform:translateY(-3px);opacity:1}}`}</style>
+            <svg width="64" height="64" viewBox="0 0 64 64" style={{animation:"empHistFloat 4s ease-in-out infinite"}}>
+              {/* Calendar/journal page illustration */}
+              <rect x="12" y="14" width="40" height="40" rx="4" fill={`${SCREENS.emotion.h}18`} stroke={`${SCREENS.emotion.h}66`} strokeWidth="1.5"/>
+              <line x1="20" y1="10" x2="20" y2="18" stroke={`${SCREENS.emotion.h}88`} strokeWidth="2" strokeLinecap="round"/>
+              <line x1="44" y1="10" x2="44" y2="18" stroke={`${SCREENS.emotion.h}88`} strokeWidth="2" strokeLinecap="round"/>
+              <line x1="12" y1="22" x2="52" y2="22" stroke={`${SCREENS.emotion.h}44`} strokeWidth="1.2"/>
+              <circle cx="22" cy="32" r="2.5" fill={`${SCREENS.emotion.h}55`}/>
+              <circle cx="32" cy="32" r="2.5" fill={`${SCREENS.emotion.h}33`}/>
+              <circle cx="42" cy="32" r="2.5" fill={`${SCREENS.emotion.h}22`}/>
+              <circle cx="22" cy="42" r="2.5" fill={`${SCREENS.emotion.h}22`}/>
+            </svg>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:18,color:G.ink,letterSpacing:-.3,textAlign:"center"}}>{t.noHistory}</div>
+            <div style={{fontFamily:G.font,fontSize:12,color:"#9892AA",textAlign:"center",lineHeight:1.4,maxWidth:240}}>{lang==="sv"?"Dina känslor sparas här när du registrerar dem.":"Your feelings will appear here once you log them."}</div>
+          </div>
+        ):hist.map((e,i)=>(
           <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:G.white,borderRadius:16,marginBottom:10,border:`1px solid ${e.color}22`,boxShadow:sh.xs}}>
             <span style={{fontSize:28}}>{e.emoji}</span>
             <div style={{flex:1}}><div style={{fontFamily:G.font,fontWeight:700,color:e.color,fontSize:15}}>{lang==="sv"?e.sv:e.en}</div>{e.reason&&<div style={{fontFamily:G.font,fontSize:13,color:G.ink2,marginTop:2}}>{e.reason}</div>}</div>
-            <div style={{fontFamily:G.font,fontSize:11,color:G.ink3,textAlign:"right"}}><div>{e.time}</div><div>{e.date}</div></div>
+            <div style={{fontFamily:G.font,fontSize:11,color:G.ink3,textAlign:"right"}}><div>{fmtT(e.time,lang)}</div><div>{e.date}</div></div>
           </div>
         ))):(<>
           <div style={{display:"flex",justifyContent:"center",marginBottom:14,background:G.white,borderRadius:24,padding:18,boxShadow:sh.sm,border:`1px solid ${G.border}`}}>
@@ -1677,7 +2737,7 @@ function EmotionScreen({lang,t,cfg}){
           </div>
           {sel&&!saved&&(<>
             <SLabel>{t.emotionReason}</SLabel>
-            <input value={reason} onChange={e=>setReason(e.target.value)} style={INP} placeholder="..."/>
+            <input value={reason} onChange={e=>setReason(e.target.value)} className="lt-input" style={INP} placeholder="..."/>
             <button onClick={doSave} style={{width:"100%",padding:"16px 0",borderRadius:16,border:"none",background:sel.color,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(sel.color)}}>💾 {t.save}</button>
           </>)}
           {saved&&<div style={{textAlign:"center",padding:28,fontFamily:G.serif,fontWeight:600,fontSize:24,color:S.deep}}>{t.emotionSaved}</div>}
@@ -1688,7 +2748,7 @@ function EmotionScreen({lang,t,cfg}){
 }
 
 /* ═══ Timer screen ═══ */
-function TimerScreen({t,cfg}){
+function TimerScreen({t,cfg,isEditor,setCfg,lang}){
   const S=SCREENS.timer;
   const tc=cfg.timerCfg;
   const allowed=tc.allowedTypes.length>0?tc.allowedTypes:["sector"];
@@ -1698,15 +2758,133 @@ function TimerScreen({t,cfg}){
   const[full,setFull]=useState(false);
   const[key,setKey]=useState(0);
   const start=()=>{setKey(k=>k+1);setFull(true);};
+
+  // Editor view — configure which timer types are allowed + defaults
+  if(isEditor){
+    const upd=(field,val)=>setCfg(x=>({...x,timerCfg:{...x.timerCfg,[field]:val}}));
+    const toggleType=(k)=>{
+      const cur=tc.allowedTypes;
+      const next=cur.includes(k)?cur.filter(a=>a!==k):[...cur,k];
+      if(next.length===0) return; // keep at least one
+      upd("allowedTypes",next);
+      // If we just disabled the default, switch default to the first remaining
+      if(!next.includes(tc.defaultType)) upd("defaultType",next[0]);
+    };
+    return(
+      <div style={{flex:1,overflowY:"auto",padding:"16px 18px 24px",display:"flex",flexDirection:"column",gap:22,background:S.hb}}>
+        <div style={{background:G.white,borderRadius:22,padding:"20px 20px 18px",border:`1px solid ${G.border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
+          <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,marginBottom:6,letterSpacing:.2}}>{lang==="en"?"What user sees":"Vad användaren ser"}</div>
+          <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:G.ink2,lineHeight:1.5,marginBottom:0}}>{lang==="en"?"Choose which timer types are available, and which one starts selected.":"Välj vilka timertyper som är tillgängliga, och vilken som är förvald."}</div>
+        </div>
+        <div>
+          <SLabel>{t.allowedTimers}</SLabel>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+            {TTYPES.map(k=>{
+              const on=tc.allowedTypes.includes(k);
+              return(
+                <button key={k} onClick={()=>toggleType(k)} className="lt-press-soft" style={{
+                  padding:"16px 6px 12px",borderRadius:16,border:"1px solid",
+                  fontFamily:G.font,fontWeight:600,fontSize:11.5,cursor:"pointer",
+                  borderColor:on?S.h:"rgba(31,27,46,0.08)",
+                  background:on?`${S.h}10`:G.white,
+                  color:on?S.deep:G.ink3,
+                  boxShadow:on?`0 8px 22px ${S.h}22`:"0 1px 2px rgba(31,27,46,0.03)",
+                  display:"flex",flexDirection:"column",alignItems:"center",gap:7,
+                  transition:"all .25s ease",
+                  opacity:on?1:0.55,
+                }}>
+                  <TimerIcon type={k} size={22} color={on?S.deep:G.ink3}/>
+                  <span>{tlbl(k,t)}</span>
+                  {on&&<span style={{fontSize:9,color:S.h,fontWeight:700,letterSpacing:.6,marginTop:-2}}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div>
+          <SLabel>{t.defaultTimer}</SLabel>
+          <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+            {tc.allowedTypes.map(k=>{
+              const sel=tc.defaultType===k;
+              return(
+                <button key={k} onClick={()=>upd("defaultType",k)} className="lt-press-soft" style={{
+                  padding:"8px 14px 8px 11px",borderRadius:13,border:"1px solid",
+                  fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",
+                  borderColor:sel?S.h:"rgba(31,27,46,0.08)",
+                  background:sel?S.h:G.white,
+                  color:sel?"#fff":G.ink2,
+                  display:"flex",alignItems:"center",gap:7,
+                  boxShadow:sel?`0 6px 16px ${S.h}40`:"0 1px 2px rgba(31,27,46,0.03)",
+                  transition:"all .2s ease",
+                }}>
+                  <TimerIcon type={k} size={14} color={sel?"#fff":G.ink2}/>
+                  {tlbl(k,t)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
+            <SLabel>{lang==="en"?"Default minutes":"Standard minuter"}</SLabel>
+            <span style={{fontFamily:G.serif,fontWeight:600,fontSize:18,color:G.ink}}>{tc.defaultMin} {t.min}</span>
+          </div>
+          <input type="range" min={1} max={60} value={tc.defaultMin} onChange={e=>upd("defaultMin",+e.target.value)} style={{width:"100%",accentColor:S.h}}/>
+          <div style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
+            {[1,5,10,15,20,30,45].map(v=>{
+              const sel=tc.defaultMin===v;
+              return(
+                <button key={v} onClick={()=>upd("defaultMin",v)} className="lt-press-soft" style={{
+                  padding:"7px 12px",borderRadius:11,
+                  border:`1px solid ${sel?S.h:"rgba(31,27,46,0.08)"}`,
+                  background:sel?S.h:G.white,
+                  color:sel?"#fff":G.ink2,
+                  fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",
+                  transition:"all .2s ease",
+                }}>{v}</button>
+              );
+            })}
+          </div>
+        </div>
+        <div>
+          <SLabel>{lang==="en"?"Default colour":"Standardfärg"}</SLabel>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+            {TMR_C.map(col=>{
+              const sel=tc.defaultColor===col;
+              return(
+                <div key={col} onClick={()=>upd("defaultColor",col)} className="lt-press-soft" style={{
+                  width:36,height:36,borderRadius:"50%",
+                  background:col,cursor:"pointer",position:"relative",
+                  transform:sel?"scale(1.1)":"scale(1)",
+                  boxShadow:sel?`0 0 0 3px ${G.white}, 0 0 0 5px ${col}, 0 8px 20px ${col}55`:`0 2px 6px ${col}33`,
+                  transition:"transform .25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .25s ease",
+                }}>
+                  {sel&&(
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{position:"absolute",inset:0,width:"100%",height:"100%",padding:8}}>
+                      <path d="M5 12l5 5L20 7"/>
+                    </svg>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return(
     <>
       {full&&<FullTimer key={key} type={type} totalSec={min*60} color={color} t={t} autoRun={true} onClose={()=>setFull(false)}/>}
-      <div style={{flex:1,overflowY:"auto",padding:"16px 18px 20px",display:"flex",flexDirection:"column",gap:18,background:S.hb}}>
+      <div style={{flex:1,overflowY:"auto",padding:"16px 18px 24px",display:"flex",flexDirection:"column",gap:20,background:S.hb}}>
         {/* Preview + start — compact, at the top */}
-        <div style={{background:G.white,borderRadius:24,padding:"22px 22px 20px",boxShadow:sh.md,display:"flex",flexDirection:"column",alignItems:"center",gap:14,border:`1px solid ${G.border}`}}>
+        <div style={{background:G.white,borderRadius:26,padding:"24px 22px 22px",boxShadow:"0 12px 32px rgba(31,27,46,0.06), 0 2px 6px rgba(31,27,46,0.04)",display:"flex",flexDirection:"column",alignItems:"center",gap:16,border:"1px solid rgba(31,27,46,0.04)"}}>
           <TimerThumb type={type} color={color} size={130} min={min}/>
-          <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:G.ink2}}>{min} {t.min} · {tlbl(type,t)}</div>
-          <button onClick={start} style={{width:"100%",maxWidth:300,padding:"15px 0",borderRadius:16,border:"none",background:`linear-gradient(135deg,${color},${color}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:16,cursor:"pointer",boxShadow:sh.c(color)}}>▶ &nbsp;{t.startTimer}</button>
+          <div style={{fontFamily:G.font,fontWeight:500,fontSize:13,color:G.ink2,letterSpacing:.2}}>{min} {t.min} · {tlbl(type,t)}</div>
+          <button onClick={start} className="lt-press" style={{width:"100%",maxWidth:300,padding:"16px 0",borderRadius:18,border:"none",background:`linear-gradient(135deg,${color},${color}D8)`,color:"#fff",fontFamily:G.font,fontWeight:600,fontSize:15,letterSpacing:.3,cursor:"pointer",boxShadow:`0 14px 30px ${color}45, 0 3px 8px ${color}28`,display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2 L11 7 L3 12 Z"/></svg>
+            {t.startTimer}
+          </button>
         </div>
         {/* Minutes */}
         <div>
@@ -1715,24 +2893,84 @@ function TimerScreen({t,cfg}){
             <span style={{fontFamily:G.serif,fontWeight:600,fontSize:22,color:G.ink}}>{min} {t.min}</span>
           </div>
           <input type="range" min={1} max={120} value={min} onChange={e=>setMin(+e.target.value)} style={{width:"100%",accentColor:color}}/>
-          <div style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
-            {[1,5,10,15,20,30,45,60].map(v=><button key={v} onClick={()=>setMin(v)} style={{padding:"7px 12px",borderRadius:11,fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",border:`1px solid ${min===v?color:G.border}`,background:min===v?color:G.white,color:min===v?"#fff":G.ink2}}>{v}</button>)}
+          <div style={{display:"flex",gap:7,marginTop:12,flexWrap:"wrap"}}>
+            {[1,5,10,15,20,30,45,60].map(v=>{
+              const sel=min===v;
+              return(
+                <button
+                  key={v}
+                  onClick={()=>setMin(v)}
+                  className="lt-press-soft"
+                  style={{
+                    padding:"9px 14px",borderRadius:13,
+                    fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",
+                    border:`1px solid ${sel?color:"rgba(31,27,46,0.08)"}`,
+                    background:sel?color:G.white,
+                    color:sel?"#fff":G.ink2,
+                    boxShadow:sel?`0 6px 16px ${color}40`:"0 1px 2px rgba(31,27,46,0.04)",
+                    transition:"background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease",
+                  }}>{v}</button>
+              );
+            })}
           </div>
         </div>
         {/* Type */}
         {allowed.length>1&&(
           <div>
             <SLabel>{t.timerType}</SLabel>
-            <div style={{display:"grid",gridTemplateColumns:`repeat(${Math.min(allowed.length,3)},1fr)`,gap:8}}>
-              {allowed.map(k=><button key={k} onClick={()=>setType(k)} style={{padding:"14px 6px",borderRadius:16,border:"1px solid",fontFamily:G.font,fontWeight:700,fontSize:11,cursor:"pointer",transition:"all .2s",borderColor:type===k?color:G.border,background:type===k?`${color}12`:G.white,color:type===k?color:G.ink2,boxShadow:type===k?sh.c(color):sh.xs}}><div style={{fontSize:22,marginBottom:4}}>{TICON[k]}</div>{tlbl(k,t)}</button>)}
+            <div style={{display:"grid",gridTemplateColumns:`repeat(${Math.min(allowed.length,3)},1fr)`,gap:10}}>
+              {allowed.map(k=>{
+                const selected=type===k;
+                return(
+                  <button
+                    key={k}
+                    onClick={()=>setType(k)}
+                    className="lt-press-soft"
+                    style={{
+                      padding:"18px 8px 14px",borderRadius:18,border:"1px solid",
+                      fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",
+                      transition:"border-color .25s ease, background .25s ease, color .25s ease, box-shadow .3s ease",
+                      borderColor:selected?color:"rgba(31,27,46,0.08)",
+                      background:selected?`${color}10`:G.white,
+                      color:selected?color:G.ink2,
+                      boxShadow:selected?`0 12px 28px ${color}25, 0 2px 6px ${color}18`:`0 1px 3px rgba(31,27,46,0.04)`,
+                      display:"flex",flexDirection:"column",alignItems:"center",gap:8,
+                    }}>
+                    <TimerIcon type={k} size={26} color={selected?color:G.ink2}/>
+                    <span style={{letterSpacing:.2}}>{tlbl(k,t)}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
         {/* Color */}
         <div>
           <SLabel>{t.timerColor}</SLabel>
-          <div style={{display:"flex",gap:9,flexWrap:"wrap"}}>
-            {TMR_C.map(col=><div key={col} onClick={()=>setColor(col)} style={{width:32,height:32,borderRadius:"50%",background:col,cursor:"pointer",outline:color===col?`3px solid ${col}`:"none",outlineOffset:2,boxShadow:color===col?sh.c(col):"none",transition:"all .15s"}}/>)}
+          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+            {TMR_C.map(col=>{
+              const selected=color===col;
+              return(
+                <div
+                  key={col}
+                  onClick={()=>setColor(col)}
+                  className="lt-press-soft"
+                  style={{
+                    width:36,height:36,borderRadius:"50%",
+                    background:col,cursor:"pointer",
+                    position:"relative",
+                    transform:selected?"scale(1.1)":"scale(1)",
+                    boxShadow:selected?`0 0 0 3px ${G.white}, 0 0 0 5px ${col}, 0 8px 20px ${col}55`:`0 2px 6px ${col}33`,
+                    transition:"transform .25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .25s ease",
+                  }}>
+                  {selected&&(
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{position:"absolute",inset:0,width:"100%",height:"100%",padding:8}}>
+                      <path d="M5 12l5 5L20 7"/>
+                    </svg>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -1741,33 +2979,39 @@ function TimerScreen({t,cfg}){
 }
 
 /* ═══ Activity row ═══ */
-function ActRow({item,cardStyle,isEditor,onEdit,onTap,onMarkDone,idx}){
+function ActRow({item,cardStyle,isEditor,onEdit,onTap,onMarkDone,idx,lifeState="future",t}){
   const[anim,setAnim]=useState("in");
   const big=cardStyle==="big", compact=cardStyle==="compact";
   if(anim==="exit") return null;
   const handleClick=()=>{
     if(isEditor)onEdit(item);else onTap(item);
   };
+  // Adaptive visual weight — past recedes, now is centered/full, future waits quietly
+  const isPast = lifeState==="past";
+  const isNow  = lifeState==="now";
+  const wrapOpacity = isPast?0.42:1;
+  const wrapSaturate = isPast?0.6:1;
   return(
-    <div style={{animation:anim==="in"?`rIn .35s cubic-bezier(.2,.7,.2,1) both`:`rExit .8s cubic-bezier(.4,0,.2,1) forwards`,animationDelay:anim==="in"?`${idx*0.04}s`:"0s"}}>
+    <div style={{animation:anim==="in"?`rIn .35s cubic-bezier(.2,.7,.2,1) both`:`rExit .8s cubic-bezier(.4,0,.2,1) forwards`,animationDelay:anim==="in"?`${idx*0.04}s`:"0s",opacity:wrapOpacity,filter:`saturate(${wrapSaturate})`,transition:"opacity .8s cubic-bezier(0.32, 0.72, 0, 1), filter .8s cubic-bezier(0.32, 0.72, 0, 1)"}}>
       <style>{`@keyframes rIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}@keyframes rExit{0%{opacity:1;transform:scale(1);filter:none}40%{opacity:1;transform:scale(1.015);filter:brightness(1.04)}100%{opacity:0;transform:scale(.92) translateY(8px);filter:brightness(1.1)}}`}</style>
       <div
         onClick={handleClick}
+        className="lt-press-soft"
         style={{
           background:G.white,
           borderRadius:big?22:18,
           overflow:"hidden",
           position:"relative",
-          boxShadow:sh.sm,
-          border:`1px solid ${G.border}`,
+          boxShadow: isNow?`0 14px 36px ${item.color}26, 0 4px 10px ${item.color}14`:sh.sm,
+          border:`1px solid ${isNow?`${item.color}55`:G.border}`,
           cursor:"pointer",
-          transition:"box-shadow .35s cubic-bezier(.2,.7,.2,1), border-color .25s, transform .2s cubic-bezier(.2,.7,.2,1)",
+          transition:"box-shadow .55s cubic-bezier(0.32, 0.72, 0, 1), border-color .55s cubic-bezier(0.32, 0.72, 0, 1), transform .26s cubic-bezier(0.32, 0.72, 0, 1)",
           userSelect:"none",
           WebkitUserSelect:"none",
           WebkitTouchCallout:"none",
         }}
-        onMouseEnter={e=>{e.currentTarget.style.boxShadow=sh.md;e.currentTarget.style.borderColor=`${item.color}40`;e.currentTarget.style.transform="translateY(-1px)";}}
-        onMouseLeave={e=>{e.currentTarget.style.boxShadow=sh.sm;e.currentTarget.style.borderColor=G.border;e.currentTarget.style.transform="";}}>
+        onMouseEnter={e=>{if(!isNow){e.currentTarget.style.boxShadow=sh.md;e.currentTarget.style.borderColor=`${item.color}40`;}}}
+        onMouseLeave={e=>{if(!isNow){e.currentTarget.style.boxShadow=sh.sm;e.currentTarget.style.borderColor=G.border;}}}>
         {big&&<div style={{height:92,background:item.photo?"#000":`linear-gradient(135deg,${item.color}1F,${item.color}38)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:60,position:"relative",overflow:"hidden"}}>{item.photo?<img src={item.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:item.emoji}</div>}
         <div style={{display:"flex",alignItems:"center",gap:compact?10:13,padding:compact?"12px 14px":"16px 18px",position:"relative"}}>
           <div style={{position:"absolute",left:0,top:0,bottom:0,width:4,background:`linear-gradient(180deg,${item.color},${item.color}80)`,borderRadius:"18px 0 0 18px"}}/>
@@ -1775,16 +3019,16 @@ function ActRow({item,cardStyle,isEditor,onEdit,onTap,onMarkDone,idx}){
           {!big&&<div style={{fontSize:compact?30:38,lineHeight:1,minWidth:compact?44:54,height:compact?44:54,borderRadius:compact?12:14,background:item.photo?"#000":`linear-gradient(140deg,${item.color}18,${item.color}30)`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${item.color}25`,flexShrink:0,overflow:"hidden"}}>{item.photo?<img src={item.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:item.emoji}</div>}
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontFamily:G.serif,fontWeight:400,fontSize:compact?16:19,color:G.ink,lineHeight:1.2,letterSpacing:-.3}}>{item.name}</div>
-            <div style={{display:"flex",alignItems:"center",gap:7,marginTop:5,flexWrap:"wrap"}}>
-              <span style={{fontFamily:G.font,fontWeight:600,fontSize:12,color:item.color,letterSpacing:.4}}>{item.time}{item.endTime?` – ${item.endTime}`:""}</span>
+            <div style={{display:"flex",alignItems:"center",gap:7,marginTop:6,flexWrap:"wrap"}}>
+              <span style={{fontFamily:G.font,fontWeight:500,fontSize:11.5,color:item.color,letterSpacing:.5}}>{fmtT(item.time,t)}{item.endTime?` – ${fmtT(item.endTime,t)}`:""}</span>
               {item.repeat&&item.repeat.type&&item.repeat.type!=="none"&&(
-                <Tag col={item.color}>🔁 {item.repeat.type==="daily"?"Dagligen":item.repeat.type==="weekdays"?"Vardagar":item.repeat.type==="weekend"?"Helger":(item.repeat.days||[]).length+" dagar"}</Tag>
+                <Tag col={item.color}>{item.repeat.type==="daily"?"Dagligen":item.repeat.type==="weekdays"?"Vardagar":item.repeat.type==="weekend"?"Helger":(item.repeat.days||[]).length+" dagar"}</Tag>
               )}
-              {item.steps?.length>0&&<Tag col={item.color}>📋 {item.steps.length}</Tag>}
-              {item.timer?.on&&<Tag col={item.timer.color||"#E89B89"}>{TICON[item.timer.type]} {item.timer.min}m</Tag>}
+              {item.steps?.length>0&&<Tag col={item.color}>{item.steps.length===1?(t?.stepCountOne||"1 steg"):(t?.stepCountMany||"{n} steg").replace("{n}",item.steps.length)}</Tag>}
+              {item.timer?.on&&<Tag col={item.timer.color||"#E89B89"}>{item.timer.min} min</Tag>}
             </div>
           </div>
-          {isEditor&&<button onClick={e=>{e.stopPropagation();onEdit(item);}} style={{background:SCREENS.home.hl,border:"none",borderRadius:11,width:36,height:36,cursor:"pointer",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✏️</button>}
+          {isEditor&&<button onClick={e=>{e.stopPropagation();onEdit(item);}} className="lt-press" style={{background:"transparent",border:`1px solid ${G.border}`,borderRadius:11,width:36,height:36,cursor:"pointer",fontSize:13,color:G.ink3,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✏</button>}
         </div>
       </div>
     </div>
@@ -1794,130 +3038,309 @@ function ActRow({item,cardStyle,isEditor,onEdit,onTap,onMarkDone,idx}){
 /* ═══ Card view ═══ */
 function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
   const[idx,setIdx]=useState(0);
-  const[anim,setAnim]=useState(null);
-  const[holdPct,setHoldPct]=useState(0);
+  // pickState: idle | touching | swiping | picked | dropping | returning
+  const[pickState,setPickState]=useState("idle");
+  const[drag,setDrag]=useState({x:0,y:0});
+  const[overTrash,setOverTrash]=useState(false);
   const startPt=useRef(null);
-  const holdTimer=useRef(null);
-  const holdStart=useRef(null);
-  const isHolding=useRef(false);
-  const movedOut=useRef(false);
+  const pickTimer=useRef(null);
+  const trashRef=useRef(null);
+  const imgRef=useRef(null);
   const item=acts[idx];
-  const HOLD_MS=1100;
+  const HOLD_MS=420;
   useEffect(()=>{if(idx>=acts.length&&acts.length>0) setIdx(Math.max(0,acts.length-1));},[acts.length,idx]);
-  useEffect(()=>()=>{if(holdTimer.current)clearInterval(holdTimer.current);},[]);
-  if(!item) return <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,padding:40}}><div style={{fontSize:64}}>🌟</div><div style={{fontFamily:G.serif,fontWeight:600,fontSize:24,color:G.ink}}>Bra jobbat!</div><div style={{fontFamily:G.font,fontSize:14,color:G.ink2}}>Alla aktiviteter är klara!</div></div>;
+  useEffect(()=>()=>{if(pickTimer.current)clearTimeout(pickTimer.current);},[]);
+  if(!item) return <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:40}}>
+    <style>{`@keyframes emptyBreath{0%,100%{transform:scale(1);opacity:0.85}50%{transform:scale(1.03);opacity:1}}`}</style>
+    <svg width="64" height="64" viewBox="0 0 64 64" style={{animation:"emptyBreath 4.2s ease-in-out infinite"}}>
+      <defs>
+        <radialGradient id="emFace" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stopColor="#FFFFFF"/>
+          <stop offset="100%" stopColor={`${SCREENS.home.h}33`}/>
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32" r="28" fill="url(#emFace)" stroke={`${SCREENS.home.h}40`} strokeWidth="1"/>
+      <path d="M22,32 L29,40 L43,24" stroke={SCREENS.home.deep} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.75"/>
+    </svg>
+    <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.ink,letterSpacing:-.4,lineHeight:1.1}}>Alla aktiviteter är klara</div>
+    <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",marginTop:-4,letterSpacing:.1}}>Du kan vila resten av dagen.</div>
+  </div>;
 
-  const cancelHold=()=>{
-    if(holdTimer.current){clearInterval(holdTimer.current);holdTimer.current=null;}
-    holdStart.current=null;
-    isHolding.current=false;
-    setHoldPct(0);
+  const cancelPickTimer=()=>{
+    if(pickTimer.current){clearTimeout(pickTimer.current);pickTimer.current=null;}
+  };
+  const resetAll=()=>{
+    cancelPickTimer();
+    setPickState("idle");
+    setDrag({x:0,y:0});
+    setOverTrash(false);
+    startPt.current=null;
   };
 
-  const startHold=()=>{
+  const handleStart=(x,y)=>{
     if(isEditor) return;
-    holdStart.current=Date.now();
-    isHolding.current=true;
-    movedOut.current=false;
-    holdTimer.current=setInterval(()=>{
-      if(!holdStart.current) return;
-      const p=Math.min(1,(Date.now()-holdStart.current)/HOLD_MS);
-      setHoldPct(p);
-      if(p>=1){
-        cancelHold();
-        chime();
-        setAnim("out");
-        setTimeout(()=>{onMarkDone(item.id);setAnim(null);},520);
-      }
-    },30);
+    startPt.current={x,y,t:Date.now()};
+    setPickState("touching");
+    cancelPickTimer();
+    pickTimer.current=setTimeout(()=>{
+      setPickState("picked");
+      if(typeof navigator!=="undefined"&&navigator.vibrate) navigator.vibrate(18);
+    },HOLD_MS);
   };
+  const handleMove=(x,y)=>{
+    if(!startPt.current) return;
+    const dx=x-startPt.current.x, dy=y-startPt.current.y;
+    if(pickState==="touching"){
+      if(Math.abs(dx)>10||Math.abs(dy)>10){
+        cancelPickTimer();
+        setPickState("swiping");
+      }
+    } else if(pickState==="picked"){
+      setDrag({x:dx,y:dy});
+      if(trashRef.current){
+        const r=trashRef.current.getBoundingClientRect();
+        const over=x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;
+        if(over!==overTrash) setOverTrash(over);
+      }
+    }
+  };
+  const handleEnd=(x,y)=>{
+    if(!startPt.current){cancelPickTimer();return;}
+    const dx=x-startPt.current.x, dy=y-startPt.current.y;
+    const dur=Date.now()-startPt.current.t;
+    cancelPickTimer();
+    if(pickState==="picked"){
+      if(overTrash){
+        setPickState("dropping");
+        if(typeof navigator!=="undefined"&&navigator.vibrate) navigator.vibrate(35);
+        setTimeout(()=>{
+          chime();
+          onMarkDone(item.id);
+          setIdx(prev=>Math.min(prev,acts.length-2));
+          resetAll();
+        },420);
+      } else {
+        setPickState("returning");
+        setDrag({x:0,y:0});
+        setOverTrash(false);
+        setTimeout(()=>setPickState("idle"),340);
+      }
+      startPt.current=null;
+      return;
+    }
+    if(pickState==="swiping"){
+      if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)){
+        setIdx(i=>dx<0?Math.min(acts.length-1,i+1):Math.max(0,i-1));
+      }
+    } else if(pickState==="touching"&&dur<300&&Math.abs(dx)<8&&Math.abs(dy)<8){
+      isEditor?onEdit(item):onTap(item);
+    }
+    resetAll();
+  };
+
+  // Window listeners while picked — track drag globally so user can move freely
+  useEffect(()=>{
+    if(pickState!=="picked") return;
+    const onMM=(e)=>{
+      const x=e.touches?.[0]?.clientX??e.clientX;
+      const y=e.touches?.[0]?.clientY??e.clientY;
+      handleMove(x,y);
+      if(e.cancelable) e.preventDefault();
+    };
+    const onMU=(e)=>{
+      const x=e.changedTouches?.[0]?.clientX??e.clientX;
+      const y=e.changedTouches?.[0]?.clientY??e.clientY;
+      handleEnd(x,y);
+    };
+    window.addEventListener("mousemove",onMM);
+    window.addEventListener("mouseup",onMU);
+    window.addEventListener("touchmove",onMM,{passive:false});
+    window.addEventListener("touchend",onMU);
+    window.addEventListener("touchcancel",onMU);
+    return()=>{
+      window.removeEventListener("mousemove",onMM);
+      window.removeEventListener("mouseup",onMU);
+      window.removeEventListener("touchmove",onMM);
+      window.removeEventListener("touchend",onMU);
+      window.removeEventListener("touchcancel",onMU);
+    };
+    // eslint-disable-next-line
+  },[pickState,overTrash]);
 
   const onTS=e=>{
     const x=e.touches?.[0]?.clientX??e.clientX;
     const y=e.touches?.[0]?.clientY??e.clientY;
-    startPt.current={x,y,t:Date.now()};
-    startHold();
+    handleStart(x,y);
   };
   const onTM=e=>{
-    if(!startPt.current) return;
+    if(pickState==="picked") return; // window listener handles it
     const x=e.touches?.[0]?.clientX??e.clientX;
     const y=e.touches?.[0]?.clientY??e.clientY;
-    const dx=x-startPt.current.x, dy=y-startPt.current.y;
-    if(Math.abs(dx)>8||Math.abs(dy)>8){
-      movedOut.current=true;
-      cancelHold();
-    }
+    handleMove(x,y);
   };
   const onTE=e=>{
-    if(!startPt.current) return;
+    if(pickState==="picked") return;
     const x=e.changedTouches?.[0]?.clientX??e.clientX;
     const y=e.changedTouches?.[0]?.clientY??e.clientY;
-    const dx=x-startPt.current.x, dy=y-startPt.current.y;
-    const dur=Date.now()-startPt.current.t;
-    cancelHold();
-    startPt.current=null;
-    // Horizontal swipe to navigate
-    if(Math.abs(dx)>40 && Math.abs(dx)>Math.abs(dy)){
-      setIdx(i=>dx<0?Math.min(acts.length-1,i+1):Math.max(0,i-1));
-      return;
-    }
-    // Quick tap → open detail (or edit)
-    if(dur<300 && Math.abs(dx)<8 && Math.abs(dy)<8 && !movedOut.current){
-      isEditor ? onEdit(item) : onTap(item);
-    }
+    handleEnd(x,y);
   };
+
+  const cardLifted = pickState==="picked"||pickState==="dropping";
+  const showTrash = cardLifted||pickState==="returning";
+  // Smooth dim of background during pickup — fades in over 300ms, out over 400ms.
+  // The card and trash sit above via higher z-index, so only the rest of the UI dims.
+  const showDim = cardLifted||pickState==="returning";
 
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 20px",userSelect:"none",position:"relative"}}>
-      <style>{`@keyframes cOut{0%{opacity:1;transform:scale(1) translateY(0)}100%{opacity:0;transform:scale(.85) translateY(-120px)}}`}</style>
+      <style>{`
+        @keyframes trashIn{from{opacity:0;transform:translateX(-50%) translateY(30px) scale(0.7)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+        @keyframes trashOut{from{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}to{opacity:0;transform:translateX(-50%) translateY(30px) scale(0.7)}}
+      `}</style>
 
-      {/* Hold hint */}
-      {holdPct>0.05 && (
-        <div style={{position:"absolute",top:"8%",left:"50%",transform:"translateX(-50%)",padding:"10px 22px",borderRadius:20,background:holdPct>=1?item.color:G.white,border:`2px solid ${item.color}`,color:holdPct>=1?"#fff":item.color,fontFamily:G.font,fontWeight:700,fontSize:13,boxShadow:sh.sm,display:"flex",alignItems:"center",gap:8,pointerEvents:"none",zIndex:5}}>
-          <span style={{fontSize:16}}>✓</span>
-          {holdPct>=1?"Klar!":"Håll kvar för att slutföra"}
-        </div>
+      {/* Background dim — soft veil over everything except the lifted card and trash */}
+      {showDim && (
+        <div style={{
+          position:"fixed",
+          inset:0,
+          background:"rgba(31,27,46,0.32)",
+          backdropFilter:"blur(6px)",
+          WebkitBackdropFilter:"blur(6px)",
+          opacity: pickState==="returning"?0:1,
+          transition: pickState==="returning"
+            ? "opacity 0.4s cubic-bezier(0.32, 0.72, 0, 1), backdrop-filter 0.4s ease"
+            : "opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), backdrop-filter 0.3s ease",
+          zIndex:40,
+          pointerEvents:"none",
+        }}/>
       )}
 
       <div
-        onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} onTouchCancel={cancelHold}
-        onMouseDown={onTS} onMouseMove={onTM} onMouseUp={onTE} onMouseLeave={cancelHold}
+        onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} onTouchCancel={resetAll}
+        onMouseDown={onTS} onMouseMove={onTM} onMouseUp={onTE} onMouseLeave={()=>{if(pickState!=="picked")resetAll();}}
         onContextMenu={e=>e.preventDefault()}
         draggable={false}
         style={{
           width:"100%",maxWidth:340,
-          background:G.white,borderRadius:30,padding:"34px 26px 28px",textAlign:"center",cursor:"pointer",
-          boxShadow: holdPct>0 ? `0 18px 60px ${item.color}44, 0 0 0 2px ${item.color}AA` : `0 18px 60px ${item.color}1F`,
+          background: cardLifted
+            ? `linear-gradient(180deg, ${G.white}, ${G.cream})`
+            : G.white,
+          borderRadius:30,padding:"34px 26px 28px",textAlign:"center",
+          cursor:cardLifted?"grabbing":"pointer",
+          boxShadow: cardLifted
+            ? `0 18px 44px ${item.color}1F, 0 4px 10px rgba(31,27,46,0.08)`
+            : `0 18px 60px ${item.color}1F`,
           border:`1px solid ${item.color}25`,
-          transform: holdPct>0 ? `scale(${1+holdPct*0.025})` : "none",
-          transition: "transform .2s ease, box-shadow .2s ease",
-          animation:anim==="out"?"cOut .55s ease forwards":"none",
-          position:"relative",overflow:"hidden",
-          touchAction:"pan-x",
-          willChange:"transform",
+          transition:"box-shadow .35s ease, background .35s ease",
+          position:"relative",
+          overflow:"visible",
+          touchAction: pickState==="picked"?"none":"pan-x",
+          zIndex: cardLifted?50:1,
           WebkitUserSelect:"none",userSelect:"none",WebkitTouchCallout:"none",
         }}>
-        {/* Hold progress fill — fills the card from bottom up */}
-        {holdPct>0 && (
-          <div style={{position:"absolute",inset:0,background:`linear-gradient(0deg, ${item.color}22 0%, ${item.color}22 ${holdPct*100}%, transparent ${holdPct*100}%)`,pointerEvents:"none",transition:"background .03s linear"}}/>
-        )}
-        {item.photo?(
-          <div style={{width:140,height:140,borderRadius:24,overflow:"hidden",margin:"0 auto 14px",position:"relative",background:"#000",boxShadow:`0 8px 24px ${item.color}33`}}>
-            <img src={item.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-          </div>
-        ):(
-          <div style={{fontSize:76,lineHeight:1,marginBottom:14,display:"inline-block",padding:18,borderRadius:24,background:`linear-gradient(140deg,${item.color}1A,${item.color}30)`,pointerEvents:"none",position:"relative"}}>{item.emoji}</div>
-        )}
-        <div style={{fontFamily:G.font,fontWeight:600,fontSize:11,color:item.color,letterSpacing:2.5,textTransform:"uppercase",marginBottom:6,pointerEvents:"none",position:"relative"}}>{item.time}</div>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:24,color:G.ink,lineHeight:1.2,letterSpacing:-.4,pointerEvents:"none",position:"relative"}}>{item.name}</div>
-        {item.steps?.length>0&&<div style={{display:"flex",gap:8,justifyContent:"center",marginTop:14,flexWrap:"wrap",pointerEvents:"none",position:"relative"}}>{item.steps.slice(0,5).map(s=><span key={s.id} style={{fontSize:22}}>{s.emoji}</span>)}{item.steps.length>5&&<span style={{fontFamily:G.font,fontSize:13,color:G.ink2}}>+{item.steps.length-5}</span>}</div>}
+        {/* Image wrapper — gets the offset transform during pickup so only the image drags.
+            Same proven offset-pattern that worked on the whole card, just applied here. */}
+        <div ref={imgRef} style={{
+          display:"inline-block",
+          transform:
+            pickState==="picked"
+              ? `translate(${drag.x}px, ${drag.y}px) scale(${overTrash?0.55:1.08}) rotate(${Math.max(-6,Math.min(6,drag.x*0.04))}deg)`
+            : pickState==="dropping"
+              ? `translate(${drag.x}px, ${drag.y}px) scale(0.15) rotate(12deg)`
+            : pickState==="returning"
+              ? "translate(0,0) scale(1) rotate(0deg)"
+            : "none",
+          transition:
+            pickState==="picked"
+              ? "transform 0.06s linear"
+            : pickState==="dropping"
+              ? "transform 0.46s cubic-bezier(.5,0,.75,0), opacity 0.42s ease"
+            : pickState==="returning"
+              ? "transform 0.42s cubic-bezier(.34,1.56,.64,1)"
+            : "transform 0.2s ease",
+          opacity: pickState==="dropping"?0:1,
+          willChange:"transform",
+          position:"relative",
+          zIndex:5,
+        }}>
+          {item.photo?(
+            <div style={{
+              width:140,height:140,borderRadius:24,overflow:"hidden",margin:"0 auto 14px",
+              position:"relative",background:"#FFFFFF",
+              boxShadow: cardLifted
+                ? `0 28px 48px rgba(31,27,46,0.38), 0 10px 20px rgba(31,27,46,0.22), 0 2px 6px rgba(31,27,46,0.14), 0 0 0 3px #FFFFFF, 0 0 0 4px ${item.color}30`
+                : `0 8px 24px ${item.color}33`,
+              transition:"box-shadow 0.4s cubic-bezier(0.32, 0.72, 0, 1)",
+            }}>
+              <img src={item.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block",opacity:1}}/>
+            </div>
+          ):(
+            <div style={{
+              fontSize:76,lineHeight:1,marginBottom:14,display:"inline-block",padding:18,borderRadius:24,
+              background:cardLifted
+                ? `linear-gradient(140deg, #FFFFFF, ${item.color}14)`
+                : `linear-gradient(140deg,${item.color}1A,${item.color}30)`,
+              pointerEvents:"none",position:"relative",
+              boxShadow: cardLifted
+                ? `0 28px 48px rgba(31,27,46,0.28), 0 10px 20px rgba(31,27,46,0.18), 0 2px 6px rgba(31,27,46,0.10), 0 0 0 3px #FFFFFF, 0 0 0 4px ${item.color}30`
+                : "none",
+              transition:"box-shadow 0.4s cubic-bezier(0.32, 0.72, 0, 1), background 0.32s ease",
+            }}>{item.emoji}</div>
+          )}
+        </div>
+        {/* Text content fades together as a unit when card is lifted — image stays bright */}
+        <div style={{
+          opacity: cardLifted?0.28:1,
+          transition:"opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
+        }}>
+          <div style={{fontFamily:G.font,fontWeight:600,fontSize:11,color:item.color,letterSpacing:2.5,textTransform:"uppercase",marginBottom:6,pointerEvents:"none",position:"relative"}}>{fmtT(item.time,t)}</div>
+          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:24,color:G.ink,lineHeight:1.2,letterSpacing:-.4,pointerEvents:"none",position:"relative"}}>{item.name}</div>
+          {item.steps?.length>0&&<div style={{display:"flex",gap:8,justifyContent:"center",marginTop:14,flexWrap:"wrap",pointerEvents:"none",position:"relative"}}>{item.steps.slice(0,5).map(s=><span key={s.id} style={{fontSize:22}}>{s.emoji}</span>)}{item.steps.length>5&&<span style={{fontFamily:G.font,fontSize:13,color:G.ink2}}>+{item.steps.length-5}</span>}</div>}
+        </div>
       </div>
 
-      {/* Pagination dots */}
-      <div style={{display:"flex",gap:8}}>{acts.map((_,i)=><div key={i} onClick={()=>setIdx(i)} style={{height:8,width:i===idx?24:8,borderRadius:5,background:i===idx?item.color:G.border,cursor:"pointer",transition:"all .3s"}}/>)}</div>
+      {/* Trash drop target — appears when card is picked up */}
+      {showTrash&&(
+        <div
+          ref={trashRef}
+          style={{
+            position:"absolute",bottom:22,left:"50%",
+            transform:`translateX(-50%) scale(${overTrash?1.28:1})`,
+            width:80,height:80,borderRadius:26,
+            background: overTrash
+              ? `linear-gradient(135deg, ${item.color}, ${item.color}D0)`
+              : "rgba(255,255,255,0.92)",
+            backdropFilter:"blur(16px)",
+            WebkitBackdropFilter:"blur(16px)",
+            border:`1.5px solid ${overTrash?`${item.color}`:"rgba(31,27,46,0.08)"}`,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            color: overTrash?"#fff":G.ink2,
+            transition:"transform .28s cubic-bezier(.34,1.56,.64,1), background .25s ease, border-color .25s ease, color .25s ease, box-shadow .3s ease",
+            pointerEvents:"none",
+            zIndex:100,
+            animation: pickState==="returning"
+              ? "trashOut 0.32s cubic-bezier(.4,0,.6,1) forwards"
+              : "trashIn 0.46s cubic-bezier(.34,1.56,.64,1) both",
+            boxShadow: overTrash
+              ? `0 28px 60px ${item.color}55, 0 8px 18px ${item.color}33, inset 0 1px 0 rgba(255,255,255,0.30)`
+              : "0 18px 40px rgba(31,27,46,0.10), 0 4px 10px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.95)",
+          }}
+        >
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{transition:"transform .25s cubic-bezier(.34,1.56,.64,1)",transform:overTrash?"scale(1.08)":"scale(1)"}}>
+            <path d="M3 6h18"/>
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            <path d="M19 6l-1.2 14a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 6"/>
+            <line x1="10" y1="11" x2="10" y2="17"/>
+            <line x1="14" y1="11" x2="14" y2="17"/>
+          </svg>
+        </div>
+      )}
 
-      {/* Subtle navigation row */}
-      <div style={{display:"flex",gap:10,alignItems:"center"}}>
+      {/* Pagination dots — hidden when picked */}
+      <div style={{display:"flex",gap:8,opacity:cardLifted?0:1,transition:"opacity .25s ease"}}>{acts.map((_,i)=><div key={i} onClick={()=>setIdx(i)} style={{height:8,width:i===idx?24:8,borderRadius:5,background:i===idx?item.color:G.border,cursor:"pointer",transition:"all .3s"}}/>)}</div>
+
+      {/* Subtle navigation row — hidden when picked */}
+      <div style={{display:"flex",gap:10,alignItems:"center",opacity:cardLifted?0:1,transition:"opacity .25s ease",pointerEvents:cardLifted?"none":"auto"}}>
         <button onClick={()=>setIdx(i=>Math.max(0,i-1))} disabled={idx===0} style={{padding:"8px 18px",borderRadius:12,border:"none",fontFamily:G.font,fontWeight:600,fontSize:12,cursor:idx===0?"default":"pointer",background:idx===0?G.cream:SCREENS.home.hl,color:idx===0?G.ink3:SCREENS.home.deep}}>←</button>
         <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:G.ink3,letterSpacing:.5,minWidth:36,textAlign:"center"}}>{idx+1} / {acts.length}</div>
         <button onClick={()=>setIdx(i=>Math.min(acts.length-1,i+1))} disabled={idx===acts.length-1} style={{padding:"8px 18px",borderRadius:12,border:"none",fontFamily:G.font,fontWeight:600,fontSize:12,cursor:idx===acts.length-1?"default":"pointer",background:idx===acts.length-1?G.cream:SCREENS.home.hl,color:idx===acts.length-1?G.ink3:SCREENS.home.deep}}>→</button>
@@ -1926,43 +3349,145 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
   );
 }
 
+
 /* ═══ Shared UI primitives ═══ */
-function Overlay({children,onClose}){return(<div style={{position:"fixed",inset:0,background:"rgba(31,27,46,0.42)",backdropFilter:"blur(8px)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:500}} onClick={onClose}><div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:480}}>{children}</div></div>);}
-function Sheet({children,scroll}){return(<div style={{background:G.white,borderRadius:"28px 28px 0 0",padding:"28px 22px 48px",maxHeight:"90vh",overflowY:scroll?"auto":"hidden",boxShadow:"0 -24px 60px rgba(31,27,46,0.18)"}}>{children}</div>);}
-function Toggle({on,onChange,color}){return(<div onClick={onChange} style={{width:52,height:30,borderRadius:15,background:on?color:G.border2,cursor:"pointer",position:"relative",transition:"background .3s",flexShrink:0}}><div style={{width:24,height:24,borderRadius:"50%",background:G.white,position:"absolute",top:3,left:on?25:3,transition:"left .3s",boxShadow:"0 2px 6px rgba(0,0,0,.18)"}}/></div>);}
-function SLabel({children}){return <div style={{fontFamily:G.font,fontWeight:600,fontSize:11,color:G.ink3,letterSpacing:1,textTransform:"uppercase",marginBottom:10}}>{children}</div>;}
-function Tag({col,children}){return <span style={{fontFamily:G.font,fontSize:11,color:col,background:`${col}14`,borderRadius:8,padding:"3px 9px"}}>{children}</span>;}
+function Overlay({children,onClose}){
+  // Track the visual viewport (the part of the screen NOT covered by the keyboard).
+  // This is the only reliable way to handle iOS keyboard — dvh doesn't always work,
+  // and CSS-only solutions fail across iOS Safari versions.
+  const[vv,setVv]=useState(()=>{
+    if(typeof window==="undefined") return{h:800,offsetTop:0};
+    const v=window.visualViewport;
+    return v?{h:v.height,offsetTop:v.offsetTop}:{h:window.innerHeight,offsetTop:0};
+  });
+  useEffect(()=>{
+    if(typeof document==="undefined") return;
+    const body=document.body;
+    const scrollY=window.scrollY;
+    const prevPosition=body.style.position;
+    const prevTop=body.style.top;
+    const prevWidth=body.style.width;
+    const prevOverflow=body.style.overflow;
+    body.style.position="fixed";
+    body.style.top=`-${scrollY}px`;
+    body.style.width="100%";
+    body.style.overflow="hidden";
+
+    // Watch visual viewport — updates when keyboard opens/closes
+    const updateVv=()=>{
+      const v=window.visualViewport;
+      if(!v) return;
+      setVv({h:v.height,offsetTop:v.offsetTop});
+    };
+    if(window.visualViewport){
+      window.visualViewport.addEventListener("resize",updateVv);
+      window.visualViewport.addEventListener("scroll",updateVv);
+      updateVv();
+    }
+
+    return()=>{
+      body.style.position=prevPosition;
+      body.style.top=prevTop;
+      body.style.width=prevWidth;
+      body.style.overflow=prevOverflow;
+      window.scrollTo(0,scrollY);
+      if(window.visualViewport){
+        window.visualViewport.removeEventListener("resize",updateVv);
+        window.visualViewport.removeEventListener("scroll",updateVv);
+      }
+    };
+  },[]);
+  return(
+    <div onClick={onClose} style={{
+      position:"fixed",
+      // Anchor to the VISIBLE viewport — when keyboard opens, this shrinks
+      top:vv.offsetTop,left:0,right:0,
+      height:vv.h, // explicit pixel height — bypasses CSS vh quirks
+      background:"rgba(31,27,46,0.55)",
+      display:"flex",alignItems:"flex-end",justifyContent:"center",
+      zIndex:9500,
+      animation:"ovlIn 0.32s cubic-bezier(0.32, 0.72, 0, 1) both",
+    }}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        width:"100%",maxWidth:480,
+        // ALWAYS fill 92% of visible viewport — no conditional, no detection.
+        // When keyboard is open, vv.h shrinks → Sheet shrinks with it but still fills available space.
+        // When keyboard is closed, Sheet is tall and shows all content directly.
+        // This means input fields always appear high on screen, never hidden behind keyboard.
+        height:Math.floor(vv.h*0.92),
+        display:"flex",flexDirection:"column",
+        animation:"shtIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) both",
+      }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+function Sheet({children,scroll}){
+  // Sheet fills available space within its Overlay parent (which is sized to visual viewport).
+  // Content scrolls within Sheet — keyboard never hides Save buttons because Sheet always
+  // fits within the visible area above the keyboard.
+  return(<div style={{
+    background:G.white,
+    borderRadius:"28px 28px 0 0",
+    padding:"28px 22px max(28px, env(safe-area-inset-bottom, 12px))",
+    flex:1,
+    minHeight:0, // critical for flex children to allow scroll
+    overflowY:"auto",
+    WebkitOverflowScrolling:"touch",
+    overscrollBehavior:"contain",
+    boxShadow:"0 -24px 60px rgba(31,27,46,0.18)",
+  }}>{children}</div>);
+}
+function Toggle({on,onChange,color}){return(<div onClick={onChange} className="lt-press-soft" style={{width:52,height:30,borderRadius:15,background:on?color:G.border2,cursor:"pointer",position:"relative",transition:"background .3s cubic-bezier(0.32, 0.72, 0, 1)",flexShrink:0}}><div style={{width:24,height:24,borderRadius:"50%",background:G.white,position:"absolute",top:3,left:on?25:3,transition:"left .35s cubic-bezier(0.34, 1.56, 0.64, 1)",boxShadow:"0 2px 6px rgba(0,0,0,.18)"}}/></div>);}
+function SLabel({children}){return <div style={{fontFamily:G.font,fontWeight:500,fontSize:10.5,color:"#9892AA",letterSpacing:1.4,textTransform:"uppercase",marginBottom:14}}>{children}</div>;}
+function Tag({col,children}){return <span style={{fontFamily:G.font,fontWeight:500,fontSize:10.5,color:col,background:`${col}14`,borderRadius:7,padding:"3px 8px",letterSpacing:.3}}>{children}</span>;}
 const INP={width:"100%",padding:"13px 16px",borderRadius:14,border:`1px solid ${G.border}`,fontSize:15,outline:"none",fontFamily:G.font,color:G.ink,boxSizing:"border-box",marginBottom:16,background:G.cream};
 const GHOST={padding:"13px 20px",borderRadius:14,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:14,cursor:"pointer"};
 
 function TabB({active,gold,children,onClick,color,deep,flex=1}){
   return(
-    <button onClick={onClick} onMouseDown={e=>e.currentTarget.style.transform="scale(0.96)"} onMouseUp={e=>e.currentTarget.style.transform=""} onMouseLeave={e=>e.currentTarget.style.transform=""} style={{flex,padding:"9px 0",borderRadius:11,border:"none",fontFamily:G.font,fontWeight:700,fontSize:12,cursor:"pointer",transition:"transform .15s, background .25s, box-shadow .25s, color .2s",background:gold?"linear-gradient(135deg,#FDE68A,#F4C95C)":active?`linear-gradient(135deg,${color},${color}E5)`:"transparent",color:gold?"#78350F":active?"#fff":G.ink2,boxShadow:active?`0 4px 14px ${color}55, 0 1px 3px ${color}33`:gold?"0 3px 10px #FDE68A88":"none"}}>{children}</button>
+    <button onClick={onClick} className="lt-press-soft" style={{flex,padding:"9px 0",borderRadius:11,border:"none",fontFamily:G.font,fontWeight:active||gold?600:500,fontSize:12,letterSpacing:.3,cursor:"pointer",transition:"transform .22s cubic-bezier(0.32, 0.72, 0, 1), background .28s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .28s ease, color .22s ease",background:gold?"linear-gradient(135deg,#FDE68A,#F4C95C)":active?`linear-gradient(135deg,${color},${color}E5)`:"transparent",color:gold?"#78350F":active?"#fff":G.ink2,boxShadow:active?`0 4px 14px ${color}55, 0 1px 3px ${color}33`:gold?"0 3px 10px #FDE68A88":"none"}}>{children}</button>
   );
 }
 
 /* ═══ Story viewer (fullscreen page-by-page) ═══ */
 function StoryViewer({story,lang,t,onClose}){
   const[idx,setIdx]=useState(0);
+  const[showTimer,setShowTimer]=useState(false);
   const startX=useRef(null);
   const isFT=story.type==="firstthen";
   const page=story.pages[idx];
   if(!page) return null;
   const onTS=e=>{startX.current=e.touches?.[0]?.clientX??e.clientX;};
   const onTE=e=>{if(startX.current===null)return;const dx=(e.changedTouches?.[0]?.clientX??e.clientX)-startX.current;if(Math.abs(dx)>40){if(dx<0&&idx<story.pages.length-1)setIdx(i=>i+1);else if(dx>0&&idx>0)setIdx(i=>i-1);}startX.current=null;};
+  // Per-page timer — appears underneath the current page's content card
+  const pt=page.timer;
+  const hasTimer=pt?.on;
+  // Auto-close timer when navigating between pages
+  useEffect(()=>{setShowTimer(false);},[idx]);
 
   // FIRST-THEN: special two-card contract layout
   if(isFT){
     const firstPage=story.pages[0], thenPage=story.pages[1];
+    const firstHasTimer=firstPage?.timer?.on;
+    const thenHasTimer=thenPage?.timer?.on;
     return(
       <div style={{position:"fixed",inset:0,zIndex:9000,background:"#FFFFFF",backgroundImage:`linear-gradient(165deg,${story.color}12 0%,#FFFFFF 70%)`,display:"flex",flexDirection:"column",userSelect:"none",animation:"ftIn .25s ease"}}>
+        {showTimer&&hasTimer&&<FullTimer type={pt.type} totalSec={pt.min*60} color={pt.color} t={t} autoRun={true} onClose={()=>setShowTimer(false)}/>}
         <style>{`@keyframes ftArrow{0%{transform:translateX(0)}50%{transform:translateX(8px)}100%{transform:translateX(0)}}`}</style>
-        <div style={{padding:"22px 22px 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontSize:22}}>{story.emoji}</span>
-            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:story.color,letterSpacing:-.2}}>{lang==="sv"?story.sv:story.en}</div>
+        <div style={{padding:"22px 22px 0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+            {story.photo?(
+              <div style={{width:32,height:32,borderRadius:10,overflow:"hidden",flexShrink:0}}>
+                <img src={story.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              </div>
+            ):(
+              <span style={{fontSize:22}}>{story.emoji}</span>
+            )}
+            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:story.color,letterSpacing:-.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lsText(story,lang)}</div>
           </div>
-          <button onClick={onClose} style={{width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:20,cursor:"pointer",boxShadow:sh.sm}}>✕</button>
+          <button onClick={onClose} style={{width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:20,cursor:"pointer",boxShadow:sh.sm,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
         </div>
         <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 18px",gap:10}}>
           {/* FIRST */}
@@ -1971,7 +3496,21 @@ function StoryViewer({story,lang,t,onClose}){
             <div style={{width:"100%",aspectRatio:"1",borderRadius:20,background:firstPage?.photo?"#000":`linear-gradient(140deg,${story.color}1A,${story.color}3A)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:72,marginBottom:12,overflow:"hidden"}}>
               {firstPage?.photo?<img src={firstPage.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:firstPage?.emoji}
             </div>
-            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:17,color:G.ink,lineHeight:1.2,letterSpacing:-.2}}>{lang==="sv"?firstPage?.sv:firstPage?.en}</div>
+            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:17,color:G.ink,lineHeight:1.2,letterSpacing:-.2}}>{lsText(firstPage,lang)}</div>
+            {firstHasTimer&&(
+              <button onClick={()=>{setIdx(0);setShowTimer(true);}} className="lt-press-soft" style={{
+                marginTop:12,display:"inline-flex",alignItems:"center",gap:6,
+                padding:"8px 12px",borderRadius:12,
+                background:`${firstPage.timer.color}10`,
+                border:`1px solid ${firstPage.timer.color}40`,
+                color:firstPage.timer.color,
+                fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",
+                boxShadow:`0 4px 12px ${firstPage.timer.color}22`,
+              }}>
+                <TimerIcon type={firstPage.timer.type} size={13} color={firstPage.timer.color}/>
+                <span>{firstPage.timer.min} {t.min}</span>
+              </button>
+            )}
           </div>
           {/* Arrow — elegant SVG with subtle drawn animation */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"center",animation:"ftArrow 2s ease infinite",flexShrink:0,padding:"0 4px"}}>
@@ -1993,7 +3532,21 @@ function StoryViewer({story,lang,t,onClose}){
             <div style={{width:"100%",aspectRatio:"1",borderRadius:20,background:thenPage?.photo?"#000":`linear-gradient(140deg,${story.color}1A,${story.color}3A)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:72,marginBottom:12,overflow:"hidden"}}>
               {thenPage?.photo?<img src={thenPage.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:thenPage?.emoji}
             </div>
-            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:17,color:G.ink,lineHeight:1.2,letterSpacing:-.2}}>{lang==="sv"?thenPage?.sv:thenPage?.en}</div>
+            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:17,color:G.ink,lineHeight:1.2,letterSpacing:-.2}}>{lsText(thenPage,lang)}</div>
+            {thenHasTimer&&(
+              <button onClick={()=>{setIdx(1);setShowTimer(true);}} className="lt-press-soft" style={{
+                marginTop:12,display:"inline-flex",alignItems:"center",gap:6,
+                padding:"8px 12px",borderRadius:12,
+                background:`${thenPage.timer.color}10`,
+                border:`1px solid ${thenPage.timer.color}40`,
+                color:thenPage.timer.color,
+                fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",
+                boxShadow:`0 4px 12px ${thenPage.timer.color}22`,
+              }}>
+                <TimerIcon type={thenPage.timer.type} size={13} color={thenPage.timer.color}/>
+                <span>{thenPage.timer.min} {t.min}</span>
+              </button>
+            )}
           </div>
         </div>
         <div style={{padding:"0 24px 32px"}}>
@@ -2006,18 +3559,93 @@ function StoryViewer({story,lang,t,onClose}){
   // SEQUENCE: normal page-by-page viewer
   return(
     <div onTouchStart={onTS} onTouchEnd={onTE} onMouseDown={onTS} onMouseUp={onTE} style={{position:"fixed",inset:0,zIndex:9000,background:"#FFFFFF",backgroundImage:`linear-gradient(165deg,${story.color}10 0%,#FFFFFF 70%)`,display:"flex",flexDirection:"column",userSelect:"none",animation:"ftIn .25s ease"}}>
-      <div style={{padding:"22px 22px 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <span style={{fontSize:22}}>{story.emoji}</span>
-          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:story.color,letterSpacing:-.2}}>{lang==="sv"?story.sv:story.en}</div>
+      <div style={{padding:"22px 22px 0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+          {story.photo?(
+            <div style={{width:32,height:32,borderRadius:10,overflow:"hidden",flexShrink:0}}>
+              <img src={story.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+            </div>
+          ):(
+            <span style={{fontSize:22}}>{story.emoji}</span>
+          )}
+          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:story.color,letterSpacing:-.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lsText(story,lang)}</div>
         </div>
-        <button onClick={onClose} style={{width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:20,cursor:"pointer",boxShadow:sh.sm}}>✕</button>
+        <button onClick={onClose} style={{width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:20,cursor:"pointer",boxShadow:sh.sm,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
       </div>
-      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"20px 30px",gap:32}}>
-        <div style={{width:220,height:220,borderRadius:36,background:page.photo?"transparent":`linear-gradient(140deg,${story.color}1A,${story.color}38)`,border:`1px solid ${story.color}30`,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:120,boxShadow:`0 20px 50px ${story.color}26`}}>
+      <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:showTimer?"flex-start":"center",padding:"20px 30px",gap:20,transition:"justify-content .4s ease"}}>
+        {/* Page image — shrinks when timer is active so both fit */}
+        <div style={{
+          width:showTimer?140:220,
+          height:showTimer?140:220,
+          borderRadius:showTimer?28:36,
+          background:page.photo?"transparent":`linear-gradient(140deg,${story.color}1A,${story.color}38)`,
+          border:`1px solid ${story.color}30`,
+          overflow:"hidden",
+          display:"flex",alignItems:"center",justifyContent:"center",
+          fontSize:showTimer?76:120,
+          boxShadow:`0 ${showTimer?12:20}px ${showTimer?30:50}px ${story.color}26`,
+          flexShrink:0,
+          transition:"width .45s cubic-bezier(0.32, 0.72, 0, 1), height .45s cubic-bezier(0.32, 0.72, 0, 1), border-radius .45s, font-size .45s, box-shadow .45s",
+        }}>
           {page.photo?<img src={page.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:page.emoji}
         </div>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:22,color:G.ink,textAlign:"center",lineHeight:1.35,maxWidth:340,letterSpacing:-.3}}>{lang==="sv"?page.sv:page.en}</div>
+        <div style={{
+          fontFamily:G.serif,
+          fontWeight:600,
+          fontSize:showTimer?16:22,
+          color:G.ink,
+          textAlign:"center",
+          lineHeight:1.35,
+          maxWidth:340,
+          letterSpacing:-.3,
+          transition:"font-size .45s",
+        }}>{lsText(page,lang)}</div>
+
+        {/* Timer — pill (idle) or live inline animation (running) */}
+        {hasTimer&&!showTimer&&(
+          <button onClick={()=>setShowTimer(true)} className="lt-press-soft" style={{
+            display:"inline-flex",alignItems:"center",gap:9,
+            padding:"11px 18px 11px 14px",borderRadius:18,
+            background:G.white,
+            border:`1px solid ${pt.color}40`,
+            color:pt.color,
+            fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",
+            boxShadow:`0 10px 28px ${pt.color}28, 0 2px 6px ${pt.color}22`,
+            letterSpacing:.1,
+            animation:"timerPillIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+          }}>
+            <style>{`@keyframes timerPillIn{0%{opacity:0;transform:translateY(8px) scale(0.92)}100%{opacity:1;transform:translateY(0) scale(1)}}`}</style>
+            <TimerIcon type={pt.type} size={16} color={pt.color}/>
+            <span>{pt.min} {t.min}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.7,marginLeft:2}}>
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+          </button>
+        )}
+
+        {/* Inline running timer — appears under the card */}
+        {hasTimer&&showTimer&&(
+          <div style={{
+            width:"100%",
+            display:"flex",
+            flexDirection:"column",
+            alignItems:"center",
+            gap:14,
+            animation:"timerInlineIn 0.55s cubic-bezier(0.32, 0.72, 0, 1) both",
+          }}>
+            <style>{`@keyframes timerInlineIn{0%{opacity:0;transform:translateY(14px) scale(0.95)}100%{opacity:1;transform:translateY(0) scale(1)}}`}</style>
+            <TimerComp type={pt.type} totalSec={pt.min*60} color={pt.color} t={t} autoRun={true} size={Math.min(240, typeof window!=="undefined"?Math.min(window.innerWidth,480)-72:240)} showCtrl={true}/>
+            <button onClick={()=>setShowTimer(false)} className="lt-press-soft" style={{
+              padding:"8px 16px",borderRadius:12,
+              border:`1px solid ${G.border}`,
+              background:G.white,
+              color:G.ink2,
+              fontFamily:G.font,fontWeight:600,fontSize:12,
+              cursor:"pointer",
+              letterSpacing:.2,
+            }}>{lang==="sv"?"Dölj timer":"Hide timer"}</button>
+          </div>
+        )}
       </div>
       <div style={{padding:"0 24px 32px"}}>
         <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:22}}>
@@ -2038,6 +3666,7 @@ function PageEditor({page,idx,total,onUpdate,onRemove,onMoveUp,onMoveDown,color,
   const[epage,setEpage]=useState(0);
   const pp=40;
   const fileRef=useRef(null);
+  const cameraRef=useRef(null);
   const onPhoto=e=>{
     const f=e.target.files?.[0]; if(!f) return;
     const r=new FileReader();
@@ -2056,28 +3685,155 @@ function PageEditor({page,idx,total,onUpdate,onRemove,onMoveUp,onMoveDown,color,
     r.readAsDataURL(f);
   };
   return(
-    <div style={{background:G.cream,borderRadius:16,padding:14,marginBottom:10,border:`1px solid ${G.border}`}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:11}}>
+    <div style={{background:G.cream,borderRadius:16,padding:16,marginBottom:12,border:`1px solid ${G.border}`,animation:`pageEditorIn 0.45s cubic-bezier(0.32, 0.72, 0, 1) ${Math.min(idx*0.04, 0.3)}s both`}}>
+      <style>{`@keyframes pageEditorIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}`}</style>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
         <span style={{fontFamily:G.font,fontWeight:600,fontSize:11,color:G.ink3,letterSpacing:.8}}>{t.pageNum} {idx+1}</span>
         <div style={{flex:1}}/>
         <button onClick={onMoveUp} disabled={idx===0} style={{padding:"4px 9px",borderRadius:8,border:"none",background:idx===0?G.white:G.border,color:idx===0?G.ink3:G.ink2,cursor:idx===0?"default":"pointer",fontSize:11}}>↑</button>
         <button onClick={onMoveDown} disabled={idx===total-1} style={{padding:"4px 9px",borderRadius:8,border:"none",background:idx===total-1?G.white:G.border,color:idx===total-1?G.ink3:G.ink2,cursor:idx===total-1?"default":"pointer",fontSize:11}}>↓</button>
         <button onClick={onRemove} style={{padding:"4px 9px",borderRadius:8,border:"none",background:"#FEF2F2",color:"#EF4444",cursor:"pointer",fontSize:11}}>✕</button>
       </div>
-      <div style={{display:"flex",gap:10}}>
-        <div onClick={()=>setShowE(true)} style={{width:64,height:64,borderRadius:14,background:page.photo?"transparent":G.white,border:`1px solid ${G.border}`,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,flexShrink:0,cursor:"pointer"}}>
+
+      {/* Top row — bild + textfält */}
+      <div style={{display:"flex",gap:12,marginBottom:12}}>
+        <div onClick={()=>{if(!page.photo)setShowE(true);}} style={{width:80,height:80,borderRadius:14,background:page.photo?"transparent":G.white,border:`1px solid ${G.border}`,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,flexShrink:0,cursor:"pointer"}}>
           {page.photo?<img src={page.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:page.emoji}
         </div>
-        <div style={{flex:1,display:"flex",flexDirection:"column",gap:6}}>
-          <textarea value={page.sv} onChange={e=>onUpdate("sv",e.target.value)} placeholder="t.ex. Jag bäddar sängen" style={{...INP,marginBottom:0,minHeight:42,resize:"vertical",fontSize:14,fontFamily:G.font}}/>
-          <div style={{display:"flex",gap:6}}>
-            <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{display:"none"}}/>
-            <button onClick={()=>fileRef.current?.click()} style={{flex:1,padding:"7px",borderRadius:9,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer"}}>📷 Foto</button>
-            <button onClick={()=>setShowE(true)} style={{flex:1,padding:"7px",borderRadius:9,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer"}}>😊 Emoji</button>
-            {page.photo&&<button onClick={()=>onUpdate("photo",null)} style={{padding:"7px 10px",borderRadius:9,border:"none",background:"#FEF2F2",color:"#EF4444",cursor:"pointer",fontSize:11}}>↺</button>}
-          </div>
-        </div>
+        <textarea value={page.sv} onChange={e=>onUpdate("sv",e.target.value)} placeholder={t.pageTextPH} className="lt-input" style={{...INP,marginBottom:0,minHeight:80,resize:"vertical",fontSize:14,fontFamily:G.font,flex:1}}/>
       </div>
+
+      {/* Visual media controls — labelled section like schemat */}
+      <div style={{fontFamily:G.font,fontWeight:500,fontSize:10,color:"#9892AA",letterSpacing:1.2,textTransform:"uppercase",marginBottom:8}}>{t.pageImage}</div>
+      <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{display:"none"}}/>
+      <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={onPhoto} style={{display:"none"}}/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+        <button onClick={()=>cameraRef.current?.click()} className="lt-press-soft" style={{padding:"10px 6px",borderRadius:11,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <span>{t.camera}</span>
+        </button>
+        <button onClick={()=>fileRef.current?.click()} className="lt-press-soft" style={{padding:"10px 6px",borderRadius:11,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="9" cy="10" r="1.5"/>
+            <path d="M21 15l-4-4-9 9"/>
+          </svg>
+          <span>{t.gallery}</span>
+        </button>
+        <button onClick={()=>{setShowE(true);}} className="lt-press-soft" style={{padding:"10px 6px",borderRadius:11,border:`1px solid ${!page.photo?color:G.border}`,background:!page.photo?`${color}10`:G.white,color:!page.photo?color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+            <line x1="9" y1="9" x2="9.01" y2="9"/>
+            <line x1="15" y1="9" x2="15.01" y2="9"/>
+          </svg>
+          <span>{t.emoji}</span>
+        </button>
+      </div>
+      {page.photo&&(
+        <button onClick={()=>onUpdate("photo",null)} className="lt-press-soft" style={{marginTop:8,width:"100%",padding:"8px",borderRadius:10,border:"none",background:"#FEF2F2",color:"#EF4444",fontFamily:G.font,fontSize:12,fontWeight:600,cursor:"pointer"}}>{t.removePhoto}</button>
+      )}
+
+      {/* Timer section — optional countdown for this specific page */}
+      {(()=>{
+        const pt=page.timer||{on:false,type:"sector",min:15,color:"#8AAFD2"};
+        const setT=(field,val)=>onUpdate("timer",{...pt,[field]:val});
+        return(
+          <div style={{marginTop:14,padding:14,borderRadius:14,background:pt.on?`${pt.color}0C`:G.white,border:`1px solid ${pt.on?pt.color+"30":G.border}`,transition:"all .3s ease"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+                <TimerIcon type={pt.type} size={18} color={pt.on?pt.color:G.ink3}/>
+                <div style={{minWidth:0}}>
+                  <div style={{fontFamily:G.font,fontWeight:600,fontSize:12,color:pt.on?G.ink:G.ink2,letterSpacing:.1}}>{t.pageTimer}</div>
+                  <div style={{fontFamily:G.font,fontWeight:400,fontSize:10.5,color:G.ink3,marginTop:1}}>
+                    {pt.on?`${pt.min} min · ${tlbl(pt.type,t)}`:t.off}
+                  </div>
+                </div>
+              </div>
+              <Toggle on={pt.on} onChange={()=>setT("on",!pt.on)} color={pt.color}/>
+            </div>
+            {pt.on&&(
+              <div style={{display:"flex",flexDirection:"column",gap:12,marginTop:14,animation:"pSect 0.32s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+                <style>{`@keyframes pSect{0%{opacity:0;transform:translateY(5px)}100%{opacity:1;transform:translateY(0)}}`}</style>
+                {/* Type */}
+                <div>
+                  <div style={{fontFamily:G.font,fontWeight:500,fontSize:9.5,color:"#9892AA",letterSpacing:1.2,textTransform:"uppercase",marginBottom:7}}>{t.timerType}</div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:5}}>
+                    {TTYPES.map(k=>{
+                      const sel=pt.type===k;
+                      return(
+                        <button key={k} onClick={()=>setT("type",k)} className="lt-press-soft" style={{
+                          padding:"8px 3px 7px",borderRadius:10,border:"1px solid",
+                          fontFamily:G.font,fontWeight:600,fontSize:10,cursor:"pointer",
+                          borderColor:sel?pt.color:"rgba(31,27,46,0.08)",
+                          background:sel?pt.color:G.white,
+                          color:sel?"#fff":G.ink2,
+                          display:"flex",flexDirection:"column",alignItems:"center",gap:4,
+                          transition:"all .2s ease",
+                        }}>
+                          <TimerIcon type={k} size={14} color={sel?"#fff":G.ink2}/>
+                          <span>{tlbl(k,t)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {/* Minutes */}
+                <div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:5}}>
+                    <div style={{fontFamily:G.font,fontWeight:500,fontSize:9.5,color:"#9892AA",letterSpacing:1.2,textTransform:"uppercase"}}>{t.timerMin}</div>
+                    <span style={{fontFamily:G.serif,fontWeight:600,fontSize:14,color:G.ink}}>{pt.min} {t.min}</span>
+                  </div>
+                  <input type="range" min={1} max={60} value={pt.min} onChange={e=>setT("min",+e.target.value)} style={{width:"100%",accentColor:pt.color}}/>
+                  <div style={{display:"flex",gap:4,marginTop:6,flexWrap:"wrap"}}>
+                    {[5,10,15,20,30,45].map(v=>{
+                      const sel=pt.min===v;
+                      return(
+                        <button key={v} onClick={()=>setT("min",v)} className="lt-press-soft" style={{
+                          padding:"5px 9px",borderRadius:9,
+                          border:`1px solid ${sel?pt.color:"rgba(31,27,46,0.08)"}`,
+                          background:sel?pt.color:G.white,
+                          color:sel?"#fff":G.ink2,
+                          fontFamily:G.font,fontWeight:600,fontSize:10.5,cursor:"pointer",
+                          transition:"all .2s ease",
+                        }}>{v}</button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {/* Color */}
+                <div>
+                  <div style={{fontFamily:G.font,fontWeight:500,fontSize:9.5,color:"#9892AA",letterSpacing:1.2,textTransform:"uppercase",marginBottom:7}}>{t.timerColor}</div>
+                  <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+                    {TMR_C.map(col=>{
+                      const sel=pt.color===col;
+                      return(
+                        <div key={col} onClick={()=>setT("color",col)} className="lt-press-soft" style={{
+                          width:26,height:26,borderRadius:"50%",
+                          background:col,cursor:"pointer",position:"relative",
+                          transform:sel?"scale(1.1)":"scale(1)",
+                          boxShadow:sel?`0 0 0 2px ${G.white}, 0 0 0 4px ${col}, 0 4px 10px ${col}55`:`0 2px 5px ${col}33`,
+                          transition:"transform .25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .25s ease",
+                        }}>
+                          {sel&&(
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{position:"absolute",inset:0,width:"100%",height:"100%",padding:6}}>
+                              <path d="M5 12l5 5L20 7"/>
+                            </svg>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {showE&&(
         <Overlay onClose={()=>setShowE(false)}>
           <Sheet scroll>
@@ -2096,10 +3852,11 @@ function PageEditor({page,idx,total,onUpdate,onRemove,onMoveUp,onMoveDown,color,
 }
 
 /* ═══ Story editor ═══ */
-function StoryEditor({story,onSave,onDel,onClose,t}){
+function StoryEditor({story,onSave,onDel,onClose,t,lang}){
   const[type,setType]=useState(story?.type||"sequence");
   const[title,setTitle]=useState(story?.sv||"");
   const[emoji,setEmoji]=useState(story?.emoji||(story?.type==="firstthen"?"📋":"📖"));
+  const[photo,setPhoto]=useState(story?.photo||null);
   const[color,setColor]=useState(story?.color||(story?.type==="firstthen"?"#D9886B":"#C9A875"));
   const[firstLabel,setFirstLabel]=useState(story?.firstLabel||"");
   const[thenLabel,setThenLabel]=useState(story?.thenLabel||"");
@@ -2117,6 +3874,26 @@ function StoryEditor({story,onSave,onDel,onClose,t}){
   const pp=40;
   const S=SCREENS.stories;
   const isFT=type==="firstthen";
+  // Photo upload for the story cover image
+  const fileRef=useRef(null);
+  const cameraRef=useRef(null);
+  const onCoverPhoto=e=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=500, scale=Math.min(1,max/Math.max(img.width,img.height));
+        const w=img.width*scale, h=img.height*scale;
+        const cv=document.createElement("canvas");
+        cv.width=w; cv.height=h;
+        cv.getContext("2d").drawImage(img,0,0,w,h);
+        setPhoto(cv.toDataURL("image/jpeg",0.82));
+      };
+      img.src=r.result;
+    };
+    r.readAsDataURL(f);
+  };
   const addPage=()=>setPages(p=>[...p,{id:"p"+Date.now()+Math.random(),emoji:"⭐",photo:null,sv:"",en:""}]);
   const updPage=(id,field,val)=>setPages(p=>p.map(pg=>pg.id===id?{...pg,[field]:val}:pg));
   const rmPage=id=>setPages(p=>p.filter(pg=>pg.id!==id));
@@ -2144,45 +3921,87 @@ function StoryEditor({story,onSave,onDel,onClose,t}){
     if(!title.trim()) return;
     if(isFT && pages.length!==2) return;
     if(!isFT && pages.length===0) return;
-    onSave({id:story?.id||"s"+Date.now(),type,sv:title,en:title,emoji,color,pages,firstLabel:firstLabel.trim(),thenLabel:thenLabel.trim()});
+    onSave({id:story?.id||"s"+Date.now(),type,sv:title,en:title,emoji,photo,color,pages,firstLabel:firstLabel.trim(),thenLabel:thenLabel.trim()});
     onClose();
   };
   return(
     <Overlay onClose={onClose}>
       <Sheet scroll>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:21,color:G.ink,marginBottom:18}}>{story?.id?"Redigera berättelse":t.newStory}</div>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:24,letterSpacing:-.5,lineHeight:1.1}}>{story?.id?t.editStory:t.newStory}</div>
 
         {/* Type selector */}
-        <SLabel>Typ</SLabel>
+        <SLabel>{t.storyType}</SLabel>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
           <button onClick={()=>switchType("sequence")} style={{padding:"14px 10px",borderRadius:14,border:`1.5px solid ${type==="sequence"?S.h:G.border}`,background:type==="sequence"?S.hl:G.white,color:type==="sequence"?S.deep:G.ink2,fontFamily:G.font,fontWeight:600,cursor:"pointer",fontSize:13,textAlign:"center",lineHeight:1.3}}>
             <div style={{fontSize:22,marginBottom:4}}>📖</div>
-            <div>Steg-för-steg</div>
-            <div style={{fontSize:10,opacity:.7,marginTop:3,fontWeight:500}}>Flera sidor</div>
+            <div>{t.typeSeq}</div>
+            <div style={{fontSize:10,opacity:.7,marginTop:3,fontWeight:500}}>{t.typeSeqDesc}</div>
           </button>
           <button onClick={()=>switchType("firstthen")} style={{padding:"14px 10px",borderRadius:14,border:`1.5px solid ${type==="firstthen"?S.h:G.border}`,background:type==="firstthen"?S.hl:G.white,color:type==="firstthen"?S.deep:G.ink2,fontFamily:G.font,fontWeight:600,cursor:"pointer",fontSize:13,textAlign:"center",lineHeight:1.3}}>
             <div style={{fontSize:22,marginBottom:4}}>📋</div>
-            <div>Först-Sedan</div>
-            <div style={{fontSize:10,opacity:.7,marginTop:3,fontWeight:500}}>Först → Sedan</div>
+            <div>{t.typeFT}</div>
+            <div style={{fontSize:10,opacity:.7,marginTop:3,fontWeight:500}}>{t.typeFTDesc}</div>
           </button>
         </div>
 
-        <SLabel>{t.pickEmoji}</SLabel>
-        <button onClick={()=>setShowE(true)} style={{fontSize:32,padding:"10px 22px",borderRadius:14,border:`1px solid ${G.border}`,background:G.white,cursor:"pointer",marginBottom:16}}>{emoji}</button>
+        <SLabel>{t.cover}</SLabel>
+        <input ref={fileRef} type="file" accept="image/*" onChange={onCoverPhoto} style={{display:"none"}}/>
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={onCoverPhoto} style={{display:"none"}}/>
+        <div style={{display:"flex",gap:12,alignItems:"center",marginBottom:18}}>
+          <div onClick={()=>{if(!photo)setShowE(true);}} style={{
+            width:72,height:72,borderRadius:18,
+            background:photo?"transparent":G.white,
+            border:`1px solid ${G.border}`,
+            overflow:"hidden",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:36,flexShrink:0,cursor:"pointer",
+          }}>
+            {photo?<img src={photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:emoji}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,flex:1}}>
+            <button onClick={()=>cameraRef.current?.click()} className="lt-press-soft" style={{padding:"9px 4px",borderRadius:11,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              <span>{t.camera}</span>
+            </button>
+            <button onClick={()=>fileRef.current?.click()} className="lt-press-soft" style={{padding:"9px 4px",borderRadius:11,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="9" cy="10" r="1.5"/>
+                <path d="M21 15l-4-4-9 9"/>
+              </svg>
+              <span>{t.gallery}</span>
+            </button>
+            <button onClick={()=>{setShowE(true);}} className="lt-press-soft" style={{padding:"9px 4px",borderRadius:11,border:`1px solid ${!photo?color:G.border}`,background:!photo?`${color}10`:G.white,color:!photo?color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                <line x1="15" y1="9" x2="15.01" y2="9"/>
+              </svg>
+              <span>{t.emoji}</span>
+            </button>
+          </div>
+        </div>
+        {photo&&(
+          <button onClick={()=>setPhoto(null)} className="lt-press-soft" style={{marginTop:-8,marginBottom:14,padding:"7px 12px",borderRadius:10,border:"none",background:"#FEF2F2",color:"#EF4444",fontFamily:G.font,fontSize:11,fontWeight:600,cursor:"pointer",alignSelf:"flex-start"}}>{t.removePhoto}</button>
+        )}
         <SLabel>{t.storyTitle}</SLabel>
-        <input value={title} onChange={e=>setTitle(e.target.value)} style={INP} placeholder={isFT?"t.ex. Först läxor, sedan TV":"t.ex. Städa rummet"}/>
+        <input value={title} onChange={e=>setTitle(e.target.value)} className="lt-input" style={INP} placeholder={isFT?t.storyPlacehFT:t.storyPlacehSeq}/>
         <SLabel>{t.pickColor}</SLabel>
         <div style={{display:"flex",gap:9,marginBottom:22,flexWrap:"wrap"}}>
           {ACT_C.map(col=><div key={col} onClick={()=>setColor(col)} style={{width:32,height:32,borderRadius:"50%",background:col,cursor:"pointer",outline:color===col?`3px solid ${col}`:"none",outlineOffset:2}}/>)}
         </div>
-        <SLabel>{isFT?"Först och Sedan":`${t.pages} · ${pages.length}`}</SLabel>
+        <SLabel>{isFT?t.ftSection:`${t.pages} · ${pages.length}`}</SLabel>
         {isFT?(
           <>
             <div style={{padding:"12px 14px",borderRadius:14,background:`${color}0C`,border:`1px solid ${color}28`,marginBottom:18}}>
-              <div style={{fontFamily:G.font,fontWeight:600,fontSize:11,color:G.ink3,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8}}>Etiketter (visas över korten)</div>
+              <div style={{fontFamily:G.font,fontWeight:600,fontSize:11,color:G.ink3,letterSpacing:0.8,textTransform:"uppercase",marginBottom:8}}>{t.ftLabels}</div>
               <div style={{display:"flex",gap:8}}>
-                <input value={firstLabel} onChange={e=>setFirstLabel(e.target.value)} placeholder={t.first||"Först"} maxLength={20} style={{...INP,flex:1,marginBottom:0,fontSize:14}}/>
-                <input value={thenLabel} onChange={e=>setThenLabel(e.target.value)} placeholder={t.then||"Sedan"} maxLength={20} style={{...INP,flex:1,marginBottom:0,fontSize:14}}/>
+                <input value={firstLabel} onChange={e=>setFirstLabel(e.target.value)} placeholder={t.first||"Först"} maxLength={20} className="lt-input" style={{...INP,flex:1,marginBottom:0,fontSize:14}}/>
+                <input value={thenLabel} onChange={e=>setThenLabel(e.target.value)} placeholder={t.then||"Sedan"} maxLength={20} className="lt-input" style={{...INP,flex:1,marginBottom:0,fontSize:14}}/>
               </div>
             </div>
             <div style={{fontFamily:G.font,fontWeight:700,fontSize:11,color:color,letterSpacing:2,textTransform:"uppercase",marginBottom:8}}>{firstLabel.trim()||t.first||"Först"}</div>
@@ -2196,11 +4015,15 @@ function StoryEditor({story,onSave,onDel,onClose,t}){
             <button onClick={addPage} style={{width:"100%",padding:"13px 0",borderRadius:14,border:`1.5px dashed ${color}66`,background:G.white,color,fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",marginBottom:20}}>{t.addPage}</button>
           </>
         )}
-        <div style={{display:"flex",gap:8,marginTop:isFT?20:0}}>
+
+        {/* Save / Cancel / Delete row */}
+        <div style={{display:"flex",gap:8,marginTop:isFT?20:0,marginBottom:20}}>
           {story?.id&&<button onClick={()=>{onDel(story.id);onClose();}} style={{padding:"14px 16px",borderRadius:14,border:"none",background:"#FEF2F2",color:"#EF4444",cursor:"pointer",fontSize:17}}>🗑</button>}
           <button onClick={onClose} style={{flex:1,...GHOST}}>{t.cancel}</button>
           <button onClick={doSave} style={{flex:2,padding:"15px 0",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h)}}>{t.save}</button>
         </div>
+        {/* Extra spacer at the very bottom so Save row clears any bottom nav overlap on iOS */}
+        <div style={{height:80}}/>
         {showE&&(
           <Overlay onClose={()=>setShowE(false)}>
             <Sheet scroll>
@@ -2227,25 +4050,68 @@ function StoryScreen({lang,t,isEditor,stories,setStories}){
   return(
     <div style={{flex:1,overflowY:"auto",background:S.hb}}>
       {viewer&&<StoryViewer story={viewer} lang={lang} t={t} onClose={()=>setViewer(null)}/>}
-      {editor&&<StoryEditor story={editor.id?editor:null} t={t} onSave={s=>setStories(ss=>editor.id?ss.map(x=>x.id===s.id?s:x):[...ss,s])} onDel={id=>setStories(ss=>ss.filter(x=>x.id!==id))} onClose={()=>setEditor(null)}/>}
-      <div style={{padding:"20px 20px 120px"}}>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:22,color:G.ink,marginBottom:18,letterSpacing:-.2}}>{t.stories}</div>
+      {editor&&<StoryEditor story={editor.id?editor:null} t={t} lang={lang} onSave={s=>setStories(ss=>editor.id?ss.map(x=>x.id===s.id?s:x):[...ss,s])} onDel={id=>setStories(ss=>ss.filter(x=>x.id!==id))} onClose={()=>setEditor(null)}/>}
+      <div style={{padding:"32px 22px 120px"}}>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:28,color:G.ink,marginBottom:22,letterSpacing:-.6,lineHeight:1.05}}>{t.stories}</div>
         {stories.length===0&&!isEditor?(
-          <div style={{textAlign:"center",marginTop:60,color:G.ink3,fontFamily:G.font}}>{t.noStories}</div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"60px 30px 60px",gap:18}}>
+            <style>{`@keyframes empStoryBreath{0%,100%{transform:scale(1);opacity:0.85}50%{transform:scale(1.025);opacity:1}}`}</style>
+            <svg width="72" height="72" viewBox="0 0 64 64" style={{animation:"empStoryBreath 4.2s ease-in-out infinite"}}>
+              <defs>
+                <linearGradient id="empStoryBook" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={`${S.h}30`}/>
+                  <stop offset="100%" stopColor={`${S.h}66`}/>
+                </linearGradient>
+              </defs>
+              {/* Open book illustration */}
+              <path d="M10 18 Q10 14 14 14 L30 16 Q32 16 32 18 L32 50 Q32 52 30 52 L14 50 Q10 50 10 46 Z" fill="url(#empStoryBook)" stroke={`${S.h}88`} strokeWidth="1.4"/>
+              <path d="M54 18 Q54 14 50 14 L34 16 Q32 16 32 18 L32 50 Q32 52 34 52 L50 50 Q54 50 54 46 Z" fill="url(#empStoryBook)" stroke={`${S.h}88`} strokeWidth="1.4"/>
+              <line x1="16" y1="24" x2="28" y2="25" stroke={`${S.h}aa`} strokeWidth="1.2" strokeLinecap="round"/>
+              <line x1="16" y1="30" x2="26" y2="31" stroke={`${S.h}88`} strokeWidth="1.2" strokeLinecap="round"/>
+              <line x1="36" y1="25" x2="48" y2="24" stroke={`${S.h}aa`} strokeWidth="1.2" strokeLinecap="round"/>
+              <line x1="36" y1="31" x2="46" y2="30" stroke={`${S.h}88`} strokeWidth="1.2" strokeLinecap="round"/>
+              <line x1="36" y1="37" x2="44" y2="36" stroke={`${S.h}66`} strokeWidth="1.2" strokeLinecap="round"/>
+            </svg>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.ink,letterSpacing:-.4,lineHeight:1.1,textAlign:"center",marginTop:2}}>{lang==="sv"?"Inga berättelser än":"No stories yet"}</div>
+            <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",letterSpacing:.1,textAlign:"center",lineHeight:1.4,maxWidth:240}}>{t.noStories}</div>
+          </div>
         ):(
           <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12}}>
-            {stories.map(s=>(
-              <div key={s.id} style={{position:"relative"}}>
-                <div onClick={()=>isEditor?setEditor(s):setViewer(s)} onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"} onMouseUp={e=>e.currentTarget.style.transform=""} onMouseLeave={e=>e.currentTarget.style.transform=""} onTouchStart={e=>e.currentTarget.style.transform="scale(0.97)"} onTouchEnd={e=>e.currentTarget.style.transform=""} style={{background:G.white,borderRadius:20,padding:"22px 14px 18px",cursor:"pointer",border:`1px solid ${s.color}25`,boxShadow:`0 6px 20px ${s.color}14`,transition:"transform .15s ease, box-shadow .2s ease"}}>
-                  <div style={{width:84,height:84,margin:"0 auto 12px",borderRadius:20,background:`linear-gradient(140deg,${s.color}1F,${s.color}3A)`,border:`1px solid ${s.color}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:46}}>{s.emoji}</div>
-                  <div style={{fontFamily:G.serif,fontWeight:600,fontSize:15,color:G.ink,textAlign:"center",lineHeight:1.2,letterSpacing:-.2}}>{lang==="sv"?s.sv:s.en}</div>
-                  <div style={{fontFamily:G.font,fontWeight:600,fontSize:10,color:s.color,textAlign:"center",marginTop:7,letterSpacing:.5,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-                    {s.type==="firstthen"?<><span>📋</span><span>{lang==="sv"?"Först-Sedan":"First-Then"}</span></>:<><span>{s.pages.length}</span><span>{t.pages.toLowerCase()}</span></>}
+            <style>{`@keyframes storyCardIn{0%{opacity:0;transform:translateY(10px) scale(0.97)}100%{opacity:1;transform:translateY(0) scale(1)}}`}</style>
+            {stories.map((s,i)=>{
+              const timerCount=(s.pages||[]).filter(p=>p.timer?.on).length;
+              return(
+              <div key={s.id} style={{position:"relative",animation:`storyCardIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) ${i*0.05}s both`}}>
+                <div onClick={()=>isEditor?setEditor(s):setViewer(s)} className="lt-press-soft" style={{background:G.white,borderRadius:20,padding:"22px 14px 18px",cursor:"pointer",border:`1px solid ${s.color}25`,boxShadow:`0 6px 20px ${s.color}14`,transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .2s ease"}}>
+                  <div style={{width:84,height:84,margin:"0 auto 12px",borderRadius:20,background:s.photo?"transparent":`linear-gradient(140deg,${s.color}1F,${s.color}3A)`,border:`1px solid ${s.color}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:46,overflow:"hidden"}}>
+                    {s.photo?<img src={s.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:s.emoji}
                   </div>
+                  <div style={{fontFamily:G.serif,fontWeight:500,fontSize:15,color:G.ink,textAlign:"center",lineHeight:1.2,letterSpacing:-.3}}>{lsText(s,lang)}</div>
+                  <div style={{fontFamily:G.font,fontWeight:500,fontSize:10.5,color:"#9892AA",textAlign:"center",marginTop:8,letterSpacing:.6,textTransform:"uppercase"}}>
+                    {s.type==="firstthen"?(lang==="sv"?"Först-Sedan":"First-Then"):`${s.pages.length} ${t.pages.toLowerCase()}`}
+                  </div>
+                  {/* Timer badge — shows if any page has a timer */}
+                  {timerCount>0&&(
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:5,marginTop:8,padding:"4px 10px",borderRadius:10,background:`${s.color}14`,border:`1px solid ${s.color}28`}}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={s.color} strokeWidth="2" strokeLinecap="round">
+                        <circle cx="12" cy="13" r="8"/>
+                        <path d="M12 13 L12 8" strokeLinejoin="round"/>
+                      </svg>
+                      <span style={{fontFamily:G.font,fontWeight:600,fontSize:10.5,color:s.color,letterSpacing:.2}}>{timerCount===1?(lang==="sv"?"1 timer":"1 timer"):`${timerCount} ${lang==="sv"?"timers":"timers"}`}</span>
+                    </div>
+                  )}
                 </div>
-                {isEditor&&<div style={{position:"absolute",top:8,right:8,padding:"4px 8px",borderRadius:10,background:G.white,boxShadow:sh.sm,fontSize:11,color:s.color,fontFamily:G.font,fontWeight:600}}>✏️</div>}
+                {isEditor&&(
+                  <div style={{position:"absolute",top:8,right:8,width:24,height:24,borderRadius:8,background:G.white,boxShadow:sh.sm,color:s.color,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4 H4 a2 2 0 0 0 -2 2 v14 a2 2 0 0 0 2 2 h14 a2 2 0 0 0 2 -2 v-7"/>
+                      <path d="M18.5 2.5 a2.121 2.121 0 0 1 3 3 L12 15 l-4 1 1 -4 z"/>
+                    </svg>
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
             {isEditor&&(
               <div onClick={()=>setEditor({})} style={{borderRadius:20,padding:"22px 14px 18px",cursor:"pointer",border:`1.5px dashed ${G.border2}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,minHeight:172}}>
                 <div style={{width:60,height:60,borderRadius:18,background:S.hll,display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -2300,10 +4166,59 @@ function BreathingExercise({onClose,t}){
   },[elapsed,started]);
   if(round>=4){
     return(
-      <div style={{position:"fixed",inset:0,zIndex:9000,background:"#FFFFFF",backgroundImage:`linear-gradient(165deg,${BLUE}14,#FFFFFF)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:30,gap:24,animation:"ftIn .4s ease"}}>
-        <div style={{fontSize:80}}>🌿</div>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:28,color:DEEP,textAlign:"center",letterSpacing:-.3}}>{t.breathDone}</div>
-        <button onClick={onClose} style={{padding:"15px 40px",borderRadius:18,border:"none",background:`linear-gradient(135deg,${BLUE},${DEEP})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:16,cursor:"pointer",boxShadow:sh.c(BLUE),marginTop:10}}>{t.close}</button>
+      <div style={{position:"fixed",inset:0,zIndex:9000,background:"#FFFFFF",backgroundImage:`linear-gradient(165deg,${BLUE}14,#FFFFFF)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:30,animation:"ftIn .4s ease"}}>
+        <style>{`
+          @keyframes bdRingExpand{0%{transform:scale(0.6);opacity:0}40%{opacity:0.55}100%{transform:scale(2.6);opacity:0}}
+          @keyframes bdBubbleSettle{0%{opacity:0;transform:scale(0.7)}40%{opacity:1;transform:scale(1.06)}70%{transform:scale(0.98)}100%{transform:scale(1)}}
+          @keyframes bdBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+          @keyframes bdCheckDraw{from{stroke-dashoffset:80}to{stroke-dashoffset:0}}
+          @keyframes bdDotFloat{0%{opacity:0;transform:translateY(20px) scale(0.5)}30%{opacity:0.7}100%{opacity:0;transform:translateY(-60px) scale(1)}}
+          @keyframes bdHaloPulse{0%,100%{opacity:0.18;transform:scale(0.94)}50%{opacity:0.36;transform:scale(1.04)}}
+        `}</style>
+
+        {/* Stage: bubble + radiating rings + ambient particles */}
+        <div style={{position:"relative",width:200,height:200,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          {/* Soft outer halo — slow pulse */}
+          <div style={{position:"absolute",width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle, ${BLUE}33 0%, ${BLUE}00 70%)`,animation:"bdHaloPulse 4.8s ease-in-out infinite"}}/>
+
+          {/* Two outward ripple rings — staggered, fade as they expand */}
+          <div style={{position:"absolute",width:140,height:140,borderRadius:"50%",border:`1.5px solid ${BLUE}`,animation:"bdRingExpand 3.4s cubic-bezier(0.32, 0.72, 0, 1) 0.4s infinite"}}/>
+          <div style={{position:"absolute",width:140,height:140,borderRadius:"50%",border:`1.5px solid ${BLUE}`,animation:"bdRingExpand 3.4s cubic-bezier(0.32, 0.72, 0, 1) 1.9s infinite"}}/>
+
+          {/* Floating bubble particles — drift upward */}
+          {[
+            {x:30,y:140,delay:0.8,size:6},
+            {x:155,y:130,delay:1.4,size:5},
+            {x:60,y:160,delay:2.1,size:4},
+            {x:140,y:155,delay:2.8,size:5},
+            {x:90,y:170,delay:3.5,size:4},
+          ].map((p,i)=>(
+            <div key={i} style={{position:"absolute",left:p.x,top:p.y,width:p.size,height:p.size,borderRadius:"50%",background:BLUE,animation:`bdDotFloat 3.6s ease-out ${p.delay}s infinite`}}/>
+          ))}
+
+          {/* Central bubble — settle in, then gentle breath forever */}
+          <div style={{width:130,height:130,borderRadius:"50%",animation:"bdBubbleSettle 1.2s cubic-bezier(0.32, 0.72, 0, 1) both",position:"relative"}}>
+            <div style={{
+              width:"100%",height:"100%",borderRadius:"50%",
+              background:`radial-gradient(circle at 35% 28%, #FFFFFF 0%, ${BLUE}AA 32%, ${BLUE}88 62%, ${DEEP}55 100%)`,
+              boxShadow:`0 28px 64px ${BLUE}55, inset 0 -16px 32px ${DEEP}33, inset 0 14px 28px rgba(255,255,255,0.55)`,
+              position:"relative",overflow:"hidden",
+              animation:"bdBreath 5.4s ease-in-out 1.2s infinite",
+            }}>
+              {/* Specular highlights */}
+              <div style={{position:"absolute",top:22,left:28,width:44,height:28,borderRadius:"50%",background:"radial-gradient(ellipse, rgba(255,255,255,0.75) 0%, transparent 70%)",filter:"blur(2px)"}}/>
+              <div style={{position:"absolute",top:26,left:32,width:20,height:13,borderRadius:"50%",background:"rgba(255,255,255,0.92)",filter:"blur(1px)"}}/>
+
+              {/* Quiet check — drawn slow once bubble has settled */}
+              <svg width="130" height="130" style={{position:"absolute",top:0,left:0,pointerEvents:"none"}} viewBox="0 0 130 130">
+                <path d="M44,68 L58,82 L88,50" stroke="rgba(255,255,255,0.92)" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" fill="none" strokeDasharray="80" style={{strokeDashoffset:80,animation:"bdCheckDraw 1s 1.6s cubic-bezier(0.32, 0.72, 0, 1) forwards",filter:`drop-shadow(0 1px 2px ${DEEP}44)`}}/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Close button — soft entry, isolated below the stage with generous breathing room */}
+        <button onClick={onClose} className="lt-press" style={{marginTop:64,padding:"14px 36px",borderRadius:20,border:"none",background:`linear-gradient(135deg,${BLUE},${DEEP})`,color:"#fff",fontFamily:G.font,fontWeight:600,fontSize:15,letterSpacing:.3,cursor:"pointer",boxShadow:sh.c(BLUE),opacity:0,animation:"adSection 0.8s 2.6s cubic-bezier(0.32, 0.72, 0, 1) forwards"}}>{t.close}</button>
       </div>
     );
   }
@@ -2312,9 +4227,11 @@ function BreathingExercise({onClose,t}){
       <button onClick={onClose} style={{position:"absolute",top:24,right:24,width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:20,cursor:"pointer",boxShadow:sh.sm,zIndex:5}}>✕</button>
       {!started?(
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:24,padding:30,textAlign:"center"}}>
-          {/* Preview bubble */}
-          <div style={{width:160,height:160,borderRadius:"50%",background:`radial-gradient(circle at 35% 30%, ${BLUE}88 0%, ${BLUE}55 50%, ${DEEP}33 100%)`,boxShadow:`0 18px 50px ${BLUE}55, inset 0 -12px 28px ${DEEP}33, inset 0 10px 22px rgba(255,255,255,0.5)`,position:"relative",overflow:"hidden"}}>
+          <style>{`@keyframes bePreviewBreath{0%,100%{transform:scale(0.92)}50%{transform:scale(1.04)}}`}</style>
+          {/* Preview bubble — gently breathes to invite */}
+          <div style={{width:160,height:160,borderRadius:"50%",background:`radial-gradient(circle at 35% 30%, ${BLUE}AA 0%, ${BLUE}66 50%, ${DEEP}44 100%)`,boxShadow:`0 18px 50px ${BLUE}55, inset 0 -12px 28px ${DEEP}33, inset 0 10px 22px rgba(255,255,255,0.5)`,position:"relative",overflow:"hidden",animation:"bePreviewBreath 4.5s ease-in-out infinite"}}>
             <div style={{position:"absolute",width:60,height:36,top:24,left:32,borderRadius:"50%",background:"radial-gradient(ellipse, rgba(255,255,255,0.7), transparent 70%)",filter:"blur(2px)"}}/>
+            <div style={{position:"absolute",width:24,height:14,top:30,left:40,borderRadius:"50%",background:"rgba(255,255,255,0.9)",filter:"blur(1px)"}}/>
           </div>
           <div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color:G.ink,letterSpacing:-.3}}>{t.breathing}</div>
           <div style={{fontFamily:G.font,fontSize:15,color:G.ink2,maxWidth:280,lineHeight:1.5}}>Följ bubblan. Andas in när den växer, håll, andas ut när den krymper.</div>
@@ -2617,11 +4534,43 @@ function GroundingExercise({onClose,t}){
   if(idx<0){
     return(
       <div style={{position:"fixed",inset:0,zIndex:9000,background:"#FFFFFF",backgroundImage:`linear-gradient(165deg,${S.hb} 0%,#FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:30,gap:24,animation:"ftIn .25s ease"}}>
+        <style>{`
+          @keyframes gIntroIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}
+          @keyframes gIntroRipple{0%{transform:scale(0.4);opacity:0.7}100%{transform:scale(2.2);opacity:0}}
+          @keyframes gIntroBreathe{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.07);filter:brightness(1.1)}}
+          @keyframes gIntroTextIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        `}</style>
         <button onClick={onClose} style={{position:"absolute",top:24,right:24,width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:20,cursor:"pointer",boxShadow:sh.sm}}>✕</button>
-        <div style={{fontSize:80}}>🌱</div>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color:G.ink,textAlign:"center",letterSpacing:-.3}}>{t.groundIntro}</div>
-        <div style={{fontFamily:G.font,fontSize:15,color:G.ink2,textAlign:"center",maxWidth:280,lineHeight:1.5}}>Vi går igenom fem sinnen, ett i taget. Du behöver inte säga något högt.</div>
-        <button onClick={()=>{setIdx(0);setChecked(0);}} style={{padding:"16px 42px",borderRadius:18,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:16,cursor:"pointer",boxShadow:sh.c(S.h),marginTop:8}}>▶ {t.groundStart}</button>
+        {/* Breathing mandala — slimmer than completion screen, sets the calm tone */}
+        <div style={{width:100,height:100,display:"flex",alignItems:"center",justifyContent:"center",animation:"gIntroIn 1s cubic-bezier(0.22,1,0.36,1) both"}}>
+          <svg width={100} height={100} viewBox="0 0 100 100" style={{overflow:"visible"}}>
+            <defs>
+              <radialGradient id="gIntroHalo" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={S.h} stopOpacity="0.35"/>
+                <stop offset="60%" stopColor={S.h} stopOpacity="0.1"/>
+                <stop offset="100%" stopColor={S.h} stopOpacity="0"/>
+              </radialGradient>
+              <radialGradient id="gIntroCore" cx="35%" cy="30%" r="70%">
+                <stop offset="0%" stopColor="#FFFFFF"/>
+                <stop offset="22%" stopColor="#FFFAF0"/>
+                <stop offset="58%" stopColor={S.h}/>
+                <stop offset="100%" stopColor={S.deep}/>
+              </radialGradient>
+            </defs>
+            <circle cx="50" cy="50" r="45" fill="url(#gIntroHalo)"/>
+            <circle cx="50" cy="50" r="20" fill="none" stroke={S.h} strokeWidth="1.4" opacity="0.55"
+              style={{transformOrigin:"50px 50px",animation:"gIntroRipple 4s ease-out infinite"}}/>
+            <circle cx="50" cy="50" r="20" fill="none" stroke={S.h} strokeWidth="1.4" opacity="0.55"
+              style={{transformOrigin:"50px 50px",animation:"gIntroRipple 4s ease-out 2s infinite"}}/>
+            <g style={{transformOrigin:"50px 50px",animation:"gIntroBreathe 3.6s ease-in-out infinite"}}>
+              <circle cx="50" cy="50" r="14" fill="url(#gIntroCore)"/>
+              <circle cx="46" cy="46" r="3.4" fill="#FFFFFF" opacity="0.85"/>
+            </g>
+          </svg>
+        </div>
+        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:24,color:G.ink,textAlign:"center",letterSpacing:-.3,maxWidth:320,lineHeight:1.25,animation:"gIntroTextIn 0.9s 0.4s cubic-bezier(0.22,1,0.36,1) both"}}>{t.groundIntro}</div>
+        <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,textAlign:"center",maxWidth:280,lineHeight:1.55,animation:"gIntroTextIn 0.9s 0.6s cubic-bezier(0.22,1,0.36,1) both"}}>Vi går igenom fem sinnen, ett i taget. Du behöver inte säga något högt.</div>
+        <button onClick={()=>{setIdx(0);setChecked(0);}} style={{padding:"16px 42px",borderRadius:18,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:16,cursor:"pointer",boxShadow:sh.c(S.h),marginTop:8,animation:"gIntroTextIn 0.9s 0.85s cubic-bezier(0.22,1,0.36,1) both"}}>▶ {t.groundStart}</button>
       </div>
     );
   }
@@ -2654,33 +4603,1059 @@ function GroundingExercise({onClose,t}){
   );
 }
 
+/* ═══════════════════════════════════════════════════
+   SKYLIGHT — passive visual meditation. Watch clouds
+   drift across an evolving sky. No breathing prompts,
+   no counting. Just rest the gaze. Calms nervous
+   system through soft motion + slow color shift.
+═══════════════════════════════════════════════════ */
+function SkylightExercise({onClose,t,lang}){
+  // Phase progression: dawn → day → dusk → starry → done
+  // Total: ~90 seconds. Each phase ~22s with crossfade between
+  const[elapsed,setElapsed]=useState(0);
+  const[done,setDone]=useState(false);
+  const[shootingStars,setShootingStars]=useState([]);
+  const[tappedStars,setTappedStars]=useState({});
+  const[bouncedClouds,setBouncedClouds]=useState({});
+  // Cloud drift offsets — when tapped, cloud nudges along a new vertical path
+  const[cloudDrifts,setCloudDrifts]=useState({});
+  const DURATION=90; // seconds
+  const startRef=useRef(Date.now());
+  const shootingIdRef=useRef(0);
+  useEffect(()=>{
+    const id=setInterval(()=>{
+      const e=(Date.now()-startRef.current)/1000;
+      if(e>=DURATION){setDone(true);clearInterval(id);return;}
+      setElapsed(e);
+    },200);
+    return()=>clearInterval(id);
+  },[]);
+  // Clean up shooting stars after their animation completes
+  useEffect(()=>{
+    if(shootingStars.length===0) return;
+    const id=setTimeout(()=>{
+      setShootingStars(prev=>prev.filter(s=>Date.now()-s.t<2400));
+    },2400);
+    return()=>clearTimeout(id);
+  },[shootingStars]);
+  // Trigger a shooting star from a tapped star position
+  const handleStarTap=(starIdx,sx,sy)=>{
+    if(tappedStars[starIdx]) return; // prevent rapid double-tap
+    setTappedStars(prev=>({...prev,[starIdx]:Date.now()}));
+    setTimeout(()=>setTappedStars(prev=>{const next={...prev};delete next[starIdx];return next;}),1800);
+    if(typeof navigator!=="undefined"&&navigator.vibrate) navigator.vibrate(8);
+    // Add a shooting star from this position, drifting diagonally
+    const id=++shootingIdRef.current;
+    // Pick a diagonal direction: down-right (most common), down-left, or steep
+    const dirs=[
+      {dx:42,dy:38,len:140},   // gentle down-right
+      {dx:-38,dy:42,len:135},  // gentle down-left
+      {dx:35,dy:55,len:155},   // steeper down-right
+      {dx:-30,dy:50,len:140},  // steeper down-left
+    ];
+    const dir=dirs[Math.floor(Math.random()*dirs.length)];
+    setShootingStars(prev=>[...prev,{id,sx,sy,...dir,t:Date.now()}]);
+  };
+  const handleCloudTap=(idx)=>{
+    if(bouncedClouds[idx]) return;
+    setBouncedClouds(prev=>({...prev,[idx]:Date.now()}));
+    setTimeout(()=>setBouncedClouds(prev=>{const next={...prev};delete next[idx];return next;}),1400);
+    // Drift offset — small random vertical nudge that accumulates with each tap
+    // Cloud gracefully glides to a new path while continuing to drift horizontally
+    const dyNudge = (Math.random()-0.5) * 18; // -9 to +9 px
+    setCloudDrifts(prev=>{
+      const cur=prev[idx]||0;
+      // Clamp total drift so cloud doesn't wander off screen
+      const next=Math.max(-30,Math.min(30,cur+dyNudge));
+      return{...prev,[idx]:next};
+    });
+    if(typeof navigator!=="undefined"&&navigator.vibrate) navigator.vibrate(6);
+  };
+
+  // Color phases — soft pastel sky transitions
+  // dawn = warm pink/peach, day = bright blue, dusk = lavender/coral, starry = deep indigo
+  const phases=[
+    {top:"#F5D5C8",mid:"#E8C5D5",bot:"#D5BCD8"},   // dawn
+    {top:"#C5DCE5",mid:"#9DC4D8",bot:"#82AEC8"},   // day
+    {top:"#E8C5D5",mid:"#C8A5C5",bot:"#9D85B5"},   // dusk
+    {top:"#3D3854",mid:"#2A2640",bot:"#1F1B2E"},   // starry night
+  ];
+  const phaseIdx=Math.min(3,Math.floor(elapsed/(DURATION/4)));
+  const phaseProgress=(elapsed%(DURATION/4))/(DURATION/4);
+  const nextIdx=Math.min(3,phaseIdx+1);
+  // Interpolate between current and next phase
+  const lerp=(a,b,t)=>{
+    const hex2rgb=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+    const rgb2hex=([r,g,b])=>`#${[r,g,b].map(x=>Math.round(x).toString(16).padStart(2,"0")).join("")}`;
+    const ca=hex2rgb(a),cb=hex2rgb(b);
+    return rgb2hex(ca.map((x,i)=>x+(cb[i]-x)*t));
+  };
+  const skyTop=lerp(phases[phaseIdx].top,phases[nextIdx].top,phaseProgress);
+  const skyMid=lerp(phases[phaseIdx].mid,phases[nextIdx].mid,phaseProgress);
+  const skyBot=lerp(phases[phaseIdx].bot,phases[nextIdx].bot,phaseProgress);
+  const isDark=phaseIdx>=3||(phaseIdx===2&&phaseProgress>0.7);
+
+  // Generate cloud positions — fixed positions but drift across via animation
+  const clouds=[
+    {y:18,size:1.0,speed:42,delay:0,opacity:0.85},
+    {y:32,size:0.75,speed:55,delay:-12,opacity:0.7},
+    {y:48,size:1.15,speed:68,delay:-28,opacity:0.9},
+    {y:62,size:0.85,speed:48,delay:-8,opacity:0.75},
+    {y:78,size:1.0,speed:60,delay:-22,opacity:0.8},
+  ];
+
+  // Stars — only visible in starry phase
+  const stars=[
+    {x:12,y:14,size:1.4,delay:0},
+    {x:28,y:22,size:0.9,delay:1.2},
+    {x:48,y:10,size:1.6,delay:0.4},
+    {x:72,y:18,size:1.1,delay:2.1},
+    {x:88,y:28,size:1.3,delay:0.8},
+    {x:22,y:38,size:0.8,delay:1.6},
+    {x:62,y:32,size:1.0,delay:2.8},
+    {x:84,y:46,size:0.7,delay:0.6},
+    {x:18,y:52,size:1.2,delay:2.3},
+    {x:42,y:48,size:0.9,delay:1.0},
+  ];
+
+  if(done){
+    const restart=()=>{
+      setDone(false);
+      setElapsed(0);
+      setShootingStars([]);
+      setTappedStars({});
+      setBouncedClouds({});
+      setCloudDrifts({});
+      startRef.current=Date.now();
+    };
+    return(
+      <div style={{position:"fixed",inset:0,zIndex:9000,background:`linear-gradient(180deg, ${skyTop} 0%, ${skyMid} 55%, ${skyBot} 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:30,animation:"ftIn .4s ease"}}>
+        <style>{`
+          @keyframes skyDoneCircle{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}
+          @keyframes skyDoneBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+          @keyframes skyDoneTwinkle{0%,100%{opacity:0.3}50%{opacity:0.95}}
+          @keyframes skyDoneTextIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+        `}</style>
+        {/* Twinkling stars on the dark sky */}
+        {stars.map((s,i)=>(
+          <div key={i} style={{position:"absolute",left:`${s.x}%`,top:`${s.y}%`,width:s.size*2.5,height:s.size*2.5,borderRadius:"50%",background:"#FFFFFF",boxShadow:`0 0 ${s.size*3}px rgba(255,255,255,0.6)`,animation:`skyDoneTwinkle ${2.5+i*0.2}s ease-in-out ${s.delay}s infinite`}}/>
+        ))}
+        {/* Central moon-like orb */}
+        <div style={{animation:"skyDoneCircle 1.2s cubic-bezier(0.32, 0.72, 0, 1) both",zIndex:2}}>
+          <svg width={130} height={130} style={{display:"block",animation:"skyDoneBreath 5s ease-in-out 1s infinite"}}>
+            <defs>
+              <radialGradient id="skyMoonFace" cx="40%" cy="35%" r="65%">
+                <stop offset="0%" stopColor="#FFFFFF"/>
+                <stop offset="55%" stopColor="#E8DCF0"/>
+                <stop offset="100%" stopColor="#B89DC4"/>
+              </radialGradient>
+            </defs>
+            <circle cx={65} cy={65} r={58} fill="rgba(255,255,255,0.06)"/>
+            <circle cx={65} cy={65} r={50} fill="url(#skyMoonFace)"/>
+            {/* Subtle craters / texture */}
+            <circle cx={52} cy={56} r={4} fill="rgba(184,157,196,0.18)"/>
+            <circle cx={75} cy={68} r={3} fill="rgba(184,157,196,0.15)"/>
+            <circle cx={62} cy={78} r={2.5} fill="rgba(184,157,196,0.13)"/>
+          </svg>
+        </div>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:"#FFFFFF",letterSpacing:-.2,marginTop:24,animation:"skyDoneTextIn 0.7s 0.7s cubic-bezier(0.32, 0.72, 0, 1) both",textShadow:"0 2px 12px rgba(0,0,0,0.4)",zIndex:2}}>Klart</div>
+        {/* Tappable restart hint — tap to begin again */}
+        <button
+          onClick={restart}
+          className="lt-press"
+          style={{
+            marginTop:8,
+            padding:"10px 18px",
+            borderRadius:14,
+            border:"none",
+            background:"transparent",
+            fontFamily:G.font,fontWeight:500,fontSize:13,color:"rgba(255,255,255,0.78)",letterSpacing:.3,
+            cursor:"pointer",
+            animation:"skyDoneTextIn 0.7s 1.1s cubic-bezier(0.32, 0.72, 0, 1) both",
+            textShadow:"0 1px 8px rgba(0,0,0,0.4)",
+            zIndex:2,
+            display:"flex",alignItems:"center",gap:7,
+          }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.7}}>
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          <span>Stanna kvar en stund till</span>
+        </button>
+        <button onClick={onClose} className="lt-press" style={{marginTop:32,padding:"13px 32px",borderRadius:18,border:"1px solid rgba(255,255,255,0.3)",background:"rgba(255,255,255,0.15)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",color:"#FFFFFF",fontFamily:G.font,fontWeight:500,fontSize:14,letterSpacing:.3,cursor:"pointer",opacity:0,animation:"skyDoneTextIn 0.8s 1.8s cubic-bezier(0.32, 0.72, 0, 1) forwards",zIndex:2}}>{t.close}</button>
+      </div>
+    );
+  }
+
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:9000,background:`linear-gradient(180deg, ${skyTop} 0%, ${skyMid} 55%, ${skyBot} 100%)`,transition:"background 1.5s ease",overflow:"hidden",animation:"ftIn .4s ease",display:"flex",flexDirection:"column"}}>
+      <style>{`
+        @keyframes skyCloudDrift{from{transform:translateX(-25%)}to{transform:translateX(125%)}}
+        @keyframes skyStarTwinkle{0%,100%{opacity:0.3;transform:scale(0.9)}50%{opacity:0.95;transform:scale(1.05)}}
+        @keyframes skyHorizonGlow{0%,100%{opacity:0.4}50%{opacity:0.7}}
+        @keyframes skyStarBurst{0%{transform:scale(1);opacity:1}40%{transform:scale(2.6);opacity:0.85}100%{transform:scale(4);opacity:0}}
+        @keyframes skyStarRipple{0%{transform:scale(0.5);opacity:0.8}100%{transform:scale(3.5);opacity:0}}
+        @keyframes skyShootFly{
+          0%{opacity:0;transform:translate3d(0,0,0) scale(0.3)}
+          12%{opacity:1;transform:translate3d(calc(var(--shoot-end-x)*0.12), calc(var(--shoot-end-y)*0.12), 0) scale(1)}
+          82%{opacity:1;transform:translate3d(calc(var(--shoot-end-x)*0.85), calc(var(--shoot-end-y)*0.85), 0) scale(1)}
+          100%{opacity:0;transform:translate3d(var(--shoot-end-x), var(--shoot-end-y), 0) scale(0.5)}
+        }
+        @keyframes skyShootGlowPulse{
+          0%,100%{filter:brightness(1)}
+          50%{filter:brightness(1.4)}
+        }
+        @keyframes skyShootFlash{
+          0%{opacity:0;transform:scale(0.2)}
+          30%{opacity:0.95;transform:scale(1.2)}
+          100%{opacity:0;transform:scale(2.4)}
+        }
+        @keyframes skySparkle{
+          0%{opacity:0;transform:scale(0)}
+          40%{opacity:1;transform:scale(1)}
+          100%{opacity:0;transform:scale(0.3) translate(var(--spark-dx),var(--spark-dy))}
+        }
+        @keyframes skyCloudBob{
+          0%,100%{transform:translate(0,0) scale(1)}
+          25%{transform:translate(0,-3px) scale(1.02)}
+          55%{transform:translate(0,-1px) scale(1.015)}
+          75%{transform:translate(0,2px) scale(0.995)}
+        }
+        @keyframes skyCloudSquish{
+          0%{transform:translate(0,0) scale(1,1)}
+          18%{transform:translate(0,-4px) scale(1.12,0.86)}
+          40%{transform:translate(0,3px) scale(0.92,1.08)}
+          62%{transform:translate(0,-2px) scale(1.05,0.95)}
+          82%{transform:translate(0,1px) scale(0.98,1.02)}
+          100%{transform:translate(0,0) scale(1,1)}
+        }
+        @keyframes skyCloudPuff{
+          0%{opacity:0;transform:scale(0.6) translateY(0)}
+          40%{opacity:0.8;transform:scale(1.4) translateY(-8px)}
+          100%{opacity:0;transform:scale(2.2) translateY(-20px)}
+        }
+      `}</style>
+
+      {/* Stars layer — only visible during dusk and night, tappable for shooting stars */}
+      {(phaseIdx>=2)&&stars.map((s,i)=>{
+        const starOpacity=phaseIdx===2?phaseProgress*0.6:1;
+        const isTapped=!!tappedStars[i];
+        return(
+          <div key={i}
+            onClick={e=>{
+              e.stopPropagation();
+              const rect=e.currentTarget.getBoundingClientRect();
+              const sx=rect.left+rect.width/2;
+              const sy=rect.top+rect.height/2;
+              handleStarTap(i,sx,sy);
+            }}
+            style={{
+              position:"absolute",left:`${s.x}%`,top:`${s.y}%`,
+              width:Math.max(18,s.size*2.5),height:Math.max(18,s.size*2.5),
+              marginLeft:`-${Math.max(9,s.size*1.25)}px`,
+              marginTop:`-${Math.max(9,s.size*1.25)}px`,
+              borderRadius:"50%",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              cursor:"pointer",
+              opacity:starOpacity,
+              transition:"opacity 2s ease",
+              zIndex:2,
+              WebkitTapHighlightColor:"transparent",
+            }}>
+            {/* Star core */}
+            <div style={{
+              width:s.size*2.5,height:s.size*2.5,borderRadius:"50%",
+              background:"#FFFFFF",
+              boxShadow:`0 0 ${s.size*4}px rgba(255,255,255,0.7), 0 0 ${s.size*8}px rgba(255,255,255,0.3)`,
+              animation:isTapped
+                ?`skyStarBurst 1.6s cubic-bezier(0.32, 0.72, 0, 1) forwards`
+                :`skyStarTwinkle ${2.6+i*0.18}s ease-in-out ${s.delay}s infinite`,
+              pointerEvents:"none",
+            }}/>
+            {/* Ripple when tapped */}
+            {isTapped&&(
+              <div style={{
+                position:"absolute",left:"50%",top:"50%",
+                marginLeft:`-${s.size*2.5}px`,marginTop:`-${s.size*2.5}px`,
+                width:s.size*5,height:s.size*5,borderRadius:"50%",
+                border:"1.5px solid rgba(255,255,255,0.8)",
+                animation:"skyStarRipple 1.4s cubic-bezier(0.32, 0.72, 0, 1) forwards",
+                pointerEvents:"none",
+              }}/>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Shooting stars — beautiful multi-layer comets with sparkle trails */}
+      {shootingStars.map(ss=>{
+        const vw=typeof window!=="undefined"?window.innerWidth:400;
+        const vh=typeof window!=="undefined"?window.innerHeight:800;
+        const endX=ss.dx*vw/100;
+        const endY=ss.dy*vh/100;
+        const angle=Math.atan2(ss.dy,ss.dx)*180/Math.PI;
+        const tailLen=ss.len*1.4;
+        // Sparkles along the tail — keep light, 3 particles for crisp performance
+        const sparkles=[
+          {pos:0.25,size:2,delay:0.10,dx:8,dy:-10},
+          {pos:0.50,size:2.2,delay:0.22,dx:-10,dy:8},
+          {pos:0.75,size:1.6,delay:0.36,dx:10,dy:-6},
+        ];
+        return(
+          <Fragment key={ss.id}>
+            {/* End-flash burst — soft glow at impact point */}
+            <div style={{
+              position:"fixed",
+              left:ss.sx+endX-28, top:ss.sy+endY-28,
+              width:56,height:56,borderRadius:"50%",
+              background:"radial-gradient(circle, rgba(255,255,250,0.9) 0%, rgba(255,240,200,0.4) 35%, rgba(255,220,160,0) 70%)",
+              pointerEvents:"none",
+              zIndex:5,
+              animation:"skyShootFlash 1s cubic-bezier(0.32, 0.72, 0, 1) 1.9s forwards",
+              opacity:0,
+            }}/>
+            {/* Comet body */}
+            <div style={{
+              position:"fixed",
+              left:ss.sx,top:ss.sy,
+              width:0,height:0,
+              pointerEvents:"none",
+              zIndex:6,
+              "--shoot-end-x":`${endX}px`,
+              "--shoot-end-y":`${endY}px`,
+              animation:"skyShootFly 2.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards",
+              willChange:"transform, opacity",
+            }}>
+            {/* Comet body: rotated container holding the tail behind the head */}
+            <div style={{position:"absolute",left:0,top:0,width:0,height:0,transform:`rotate(${angle}deg)`}}>
+              {/* Outer glow halo — single soft gradient, no blur filter */}
+              <div style={{
+                position:"absolute",left:-24,top:-24,width:48,height:48,borderRadius:"50%",
+                background:"radial-gradient(circle, rgba(255,250,220,0.8) 0%, rgba(255,240,190,0.3) 35%, rgba(255,220,160,0) 70%)",
+              }}/>
+              {/* Tail — single layer with gradient, no blur for GPU smoothness */}
+              <div style={{
+                position:"absolute",
+                left:-tailLen,top:-3,
+                width:tailLen,height:6,
+                background:"linear-gradient(90deg, rgba(255,250,220,0) 0%, rgba(255,250,220,0.25) 35%, rgba(255,250,225,0.7) 75%, #FFFFFF 100%)",
+                borderRadius:"50%",
+              }}/>
+              {/* Inner bright tail line — sharp core */}
+              <div style={{
+                position:"absolute",
+                left:-tailLen*0.7,top:-0.75,
+                width:tailLen*0.7,height:1.5,
+                background:"linear-gradient(90deg, rgba(255,255,250,0) 0%, rgba(255,255,250,0.6) 60%, #FFFFFF 100%)",
+                borderRadius:"50%",
+              }}/>
+              {/* Comet head — clean nucleus with single layered shadow */}
+              <div style={{
+                position:"absolute",left:-4,top:-4,width:8,height:8,borderRadius:"50%",
+                background:"radial-gradient(circle, #FFFFFF 0%, #FFFEF0 50%, rgba(255,240,180,0) 80%)",
+                boxShadow:"0 0 12px rgba(255,250,220,0.9), 0 0 32px rgba(255,240,180,0.5)",
+              }}/>
+              {/* Tiny sparkle particles along the tail */}
+              {sparkles.map((sp,si)=>(
+                <div key={si} style={{
+                  position:"absolute",
+                  left:-tailLen*sp.pos,top:-sp.size/2,
+                  width:sp.size,height:sp.size,borderRadius:"50%",
+                  background:"#FFFFFF",
+                  boxShadow:`0 0 ${sp.size*4}px rgba(255,250,220,0.9)`,
+                  "--spark-dx":`${sp.dx}px`,
+                  "--spark-dy":`${sp.dy}px`,
+                  animation:`skySparkle 1.4s cubic-bezier(0.32, 0.72, 0, 1) ${sp.delay}s forwards`,
+                  opacity:0,
+                }}/>
+              ))}
+            </div>
+          </div>
+          </Fragment>
+        );
+      })}
+
+      {/* Soft horizon glow band */}
+      <div style={{position:"absolute",left:0,right:0,bottom:0,height:"35%",background:`linear-gradient(180deg, transparent 0%, ${isDark?"rgba(255,200,170,0.0)":"rgba(255,220,200,0.18)"} 60%, ${isDark?"rgba(255,180,200,0.0)":"rgba(255,200,210,0.25)"} 100%)`,animation:"skyHorizonGlow 8s ease-in-out infinite",pointerEvents:"none",transition:"background 2s ease",zIndex:1}}/>
+
+      {/* Cloud layers — drift horizontally, tap to bounce + nudge vertical path */}
+      {clouds.map((c,i)=>{
+        // Clouds fade out as night approaches
+        const cloudOp = phaseIdx===3 ? c.opacity*0.15 : phaseIdx===2 ? c.opacity*(1-phaseProgress*0.7) : c.opacity;
+        const isBounced=!!bouncedClouds[i];
+        const driftY=cloudDrifts[i]||0;
+        return(
+          <div key={i} style={{
+            position:"absolute",
+            top:`${c.y}%`,
+            left:0,right:0,
+            transform:"translateX(0)",
+            animation:`skyCloudDrift ${c.speed}s linear ${c.delay}s infinite`,
+            pointerEvents:"none",
+            opacity:cloudOp,
+            transition:"opacity 2s ease",
+            zIndex:2,
+          }}>
+            {/* Vertical drift wrapper — smoothly glides to new path when tapped */}
+            <div style={{
+              transform:`translateY(${driftY}px)`,
+              transition:"transform 2.4s cubic-bezier(0.32, 0.72, 0, 1)",
+              display:"inline-block",
+            }}>
+            {/* Tap target wraps the cloud SVG and handles bounce */}
+            <div
+              onClick={e=>{e.stopPropagation();handleCloudTap(i);}}
+              style={{
+                display:"inline-block",
+                cursor:"pointer",
+                pointerEvents:"auto",
+                animation:isBounced?"skyCloudSquish 1.4s cubic-bezier(0.32, 0.72, 0, 1)":"none",
+                WebkitTapHighlightColor:"transparent",
+              }}>
+              <svg width={120*c.size} height={42*c.size} viewBox="0 0 120 42" style={{display:"block",filter:`drop-shadow(0 4px 12px rgba(255,255,255,0.15))${isBounced?" brightness(1.15)":""}`,transition:"filter 0.4s ease"}}>
+                <defs>
+                  <radialGradient id={`cloudGrad${i}`} cx="40%" cy="40%" r="70%">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95"/>
+                    <stop offset="80%" stopColor="#FFFFFF" stopOpacity="0.7"/>
+                    <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.4"/>
+                  </radialGradient>
+                </defs>
+                <ellipse cx="35" cy="24" rx="22" ry="11" fill={`url(#cloudGrad${i})`}/>
+                <ellipse cx="55" cy="20" rx="20" ry="13" fill={`url(#cloudGrad${i})`}/>
+                <ellipse cx="78" cy="22" rx="24" ry="12" fill={`url(#cloudGrad${i})`}/>
+                <ellipse cx="95" cy="26" rx="16" ry="9" fill={`url(#cloudGrad${i})`}/>
+              </svg>
+              {/* Puff particles when bounced — three soft puffs escape upward */}
+              {isBounced&&[0,1,2].map(pi=>(
+                <div key={pi} style={{
+                  position:"absolute",
+                  left:`${30+pi*25}%`,top:"40%",
+                  width:14,height:14,borderRadius:"50%",
+                  background:"radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 70%)",
+                  pointerEvents:"none",
+                  animation:`skyCloudPuff 1.2s cubic-bezier(0.32, 0.72, 0, 1) ${pi*0.08}s forwards`,
+                  opacity:0,
+                  filter:"blur(1px)",
+                }}/>
+              ))}
+            </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Subtle close button — top-right, glassmorphic */}
+      <button onClick={onClose} className="lt-press" style={{position:"absolute",top:22,right:22,width:38,height:38,borderRadius:19,border:`1px solid ${isDark?"rgba(255,255,255,0.25)":"rgba(31,27,46,0.12)"}`,background:isDark?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.45)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",color:isDark?"#FFFFFF":G.ink,fontSize:14,cursor:"pointer",zIndex:10,fontWeight:500,transition:"background .8s ease, color .8s ease, border-color .8s ease",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+
+      {/* Minimal guidance text — bottom center, fades in and out */}
+      <div style={{position:"absolute",bottom:48,left:0,right:0,textAlign:"center",pointerEvents:"none",zIndex:5}}>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:18,color:isDark?"rgba(255,255,255,0.92)":"rgba(31,27,46,0.78)",letterSpacing:-.2,textShadow:isDark?"0 2px 8px rgba(0,0,0,0.4)":"0 1px 2px rgba(255,255,255,0.4)",transition:"color 1.5s ease, text-shadow 1.5s ease"}}>{phaseIdx>=3?(lang==="sv"?"Tryck på en stjärna":"Tap a star"):t.skyHint}</div>
+      </div>
+
+      {/* Progress ring — bottom-right, very subtle */}
+      <div style={{position:"absolute",bottom:22,right:22,zIndex:10,pointerEvents:"none"}}>
+        <svg width={38} height={38} viewBox="0 0 38 38">
+          <circle cx="19" cy="19" r="16" fill="none" stroke={isDark?"rgba(255,255,255,0.18)":"rgba(31,27,46,0.12)"} strokeWidth="1.5"/>
+          <circle cx="19" cy="19" r="16" fill="none" stroke={isDark?"rgba(255,255,255,0.65)":"rgba(31,27,46,0.45)"} strokeWidth="1.5" strokeLinecap="round" strokeDasharray={`${2*Math.PI*16}`} strokeDashoffset={`${2*Math.PI*16*(1-elapsed/DURATION)}`} transform="rotate(-90 19 19)" style={{transition:"stroke .8s ease, stroke-dashoffset .25s linear"}}/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 /* ═══ Calm screen — pick exercise ═══ */
-function CalmScreen({t,cfg}){
+function CalmScreen({t,lang,cfg,isEditor,setCfg}){
   const S=SCREENS.calm;
   const[active,setActive]=useState(null);
+
+  // Editor view — toggle exercises on/off
+  if(isEditor){
+    const calmTools=cfg.calmTools||{breath:true,grounding:true,skylight:true};
+    const toggle=(k)=>{
+      const cur=calmTools[k]!==false;
+      const next={...calmTools,[k]:!cur};
+      // Keep at least one enabled
+      const any=Object.values(next).some(v=>v!==false);
+      if(!any) return;
+      setCfg(x=>({...x,calmTools:next}));
+    };
+    const items=[
+      {key:"breath",icon:"🫧",title:t.breathing,desc:lang==="en"?"4 calming breath cycles":"Andas lugnt i 4 omgångar",color:"#9DC4D8"},
+      {key:"grounding",icon:"🌱",title:t.grounding,desc:lang==="en"?"5 senses, one at a time":"5 sinnen, ett i taget",color:"#A5C9B5"},
+      {key:"skylight",icon:"☁️",title:t.skylight,desc:lang==="en"?"Rest your gaze on the sky":"Vila blicken mot himlen",color:"#B89DC4"},
+    ];
+    return(
+      <div style={{flex:1,overflowY:"auto",background:S.hb,padding:"24px 22px 120px",display:"flex",flexDirection:"column",gap:18}}>
+        <div style={{background:G.white,borderRadius:22,padding:"20px 20px 18px",border:`1px solid ${G.border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
+          <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,marginBottom:6,letterSpacing:.2}}>{lang==="en"?"Available exercises":"Tillgängliga övningar"}</div>
+          <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:G.ink2,lineHeight:1.5}}>{lang==="en"?"Choose which exercises the user can see. At least one must be enabled.":"Välj vilka övningar som syns för användaren. Minst en måste vara aktiv."}</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {items.map(ex=>{
+            const on=calmTools[ex.key]!==false;
+            return(
+              <div key={ex.key} onClick={()=>toggle(ex.key)} className="lt-press-soft" style={{
+                background:G.white,borderRadius:18,padding:"16px 18px",cursor:"pointer",
+                border:`1px solid ${on?ex.color+"66":"rgba(31,27,46,0.06)"}`,
+                boxShadow:on?`0 6px 18px ${ex.color}22`:"0 1px 3px rgba(31,27,46,0.04)",
+                display:"flex",alignItems:"center",gap:14,
+                opacity:on?1:0.6,
+                transition:"all .25s ease",
+              }}>
+                <div style={{width:52,height:52,borderRadius:14,background:on?`linear-gradient(140deg,${ex.color}40,${ex.color}28)`:"#F4F2F8",border:`1px solid ${on?ex.color+"33":"rgba(31,27,46,0.06)"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0,filter:on?"none":"grayscale(0.7)"}}>{ex.icon}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:G.serif,fontWeight:500,fontSize:17,color:G.ink,marginBottom:2,letterSpacing:-.1}}>{ex.title}</div>
+                  <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:G.ink2,lineHeight:1.3}}>{ex.desc}</div>
+                </div>
+                <Toggle on={on} onChange={()=>toggle(ex.key)} color={ex.color}/>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   const exercises=[
-    cfg.calmTools?.breath!==false&&{key:"breath",emoji:"🫧",title:t.breathing,desc:"Andas lugnt i 4 omgångar",color:S.h,gradFrom:S.h,gradTo:"#B6D4E5"},
+    cfg.calmTools?.breath!==false&&{key:"breath",emoji:"🫧",title:t.breathing,desc:"Andas lugnt i 4 omgångar",color:"#9DC4D8",gradFrom:"#9DC4D8",gradTo:"#C5DCE5"},
     cfg.calmTools?.grounding!==false&&{key:"grounding",emoji:"🌱",title:t.grounding,desc:"5 sinnen, ett i taget",color:"#A5C9B5",gradFrom:"#A5C9B5",gradTo:"#C5DBC9"},
+    cfg.calmTools?.skylight!==false&&{key:"skylight",emoji:"☁️",title:t.skylight,desc:"Vila blicken mot himlen",color:"#B89DC4",gradFrom:"#B89DC4",gradTo:"#D5C5DD"},
   ].filter(Boolean);
   return(
     <div style={{flex:1,overflowY:"auto",background:S.hb}}>
       {active==="breath"&&<BreathingExercise onClose={()=>setActive(null)} t={t}/>}
       {active==="grounding"&&<GroundingExercise onClose={()=>setActive(null)} t={t}/>}
-      <div style={{padding:"24px 20px 120px"}}>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:22,color:G.ink,marginBottom:6,letterSpacing:-.3}}>{t.calmTitle}</div>
-        <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,marginBottom:24}}>Välj en övning som passar dig nu.</div>
+      {active==="skylight"&&<SkylightExercise onClose={()=>setActive(null)} t={t} lang={lang}/>}
+      <div style={{padding:"32px 22px 120px"}}>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:28,color:G.ink,marginBottom:8,letterSpacing:-.6,lineHeight:1.05}}>{t.calmTitle}</div>
+        <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:"#9892AA",marginBottom:32,letterSpacing:.1,lineHeight:1.4}}>Välj en övning som passar dig nu.</div>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           {exercises.map(ex=>(
-            <div key={ex.key} onClick={()=>setActive(ex.key)} style={{background:G.white,borderRadius:24,padding:"24px 22px",cursor:"pointer",border:`1px solid ${ex.color}25`,boxShadow:`0 10px 30px ${ex.color}1F`,display:"flex",alignItems:"center",gap:18,transition:"transform .15s ease"}}>
-              <div style={{width:74,height:74,borderRadius:22,background:`linear-gradient(140deg,${ex.gradFrom}40,${ex.gradTo}55)`,border:`1px solid ${ex.color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:38,flexShrink:0,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.6)`}}>{ex.emoji}</div>
-              <div style={{flex:1}}>
-                <div style={{fontFamily:G.serif,fontWeight:600,fontSize:18,color:G.ink,letterSpacing:-.2}}>{ex.title}</div>
-                <div style={{fontFamily:G.font,fontSize:13,color:G.ink2,marginTop:4}}>{ex.desc}</div>
+            <div key={ex.key} onClick={()=>setActive(ex.key)} className="lt-press-soft" style={{background:G.white,borderRadius:24,padding:"24px 22px",cursor:"pointer",border:`1px solid ${ex.color}25`,boxShadow:`0 10px 30px ${ex.color}1F`,display:"flex",alignItems:"center",gap:18}}>
+              <div style={{width:74,height:74,borderRadius:22,background:`linear-gradient(140deg,${ex.gradFrom}40,${ex.gradTo}55)`,border:`1px solid ${ex.color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:38,flexShrink:0,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.6)`,overflow:"hidden"}}>
+                {ex.key==="grounding"?(
+                  <svg width={54} height={54} viewBox="0 0 100 100" style={{overflow:"visible"}}>
+                    <style>{`
+                      @keyframes gIconRipple{0%{transform:scale(0.4);opacity:0.65}100%{transform:scale(1.9);opacity:0}}
+                      @keyframes gIconBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+                    `}</style>
+                    <defs>
+                      <radialGradient id="gIconCore" cx="35%" cy="30%" r="70%">
+                        <stop offset="0%" stopColor="#FFFFFF"/>
+                        <stop offset="22%" stopColor="#FFFAF0"/>
+                        <stop offset="58%" stopColor={ex.color}/>
+                        <stop offset="100%" stopColor="#6E9779"/>
+                      </radialGradient>
+                    </defs>
+                    <circle cx="50" cy="50" r="20" fill="none" stroke={ex.color} strokeWidth="2" opacity="0.65" style={{transformOrigin:"50px 50px",animation:"gIconRipple 3.6s ease-out infinite"}}/>
+                    <circle cx="50" cy="50" r="20" fill="none" stroke={ex.color} strokeWidth="2" opacity="0.65" style={{transformOrigin:"50px 50px",animation:"gIconRipple 3.6s ease-out 1.8s infinite"}}/>
+                    <g style={{transformOrigin:"50px 50px",animation:"gIconBreathe 3.2s ease-in-out infinite"}}>
+                      <circle cx="50" cy="50" r="17" fill="url(#gIconCore)"/>
+                      <circle cx="45" cy="45" r="4.2" fill="#FFFFFF" opacity="0.85"/>
+                    </g>
+                  </svg>
+                ):ex.key==="breath"?(
+                  <svg width={54} height={54} viewBox="0 0 100 100" style={{overflow:"visible"}}>
+                    <style>{`
+                      @keyframes bIconBreath{0%,100%{transform:scale(0.62)}33%{transform:scale(1)}50%{transform:scale(1)}}
+                      @keyframes bIconHaloPulse{0%,100%{opacity:0.28;transform:scale(0.88)}50%{opacity:0.5;transform:scale(1.02)}}
+                    `}</style>
+                    <defs>
+                      <radialGradient id="bIconCore" cx="35%" cy="30%" r="70%">
+                        <stop offset="0%" stopColor="#FFFFFF"/>
+                        <stop offset="22%" stopColor="#F4FAFD"/>
+                        <stop offset="58%" stopColor={ex.color}/>
+                        <stop offset="100%" stopColor="#4E7398"/>
+                      </radialGradient>
+                      <radialGradient id="bIconHalo" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stopColor={ex.color} stopOpacity="0.4"/>
+                        <stop offset="70%" stopColor={ex.color} stopOpacity="0.08"/>
+                        <stop offset="100%" stopColor={ex.color} stopOpacity="0"/>
+                      </radialGradient>
+                    </defs>
+                    {/* Soft halo — pulses in sync with breath */}
+                    <circle cx="50" cy="50" r="44" fill="url(#bIconHalo)" style={{transformOrigin:"50px 50px",animation:"bIconHaloPulse 5.5s ease-in-out infinite"}}/>
+                    {/* Outer breath ring — slowly pulses */}
+                    <circle cx="50" cy="50" r="36" fill="none" stroke={ex.color} strokeWidth="1.5" opacity="0.35" style={{transformOrigin:"50px 50px",animation:"bIconHaloPulse 5.5s ease-in-out infinite"}}/>
+                    {/* Breathing orb — main element */}
+                    <g style={{transformOrigin:"50px 50px",animation:"bIconBreath 5.5s ease-in-out infinite"}}>
+                      <circle cx="50" cy="50" r="28" fill="url(#bIconCore)"/>
+                      <circle cx="42" cy="42" r="6" fill="#FFFFFF" opacity="0.85"/>
+                    </g>
+                  </svg>
+                ):ex.key==="skylight"?(
+                  <svg width={54} height={54} viewBox="0 0 100 100" style={{overflow:"hidden",borderRadius:"50%"}}>
+                    <style>{`
+                      @keyframes skIconCloudA{0%{transform:translateX(-30px)}100%{transform:translateX(120px)}}
+                      @keyframes skIconCloudB{0%{transform:translateX(-50px)}100%{transform:translateX(110px)}}
+                      @keyframes skIconShimmer{0%,100%{opacity:0.6}50%{opacity:1}}
+                    `}</style>
+                    <defs>
+                      <radialGradient id="skIconSky" cx="50%" cy="35%" r="80%">
+                        <stop offset="0%" stopColor="#F5EEFA"/>
+                        <stop offset="55%" stopColor="#D8C6E0"/>
+                        <stop offset="100%" stopColor="#B89DC4"/>
+                      </radialGradient>
+                      <radialGradient id="skIconCloud" cx="40%" cy="40%" r="70%">
+                        <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95"/>
+                        <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.55"/>
+                      </radialGradient>
+                    </defs>
+                    {/* Sky background */}
+                    <circle cx="50" cy="50" r="50" fill="url(#skIconSky)"/>
+                    {/* Tiny star shimmer */}
+                    <circle cx="22" cy="28" r="1.2" fill="#FFFFFF" style={{animation:"skIconShimmer 3s ease-in-out infinite"}}/>
+                    <circle cx="76" cy="20" r="0.9" fill="#FFFFFF" style={{animation:"skIconShimmer 3s ease-in-out 1.5s infinite"}}/>
+                    <circle cx="82" cy="38" r="0.7" fill="#FFFFFF" opacity="0.7" style={{animation:"skIconShimmer 3s ease-in-out 2.2s infinite"}}/>
+                    {/* Drifting clouds */}
+                    <g style={{animation:"skIconCloudA 7s linear infinite"}}>
+                      <ellipse cx="0" cy="58" rx="14" ry="6" fill="url(#skIconCloud)"/>
+                      <ellipse cx="-6" cy="60" rx="10" ry="5" fill="url(#skIconCloud)"/>
+                      <ellipse cx="6" cy="60" rx="9" ry="5" fill="url(#skIconCloud)"/>
+                    </g>
+                    <g style={{animation:"skIconCloudB 11s linear infinite",animationDelay:"-3s"}}>
+                      <ellipse cx="0" cy="38" rx="10" ry="4" fill="url(#skIconCloud)" opacity="0.7"/>
+                      <ellipse cx="-5" cy="39" rx="7" ry="3.5" fill="url(#skIconCloud)" opacity="0.7"/>
+                    </g>
+                  </svg>
+                ):ex.emoji}
               </div>
-              <div style={{fontSize:22,color:ex.color,opacity:.6}}>›</div>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:19,color:G.ink,letterSpacing:-.3,lineHeight:1.15}}>{ex.title}</div>
+                <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",marginTop:5,letterSpacing:.1}}>{ex.desc}</div>
+              </div>
+              <div style={{fontSize:22,color:ex.color,opacity:.4}}>›</div>
             </div>
           ))}
           {exercises.length===0&&<div style={{textAlign:"center",color:G.ink3,fontFamily:G.font,marginTop:40}}>Aktivera övningar i Inställningar</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   WEEK VIEW — calm planning surface with adaptive
+   visual weight. Today prominent, past tones down,
+   future waits quietly. Edit mode = tap to edit.
+═══════════════════════════════════════════════════ */
+function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,headerTapCount}){
+  const S=SCREENS.week;
+  const weekColors=(cfg?.weekColors&&cfg.weekColors.length===7)?cfg.weekColors:SIGVARD0;
+  // focusedDay = jsDay user has tapped to "peek" at, or null = default (today is strong)
+  const[focusedDay,setFocusedDay]=useState(null);
+  // When the app header is tapped, reset peek focus to today
+  useEffect(()=>{
+    if(headerTapCount>0) setFocusedDay(null);
+  },[headerTapCount]);
+  // Build per-day date key for state lookup
+  const dKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const HOUR_H=58;
+  const HOUR_START=6;
+  const HOUR_END=24; // extends to midnight so day-column color reaches the actual day boundary
+  const HOURS=Array.from({length:HOUR_END-HOUR_START},(_,i)=>HOUR_START+i);
+  const TOTAL_H=HOURS.length*HOUR_H;
+  // Extra room so the day-column color reaches and fully encloses the midnight marker
+  // (the "00" label sits at the very bottom and the colored bar must visually reach it).
+  const MIDNIGHT_PAD=14;
+  const TIME_W=lang==="en"?44:34;
+  const scrollRef=useRef(null);
+
+  // Current week's Monday → Sunday
+  const today=new Date(now);
+  today.setHours(0,0,0,0);
+  const todayJS=today.getDay();
+  const offsetFromMon=todayJS===0?-6:-(todayJS-1);
+  const monday=new Date(today);
+  monday.setDate(today.getDate()+offsetFromMon);
+  const weekDays=[0,1,2,3,4,5,6].map(i=>{
+    const d=new Date(monday);
+    d.setDate(monday.getDate()+i);
+    return{date:d,day:d.getDate(),jsDay:d.getDay(),isToday:d.getTime()===today.getTime(),isPast:d.getTime()<today.getTime()};
+  });
+  const DAY_LABELS={sv:["MÅN","TIS","ONS","TOR","FRE","LÖR","SÖN"],en:["MON","TUE","WED","THU","FRI","SAT","SUN"]};
+  const labels=DAY_LABELS[lang==="sv"?"sv":"en"];
+
+  // Auto-scroll to bring "now" hour into view (or 8am if before)
+  useEffect(()=>{
+    if(!scrollRef.current) return;
+    const nowMin=now.getHours()*60+now.getMinutes();
+    const scrollH=scrollRef.current.clientHeight;
+    const focusY=Math.max(0,((nowMin/60)-HOUR_START)*HOUR_H - scrollH/3);
+    scrollRef.current.scrollTop=focusY;
+  // eslint-disable-next-line
+  },[]);
+
+  // Does activity belong on a day with this jsDay?
+  const onJsDay=(a,jsDay)=>{
+    if(!a.repeat||a.repeat.type==="none") return true;
+    if(a.repeat.type==="daily") return true;
+    if(a.repeat.type==="weekdays") return jsDay>=1&&jsDay<=5;
+    if(a.repeat.type==="weekend") return jsDay===0||jsDay===6;
+    if(a.repeat.type==="custom") return (a.repeat.days||[]).includes(jsDay);
+    return true;
+  };
+  const yForAct=a=>Math.max(0,((hm(a.time)/60)-HOUR_START)*HOUR_H);
+  const hForAct=a=>{
+    if(a.endTime){
+      const dur=hm(a.endTime)-hm(a.time);
+      return Math.max(40,(dur/60)*HOUR_H);
+    }
+    return 54;
+  };
+
+  const monthLabel=monday.toLocaleString(lang==="sv"?"sv-SE":"en-GB",{month:"short"});
+  const sundayMonth=weekDays[6].date.toLocaleString(lang==="sv"?"sv-SE":"en-GB",{month:"short"});
+  const sameMonth=monday.getMonth()===weekDays[6].date.getMonth();
+  const weekRange=sameMonth
+    ? `${monday.getDate()} – ${weekDays[6].day} ${monthLabel}`
+    : `${monday.getDate()} ${monthLabel} – ${weekDays[6].day} ${sundayMonth}`;
+
+  const nowMin=now.getHours()*60+now.getMinutes();
+  const nowY=((nowMin/60)-HOUR_START)*HOUR_H;
+  const showNowLine=nowMin>=HOUR_START*60&&nowMin<=HOUR_END*60;
+
+  // Any activity at all on the current week's days?
+  const anyActs=acts.some(a=>weekDays.some(d=>onJsDay(a,d.jsDay)));
+
+  return(
+    <div
+      style={{flex:1,display:"flex",flexDirection:"column",background:S.hb,overflow:"hidden",position:"relative"}}
+      onClick={e=>{
+        // Tapping anywhere outside a day-tile/header resets focus to today.
+        // Day-headers and tiles stop propagation, so this fires for everything else:
+        // title area, hour-grid background, day-column empty areas (for today's column).
+        setFocusedDay(null);
+      }}
+    >
+      <style>{`
+        @keyframes wkTileIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+        @keyframes wkNowPulse{0%,100%{opacity:1}50%{opacity:0.55}}
+      `}</style>
+
+      {/* Title area — generous breathing room before content. Clicking here returns focus to today. */}
+      <div style={{padding:"30px 22px 18px",flexShrink:0,cursor:focusedDay!==null?"pointer":"default",display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}}>
+        <div>
+          <div style={{fontFamily:G.font,fontWeight:400,fontSize:10.5,color:"#9892AA",letterSpacing:.6,textTransform:"capitalize",marginBottom:4}}>{weekRange}</div>
+          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,letterSpacing:-.6,lineHeight:1.05}}>{t.myWeek}</div>
+        </div>
+        {/* Subtle "back to today" hint — only when peeking at another day. Tappable. */}
+        <div
+          onClick={e=>{e.stopPropagation();setFocusedDay(null);}}
+          className="lt-press-soft"
+          style={{
+            opacity:focusedDay!==null?1:0,
+            transform:focusedDay!==null?"translateY(0)":"translateY(4px)",
+            transition:"opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1), transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
+            pointerEvents:focusedDay!==null?"auto":"none",
+            display:"flex",alignItems:"center",gap:5,
+            padding:"6px 10px 6px 8px",borderRadius:14,
+            background:"rgba(255,255,255,0.7)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",
+            border:"1px solid rgba(31,27,46,0.06)",
+            fontFamily:G.font,fontWeight:500,fontSize:11,color:G.ink2,letterSpacing:.2,
+            cursor:"pointer",
+          }}>
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 11L5 7l4-4"/>
+          </svg>
+          <span>{lang==="sv"?"Idag":"Today"}</span>
+        </div>
+      </div>
+
+      {/* Day-header row — sticky context, today header extends upward like a bookmark */}
+      <div style={{display:"flex",padding:"18px 6px 12px 6px",flexShrink:0,position:"relative",alignItems:"flex-end"}}>
+        <div style={{width:TIME_W,flexShrink:0}}/>
+        {weekDays.map((d,i)=>{
+          const dCol=weekColors[d.jsDay]||S.h;
+          // Three-state: today (strongest, default), peeked (medium, on tap), other (quiet)
+          const isPeeked=focusedDay===d.jsDay&&!d.isToday;
+          const showStrong=d.isToday&&focusedDay===null;
+          const showMedium=isPeeked;
+          // Today stays identifiable even when peeking another day — softer than strong, stronger than quiet
+          const todaySofter=d.isToday&&focusedDay!==null;
+          const isLight=dCol==="#FFFFFF"||dCol==="#F5F2EE";
+          // Match column flex widths EXACTLY so the disc centers over the colored strip.
+          // These must mirror the colFlex logic in the day-column rendering below.
+          const headerFlex = showStrong ? 1.85 : todaySofter ? 1.50 : showMedium ? 1.00 : d.isPast ? 0.5 : 0.7;
+          // Disc and number sizing follow the same hierarchy as colFlex:
+          // today (strong) is biggest; today-while-peeking still clearly larger than peeked;
+          // peeked day grows above normal; past shrinks.
+          const discSize = showStrong ? 46 : todaySofter ? 36 : showMedium ? 34 : d.isPast ? 18 : 30;
+          const numSize  = showStrong ? 21 : todaySofter ? 17 : showMedium ? 16 : d.isPast ? 9 : 13.5;
+          // Today's whole header extends upward — like a tall bookmark sticking up above the row
+          const headerExtend = d.isToday ? -16 : 0;
+          return(
+            <div key={i}
+              onClick={e=>{
+                e.stopPropagation();
+                // Tap on today always returns to default (today big again).
+                // Tap on another day toggles peek-focus.
+                if(d.isToday){
+                  setFocusedDay(null);
+                } else {
+                  setFocusedDay(prev=>prev===d.jsDay?null:d.jsDay);
+                }
+              }}
+              className="lt-press-soft"
+              style={{flex:headerFlex,textAlign:"center",padding:"4px 0 6px",marginTop:headerExtend,opacity:d.isPast?0.28:1,filter:d.isPast?"saturate(0.4)":"none",transition:"flex .5s cubic-bezier(0.32, 0.72, 0, 1), margin-top .5s cubic-bezier(0.32, 0.72, 0, 1), opacity .6s cubic-bezier(0.32, 0.72, 0, 1), filter .6s cubic-bezier(0.32, 0.72, 0, 1)",position:"relative",cursor:"pointer"}}>
+              {/* Day label — quiet */}
+              <div style={{fontFamily:G.font,fontWeight:500,fontSize:9.5,color:showStrong||showMedium||todaySofter?G.ink:"#9892AA",letterSpacing:.7,marginBottom:5,transition:"color .35s ease"}}>{labels[i]}</div>
+              {/* Date number — wrapped in color disc */}
+              <div style={{
+                width:discSize,height:discSize,borderRadius:"50%",margin:"0 auto",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                background:showStrong||showMedium||todaySofter?dCol:`${dCol}33`,
+                border:`1px solid ${isLight?"rgba(31,27,46,0.18)":"rgba(31,27,46,0.04)"}`,
+                boxShadow:showStrong
+                  ?`0 6px 16px ${dCol}77, 0 2px 4px ${dCol}55, inset 0 1px 0 rgba(255,255,255,0.5)`
+                  :showMedium
+                  ?`0 3px 8px ${dCol}44, inset 0 1px 0 rgba(255,255,255,0.4)`
+                  :todaySofter
+                  ?`0 3px 8px ${dCol}44, inset 0 1px 0 rgba(255,255,255,0.45)`
+                  :"inset 0 1px 0 rgba(255,255,255,0.35)",
+                transition:"width .5s cubic-bezier(0.32, 0.72, 0, 1), height .5s cubic-bezier(0.32, 0.72, 0, 1), background .4s ease, box-shadow .4s ease, transform .35s cubic-bezier(0.32, 0.72, 0, 1)",
+                transform:showMedium?"scale(1.04)":"scale(1)",
+              }}>
+                <span style={{fontFamily:G.serif,fontWeight:showStrong||showMedium||todaySofter?600:500,fontSize:numSize,color:showStrong||showMedium||todaySofter?"#FFFFFF":G.ink,textShadow:(showStrong||showMedium||todaySofter)&&(isLight||dCol==="#F5E26B")?"0 1px 2px rgba(31,27,46,0.45), 0 0 1px rgba(31,27,46,0.35)":"none",lineHeight:1,letterSpacing:-.3,transition:"font-size .5s cubic-bezier(0.32, 0.72, 0, 1), color .35s ease"}}>{d.day}</span>
+              </div>
+              {/* "Today" indicator — always visible under today's disc, regardless of focus */}
+              {d.isToday&&(
+                <div style={{marginTop:6,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
+                  <div style={{width:4,height:4,borderRadius:"50%",background:G.ink,opacity:0.7}}/>
+                  <div style={{fontFamily:G.font,fontWeight:600,fontSize:8.5,color:G.ink,letterSpacing:.8,textTransform:"uppercase",opacity:0.7}}>{lang==="sv"?"Idag":"Today"}</div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {/* Hairline divider beneath header — soft, full width edge-to-edge for visual binding */}
+        <div style={{position:"absolute",bottom:0,left:0,right:0,height:1,background:"linear-gradient(90deg, transparent 0%, rgba(31,27,46,0.07) 12%, rgba(31,27,46,0.07) 88%, transparent 100%)"}}/>
+      </div>
+
+      {/* Grid body — scrollable. paddingBottom gives clearance so the App-level "Add activity" button never overlaps the last hour at scroll-bottom. */}
+      <div ref={scrollRef} style={{flex:1,overflowY:"auto",position:"relative",paddingBottom:140}}>
+        {!anyActs&&isEd?null:!anyActs?(
+          <div style={{padding:"60px 30px",textAlign:"center"}}>
+            <style>{`@keyframes wkEmpty{0%,100%{transform:scale(1);opacity:0.85}50%{transform:scale(1.025);opacity:1}}`}</style>
+            <svg width="56" height="56" viewBox="0 0 64 64" style={{display:"block",margin:"0 auto 14px",animation:"wkEmpty 4.6s ease-in-out infinite"}}>
+              <rect x="10" y="14" width="44" height="40" rx="6" fill={`${S.h}1A`} stroke={`${S.h}55`} strokeWidth="1.4"/>
+              <line x1="10" y1="24" x2="54" y2="24" stroke={`${S.h}66`} strokeWidth="1.2"/>
+              <line x1="24.6" y1="24" x2="24.6" y2="54" stroke={`${S.h}33`} strokeWidth="1"/>
+              <line x1="39.4" y1="24" x2="39.4" y2="54" stroke={`${S.h}33`} strokeWidth="1"/>
+              <path d="M22 10 v6 M42 10 v6" stroke={`${S.h}88`} strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:21,color:G.ink,letterSpacing:-.4,lineHeight:1.1,marginBottom:8}}>{t.weekEmpty}</div>
+            <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",letterSpacing:.1,lineHeight:1.4}}>Lägg till aktiviteter via redigeringsläget.</div>
+          </div>
+        ):null}
+        <div style={{position:"relative",height:TOTAL_H+MIDNIGHT_PAD,display:"flex",padding:"0 6px"}}>
+          {/* Global horizontal hour-lines — span the whole grid edge-to-edge for a calmer rhythm */}
+          {HOURS.map((_,i)=>i%2===0&&i!==0&&(
+            <div key={`hl-${i}`} style={{position:"absolute",top:i*HOUR_H,left:TIME_W+6,right:6,height:1,background:"rgba(31,27,46,0.04)",pointerEvents:"none",zIndex:0}}/>
+          ))}
+
+          {/* Global now-line — warm tinted dark, spans across the whole grid */}
+          {showNowLine&&(()=>{
+            // Compute today's left-edge percentage given variable column widths.
+            // IMPORTANT: these flex values must EXACTLY match the day-column flex logic
+            // below (showStrong / todaySofter / showMedium / past / normal). Otherwise
+            // the today-dot drifts off-center from today's column.
+            const todayIdx=weekDays.findIndex(d=>d.isToday);
+            if(todayIdx<0) return null;
+            const flexFor=(d)=>{
+              const isPeeked=focusedDay===d.jsDay&&!d.isToday;
+              const showStrong=d.isToday&&focusedDay===null;
+              const showMedium=isPeeked;
+              const todaySofter=d.isToday&&focusedDay!==null;
+              return showStrong?1.85:todaySofter?1.50:showMedium?1.00:d.isPast?0.5:0.7;
+            };
+            const totalFlex=weekDays.reduce((sum,d)=>sum+flexFor(d),0);
+            const leftFlex=weekDays.slice(0,todayIdx).reduce((sum,d)=>sum+flexFor(d),0);
+            const todayFlex=flexFor(weekDays[todayIdx]);
+            const dotCenterPct=((leftFlex+todayFlex/2)/totalFlex)*100;
+            return(
+              <div style={{position:"absolute",top:nowY,left:TIME_W,right:6,height:1.5,background:`linear-gradient(90deg, transparent 0%, ${G.ink}AA 8%, ${G.ink}AA 92%, transparent 100%)`,zIndex:3,pointerEvents:"none",transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1)"}}>
+                <div style={{position:"absolute",left:`calc(${dotCenterPct}% - 4px)`,top:-3.5,width:8,height:8,borderRadius:"50%",background:G.ink,boxShadow:`0 0 8px ${G.ink}66`,animation:"wkNowPulse 2.6s ease-in-out infinite",transition:"left .5s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
+              </div>
+            );
+          })()}
+
+          {/* Time column */}
+          <div style={{width:TIME_W,flexShrink:0,position:"relative"}}>
+            {HOURS.map((h,i)=>(
+              <div key={h} style={{position:"absolute",top:i*HOUR_H-5,left:0,right:0,paddingRight:6,textAlign:"right"}}>
+                <div style={{fontFamily:G.font,fontSize:9.5,fontWeight:500,color:"#A8A4BB",letterSpacing:.4}}>{lang==="sv"?String(h).padStart(2,"0"):(h===0?"12 AM":h<12?`${h} AM`:h===12?"12 PM":`${h-12} PM`)}</div>
+              </div>
+            ))}
+            {/* Midnight marker at the very end so the column reaches the full day boundary */}
+            <div style={{position:"absolute",top:HOURS.length*HOUR_H,left:0,right:0,paddingRight:6,textAlign:"right",transform:"translateY(-50%)"}}>
+              <div style={{fontFamily:G.font,fontSize:9.5,fontWeight:500,color:"#A8A4BB",letterSpacing:.4}}>{lang==="sv"?"00":"12 AM"}</div>
+            </div>
+          </div>
+
+          {/* Day columns */}
+          {weekDays.map((d,dayIdx)=>{
+            // Per-activity time filter: remove activities whose end time has already
+            // passed in real terms, OR that have been marked done for this specific date.
+            // Past days, today's past activities, and explicitly-completed activities all
+            // disappear. Sigvard convention: completed = gone.
+            const dayKey=dKey(d.date);
+            const dayActs=acts.filter(a=>{
+              if(!onJsDay(a,d.jsDay)) return false;
+              // Check per-date done state (e.g. user tapped trash today → don't show again today)
+              const dst=dailyState?.[dayKey]?.[a.id];
+              if(dst?.done) return false;
+              // Build the activity's actual datetime on this column's date
+              const actDate=new Date(d.date);
+              const startM=hm(a.time);
+              const endM=a.endTime?hm(a.endTime):startM;
+              actDate.setHours(Math.floor(endM/60),endM%60,0,0);
+              // Activity is "gone" once its end time has passed
+              return actDate.getTime()>now.getTime();
+            }).sort((a,b)=>hm(a.time)-hm(b.time));
+            const dCol=weekColors[d.jsDay]||S.h;
+            const isLight=dCol==="#FFFFFF"||dCol==="#F5F2EE";
+            // Four-state column rendering:
+            //   strong       = today, default (nothing peeked)
+            //   medium       = a different day user has tapped to peek at
+            //   today-softer = today, when user is peeking another day (still distinguishable)
+            //   quiet        = all other days
+            const isPeeked=focusedDay===d.jsDay&&!d.isToday;
+            const showStrong=d.isToday&&focusedDay===null;
+            const showMedium=isPeeked;
+            const todaySofter=d.isToday&&focusedDay!==null;
+            // Column width: today always has the largest flex. Peeked column zooms up
+            // but stays smaller than today. Past days shrink.
+            // - showStrong (today, default)      → 1.85 (the biggest)
+            // - todaySofter (today while peeking)→ 1.50 (still the biggest, keeps "you are here")
+            // - showMedium (a non-today peek)   → 1.00 (zoom up, but smaller than today)
+            // - past days                       → 0.5 (shrunk)
+            // - normal days                     → 0.7 (quietly present)
+            const colFlex = showStrong ? 1.85 : todaySofter ? 1.50 : showMedium ? 1.00 : d.isPast ? 0.5 : 0.7;
+            // Color fills the full day-column from morning to midnight — strong at top, holding presence to bottom.
+            // Not a fade-out: the day "owns" its space until 00:00, then the next day takes over.
+            const strongBg = isLight
+              ? `linear-gradient(180deg, ${dCol} 0%, ${dCol}F8 100%)`
+              : `linear-gradient(180deg, ${dCol}77 0%, ${dCol}66 50%, ${dCol}5C 100%)`;
+            const mediumBg = isLight
+              ? `linear-gradient(180deg, ${dCol}E5 0%, ${dCol}D8 100%)`
+              : `linear-gradient(180deg, ${dCol}44 0%, ${dCol}3D 50%, ${dCol}36 100%)`;
+            // Today, when peeking elsewhere, retains a softer-but-still-clear tint —
+            // never fully fades to "quiet" so users always see "here is today"
+            const todaySoftBg = isLight
+              ? `linear-gradient(180deg, ${dCol}F0 0%, ${dCol}E8 100%)`
+              : `linear-gradient(180deg, ${dCol}3A 0%, ${dCol}33 50%, ${dCol}2C 100%)`;
+            const quietBg = `linear-gradient(180deg, ${dCol}0F 0%, ${dCol}08 100%)`;
+            const bg = showStrong ? strongBg : showMedium ? mediumBg : todaySofter ? todaySoftBg : quietBg;
+            return(
+              <div key={dayIdx}
+                onClick={e=>{
+                  if(isEd&&dayActs.length===0){onAdd();return;}
+                  // Tap empty area of a non-today column → peek toggle
+                  if(!d.isToday){
+                    e.stopPropagation();
+                    setFocusedDay(prev=>prev===d.jsDay?null:d.jsDay);
+                  } else if(focusedDay!==null){
+                    // Tap today's column while peeking elsewhere → return to default
+                    e.stopPropagation();
+                    setFocusedDay(null);
+                  }
+                }}
+                style={{
+                  flex:colFlex,position:"relative",
+                  background:bg,
+                  // Today's column extends upward by 14px to visually emphasize "you are here"
+                  marginTop:d.isToday?-14:0,
+                  borderRadius:d.isToday?"14px 14px 0 0":0,
+                  opacity:d.isPast?0.3:1,
+                  filter:d.isPast?"saturate(0.4)":"none",
+                  transition:"flex .5s cubic-bezier(0.32, 0.72, 0, 1), margin-top .5s cubic-bezier(0.32, 0.72, 0, 1), background .45s cubic-bezier(0.32, 0.72, 0, 1), opacity .8s cubic-bezier(0.32, 0.72, 0, 1), filter .8s cubic-bezier(0.32, 0.72, 0, 1)",
+                  cursor:isEd&&dayActs.length===0?"pointer":d.isToday&&focusedDay===null?"default":"pointer",
+                }}>
+                {/* Activity tiles */}
+                {dayActs.map((a,ai)=>{
+                  const y=yForAct(a);
+                  const h=hForAct(a);
+                  const endM=a.endTime?hm(a.endTime):hm(a.time)+30;
+                  const startM=hm(a.time);
+                  const isNowAct=d.isToday&&startM<=nowMin&&endM>nowMin;
+                  // On any tinted column (strong, medium, or today-softer), tiles get white
+                  // background with colored accent stripe — classic Sigvard look.
+                  // On quiet columns, tiles stand on their own colored gradient.
+                  const onTintedColumn = showStrong || showMedium || todaySofter;
+                  const tileBg = onTintedColumn
+                    ? (a.photo?"#000":"#FFFFFF")
+                    : (a.photo?"#000":`linear-gradient(150deg, ${a.color}38, ${a.color}55)`);
+                  const tileBorder = onTintedColumn
+                    ? (isNowAct?`1.5px solid ${a.color}`:`1px solid rgba(31,27,46,0.08)`)
+                    : (isNowAct?`1.5px solid ${a.color}`:`1px solid ${a.color}3A`);
+                  const tileShadow = onTintedColumn
+                    ? (isNowAct
+                        ?`0 8px 20px ${a.color}40, 0 2px 6px rgba(31,27,46,0.18), inset 0 1px 0 rgba(255,255,255,0.5)`
+                        :`0 3px 10px rgba(31,27,46,0.12), 0 1px 3px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.7)`)
+                    : (isNowAct
+                        ?`0 8px 20px ${a.color}40, 0 2px 6px ${a.color}28, inset 0 1px 0 rgba(255,255,255,0.35)`
+                        :`0 2px 6px ${a.color}1F, inset 0 1px 0 rgba(255,255,255,0.4)`);
+                  // Tile y-position must compensate for today's column being shifted up by 14px,
+                  // otherwise activities appear above the time line they belong to (looking "past")
+                  const tileY = d.isToday ? y+14 : y;
+                  // Non-focused days dim their activities — they're context, not active focus.
+                  // When user peeks a day (medium), it lights up. Today (strong) is always full opacity.
+                  const tileOpacity = onTintedColumn ? 1 : 0.48;
+                  // Tile padding inside the column edges — today gets slightly more inset because the
+                  // column is wider, so tiles can breathe a bit more without losing emphasis
+                  const tileInset = d.isToday ? 5 : 3;
+                  return(
+                    <div key={a.id}
+                      onClick={e=>{e.stopPropagation(); isEd?onEdit(a):onTap(a,dayKey);}}
+                      className="lt-press-soft"
+                      style={{
+                        position:"absolute",
+                        top:tileY,left:tileInset,right:tileInset,height:h,
+                        background:tileBg,
+                        border:tileBorder,
+                        borderRadius:d.isToday?13:11,
+                        overflow:"hidden",
+                        cursor:"pointer",
+                        boxShadow:tileShadow,
+                        opacity:tileOpacity,
+                        transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1), left .5s cubic-bezier(0.32, 0.72, 0, 1), right .5s cubic-bezier(0.32, 0.72, 0, 1), transform .26s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .35s ease, opacity .55s cubic-bezier(0.32, 0.72, 0, 1), filter .55s ease, border .35s ease, background .45s ease",
+                        animation:`wkTileIn .45s ${(ai*0.04+dayIdx*0.05).toFixed(2)}s cubic-bezier(0.32, 0.72, 0, 1) both`,
+                        display:"flex",flexDirection:"column",alignItems:"center",justifyContent:h>50?"flex-start":"center",
+                        padding:h>56?"6px 3px 5px":h>40?"4px 2px":"2px 2px",
+                        zIndex:1,
+                      }}>
+                      {/* Color accent stripe on tinted column white tiles — classic Sigvard look */}
+                      {onTintedColumn&&!a.photo&&(
+                        <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,background:a.color,borderRadius:"11px 0 0 11px"}}/>
+                      )}
+                      {a.photo?(
+                        <>
+                          <img src={a.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",position:"absolute",inset:0}}/>
+                          {/* Bottom gradient overlay for photo tiles when name shows */}
+                          {h>50&&<div style={{position:"absolute",left:0,right:0,bottom:0,height:"50%",background:"linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 100%)",pointerEvents:"none"}}/>}
+                          {h>50&&<span style={{position:"absolute",bottom:4,left:4,right:4,fontFamily:G.font,fontSize:8.5,fontWeight:500,color:"#FFFFFF",lineHeight:1.1,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:.15,textShadow:"0 1px 2px rgba(0,0,0,0.6)",zIndex:2}}>{a.name}</span>}
+                        </>
+                      ):(
+                        <>
+                          <span style={{fontSize:h>60?22:h>44?19:h>30?16:14,lineHeight:1,marginBottom:h>56?3:0,filter:`drop-shadow(0 1px 1px ${a.color}55)`}}>{a.emoji}</span>
+                          {h>50&&(
+                            <span style={{fontFamily:G.font,fontSize:8.5,fontWeight:500,color:G.ink,lineHeight:1.1,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%",whiteSpace:"nowrap",letterSpacing:.15,padding:"0 2px",opacity:0.88}}>{a.name}</span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+                {/* Subtle midnight marker — a soft inner shadow at the very bottom of the column,
+                    showing visually where the day ends at 00:00 and the next begins. Only visible
+                    on tinted (current/peeked) columns to keep quiet columns calm. */}
+                {(showStrong||showMedium||todaySofter)&&(
+                  <div style={{position:"absolute",bottom:0,left:0,right:0,height:24,background:`linear-gradient(180deg, transparent 0%, ${dCol}44 100%)`,pointerEvents:"none"}}/>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -2758,13 +5733,19 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor}){
       {showEdit&&<IdCardEditor cfg={cfg} setCfg={setCfg} onClose={()=>setShowEdit(false)} t={t}/>}
       <div style={{padding:"22px 18px 120px"}}>
         {isEditor&&(
-          <button onClick={()=>setShowEdit(true)} style={{width:"100%",padding:"13px 0",borderRadius:14,border:`1px solid ${S.h}`,background:S.hl,color:S.deep,fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",marginBottom:16}}>✏️ {t.editCard}</button>
+          <button onClick={()=>setShowEdit(true)} className="lt-press-soft" style={{width:"100%",padding:"13px 0",borderRadius:14,border:`1px solid ${S.h}`,background:S.hl,color:S.deep,fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",marginBottom:16,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4 H4 a2 2 0 0 0 -2 2 v14 a2 2 0 0 0 2 2 h14 a2 2 0 0 0 2 -2 v-7"/>
+              <path d="M18.5 2.5 a2.121 2.121 0 0 1 3 3 L12 15 l-4 1 1 -4 z"/>
+            </svg>
+            <span>{t.editCard}</span>
+          </button>
         )}
         {isEmpty&&!isEditor?(
           <div style={{textAlign:"center",padding:"60px 24px"}}>
             <div style={{fontSize:64,marginBottom:18}}>🪪</div>
-            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:22,color:G.ink,letterSpacing:-.3,marginBottom:8}}>Kortet är inte ifyllt än</div>
-            <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.5,maxWidth:300,margin:"0 auto"}}>Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Öppna Redaktör för att fylla i det.</div>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:23,color:G.ink,letterSpacing:-.4,marginBottom:10,lineHeight:1.15}}>Kortet är inte ifyllt än</div>
+            <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.5,maxWidth:300,margin:"0 auto"}}>Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Tryck Redigera för att fylla i det.</div>
           </div>
         ):isEmpty&&isEditor?(
           <div style={{textAlign:"center",padding:"40px 24px",background:G.white,borderRadius:24,border:`1px dashed ${S.h}66`}}>
@@ -2815,7 +5796,7 @@ function IdCardEditor({cfg,setCfg,onClose,t}){
   return(
     <Overlay onClose={onClose}>
       <Sheet scroll>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:21,color:G.ink,marginBottom:22,letterSpacing:-.2}}>{t.editCard}</div>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:28,letterSpacing:-.5,lineHeight:1.05}}>{t.editCard}</div>
         <div style={{display:"flex",gap:14,marginBottom:18,alignItems:"center"}}>
           <div style={{width:78,height:78,borderRadius:22,background:c.photo?"transparent":S.hll,border:`1px solid ${G.border}`,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,flexShrink:0}}>
             {c.photo?<img src={c.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:"🙂"}
@@ -2827,24 +5808,24 @@ function IdCardEditor({cfg,setCfg,onClose,t}){
           </div>
         </div>
         <SLabel>{t.myName}</SLabel>
-        <input value={c.name} onChange={e=>setC(x=>({...x,name:e.target.value}))} style={INP} placeholder="t.ex. Elin Andersson"/>
+        <input value={c.name} onChange={e=>setC(x=>({...x,name:e.target.value}))} className="lt-input" style={INP} placeholder="t.ex. Elin Andersson"/>
         <SLabel>{t.myAge}</SLabel>
-        <input value={c.age} onChange={e=>setC(x=>({...x,age:e.target.value}))} style={INP} placeholder="t.ex. 9" inputMode="numeric"/>
+        <input value={c.age} onChange={e=>setC(x=>({...x,age:e.target.value}))} className="lt-input" style={INP} placeholder="t.ex. 9" inputMode="numeric"/>
         <SLabel>{t.aboutMe}</SLabel>
-        <textarea value={c.condition} onChange={e=>setC(x=>({...x,condition:e.target.value}))} style={{...INP,minHeight:64,resize:"vertical"}} placeholder="t.ex. Jag har autism och kan behöva extra tid"/>
+        <textarea value={c.condition} onChange={e=>setC(x=>({...x,condition:e.target.value}))} className="lt-input" style={{...INP,minHeight:64,resize:"vertical"}} placeholder="t.ex. Jag har autism och kan behöva extra tid"/>
         <SLabel>⚠️ {t.myTriggers}</SLabel>
-        <textarea value={c.triggers} onChange={e=>setC(x=>({...x,triggers:e.target.value}))} style={{...INP,minHeight:64,resize:"vertical"}} placeholder="t.ex. Höga ljud, mycket folk"/>
+        <textarea value={c.triggers} onChange={e=>setC(x=>({...x,triggers:e.target.value}))} className="lt-input" style={{...INP,minHeight:64,resize:"vertical"}} placeholder="t.ex. Höga ljud, mycket folk"/>
         <SLabel>💚 {t.whatHelps}</SLabel>
-        <textarea value={c.helpful} onChange={e=>setC(x=>({...x,helpful:e.target.value}))} style={{...INP,minHeight:64,resize:"vertical"}} placeholder="t.ex. Lugn röst, tid att tänka"/>
+        <textarea value={c.helpful} onChange={e=>setC(x=>({...x,helpful:e.target.value}))} className="lt-input" style={{...INP,minHeight:64,resize:"vertical"}} placeholder="t.ex. Lugn röst, tid att tänka"/>
         <SLabel>📞 {t.emergencyContacts}</SLabel>
         {c.contacts.map(k=>(
           <div key={k.id} style={{background:S.hll,borderRadius:14,padding:13,marginBottom:10,border:`1px solid ${S.hl}`}}>
             <div style={{display:"flex",gap:8,marginBottom:8}}>
-              <input value={k.name} onChange={e=>updC(k.id,"name",e.target.value)} style={{...INP,marginBottom:0,flex:1}} placeholder={t.contactName}/>
+              <input value={k.name} onChange={e=>updC(k.id,"name",e.target.value)} className="lt-input" style={{...INP,marginBottom:0,flex:1}} placeholder={t.contactName}/>
               <button onClick={()=>rmC(k.id)} style={{padding:"0 13px",borderRadius:12,border:"none",background:"#FEF2F2",color:"#EF4444",cursor:"pointer",fontSize:15}}>✕</button>
             </div>
-            <input value={k.phone} onChange={e=>updC(k.id,"phone",e.target.value)} style={{...INP,marginBottom:8}} placeholder={t.contactPhone} inputMode="tel"/>
-            <input value={k.relation} onChange={e=>updC(k.id,"relation",e.target.value)} style={{...INP,marginBottom:0}} placeholder={t.contactRelation+" (t.ex. Mamma)"}/>
+            <input value={k.phone} onChange={e=>updC(k.id,"phone",e.target.value)} className="lt-input" style={{...INP,marginBottom:8}} placeholder={t.contactPhone} inputMode="tel"/>
+            <input value={k.relation} onChange={e=>updC(k.id,"relation",e.target.value)} className="lt-input" style={{...INP,marginBottom:0}} placeholder={t.contactRelation+" (t.ex. Mamma)"}/>
           </div>
         ))}
         <button onClick={addContact} style={{width:"100%",padding:"12px 0",borderRadius:13,border:`1.5px dashed ${S.h}66`,background:G.white,color:S.deep,fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",marginBottom:22}}>{t.addContact}</button>
@@ -2932,9 +5913,9 @@ function SupervisorDemo({onClose,onOpenClient,lang}){
             <div style={{fontFamily:G.font,fontSize:13,color:G.ink2,marginBottom:24,lineHeight:1.5}}>{lang==="sv"?"Hantera dina klienters scheman, berättelser och verktyg. Ändringar synkas direkt till deras enheter.":"Manage your clients' schedules, stories and tools. Changes sync directly to their devices."}</div>
 
             <SLabel>{lang==="sv"?"E-post":"Email"}</SLabel>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="namn@habilitering.se" style={INP}/>
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="namn@habilitering.se" className="lt-input" style={INP}/>
             <SLabel>{lang==="sv"?"Lösenord":"Password"}</SLabel>
-            <input type="password" value={pwd} onChange={e=>setPwd(e.target.value)} placeholder="••••••••" style={INP}/>
+            <input type="password" value={pwd} onChange={e=>setPwd(e.target.value)} placeholder="••••••••" className="lt-input" style={INP}/>
 
             <button onClick={doLogin} style={{width:"100%",padding:"14px 0",borderRadius:14,border:"none",background:`linear-gradient(135deg,${S.h},${S.deep})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h),marginTop:8,marginBottom:14}}>{lang==="sv"?"Logga in":"Sign in"}</button>
 
@@ -2962,7 +5943,7 @@ function SupervisorDemo({onClose,onOpenClient,lang}){
 
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
             {DEMO_CLIENTS.map((c,i)=>(
-              <div key={c.id} onClick={()=>onOpenClient(c)} style={{background:G.white,borderRadius:20,padding:"20px 18px",boxShadow:`0 10px 28px ${c.color}1A`,border:`1px solid ${c.color}25`,cursor:"pointer",transition:"transform .15s ease,box-shadow .2s ease",animation:`svIn .35s ease ${i*0.06}s both`}}
+              <div key={c.id} onClick={()=>onOpenClient(c)} className="lt-press-soft" style={{background:G.white,borderRadius:20,padding:"20px 18px",boxShadow:`0 10px 28px ${c.color}1A`,border:`1px solid ${c.color}25`,cursor:"pointer",transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1),box-shadow .2s ease",animation:`svIn .35s ease ${i*0.06}s both`}}
                 onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow=`0 14px 36px ${c.color}26`;}}
                 onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow=`0 10px 28px ${c.color}1A`;}}>
                 <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
@@ -3000,25 +5981,1006 @@ function SupervisorDemo({onClose,onOpenClient,lang}){
 }
 
 /* ═══════════════════════════════════════════════════
+   ACTIVITY START ALERT — notification when activity begins
+═══════════════════════════════════════════════════ */
+function ActivityStartAlert({activity,onDismiss,onOpen,t,lang}){
+  return(
+    <div onClick={onDismiss} style={{position:"fixed",inset:0,zIndex:99000,background:"rgba(31,27,46,0.45)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24,animation:"asaBackdrop 0.35s ease both"}}>
+      <style>{`
+        @keyframes asaBackdrop{from{opacity:0}to{opacity:1}}
+        @keyframes asaPop{0%{opacity:0;transform:scale(0.7) translateY(20px)}55%{opacity:1;transform:scale(1.04) translateY(0)}80%{transform:scale(0.98)}100%{transform:scale(1)}}
+        @keyframes asaEmojiPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+        @keyframes asaRingPulse{0%{box-shadow:0 0 0 0 ${activity.color}55,0 16px 40px ${activity.color}30}70%{box-shadow:0 0 0 22px ${activity.color}00,0 16px 40px ${activity.color}30}100%{box-shadow:0 0 0 0 ${activity.color}00,0 16px 40px ${activity.color}30}}
+      `}</style>
+      <div onClick={e=>e.stopPropagation()} style={{background:G.white,borderRadius:30,padding:"30px 28px 24px",maxWidth:380,width:"100%",textAlign:"center",boxShadow:"0 30px 70px rgba(31,27,46,0.22), 0 4px 12px rgba(31,27,46,0.08)",border:`1px solid ${G.border}`,animation:"asaPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both"}}>
+        <div style={{width:108,height:108,margin:"0 auto 20px",borderRadius:"50%",background:`linear-gradient(140deg, ${activity.color}30, ${activity.color}55)`,border:`2px solid ${activity.color}45`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:54,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.7)`,animation:"asaRingPulse 2.2s ease-out infinite, asaEmojiPulse 2.6s ease-in-out infinite"}}>{activity.emoji}</div>
+        <div style={{fontFamily:G.font,fontSize:11,color:G.ink3,letterSpacing:1.6,textTransform:"uppercase",fontWeight:700,marginBottom:8}}>{lang==="sv"?"Det är dags":"It's time"}</div>
+        <div style={{fontFamily:G.serif,fontSize:26,fontWeight:600,color:G.ink,letterSpacing:-0.3,lineHeight:1.15,marginBottom:6}}>{activity.name}</div>
+        <div style={{fontFamily:G.font,fontSize:14,fontWeight:700,color:activity.color,letterSpacing:0.3,marginBottom:24}}>{fmtT(activity.time,lang)}</div>
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={onOpen} className="lt-press" style={{flex:1,padding:"14px 0",borderRadius:14,border:`1px solid ${G.border}`,background:G.cream,color:G.ink2,fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer"}}>{lang==="sv"?"Visa":"Show"}</button>
+          <button onClick={onDismiss} className="lt-press" style={{flex:1.5,padding:"14px 0",borderRadius:14,border:"none",background:`linear-gradient(135deg, ${activity.color}, ${activity.color}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:`0 8px 18px ${activity.color}55`}}>OK</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   DEMO TOUR — cinematic auto-play walkthrough
+═══════════════════════════════════════════════════ */
+
+function SceneIntro(){
+  // Real Luma sun — same as the one in the app header, scaled up for hero presence.
+  // Rotating rays + breathing core + outer glow + highlight dot.
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:28,padding:"40px 32px"}}>
+      <style>{`
+        @keyframes dILogoIn{0%{opacity:0;transform:scale(0.88)}100%{opacity:1;transform:scale(1)}}
+        @keyframes dILumaRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes dILumaCoreBreath{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.05);filter:brightness(1.10)}}
+        @keyframes dIRayFadeA{0%,100%{opacity:0.75}50%{opacity:0.45}}
+        @keyframes dIRayFadeB{0%,100%{opacity:0.45}50%{opacity:0.8}}
+        @keyframes dIWordmark{0%{opacity:0;letter-spacing:6px}100%{opacity:1;letter-spacing:2px}}
+        @keyframes dIDot{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
+      `}</style>
+      <div style={{width:140,height:140,position:"relative",animation:"dILogoIn 1.2s cubic-bezier(0.22,1,0.36,1) both"}}>
+        <svg width={140} height={140} viewBox="0 0 26 26" style={{overflow:"visible"}}>
+          <defs>
+            <radialGradient id="dILumaCore" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stopColor="#FFFFFF"/>
+              <stop offset="20%" stopColor="#FFFAF0" stopOpacity="0.95"/>
+              <stop offset="55%" stopColor="#E8A878"/>
+              <stop offset="100%" stopColor="#C97548"/>
+            </radialGradient>
+            <radialGradient id="dILumaOuterGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="40%" stopColor="#E8A878" stopOpacity="0"/>
+              <stop offset="70%" stopColor="#E8A878" stopOpacity="0.20"/>
+              <stop offset="100%" stopColor="#E8A878" stopOpacity="0"/>
+            </radialGradient>
+          </defs>
+          {/* Outer soft glow */}
+          <circle cx="13" cy="13" r="13" fill="url(#dILumaOuterGlow)"/>
+          {/* Rotating ray group — 8 rays, alternating long/short, same as header */}
+          <g style={{transformOrigin:"13px 13px",animation:"dILumaRotate 22s linear infinite"}}>
+            {Array.from({length:8}).map((_,i)=>{
+              const ang=(i/8)*2*Math.PI;
+              const isLong=i%2===0;
+              const r1=8.5, r2=isLong?12.2:11;
+              const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
+              const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
+              return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#E8A878" strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"dIRayFadeA":"dIRayFadeB"} ${3+i*0.18}s ease-in-out infinite`}}/>;
+            })}
+          </g>
+          {/* Core orb with breath + highlight */}
+          <g style={{transformOrigin:"13px 13px",animation:"dILumaCoreBreath 3.4s ease-in-out infinite"}}>
+            <circle cx="13" cy="13" r="6.5" fill="url(#dILumaCore)"/>
+            <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
+          </g>
+        </svg>
+      </div>
+      <div style={{fontFamily:'Georgia, serif',fontSize:52,fontWeight:500,color:"#1F1B2E",letterSpacing:2,animation:"dIWordmark 1.4s 0.4s cubic-bezier(0.22,1,0.36,1) both"}}>Luma</div>
+      <div style={{width:5,height:5,borderRadius:"50%",background:"#E8A878",animation:"dIDot 2.5s 1.2s ease-in-out infinite"}}/>
+    </div>
+  );
+}
+
+function SceneSchedule(){
+  // Schedule view — Sigvard lamps + a clean stack of activity cards
+  return(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:"100%",padding:"0 28px",boxSizing:"border-box"}}>
+      <style>{`
+        @keyframes dSchCardIn{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
+        @keyframes dSchLampOn{0%{opacity:0;transform:scale(0.5)}100%{opacity:1;transform:scale(1)}}
+        @keyframes dSchPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.18);opacity:0.85}}
+      `}</style>
+      <div style={{display:"flex",gap:14,alignItems:"stretch",width:"100%",maxWidth:340}}>
+        {/* Sigvard column */}
+        <div style={{width:14,flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:8,paddingTop:8,paddingBottom:8}}>
+          {[
+            {dim:true,delay:0.05},{dim:true,delay:0.1},{dim:true,delay:0.15},
+            {pulse:true,delay:0.2},
+            {delay:0.35},{delay:0.45},{delay:0.55},{delay:0.65},{delay:0.75},
+          ].map((l,i)=>(
+            <div key={i} style={{
+              width:8,height:8,borderRadius:"50%",
+              background:l.dim?"rgba(31,27,46,0.20)":"#E89B89",
+              boxShadow:!l.dim?"0 0 8px rgba(232,155,137,0.55)":"none",
+              animation:`dSchLampOn 0.4s ${l.delay}s ease-out both${l.pulse?", dSchPulse 2.2s "+(l.delay+0.6)+"s ease-in-out infinite":""}`,
+            }}/>
+          ))}
+        </div>
+        {/* Cards */}
+        <div style={{flex:1,display:"flex",flexDirection:"column",gap:10}}>
+          {[
+            {emoji:"🥣",name:"Frukost",time:"07:30",color:"#E89B89",done:true,delay:0.2},
+            {emoji:"📚",name:"Läxor",time:"NU",color:"#E89B89",now:true,delay:0.4},
+            {emoji:"🚶",name:"Promenad",time:"14:00",color:"#8FBFA1",delay:0.6},
+            {emoji:"📖",name:"Läsa",time:"17:00",color:"#8AAFD2",delay:0.8},
+          ].map((c,i)=>(
+            <div key={i} style={{
+              background:"#FFFFFF",
+              borderRadius:13,
+              padding:c.now?"13px 14px":"11px 14px",
+              border:c.now?`1.5px solid ${c.color}`:`1px solid ${c.color}25`,
+              display:"flex",alignItems:"center",gap:11,
+              boxShadow:c.now?`0 8px 22px ${c.color}24`:`0 2px 8px ${c.color}10`,
+              opacity:c.done?0.55:1,
+              animation:`dSchCardIn 0.55s ${c.delay}s cubic-bezier(0.22,1,0.36,1) both`,
+              position:"relative",
+            }}>
+              <div style={{width:c.now?34:30,height:c.now?34:30,borderRadius:9,background:`linear-gradient(140deg,${c.color}30,${c.color}55)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:c.now?17:15}}>{c.emoji}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontFamily:'Georgia, serif',fontWeight:600,fontSize:c.now?14:13,color:"#1F1B2E",letterSpacing:-0.2,textDecoration:c.done?"line-through":"none",textDecorationColor:"rgba(31,27,46,0.3)"}}>{c.name}</div>
+                <div style={{fontFamily:"-apple-system, sans-serif",fontSize:c.now?10:9.5,color:c.now?c.color:"#9892AA",marginTop:2,letterSpacing:c.now?0.8:0.2,textTransform:c.now?"uppercase":"none",fontWeight:c.now?700:500,fontVariantNumeric:"tabular-nums"}}>{c.time}</div>
+              </div>
+              {c.now&&<div style={{width:6,height:6,borderRadius:"50%",background:c.color,boxShadow:`0 0 6px ${c.color}`,animation:"dSchPulse 2s ease-in-out infinite"}}/>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SceneTimer(){
+  // Three different timers shown in a playful, asymmetric arrangement — varied heights,
+  // slight rotations, and gentle floating to feel alive instead of lined up.
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,padding:"0 14px",boxSizing:"border-box"}}>
+      <style>{`
+        @keyframes dTmIn{0%{opacity:0;transform:scale(0.88) translateY(14px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+        @keyframes dTmFloat1{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-7px) rotate(-1deg)}}
+        @keyframes dTmFloat2{0%,100%{transform:translateY(-4px) rotate(2deg)}50%{transform:translateY(3px) rotate(4deg)}}
+        @keyframes dTmFloat3{0%,100%{transform:translateY(-2px) rotate(-2deg)}50%{transform:translateY(-9px) rotate(1deg)}}
+        @keyframes dTmWaveShift{from{transform:translateX(0)}to{transform:translateX(-126px)}}
+        @keyframes dTmBubble{0%{transform:translate3d(0,90px,0);opacity:0}10%{opacity:0.65}90%{opacity:0.65}100%{transform:translate3d(0,5px,0);opacity:0}}
+        @keyframes dTmSunRays{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+        @keyframes dTmSunBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+        @keyframes dTmSectorSweep{from{transform:rotate(-122deg)}to{transform:rotate(238deg)}}
+      `}</style>
+      {/* Asymmetric arrangement — staggered heights, varied rotations */}
+      <div style={{display:"flex",gap:6,alignItems:"center",justifyContent:"center",width:"100%",minHeight:130,paddingTop:14,paddingBottom:14}}>
+
+        {/* 1. SECTOR TIMER — sits lowest, tilted slightly back */}
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,marginTop:36,opacity:0,animation:"dTmIn 0.8s 0.0s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+          <div style={{animation:"dTmFloat1 6.5s ease-in-out 0s infinite",willChange:"transform"}}>
+            <div style={{position:"relative",width:88,height:88}}>
+              <svg width={88} height={88} viewBox="0 0 96 96">
+                <circle cx={48} cy={48} r={42} fill="#FFFFFF" stroke="rgba(31,27,46,0.10)" strokeWidth={1.5}/>
+                {/* Tick marks */}
+                {Array.from({length:12}).map((_,i)=>{
+                  const a=(i/12)*2*Math.PI-Math.PI/2;
+                  const r1=37, r2=41;
+                  return <line key={i} x1={48+r1*Math.cos(a)} y1={48+r1*Math.sin(a)} x2={48+r2*Math.cos(a)} y2={48+r2*Math.sin(a)} stroke="rgba(31,27,46,0.22)" strokeWidth={1.1} strokeLinecap="round"/>;
+                })}
+                {/* Sweeping red sector */}
+                <g style={{transformOrigin:"48px 48px",animation:"dTmSectorSweep 7s linear infinite"}}>
+                  <path d="M48,48 L48,10 A38,38 0 0,1 80.9,29 Z" fill="#E89B89" opacity="0.85"/>
+                </g>
+                <circle cx={48} cy={48} r={3.2} fill="#1F1B2E"/>
+              </svg>
+            </div>
+          </div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#9892AA",letterSpacing:0.5,textTransform:"uppercase"}}>Time Timer</div>
+        </div>
+
+        {/* 2. WAVE TIMER — sits highest, larger, hero position */}
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,marginTop:-28,opacity:0,animation:"dTmIn 0.8s 0.16s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+          <div style={{animation:"dTmFloat2 7.5s ease-in-out 0s infinite",willChange:"transform"}}>
+            <div style={{position:"relative",width:104,height:104,borderRadius:20,overflow:"hidden",background:"linear-gradient(180deg, rgba(138,175,210,0.06) 0%, rgba(138,175,210,0.18) 100%)",border:"1px solid rgba(138,175,210,0.28)",boxShadow:"0 10px 24px rgba(138,175,210,0.22)"}}>
+              <svg width={104} height={104} style={{position:"absolute",inset:0,overflow:"hidden"}}>
+                <defs>
+                  <linearGradient id="dTmFill2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#8AAFD2" stopOpacity="0.7"/>
+                    <stop offset="100%" stopColor="#8AAFD2"/>
+                  </linearGradient>
+                  <radialGradient id="dTmBub2" cx="32%" cy="28%" r="68%">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95"/>
+                    <stop offset="60%" stopColor="#FFFFFF" stopOpacity="0.45"/>
+                    <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.15"/>
+                  </radialGradient>
+                </defs>
+                {/* Water fill — wave path now spans -208 to 312 (5× container) so animation shift of -126
+                    always leaves the visible 0-104 region covered. No more right-edge gap. */}
+                <g style={{transform:"translateY(42px)"}}>
+                  <g style={{animation:"dTmWaveShift 8s linear infinite"}}>
+                    <path d={(()=>{const f=0.08;let d="M-208,0";for(let x=-208;x<=312;x+=2){const y=Math.sin(x*f)*5+Math.sin(x*f*2.4)*1.6;d+=` L${x},${y}`;}return d+" L312,160 L-208,160 Z";})()} fill="url(#dTmFill2)"/>
+                  </g>
+                </g>
+                {/* Bubbles rising harmoniously */}
+                {[16,42,68,90].map((x,i)=>{
+                  const r=1.7+(i%3)*0.4;
+                  const dur=6+(i%3)*0.8;
+                  return(
+                    <g key={i} transform={`translate(${x},0)`}>
+                      <g style={{animation:`dTmBubble ${dur}s linear ${-i*1.4}s infinite`}}>
+                        <circle cx={0} cy={0} r={r} fill="url(#dTmBub2)"/>
+                        <circle cx={-r*0.32} cy={-r*0.38} r={r*0.22} fill="rgba(255,255,255,0.7)"/>
+                      </g>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          </div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#9892AA",letterSpacing:0.5,textTransform:"uppercase"}}>Våg</div>
+        </div>
+
+        {/* 3. SUNSET TIMER — sits mid-height between the other two */}
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,marginTop:14,opacity:0,animation:"dTmIn 0.8s 0.32s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+          <div style={{animation:"dTmFloat3 6s ease-in-out 0s infinite",willChange:"transform"}}>
+            <div style={{position:"relative",width:88,height:88,borderRadius:18,overflow:"hidden",border:"1px solid rgba(31,27,46,0.08)",boxShadow:"0 6px 16px rgba(31,27,46,0.08)"}}>
+              <svg width={88} height={88} viewBox="0 0 96 96">
+                <defs>
+                  <linearGradient id="dTmSky" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(30, 50%, 88%)"/>
+                    <stop offset="60%" stopColor="hsl(20, 55%, 82%)"/>
+                    <stop offset="100%" stopColor="hsl(10, 50%, 76%)"/>
+                  </linearGradient>
+                  <radialGradient id="dTmSun" cx="42%" cy="38%" r="62%">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95"/>
+                    <stop offset="35%" stopColor="hsl(38, 70%, 92%)"/>
+                    <stop offset="75%" stopColor="hsl(28, 62%, 80%)"/>
+                    <stop offset="100%" stopColor="hsl(18, 55%, 68%)"/>
+                  </radialGradient>
+                  <linearGradient id="dTmWater" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(205, 58%, 62%)"/>
+                    <stop offset="100%" stopColor="hsl(200, 52%, 48%)"/>
+                  </linearGradient>
+                </defs>
+                <rect width={96} height={60} fill="url(#dTmSky)"/>
+                <rect y={60} width={96} height={36} fill="url(#dTmWater)"/>
+                {/* Rotating sun rays */}
+                <g style={{transformOrigin:"48px 38px",animation:"dTmSunRays 60s linear infinite"}}>
+                  {Array.from({length:8}).map((_,i)=>{
+                    const a=(i/8)*Math.PI*2;
+                    const r1=14, r2=20;
+                    return <line key={i} x1={48+r1*Math.cos(a)} y1={38+r1*Math.sin(a)} x2={48+r2*Math.cos(a)} y2={38+r2*Math.sin(a)} stroke="hsl(28, 62%, 78%)" strokeWidth={1.4} strokeLinecap="round" opacity={0.7}/>;
+                  })}
+                </g>
+                <g style={{transformOrigin:"48px 38px",animation:"dTmSunBreath 6s ease-in-out infinite"}}>
+                  <circle cx={48} cy={38} r={11} fill="url(#dTmSun)"/>
+                </g>
+                <ellipse cx={48} cy={66} rx={9} ry={5} fill="hsl(28, 62%, 78%)" opacity={0.45}/>
+                <line x1={0} y1={60} x2={96} y2={60} stroke="rgba(31,27,46,0.10)" strokeWidth={0.6}/>
+              </svg>
+            </div>
+          </div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#9892AA",letterSpacing:0.5,textTransform:"uppercase"}}>Solnedgång</div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function SceneChecklist(){
+  // Checklist — simple stack of steps, two checked, one pending
+  return(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:"100%",padding:"0 28px",boxSizing:"border-box"}}>
+      <style>{`
+        @keyframes dChkRow{0%{opacity:0;transform:translateX(-8px)}100%{opacity:1;transform:translateX(0)}}
+        @keyframes dChkBox{0%{transform:scale(0.85)}100%{transform:scale(1)}}
+        @keyframes dChkDraw{from{stroke-dashoffset:30}to{stroke-dashoffset:0}}
+      `}</style>
+      <div style={{background:"#FFFFFF",borderRadius:18,padding:"22px 22px",boxShadow:"0 12px 32px rgba(31,27,46,0.06), 0 2px 6px rgba(31,27,46,0.04)",border:"1px solid rgba(31,27,46,0.06)",width:"100%",maxWidth:320}}>
+        <div style={{fontFamily:'Georgia, serif',fontWeight:600,fontSize:16,color:"#1F1B2E",letterSpacing:-0.2,marginBottom:18,display:"flex",alignItems:"center",gap:10}}>
+          <span style={{fontSize:22}}>🦷</span>
+          <span>Morgon</span>
+        </div>
+        {[
+          {label:"Borsta tänder",done:true,delay:0.15},
+          {label:"Tvätta ansiktet",done:true,delay:0.35},
+          {label:"Kamma håret",done:false,delay:0.55},
+        ].map((s,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:13,padding:"10px 0",borderBottom:i<2?"1px solid rgba(31,27,46,0.06)":"none",animation:`dChkRow 0.5s ${s.delay}s cubic-bezier(0.22,1,0.36,1) both`}}>
+            <div style={{
+              width:24,height:24,borderRadius:7,
+              background:s.done?"#8FBFA1":"#FFFFFF",
+              border:s.done?"none":"1.5px solid rgba(31,27,46,0.18)",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              transition:"all 0.3s ease",
+              animation:s.done?`dChkBox 0.4s ${s.delay+0.2}s cubic-bezier(0.34, 1.56, 0.64, 1) both`:"none",
+            }}>
+              {s.done&&(
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+                  <path d="M5,12 L10,17 L19,7" stroke="#FFFFFF" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={30} style={{animation:`dChkDraw 0.4s ${s.delay+0.3}s cubic-bezier(0.22,1,0.36,1) forwards`}}/>
+                </svg>
+              )}
+            </div>
+            <span style={{fontFamily:"-apple-system, sans-serif",fontSize:14,fontWeight:500,color:s.done?"#9892AA":"#1F1B2E",textDecoration:s.done?"line-through":"none",textDecorationColor:"rgba(152,146,170,0.6)",letterSpacing:0.1,flex:1}}>{s.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SceneEmotion(){
+  // Emotion picker — selection HOPS in a randomised order to feel playful and alive.
+  // Sequence: 😢 → 😊 → 😡 → 😌 → 😟 → 😊 → 😢 → 😡 (cycles in 10s, never predictable left-to-right).
+  // Each emotion has its own keyframe with active windows at different times in the cycle.
+  return(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:"100%",padding:"0 28px",boxSizing:"border-box"}}>
+      <style>{`
+        @keyframes dEmIn{0%{opacity:0;transform:translateY(12px) scale(0.92)}100%{opacity:1;transform:translateY(0) scale(1)}}
+        @keyframes dEmHopWiggle{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-4px) rotate(2deg)}}
+        /* Randomised hop pattern — 10s cycle, each emotion has active windows at different positions.
+           Sequence in cycle: 😢(0-10%) → 😊(13-23%) → 😡(26-36%) → 😌(39-49%) → 😟(52-62%) → 😊(65-75%) → 😢(78-88%) → 😡(91-100%)
+           This means 😊 and 😢 and 😡 light up twice in a cycle, others once, creating organic variation. */
+        @keyframes dEmSelect0{
+          0%{transform:scale(1);box-shadow:0 2px 6px rgba(143,191,161,0.10)}
+          /* Emotion 0 (😊) active at 13-23% */
+          13%{transform:scale(1.22);box-shadow:0 12px 28px rgba(143,191,161,0.45)}
+          18%{transform:scale(1.20);box-shadow:0 10px 24px rgba(143,191,161,0.40)}
+          23%{transform:scale(1);box-shadow:0 2px 6px rgba(143,191,161,0.10)}
+          /* Active again at 65-75% */
+          65%{transform:scale(1.22);box-shadow:0 12px 28px rgba(143,191,161,0.45)}
+          70%{transform:scale(1.20);box-shadow:0 10px 24px rgba(143,191,161,0.40)}
+          75%,100%{transform:scale(1);box-shadow:0 2px 6px rgba(143,191,161,0.10)}
+        }
+        @keyframes dEmSelect1{
+          /* 😌 active at 39-49% only */
+          0%,39%,100%{transform:scale(1);box-shadow:0 2px 6px rgba(138,175,210,0.10)}
+          42%{transform:scale(1.22);box-shadow:0 12px 28px rgba(138,175,210,0.45)}
+          46%{transform:scale(1.20);box-shadow:0 10px 24px rgba(138,175,210,0.40)}
+          49%{transform:scale(1);box-shadow:0 2px 6px rgba(138,175,210,0.10)}
+        }
+        @keyframes dEmSelect2{
+          /* 😟 active at 52-62% only */
+          0%,52%,100%{transform:scale(1);box-shadow:0 2px 6px rgba(194,96,122,0.10)}
+          55%{transform:scale(1.22);box-shadow:0 12px 28px rgba(194,96,122,0.45)}
+          59%{transform:scale(1.20);box-shadow:0 10px 24px rgba(194,96,122,0.40)}
+          62%{transform:scale(1);box-shadow:0 2px 6px rgba(194,96,122,0.10)}
+        }
+        @keyframes dEmSelect3{
+          /* 😡 active at 26-36% AND 91-100% (wraps around) */
+          0%{transform:scale(1);box-shadow:0 2px 6px rgba(232,155,137,0.10)}
+          26%{transform:scale(1);box-shadow:0 2px 6px rgba(232,155,137,0.10)}
+          29%{transform:scale(1.22);box-shadow:0 12px 28px rgba(232,155,137,0.45)}
+          33%{transform:scale(1.20);box-shadow:0 10px 24px rgba(232,155,137,0.40)}
+          36%{transform:scale(1);box-shadow:0 2px 6px rgba(232,155,137,0.10)}
+          91%{transform:scale(1);box-shadow:0 2px 6px rgba(232,155,137,0.10)}
+          94%{transform:scale(1.22);box-shadow:0 12px 28px rgba(232,155,137,0.45)}
+          98%{transform:scale(1.20);box-shadow:0 10px 24px rgba(232,155,137,0.40)}
+          100%{transform:scale(1);box-shadow:0 2px 6px rgba(232,155,137,0.10)}
+        }
+        @keyframes dEmSelect4{
+          /* 😢 active at 0-10% AND 78-88% */
+          0%{transform:scale(1.22);box-shadow:0 12px 28px rgba(150,131,194,0.45)}
+          6%{transform:scale(1.20);box-shadow:0 10px 24px rgba(150,131,194,0.40)}
+          10%{transform:scale(1);box-shadow:0 2px 6px rgba(150,131,194,0.10)}
+          78%{transform:scale(1);box-shadow:0 2px 6px rgba(150,131,194,0.10)}
+          81%{transform:scale(1.22);box-shadow:0 12px 28px rgba(150,131,194,0.45)}
+          85%{transform:scale(1.20);box-shadow:0 10px 24px rgba(150,131,194,0.40)}
+          88%,100%{transform:scale(1);box-shadow:0 2px 6px rgba(150,131,194,0.10)}
+        }
+        /* Border + bg color also pulse with selection — same timing as scale */
+        @keyframes dEmBorder0{
+          0%,13%,23%,65%,75%,100%{border-color:rgba(143,191,161,0.30);background:#E8F1E8}
+          14%,22%{border-color:#8FBFA1;background:#D8E8D8}
+          66%,74%{border-color:#8FBFA1;background:#D8E8D8}
+        }
+        @keyframes dEmBorder1{
+          0%,39%,49%,100%{border-color:rgba(138,175,210,0.30);background:#E4EEF7}
+          40%,48%{border-color:#8AAFD2;background:#D4E4F0}
+        }
+        @keyframes dEmBorder2{
+          0%,52%,62%,100%{border-color:rgba(194,96,122,0.30);background:#FAF5F6}
+          53%,61%{border-color:#C2607A;background:#F0E0E5}
+        }
+        @keyframes dEmBorder3{
+          0%,26%,36%,91%,100%{border-color:rgba(232,155,137,0.30);background:#FCE5DC}
+          27%,35%{border-color:#E89B89;background:#F5D5C5}
+          92%,99%{border-color:#E89B89;background:#F5D5C5}
+        }
+        @keyframes dEmBorder4{
+          0%{border-color:#9683C2;background:#E0D8F0}
+          11%,78%,88%,100%{border-color:rgba(150,131,194,0.30);background:#EFEBF8}
+          79%,87%{border-color:#9683C2;background:#E0D8F0}
+        }
+      `}</style>
+      <div style={{display:"flex",gap:12,alignItems:"center",justifyContent:"center",flexWrap:"wrap",maxWidth:340}}>
+        {[
+          {emoji:"😊",color:"#8FBFA1",bg:"#E8F1E8",delay:0.1,idx:0},
+          {emoji:"😌",color:"#8AAFD2",bg:"#E4EEF7",delay:0.18,idx:1},
+          {emoji:"😟",color:"#C2607A",bg:"#FAF5F6",delay:0.26,idx:2},
+          {emoji:"😡",color:"#E89B89",bg:"#FCE5DC",delay:0.34,idx:3},
+          {emoji:"😢",color:"#9683C2",bg:"#EFEBF8",delay:0.42,idx:4},
+        ].map((e)=>(
+          <div key={e.idx} style={{
+            width:54,
+            height:54,
+            borderRadius:"50%",
+            background:e.bg,
+            border:`1.5px solid ${e.color}33`,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:26,
+            boxShadow:`0 2px 6px ${e.color}1A`,
+            opacity:0,
+            animation:`dEmIn 0.55s ${e.delay}s cubic-bezier(0.22,1,0.36,1) both, dEmSelect${e.idx} 10s ${e.delay+0.9}s cubic-bezier(0.34, 1.56, 0.64, 1) infinite, dEmBorder${e.idx} 10s ${e.delay+0.9}s linear infinite`,
+            transformOrigin:"center",
+            willChange:"transform, box-shadow",
+          }}>
+            <div style={{animation:`dEmHopWiggle 2.4s ${e.idx*0.5}s ease-in-out infinite`,willChange:"transform"}}>
+              {e.emoji}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SceneCalm(){
+  // Breathing bubble — exactly the same running orb as the real BreathingExercise during exercise:
+  // glass body + 5 lava-like blobs flowing inside (goo filter) + specular highlights + outer rim.
+  // Auto-cycles through breath-in (4s) → hold (2s) → breath-out (6s) phases.
+  const BLUE="#9DC4D8", DEEP="#5A8AA3";
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"0 28px",boxSizing:"border-box"}}>
+      <style>{`
+        @keyframes dCaIn{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}
+        /* Breath cycle: in (4s) 0.4→1, hold (2s) 1→1, out (6s) 1→0.4. Total 12s. */
+        @keyframes dCaBreath{
+          0%{transform:scale(0.55)}
+          33%{transform:scale(1)}
+          50%{transform:scale(1)}
+          100%{transform:scale(0.55)}
+        }
+        @keyframes dCaRing{
+          0%{transform:scale(0.6);opacity:0.20}
+          33%{transform:scale(1.10);opacity:0.50}
+          50%{transform:scale(1.10);opacity:0.50}
+          100%{transform:scale(0.6);opacity:0.20}
+        }
+        /* Lava blobs swim continuously regardless of breath phase — gives liveliness inside the orb */
+        @keyframes dCaBlob0{0%,100%{transform:translate(0px,0px)}25%{transform:translate(22px,-15px)}50%{transform:translate(8px,18px)}75%{transform:translate(-18px,6px)}}
+        @keyframes dCaBlob1{0%,100%{transform:translate(0px,0px)}25%{transform:translate(-20px,12px)}50%{transform:translate(-5px,-22px)}75%{transform:translate(16px,8px)}}
+        @keyframes dCaBlob2{0%,100%{transform:translate(0px,0px)}30%{transform:translate(18px,16px)}60%{transform:translate(-22px,-8px)}90%{transform:translate(10px,-18px)}}
+        @keyframes dCaBlob3{0%,100%{transform:translate(0px,0px)}30%{transform:translate(-14px,-18px)}60%{transform:translate(20px,10px)}90%{transform:translate(-8px,20px)}}
+        @keyframes dCaBlob4{0%,100%{transform:translate(0px,0px)}40%{transform:translate(15px,15px)}80%{transform:translate(-18px,-12px)}}
+      `}</style>
+      <div style={{position:"relative",width:220,height:220,display:"flex",alignItems:"center",justifyContent:"center",animation:"dCaIn 1s cubic-bezier(0.22,1,0.36,1) both"}}>
+        {/* Outer companion ring — breathes with the orb, slightly oversized for depth */}
+        <div style={{
+          position:"absolute",
+          width:220,height:220,
+          borderRadius:"50%",
+          border:`1px solid ${BLUE}66`,
+          animation:"dCaRing 12s ease-in-out infinite",
+          willChange:"transform, opacity",
+        }}/>
+        {/* Glass orb with lava blobs — wrapper scales for breath cycle */}
+        <div style={{
+          width:180,height:180,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          position:"relative",
+          animation:"dCaBreath 12s ease-in-out infinite",
+          willChange:"transform",
+        }}>
+          <svg width={180} height={180} viewBox="0 0 280 280" style={{position:"absolute",overflow:"visible"}}>
+            <defs>
+              <radialGradient id="dCaFill" cx="38%" cy="32%">
+                <stop offset="0%" stopColor={`${BLUE}AA`}/>
+                <stop offset="55%" stopColor={`${BLUE}66`}/>
+                <stop offset="100%" stopColor={`${DEEP}44`}/>
+              </radialGradient>
+              <radialGradient id="dCaEdge" cx="50%" cy="50%">
+                <stop offset="85%" stopColor="rgba(255,255,255,0)"/>
+                <stop offset="100%" stopColor="rgba(255,255,255,0.55)"/>
+              </radialGradient>
+              <clipPath id="dCaClip"><circle cx={140} cy={140} r={130}/></clipPath>
+              <filter id="dCaGoo">
+                <feGaussianBlur stdDeviation="6"/>
+                <feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10"/>
+              </filter>
+            </defs>
+            {/* Glass body */}
+            <circle cx={140} cy={140} r={130} fill="url(#dCaFill)"/>
+            {/* Floating blobs inside — gooey merge effect, same as real BreathingExercise */}
+            <g clipPath="url(#dCaClip)" filter="url(#dCaGoo)">
+              {[
+                {x:140,y:140,r:40,anim:0,delay:0},
+                {x:195,y:110,r:30,anim:1,delay:-2},
+                {x:90, y:180,r:34,anim:2,delay:-5},
+                {x:170,y:195,r:26,anim:3,delay:-7},
+                {x:100,y:90, r:28,anim:4,delay:-10},
+              ].map((b,i)=>(
+                <circle
+                  key={i}
+                  cx={b.x} cy={b.y} r={b.r}
+                  fill={DEEP} opacity={0.7}
+                  style={{animation:`dCaBlob${b.anim} ${14+b.anim*1.5}s ease-in-out ${b.delay}s infinite`,willChange:"transform"}}
+                />
+              ))}
+            </g>
+            {/* Outer rim highlight */}
+            <circle cx={140} cy={140} r={130} fill="url(#dCaEdge)"/>
+            {/* Specular highlights — same as real tool */}
+            <ellipse cx={100} cy={88} rx={32} ry={20} fill="rgba(255,255,255,0.65)" style={{filter:"blur(2px)"}}/>
+            <ellipse cx={92} cy={80} rx={14} ry={9} fill="rgba(255,255,255,0.9)" style={{filter:"blur(1px)"}}/>
+            {/* Outer border — thin white ring */}
+            <circle cx={140} cy={140} r={130} fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth={1.5}/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SceneIdCard(){
+  // ID card — fuller preview with multiple sections: about, what helps, emergency contacts.
+  return(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:"100%",padding:"0 22px",boxSizing:"border-box"}}>
+      <style>{`
+        @keyframes dIdIn{0%{opacity:0;transform:translateY(14px) scale(0.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
+        @keyframes dIdRowIn{0%{opacity:0;transform:translateX(-6px)}100%{opacity:1;transform:translateX(0)}}
+        @keyframes dIdCallPulse{0%,100%{box-shadow:0 0 0 0 rgba(143,191,161,0.5)}50%{box-shadow:0 0 0 8px rgba(143,191,161,0)}}
+      `}</style>
+      <div style={{background:"#FFFFFF",borderRadius:20,padding:"20px 18px 18px",boxShadow:"0 16px 40px rgba(31,27,46,0.10), 0 2px 8px rgba(31,27,46,0.04)",border:"1px solid rgba(31,27,46,0.06)",width:"100%",maxWidth:320,animation:"dIdIn 0.9s cubic-bezier(0.22,1,0.36,1) both"}}>
+
+        {/* Avatar + name header */}
+        <div style={{display:"flex",alignItems:"center",gap:13,marginBottom:14,paddingBottom:14,borderBottom:"1px solid rgba(31,27,46,0.06)"}}>
+          <div style={{width:50,height:50,borderRadius:"50%",background:"linear-gradient(140deg,#FCE5DC,#E89B89)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,boxShadow:"0 4px 12px rgba(232,155,137,0.3)",flexShrink:0}}>👧</div>
+          <div style={{minWidth:0,flex:1}}>
+            <div style={{fontFamily:'Georgia, serif',fontWeight:600,fontSize:17,color:"#1F1B2E",letterSpacing:-0.2}}>Maja Lindberg</div>
+            <div style={{fontFamily:"-apple-system, sans-serif",fontSize:11,color:"#9892AA",marginTop:2,letterSpacing:0.2}}>8 år · Autism</div>
+          </div>
+        </div>
+
+        {/* About me */}
+        <div style={{marginBottom:11,animation:"dIdRowIn 0.45s 0.25s cubic-bezier(0.22,1,0.36,1) both"}}>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#9892AA",letterSpacing:0.8,textTransform:"uppercase",marginBottom:3}}>Om mig</div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:12.5,color:"#1F1B2E",lineHeight:1.4}}>Jag pratar inte alltid. Jag tänker mycket.</div>
+        </div>
+
+        {/* What helps */}
+        <div style={{marginBottom:11,animation:"dIdRowIn 0.45s 0.40s cubic-bezier(0.22,1,0.36,1) both"}}>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#9892AA",letterSpacing:0.8,textTransform:"uppercase",marginBottom:3}}>Det här hjälper</div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:12.5,color:"#1F1B2E",lineHeight:1.4}}>Lugn musik · Vatten · Min nalle</div>
+        </div>
+
+        {/* What's hard */}
+        <div style={{marginBottom:13,animation:"dIdRowIn 0.45s 0.55s cubic-bezier(0.22,1,0.36,1) both"}}>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#9892AA",letterSpacing:0.8,textTransform:"uppercase",marginBottom:3}}>Det här är svårt</div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:12.5,color:"#1F1B2E",lineHeight:1.4}}>Höga ljud · Plötsliga ändringar</div>
+        </div>
+
+        {/* Emergency contacts */}
+        <div style={{paddingTop:13,borderTop:"1px solid rgba(31,27,46,0.06)",animation:"dIdRowIn 0.45s 0.70s cubic-bezier(0.22,1,0.36,1) both"}}>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#9892AA",letterSpacing:0.8,textTransform:"uppercase",marginBottom:7}}>Ring vid behov</div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {[
+              {who:"Mamma Anna",num:"070 123 45 67",emoji:"👩",pulse:true},
+              {who:"Pappa Erik",num:"070 234 56 78",emoji:"👨"},
+              {who:"Sjukvård 1177",num:"1177",emoji:"🏥"},
+            ].map((c,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 9px",borderRadius:11,background:i===0?"rgba(143,191,161,0.10)":"rgba(31,27,46,0.03)",border:`1px solid ${i===0?"rgba(143,191,161,0.30)":"rgba(31,27,46,0.05)"}`}}>
+                <div style={{width:26,height:26,borderRadius:"50%",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0,border:"1px solid rgba(31,27,46,0.06)"}}>{c.emoji}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:"-apple-system, sans-serif",fontSize:11.5,fontWeight:600,color:"#1F1B2E",letterSpacing:0.1}}>{c.who}</div>
+                  <div style={{fontFamily:"-apple-system, sans-serif",fontSize:10.5,color:"#9892AA",fontVariantNumeric:"tabular-nums",marginTop:1}}>{c.num}</div>
+                </div>
+                <div style={{width:26,height:26,borderRadius:"50%",background:c.pulse?"#8FBFA1":"rgba(31,27,46,0.06)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,animation:c.pulse?"dIdCallPulse 2s ease-in-out infinite":"none"}}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={c.pulse?"#FFFFFF":"#9892AA"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function SceneTalk(){
+  // Comm board — grid of choice cards, one being "spoken"
+  return(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:"100%",padding:"0 28px",boxSizing:"border-box"}}>
+      <style>{`
+        @keyframes dTaIn{0%{opacity:0;transform:translateY(10px) scale(0.94)}100%{opacity:1;transform:translateY(0) scale(1)}}
+        @keyframes dTaPulse{0%,100%{box-shadow:0 0 0 0 rgba(138,175,210,0.4)}50%{box-shadow:0 0 0 14px rgba(138,175,210,0)}}
+        @keyframes dTaWave{0%,100%{transform:scaleY(0.4)}50%{transform:scaleY(1)}}
+      `}</style>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,maxWidth:300}}>
+        {[
+          {emoji:"💧",label:"Vatten",color:"#8AAFD2",bg:"#E4EEF7",delay:0.1,active:true},
+          {emoji:"🍎",label:"Mat",color:"#E89B89",bg:"#FCE5DC",delay:0.2},
+          {emoji:"🚽",label:"Toa",color:"#8FBFA1",bg:"#E8F1E8",delay:0.3},
+          {emoji:"🛌",label:"Vila",color:"#9683C2",bg:"#EFEBF8",delay:0.4},
+          {emoji:"📺",label:"TV",color:"#D9B868",bg:"#FAF1D9",delay:0.5},
+          {emoji:"🎵",label:"Musik",color:"#B58CD0",bg:"#F1E9F6",delay:0.6},
+        ].map((c,i)=>(
+          <div key={i} style={{
+            background:c.bg,
+            borderRadius:14,
+            padding:"14px 8px 10px",
+            border:c.active?`2px solid ${c.color}`:`1px solid ${c.color}28`,
+            display:"flex",flexDirection:"column",alignItems:"center",gap:6,
+            boxShadow:c.active?`0 8px 22px ${c.color}33`:`0 2px 6px ${c.color}14`,
+            position:"relative",
+            animation:`dTaIn 0.55s ${c.delay}s cubic-bezier(0.22,1,0.36,1) both${c.active?", dTaPulse 2.2s "+(c.delay+0.7)+"s ease-in-out infinite":""}`,
+          }}>
+            <div style={{fontSize:24}}>{c.emoji}</div>
+            <div style={{fontFamily:"-apple-system, sans-serif",fontSize:11,fontWeight:600,color:c.color,letterSpacing:0.2}}>{c.label}</div>
+            {c.active&&(
+              <div style={{display:"flex",gap:2,alignItems:"flex-end",height:7,marginTop:2}}>
+                {[0,0.15,0.3,0.15,0].map((d,j)=>(
+                  <div key={j} style={{width:2,height:6,borderRadius:1,background:c.color,transformOrigin:"center bottom",animation:`dTaWave 0.7s ${d}s ease-in-out infinite`}}/>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SceneOutro({onStart}){
+  // Final — real Luma mark + start button, gentle gradient
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:30,padding:"30px 40px",width:"100%",boxSizing:"border-box"}}>
+      <style>{`
+        @keyframes dOLogoIn{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}
+        @keyframes dOLumaRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes dOLumaBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+        @keyframes dORayFadeA{0%,100%{opacity:0.75}50%{opacity:0.45}}
+        @keyframes dORayFadeB{0%,100%{opacity:0.45}50%{opacity:0.8}}
+        @keyframes dOTextIn{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+        @keyframes dOBtnIn{0%{opacity:0;transform:translateY(14px) scale(0.94)}100%{opacity:1;transform:translateY(0) scale(1)}}
+      `}</style>
+      <div style={{width:100,height:100,position:"relative",animation:"dOLogoIn 1.2s cubic-bezier(0.22,1,0.36,1) both"}}>
+        <svg width={100} height={100} viewBox="0 0 26 26" style={{overflow:"visible"}}>
+          <defs>
+            <radialGradient id="dOLumaCore" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stopColor="#FFFFFF"/>
+              <stop offset="20%" stopColor="#FFFAF0" stopOpacity="0.95"/>
+              <stop offset="55%" stopColor="#E8A878"/>
+              <stop offset="100%" stopColor="#C97548"/>
+            </radialGradient>
+            <radialGradient id="dOLumaGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="40%" stopColor="#E8A878" stopOpacity="0"/>
+              <stop offset="70%" stopColor="#E8A878" stopOpacity="0.20"/>
+              <stop offset="100%" stopColor="#E8A878" stopOpacity="0"/>
+            </radialGradient>
+          </defs>
+          <circle cx="13" cy="13" r="13" fill="url(#dOLumaGlow)"/>
+          <g style={{transformOrigin:"13px 13px",animation:"dOLumaRotate 22s linear infinite"}}>
+            {Array.from({length:8}).map((_,i)=>{
+              const ang=(i/8)*2*Math.PI;
+              const isLong=i%2===0;
+              const r1=8.5, r2=isLong?12.2:11;
+              const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
+              const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
+              return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#E8A878" strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"dORayFadeA":"dORayFadeB"} ${3+i*0.18}s ease-in-out infinite`}}/>;
+            })}
+          </g>
+          <g style={{transformOrigin:"13px 13px",animation:"dOLumaBreath 3.4s ease-in-out infinite"}}>
+            <circle cx="13" cy="13" r="6.5" fill="url(#dOLumaCore)"/>
+            <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
+          </g>
+        </svg>
+      </div>
+      <div style={{textAlign:"center",maxWidth:320}}>
+        <div style={{fontFamily:'Georgia, serif',fontSize:36,fontWeight:500,color:"#1F1B2E",letterSpacing:1,marginBottom:14,animation:"dOTextIn 0.9s 0.3s cubic-bezier(0.22,1,0.36,1) both"}}>Luma</div>
+        <div style={{fontFamily:"-apple-system, sans-serif",fontSize:14,color:"#9892AA",lineHeight:1.5,letterSpacing:0.2,animation:"dOTextIn 0.9s 0.55s cubic-bezier(0.22,1,0.36,1) both"}}>Ett schema. En rytm.<br/>En trygghet.</div>
+      </div>
+      <button onClick={onStart} style={{
+        padding:"14px 36px",
+        borderRadius:26,
+        border:"none",
+        background:"linear-gradient(135deg,#1F1B2E,#3A3450)",
+        color:"#FFFFFF",
+        fontFamily:"-apple-system, sans-serif",
+        fontSize:14,
+        fontWeight:600,
+        letterSpacing:0.3,
+        cursor:"pointer",
+        boxShadow:"0 12px 30px rgba(31,27,46,0.28)",
+        animation:"dOBtnIn 0.9s 0.85s cubic-bezier(0.34,1.56,0.64,1) both",
+      }}>Börja använda Luma</button>
+    </div>
+  );
+}
+
+function DemoTour({onClose}){
+  const scenes=[
+    {C:SceneIntro,     bg:"linear-gradient(180deg,#FFFFFF 0%,#FCFAFE 100%)",     heading:"Luma",                       sub:"Ett schema. En rytm. En trygghet.",                                       dur:5500},
+    {C:SceneSchedule,  bg:"linear-gradient(165deg,#FCF6F4 0%,#FFFFFF 100%)",     heading:"Dagen i ett ögonkast",       sub:"Sigvard-lamporna visar var i tiden vi är.",                               dur:7500},
+    {C:SceneTimer,     bg:"linear-gradient(165deg,#EAF1F7 0%,#FFFFFF 100%)",     heading:"Tiden får form",             sub:"Du ser hur länge det är kvar.",                                           dur:7500},
+    {C:SceneChecklist, bg:"linear-gradient(165deg,#F4F9F4 0%,#FFFFFF 100%)",     heading:"Steg för steg",              sub:"En sak i taget.",                                                         dur:6500},
+    {C:SceneEmotion,   bg:"linear-gradient(165deg,#FAF5F6 0%,#FFFFFF 100%)",     heading:"Hur känns det idag?",        sub:"Sätt ord på det.",                                                        dur:6500},
+    {C:SceneCalm,      bg:"linear-gradient(165deg,#EAF3F7 0%,#FFFFFF 100%)",     heading:"När det blir mycket",        sub:"Andas. Långsamt.",                                                        dur:8000},
+    {C:SceneIdCard,    bg:"linear-gradient(165deg,#FCF3F3 0%,#FFFFFF 100%)",     heading:"Mitt kort",                  sub:"Det viktiga om mig.",                                                     dur:6500},
+    {C:SceneTalk,      bg:"linear-gradient(165deg,#F4F9FD 0%,#FFFFFF 100%)",     heading:"Bilder istället för ord",    sub:"Tryck — appen pratar för dig.",                                           dur:6500},
+    {C:SceneOutro,     bg:"linear-gradient(180deg,#FCFAFE 0%,#FFFFFF 100%)",     heading:"",                           sub:"",                                                                         dur:99999},
+  ];
+  const[idx,setIdx]=useState(0);
+  const[playing,setPlaying]=useState(true);
+  const[sceneProgress,setSceneProgress]=useState(0);
+  const startRef=useRef(null);
+
+  useEffect(()=>{
+    if(!playing||idx>=scenes.length-1) return;
+    let raf;
+    startRef.current=performance.now()-sceneProgress*scenes[idx].dur;
+    const tick=()=>{
+      const elapsed=performance.now()-startRef.current;
+      const p=Math.min(1,elapsed/scenes[idx].dur);
+      setSceneProgress(p);
+      if(p>=1){
+        setIdx(i=>Math.min(scenes.length-1,i+1));
+        setSceneProgress(0);
+      } else {
+        raf=requestAnimationFrame(tick);
+      }
+    };
+    raf=requestAnimationFrame(tick);
+    return()=>cancelAnimationFrame(raf);
+    // eslint-disable-next-line
+  },[idx,playing]);
+
+  useEffect(()=>{
+    const onKey=(e)=>{
+      if(e.key==="Escape") onClose();
+      if(e.key==="ArrowRight") setIdx(i=>Math.min(scenes.length-1,i+1));
+      if(e.key==="ArrowLeft") setIdx(i=>Math.max(0,i-1));
+      if(e.key===" "){ e.preventDefault(); setPlaying(p=>!p); }
+    };
+    window.addEventListener("keydown",onKey);
+    return()=>window.removeEventListener("keydown",onKey);
+    // eslint-disable-next-line
+  },[]);
+
+  const next=()=>{ setIdx(i=>Math.min(scenes.length-1,i+1)); setSceneProgress(0); };
+  const prev=()=>{ setIdx(i=>Math.max(0,i-1)); setSceneProgress(0); };
+  // Touch swipe navigation
+  const touchStartX=useRef(null);
+  const onTouchStart=(e)=>{touchStartX.current=e.touches[0].clientX;};
+  const onTouchEnd=(e)=>{
+    if(touchStartX.current===null) return;
+    const dx=e.changedTouches[0].clientX-touchStartX.current;
+    if(Math.abs(dx)>50){ if(dx<0) next(); else prev(); }
+    touchStartX.current=null;
+  };
+  const scene=scenes[idx];
+  const Scene=scene.C;
+  const isOutro=idx===scenes.length-1;
+
+  return(
+    <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{position:"fixed",inset:0,zIndex:99999,background:scene.bg,display:"flex",flexDirection:"column",transition:"background 0.7s ease",userSelect:"none",overflow:"hidden"}}>
+      <style>{`@keyframes dSceneIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes dTextIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
+
+      {/* Progress dots */}
+      <div style={{flexShrink:0,padding:"18px 24px 0",display:"flex",gap:5,zIndex:2}}>
+        {scenes.map((s,i)=>(
+          <div key={i} style={{flex:1,height:3,background:"rgba(31,27,46,0.08)",borderRadius:2,overflow:"hidden"}}>
+            <div style={{
+              height:"100%",
+              width: i<idx?"100%":i===idx?`${sceneProgress*100}%`:"0%",
+              background:"rgba(31,27,46,0.55)",
+              transition:i===idx?"none":"width 0.3s",
+            }}/>
+          </div>
+        ))}
+      </div>
+
+      {/* Header bar: scene counter + close */}
+      <div style={{flexShrink:0,padding:"10px 24px 0",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:3}}>
+        <div style={{fontFamily:G.font,fontSize:10,fontWeight:700,color:G.ink3,letterSpacing:1.4,textTransform:"uppercase"}}>{idx+1} / {scenes.length}</div>
+        <button onClick={onClose} aria-label="Stäng demo" style={{width:38,height:38,borderRadius:19,border:`1px solid ${G.border}`,background:"rgba(255,255,255,0.95)",backdropFilter:"blur(10px)",color:G.ink2,fontSize:15,cursor:"pointer",boxShadow:"0 4px 14px rgba(31,27,46,0.08)",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+      </div>
+
+      {/* Scene canvas — strictly contained */}
+      <div style={{flex:1,minHeight:0,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:"10px 0"}}>
+        <div key={idx} style={{animation:"dSceneIn 0.7s cubic-bezier(0.22,1,0.36,1) both",width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+          <Scene onStart={isOutro?onClose:undefined}/>
+        </div>
+      </div>
+
+      {/* Text — fixed footprint, never grows */}
+      {!isOutro&&(
+        <div key={`txt${idx}`} style={{flexShrink:0,padding:"0 28px",textAlign:"center",maxWidth:540,margin:"0 auto",width:"100%",boxSizing:"border-box"}}>
+          <h1 style={{fontFamily:G.serif,fontSize:24,fontWeight:600,color:G.ink,marginBottom:8,marginTop:0,letterSpacing:-0.3,lineHeight:1.15,animation:"dTextIn 0.9s 0.25s cubic-bezier(0.22,1,0.36,1) both"}}>{scene.heading}</h1>
+          <p style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.5,letterSpacing:0.1,margin:0,animation:"dTextIn 0.9s 0.45s cubic-bezier(0.22,1,0.36,1) both"}}>{scene.sub}</p>
+        </div>
+      )}
+
+      {/* Controls — fixed footprint */}
+      {!isOutro&&(
+        <div style={{flexShrink:0,padding:"16px 24px 24px",display:"flex",justifyContent:"center",alignItems:"center",gap:10}}>
+          <button onClick={prev} disabled={idx===0} style={{width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:idx===0?G.cream:"rgba(255,255,255,0.95)",backdropFilter:"blur(10px)",color:idx===0?G.ink3:G.ink2,fontSize:17,cursor:idx===0?"default":"pointer",opacity:idx===0?0.5:1,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 12px rgba(31,27,46,0.06)"}}>←</button>
+          <button onClick={()=>setPlaying(p=>!p)} style={{width:52,height:52,borderRadius:26,border:"none",background:"linear-gradient(135deg,#1F1B2E,#3A3450)",color:"#fff",fontSize:17,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 20px rgba(31,27,46,0.25)"}}>{playing?"⏸":"▶"}</button>
+          <button onClick={next} style={{width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:"rgba(255,255,255,0.95)",backdropFilter:"blur(10px)",color:G.ink2,fontSize:17,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 12px rgba(31,27,46,0.06)"}}>→</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
    MAIN APP
 ═══════════════════════════════════════════════════ */
+function NavIcon({type,active,color,size=22}){
+  // Single unified stroke language — 1.6 weight, rounded caps, soft fills
+  // Designed to feel hand-drawn and calm, not iconographic / system-like
+  const stroke = active ? color : "#9892AA";
+  const sw = 1.6;
+  const op = active ? 1 : 0.85;
+  const fillOp = active ? 0.14 : 0;
+  return(
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={{opacity:op,transition:"stroke 0.35s ease, opacity 0.35s ease"}}>
+      {type==="home"&&(<>
+        {/* Gentle sun above a horizon — represents "today" / the day's path */}
+        <circle cx="12" cy="9" r="3.2" fill={color} fillOpacity={fillOp}/>
+        <path d="M12 4 v1.4 M12 12.6 v1.4 M5.4 9 h1.4 M17.2 9 h1.4 M7.4 4.4 l1 1 M15.6 4.4 l-1 1 M7.4 13.6 l1-1 M15.6 13.6 l-1-1"/>
+        <path d="M3.5 19 h17" strokeOpacity="0.4"/>
+      </>)}
+      {type==="timer"&&(<>
+        {/* Quiet clock — no minute marks, single calm hand */}
+        <circle cx="12" cy="13" r="7.2" fill={color} fillOpacity={fillOp}/>
+        <path d="M12 6.5 v-2 M10.5 4.5 h3"/>
+        <path d="M12 13 v-3.5" strokeWidth="1.8"/>
+      </>)}
+      {type==="stories"&&(<>
+        {/* Open book — soft spine, gentle curve */}
+        <path d="M4 6.5 Q4 5.5 5 5.5 H11 Q12 5.5 12 6.5 V18 Q12 17 11 17 H5 Q4 17 4 18 Z" fill={color} fillOpacity={fillOp}/>
+        <path d="M20 6.5 Q20 5.5 19 5.5 H13 Q12 5.5 12 6.5 V18 Q12 17 13 17 H19 Q20 17 20 18 Z" fill={color} fillOpacity={fillOp}/>
+      </>)}
+      {type==="emotion"&&(<>
+        {/* Soft face — abstract feeling, not a specific emotion */}
+        <circle cx="12" cy="12" r="8" fill={color} fillOpacity={fillOp}/>
+        <circle cx="9.3" cy="10.5" r="0.7" fill={stroke} stroke="none"/>
+        <circle cx="14.7" cy="10.5" r="0.7" fill={stroke} stroke="none"/>
+        <path d="M9.5 14.5 Q12 16 14.5 14.5"/>
+      </>)}
+      {type==="calm"&&(<>
+        {/* Concentric breath rings — meditative, no leaf icon */}
+        <circle cx="12" cy="12" r="3.2" fill={color} fillOpacity={fillOp}/>
+        <circle cx="12" cy="12" r="6" strokeOpacity="0.55"/>
+        <circle cx="12" cy="12" r="8.6" strokeOpacity="0.25"/>
+      </>)}
+      {type==="comm"&&(<>
+        {/* Speech bubble — round, soft tail */}
+        <path d="M5 7 Q5 5.5 6.5 5.5 H17.5 Q19 5.5 19 7 V14 Q19 15.5 17.5 15.5 H11 L7.5 18.5 V15.5 H6.5 Q5 15.5 5 14 Z" fill={color} fillOpacity={fillOp}/>
+        <circle cx="9" cy="10.5" r="0.8" fill={stroke} stroke="none"/>
+        <circle cx="12" cy="10.5" r="0.8" fill={stroke} stroke="none"/>
+        <circle cx="15" cy="10.5" r="0.8" fill={stroke} stroke="none"/>
+      </>)}
+      {type==="idcard"&&(<>
+        {/* Identity card — rounded, soft, with figure */}
+        <rect x="3.5" y="6" width="17" height="12" rx="2.2" fill={color} fillOpacity={fillOp}/>
+        <circle cx="8.5" cy="11" r="1.8"/>
+        <path d="M5.5 15.5 Q5.5 13.2 8.5 13.2 Q11.5 13.2 11.5 15.5"/>
+        <path d="M14 10 h4 M14 13 h3" strokeOpacity="0.6"/>
+      </>)}
+      {type==="week"&&(<>
+        {/* Week / calendar — soft card with day columns and binding tabs */}
+        <rect x="3.5" y="5.5" width="17" height="14.5" rx="2.2" fill={color} fillOpacity={fillOp}/>
+        <line x1="3.5" y1="10" x2="20.5" y2="10" strokeOpacity="0.65"/>
+        <line x1="9.2" y1="10" x2="9.2" y2="20" strokeOpacity="0.35"/>
+        <line x1="14.8" y1="10" x2="14.8" y2="20" strokeOpacity="0.35"/>
+        <path d="M8 3.5 v3.2 M16 3.5 v3.2" strokeWidth="1.8"/>
+      </>)}
+    </svg>
+  );
+}
+
 export default function App(){
   const[lang,setLang]=usePersistentState("lang","sv");
+  const[headerTapCount,setHeaderTapCount]=useState(0); // increments on header tap — used by WeekScreen to reset focus
+  // Comm modals lifted to App level so they render outside the body-wrapper's overflow:hidden,
+  // which would otherwise clip them on iOS Safari (same DOM level as EditModal which works).
+  const[commCats,setCommCats]=usePersistentState("commCats",COMM0);
+  const[commSel,setCommSel]=useState(0);
+  const[commModal,setCommModal]=useState(null); // {type: "addCat"|"addCard"|"editCat"|"confirmDel", data?: ...}
   const t=TR[lang];
+  const[now,setNow]=useState(()=>new Date());
   const[acts,setActs]=usePersistentState("acts",()=>ACTS0.map(a=>({...a,steps:[...a.steps],stepsDone:{}})));
+  // Per-date state: { "2025-11-13": { actId: { stepsDone: {}, done: false } } }
+  // This way recurring activities have independent state per day.
+  const[dailyState,setDailyState]=usePersistentState("dailyState",{});
+  const dateKey=d=>{
+    const dt=d||new Date();
+    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
+  };
+  const todayKey=dateKey(now);
+  // Read state for a given activity on a given date (defaults to today)
+  const getDayState=(actId,dKey)=>{
+    const key=dKey||todayKey;
+    return dailyState[key]?.[actId]||{stepsDone:{},done:false};
+  };
+  // Update step done state for an activity on a specific date
+  const setDayStepsDone=(actId,sd,dKey)=>{
+    const key=dKey||todayKey;
+    setDailyState(prev=>({
+      ...prev,
+      [key]:{
+        ...(prev[key]||{}),
+        [actId]:{
+          ...(prev[key]?.[actId]||{stepsDone:{},done:false}),
+          stepsDone:sd,
+        },
+      },
+    }));
+  };
+  // Mark an activity done for a specific date
+  const setDayDone=(actId,doneFlag,dKey)=>{
+    const key=dKey||todayKey;
+    setDailyState(prev=>({
+      ...prev,
+      [key]:{
+        ...(prev[key]||{}),
+        [actId]:{
+          ...(prev[key]?.[actId]||{stepsDone:{},done:false}),
+          done:doneFlag,
+        },
+      },
+    }));
+  };
   const[stories,setStories]=usePersistentState("stories",()=>STORIES0.map(s=>({...s,pages:s.pages.map(p=>({...p}))})));
   const[screen,setScreen]=useState("home");
   const[isEd,setIsEd]=useState(false);
   const[view,setView]=useState("list");
   const[detail,setDetail]=useState(null);
+  // Open activity detail with optional date context (defaults to today)
+  // Accepts: setDetail(item) → today, or openDetail(item, dKey) → specific date
+  const openDetail=(item,dKey)=>setDetail({item,dKey:dKey||todayKey});
   const[editAct,setEditAct]=useState(null);
   const[showEd,setShowEd]=useState(false);
   const[showSet,setShowSet]=useState(false);
-  const[cfg,setCfg]=usePersistentState("cfg",CFG0);
+  const[cfgRaw,setCfg]=usePersistentState("cfg",CFG0);
+  // Merge persisted cfg with current CFG0 defaults — ensures new tool keys
+  // (e.g. tools.week added later) become available without resetting user prefs.
+  const cfg=useMemo(()=>({
+    ...CFG0,
+    ...cfgRaw,
+    tools:{...CFG0.tools,...(cfgRaw.tools||{})},
+    timerCfg:{...CFG0.timerCfg,...(cfgRaw.timerCfg||{})},
+    calmTools:{...CFG0.calmTools,...(cfgRaw.calmTools||{})},
+    idCard:{...CFG0.idCard,...(cfgRaw.idCard||{})},
+    toolsVisible:{...CFG0.toolsVisible,...(cfgRaw.toolsVisible||{})},
+  }),[cfgRaw]);
+  // One-time migration: existing users had defaultType:"sector" from old CFG0.
+  // Now that wave is the new default, upgrade their stored config so they see it too.
+  const[migrWaveDone,setMigrWaveDone]=usePersistentState("migr_wave_default",false);
+  useEffect(()=>{
+    if(!migrWaveDone){
+      if(cfgRaw.timerCfg?.defaultType==="sector"){
+        setCfg(x=>({...x,timerCfg:{...x.timerCfg,defaultType:"wave"}}));
+      }
+      setMigrWaveDone(true);
+    }
+  },[migrWaveDone,cfgRaw,setCfg,setMigrWaveDone]);
+  // Keyboard handling — when iOS keyboard opens, scroll focused input into view.
+  // Without this, the keyboard can cover Save buttons or the input itself in long forms.
+  // Uses setTimeout(300) to let iOS Safari raise the keyboard before measuring viewport.
+  useEffect(()=>{
+    if(typeof document==="undefined") return;
+    const onFocus=(e)=>{
+      const el=e.target;
+      if(!el||(el.tagName!=="INPUT"&&el.tagName!=="TEXTAREA")) return;
+      // Skip if the input is already in a comfortable position (e.g. modal at top)
+      setTimeout(()=>{
+        try{el.scrollIntoView({behavior:"smooth",block:"center"});}catch(_){}
+      },320);
+    };
+    document.addEventListener("focusin",onFocus);
+    return()=>document.removeEventListener("focusin",onFocus);
+  },[]);
   const[shareCode]=useState(genCode);
   const[hasOnboarded,setHasOnboarded]=usePersistentState("hasOnboarded",false);
   const[showOnboarding,setShowOnboarding]=useState(false);
   const[showSupervisor,setShowSupervisor]=useState(false);
+  const[showDemo,setShowDemo]=useState(()=>typeof window!=="undefined"&&window.location.hash==="#demo");
+  const[notifShown,setNotifShown]=usePersistentState("notifShown",{});
+  const[startAlert,setStartAlert]=useState(null);
   const[supervisorClient,setSupervisorClient]=useState(null);
   useEffect(()=>{
     // Show onboarding once on first visit, after mount so layout settles
@@ -3034,7 +6996,51 @@ export default function App(){
     }
   // eslint-disable-next-line
   },[]);
-  const finishOnboarding=()=>{setShowOnboarding(false);setHasOnboarded(true);};
+  // Listen to URL hash to open demo (e.g. luma-app.vercel.app/#demo)
+  useEffect(()=>{
+    const onHashChange=()=>setShowDemo(window.location.hash==="#demo");
+    window.addEventListener("hashchange",onHashChange);
+    return()=>window.removeEventListener("hashchange",onHashChange);
+  },[]);
+  // Detect activity start times — show notification when an activity begins
+  useEffect(()=>{
+    if(isEd||showOnboarding||showSupervisor||showDemo) return;
+    const check=()=>{
+      const now=new Date();
+      const today=now.toDateString();
+      const nowMin=now.getHours()*60+now.getMinutes();
+      // Clean up old day's keys (keep only today's)
+      const todayKeys=Object.keys(notifShown).filter(k=>k.startsWith(today+"::"));
+      if(todayKeys.length!==Object.keys(notifShown).length){
+        const fresh={};
+        todayKeys.forEach(k=>{fresh[k]=true;});
+        setNotifShown(fresh);
+      }
+      // Find activity that just started (within 0-3 minutes of start, not yet notified, not done)
+      for(const act of acts){
+        if(dailyState[todayKey]?.[act.id]?.done) continue;
+        const [h,m]=String(act.time).split(":").map(Number);
+        const actMin=h*60+m;
+        const key=`${today}::${act.id}`;
+        if(nowMin>=actMin && nowMin<actMin+3 && !notifShown[key]){
+          setStartAlert(act);
+          setNotifShown(prev=>({...prev,[key]:true}));
+          break;
+        }
+      }
+    };
+    check();
+    const id=setInterval(check,20000);
+    return()=>clearInterval(id);
+  },[acts,notifShown,isEd,showOnboarding,showSupervisor,showDemo]);
+  const dismissStartAlert=()=>setStartAlert(null);
+  const openStartAlertActivity=()=>{ if(startAlert){openDetail(startAlert); setStartAlert(null);} };
+  const closeDemo=()=>{
+    setShowDemo(false);
+    if(window.location.hash==="#demo") history.replaceState(null,"",window.location.pathname+window.location.search);
+  };
+  const openDemo=()=>{setShowSet(false);setShowDemo(true);};
+  const finishOnboarding=()=>{setShowOnboarding(false);setHasOnboarded(true);setTimeout(()=>setShowDemo(true),400);};
   const openSupervisor=()=>{setShowSet(false);setShowSupervisor(true);};
   const openClient=(client)=>{
     // Demo: open the regular app but switch into editor mode pretending to edit this client
@@ -3048,7 +7054,6 @@ export default function App(){
     setIsEd(false);
     setShowSupervisor(true);
   };
-  const[now,setNow]=useState(()=>new Date());
   const listRef=useRef(null);
   const observersRef=useRef({ro:null,mo:null});
   const[listHeight,setListHeight]=useState(0);
@@ -3103,7 +7108,9 @@ export default function App(){
   };
   const sortedToday=sorted.filter(matchesToday);
   const active=sortedToday.filter(a=>{
-    if(a.done) return false;
+    // Check per-date done state (today's entry)
+    const dst=dailyState[todayKey]?.[a.id];
+    if(dst?.done) return false;
     // If activity has an endTime, keep it visible until that time passes.
     // Otherwise disappear when the start time passes.
     const cutoff=a.endTime?hm(a.endTime):hm(a.time);
@@ -3113,32 +7120,34 @@ export default function App(){
   const effView=cfg.schedView==="card"?"card":cfg.schedView==="list"?"list":view;
   const handleSave=item=>setActs(a=>a.find(x=>x.id===item.id)?a.map(x=>x.id===item.id?item:x):[...a,item]);
   const handleDel=id=>setActs(a=>a.filter(x=>x.id!==id));
-  const handleCheck=(aid,sd)=>setActs(a=>a.map(x=>x.id===aid?{...x,stepsDone:sd}:x));
+  // Check/uncheck step — always writes to today's date entry
+  const handleCheck=(aid,sd)=>setDayStepsDone(aid,sd,todayKey);
   const[undoToast,setUndoToast]=useState(null);
   const undoTimerRef=useRef(null);
   const handleDone=id=>{
-    setActs(a=>a.map(x=>x.id===id?{...x,done:true}:x));
+    setDayDone(id,true,todayKey);
     const act=acts.find(x=>x.id===id);
     if(act){
       setUndoToast({id,name:act.name,color:act.color});
       if(undoTimerRef.current)clearTimeout(undoTimerRef.current);
-      undoTimerRef.current=setTimeout(()=>setUndoToast(null),5000);
+      undoTimerRef.current=setTimeout(()=>setUndoToast(null),8000);
     }
   };
   const handleUndo=()=>{
     if(!undoToast) return;
-    setActs(a=>a.map(x=>x.id===undoToast.id?{...x,done:false}:x));
+    setDayDone(undoToast.id,false,todayKey);
     setUndoToast(null);
     if(undoTimerRef.current)clearTimeout(undoTimerRef.current);
   };
   const navItems=[
-    {key:"home",icon:"🏠",label:t.home,always:true,S:SCREENS.home},
-    {key:"timer",icon:"⏱",label:t.toolsTimer,always:false,S:SCREENS.timer},
-    {key:"stories",icon:"📖",label:t.stories,always:false,S:SCREENS.stories},
-    {key:"emotion",icon:"😊",label:t.toolsEmotion,always:false,S:SCREENS.emotion},
-    {key:"calm",icon:"🌿",label:t.calm,always:false,S:SCREENS.calm},
-    {key:"comm",icon:"💬",label:t.comm,always:false,S:SCREENS.comm},
-    {key:"idcard",icon:"🪪",label:t.idcard,always:false,S:SCREENS.idcard},
+    {key:"home",icon:"home",label:t.home,always:true,S:SCREENS.home},
+    {key:"week",icon:"week",label:t.week,always:false,S:SCREENS.week},
+    {key:"timer",icon:"timer",label:t.toolsTimer,always:false,S:SCREENS.timer},
+    {key:"stories",icon:"stories",label:t.stories,always:false,S:SCREENS.stories},
+    {key:"emotion",icon:"emotion",label:t.toolsEmotion,always:false,S:SCREENS.emotion},
+    {key:"calm",icon:"calm",label:t.calm,always:false,S:SCREENS.calm},
+    {key:"comm",icon:"comm",label:t.comm,always:false,S:SCREENS.comm},
+    {key:"idcard",icon:"idcard",label:t.idcard,always:false,S:SCREENS.idcard},
   ].filter(n=>n.always||cfg.tools[n.key]||isEd);
   const curS=SCREENS[screen]||SCREENS.home;
   // Subtle time-of-day tint that gently blends with screen background.
@@ -3152,11 +7161,106 @@ export default function App(){
     return "rgba(60, 70, 120, 0.22)";                            // night
   })();
   return(
-    <div style={{height:"100vh",background:curS.hb,fontFamily:G.font,display:"flex",flexDirection:"column",maxWidth:480,margin:"0 auto",overflow:"hidden",position:"relative",transition:"background .4s",color:G.ink}}>
+    <div style={{position:"relative",minHeight:"100dvh",background:curS.hb,transition:"background .4s",color:G.ink,fontFamily:G.font}}>
+      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative"}}>
+      {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
+      <style>{`
+        /* === UNIVERSAL DEVICE ADAPTATION ===
+           - Dynamic viewport (dvh) — adapts to iOS Safari URL bar show/hide without layout jumps
+           - Safe area insets — accounts for iPhone X+ notch and home indicator
+           - Responsive max-width — wider on tablets, full-screen on desktop with clear "app frame"
+           - Touch-action manipulation — disables double-tap zoom for snappier feel
+        */
+        :root {
+          --app-vh: 100vh;
+          --app-vh: 100dvh; /* dynamic — adjusts when iOS Safari URL bar shows/hides */
+          --safe-top: env(safe-area-inset-top, 0px);
+          --safe-bottom: env(safe-area-inset-bottom, 0px);
+          --safe-left: env(safe-area-inset-left, 0px);
+          --safe-right: env(safe-area-inset-right, 0px);
+        }
+        html, body {
+          overscroll-behavior-y: contain; /* prevents pull-to-refresh on Android Chrome */
+          -webkit-text-size-adjust: 100%;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .lt-app-root {
+          height: var(--app-vh);
+          max-width: 480px;
+          padding-left: var(--safe-left);
+          padding-right: var(--safe-right);
+          /* No overflow:hidden here — would clip position:fixed overlays. Body has its own clipping. */
+          isolation: isolate; /* Creates stacking context without clipping */
+        }
+        /* Tablet — slightly wider, still single-column for one-hand feel */
+        @media (min-width: 700px) {
+          .lt-app-root {
+            max-width: 540px;
+            box-shadow: 0 0 60px rgba(31, 27, 46, 0.10);
+          }
+        }
+        /* Desktop / large tablet — distinct app frame so it doesn't look stretched.
+           Border-radius needs overflow:hidden on the inner body, not root, so overlays escape. */
+        @media (min-width: 900px) {
+          .lt-app-root {
+            max-width: 560px;
+            margin-top: 24px;
+            margin-bottom: 24px;
+            border-radius: 28px;
+            height: calc(var(--app-vh) - 48px);
+            box-shadow: 0 24px 80px rgba(31, 27, 46, 0.18), 0 4px 12px rgba(31, 27, 46, 0.08);
+            border: 1px solid rgba(31, 27, 46, 0.06);
+            overflow: hidden; /* On desktop only, app frame needs clipping for border-radius */
+          }
+        }
+        /* All interactive elements get snappy touch — disables 300ms tap delay on older Safari */
+        button, [role="button"], .lt-press, .lt-press-soft, .lt-press-tight {
+          touch-action: manipulation;
+        }
+        /* Touch / mouse press feedback — premium cubic-bezier */
+        .lt-press { transition: transform .26s cubic-bezier(0.32, 0.72, 0, 1); }
+        .lt-press:active { transform: scale(0.965); }
+        .lt-press-soft { transition: transform .26s cubic-bezier(0.32, 0.72, 0, 1); }
+        .lt-press-soft:active { transform: scale(0.985); }
+        .lt-press-tight { transition: transform .22s cubic-bezier(0.32, 0.72, 0, 1); }
+        .lt-press-tight:active { transform: scale(0.94); }
+        /* Input focus state — subtle dark glow */
+        .lt-input { transition: border-color .25s ease, background .25s ease, box-shadow .25s ease; }
+        .lt-input:focus {
+          outline: none;
+          border-color: rgba(31,27,46,0.32);
+          background: #FFFFFF;
+          box-shadow: 0 0 0 4px rgba(31,27,46,0.05);
+        }
+        /* iOS Safari — prevents zoom-on-focus for text inputs (font-size >= 16px does this) */
+        input, textarea, select {
+          font-size: 16px;
+        }
+        /* Keyboard handling — when input gets focused, browser scrolls it into view.
+           scroll-padding ensures inputs don't end up flush against the keyboard top edge. */
+        html {
+          scroll-padding-bottom: 30vh;
+          scroll-behavior: smooth;
+        }
+        /* Accessibility — respect user's reduced-motion preference (iOS Settings > Accessibility >
+           Motion > Reduce Motion, Android Settings > Accessibility > Remove Animations).
+           Disables all decorative animations while preserving functional ones (timers still tick). */
+        @media (prefers-reduced-motion: reduce) {
+          *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+          }
+        }
+        /* Modal entrance */
+        @keyframes ovlIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes shtIn { from { transform: translateY(102%); } to { transform: translateY(0); } }
+      `}</style>
       {/* Ambient time-of-day overlay — extremely subtle, sits above background */}
       <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg, ${ambientTint} 0%, transparent 60%)`,pointerEvents:"none",zIndex:0,transition:"background 2s ease"}}/>
-      {/* HEADER */}
-      <div style={{background:`linear-gradient(170deg,${curS.hl} 0%,${G.white} 100%)`,padding:"14px 22px 12px",borderBottom:`1px solid ${G.border}`,flexShrink:0,position:"relative",overflow:"hidden",transition:"background .4s"}}>
+      {/* HEADER — respects iPhone notch via safe-area-inset-top. Tapping the header signals subscreens (e.g. WeekScreen) to reset their internal focus. */}
+      <div onClick={()=>setHeaderTapCount(c=>c+1)} style={{background:`linear-gradient(170deg,${curS.hl} 0%,${G.white} 100%)`,padding:"calc(14px + env(safe-area-inset-top, 0px)) 22px 12px",borderBottom:`1px solid ${G.border}`,flexShrink:0,position:"relative",overflow:"hidden",transition:"background .4s",cursor:"pointer"}}>
         <div style={{position:"absolute",top:-50,right:-30,width:140,height:140,borderRadius:"50%",background:`radial-gradient(circle,${curS.soft}44,transparent 70%)`,pointerEvents:"none"}}/>
         {/* Luma wordmark — stylized sun with rays */}
         <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:8,position:"relative"}}>
@@ -3201,42 +7305,110 @@ export default function App(){
           </svg>
           <span style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:curS.deep,letterSpacing:0.8,lineHeight:1}}>Luma</span>
         </div>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,position:"relative",gap:12}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,position:"relative",gap:12}}>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontFamily:G.font,fontWeight:500,fontSize:10,color:G.ink2,textTransform:"capitalize",letterSpacing:.4,marginBottom:1}}>{dateStr}</div>
-            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:20,color:G.ink,lineHeight:1.15,letterSpacing:-.3}}>{screen==="home"?t.myDay:navItems.find(n=>n.key===screen)?.label||""}</div>
+            <div style={{fontFamily:G.font,fontWeight:400,fontSize:10.5,color:"#9892AA",textTransform:"capitalize",letterSpacing:.6,marginBottom:3}}>
+              {isEd ? (screen==="home" ? t.schedule : navItems.find(n=>n.key===screen)?.label || "") : dateStr}
+            </div>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,lineHeight:1.05,letterSpacing:-.6,display:"flex",alignItems:"center",gap:10}}>
+              {isEd ? (
+                <>
+                  <span>{lang==="sv"?"Redigerar":"Editing"}</span>
+                  <span style={{
+                    width:8,height:8,borderRadius:"50%",
+                    background:curS.h,
+                    boxShadow:`0 0 8px ${curS.h}88, 0 0 14px ${curS.h}44`,
+                    animation:"editDot 2.4s ease-in-out infinite",
+                    flexShrink:0,
+                  }}/>
+                  <style>{`@keyframes editDot{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}`}</style>
+                </>
+              ) : (
+                screen==="home" ? t.myDay : navItems.find(n=>n.key===screen)?.label || ""
+              )}
+            </div>
           </div>
-          <button onClick={()=>setLang(l=>l==="sv"?"en":"sv")} style={{background:G.white,border:`1px solid ${G.border}`,borderRadius:10,padding:"6px 11px",color:curS.deep,fontFamily:G.font,fontWeight:700,cursor:"pointer",fontSize:11,boxShadow:sh.xs,flexShrink:0}}>{lang.toUpperCase()}</button>
-          {isEd&&<button onClick={()=>setShowSet(true)} style={{background:G.white,border:`1px solid ${G.border}`,borderRadius:10,padding:"6px 10px",color:curS.deep,cursor:"pointer",fontSize:13,boxShadow:sh.xs,flexShrink:0}}>⚙️</button>}
+          <button onClick={e=>{e.stopPropagation();setLang(l=>l==="sv"?"en":"sv");}} className="lt-press" style={{background:"transparent",border:`1px solid ${G.border}`,borderRadius:10,padding:"6px 11px",color:G.ink2,fontFamily:G.font,fontWeight:500,cursor:"pointer",fontSize:11,flexShrink:0,letterSpacing:.4}}>{lang.toUpperCase()}</button>
+          {isEd&&(
+            <button onClick={e=>{e.stopPropagation();setShowSet(true);}} className="lt-gear-btn" style={{background:"transparent",border:`1px solid ${G.border}`,borderRadius:10,padding:"6px 8px",color:G.ink2,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",height:28,width:32,transition:"background .25s ease, border-color .25s ease"}}>
+              <style>{`
+                @keyframes gearSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+                .lt-gear-btn:hover{background:${G.cream};border-color:${G.ink3}66}
+                .lt-gear-btn:hover .lt-gear-svg{animation:gearSpin 4s linear infinite}
+                .lt-gear-btn:active{transform:scale(0.94)}
+                .lt-gear-btn:active .lt-gear-svg{animation:gearSpin 0.6s cubic-bezier(0.32, 0.72, 0, 1)}
+              `}</style>
+              <svg className="lt-gear-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{transformOrigin:"center",willChange:"transform"}}>
+                {/* 8-tooth gear — symmetric, premium feel */}
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          )}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{display:"flex",gap:4,flex:1,background:G.white,borderRadius:12,padding:3,border:`1px solid ${G.border}`,boxShadow:sh.xs}}>
-            {screen==="home"&&!isEd&&cfg.schedView!=="card"&&<TabB active={effView==="list"} onClick={()=>setView("list")} color={curS.h} deep={curS.deep}>☰ {t.list}</TabB>}
-            {screen==="home"&&!isEd&&cfg.schedView!=="list"&&<TabB active={effView==="card"} onClick={()=>setView("card")} color={curS.h} deep={curS.deep}>⊞ {t.card}</TabB>}
-            {screen==="home"&&<TabB active={isEd} gold={isEd} onClick={()=>setIsEd(e=>!e)} color={curS.h} deep={curS.deep} flex={isEd?2:1}>{isEd?`✓ ${t.editorClose}`:`✏️ ${t.editorOpen}`}</TabB>}
-            {screen!=="home"&&!isEd&&<div style={{flex:1,padding:"6px 12px",fontFamily:G.font,fontWeight:600,fontSize:11,color:curS.deep,display:"flex",alignItems:"center",gap:7}}><span style={{width:7,height:7,borderRadius:"50%",background:curS.h,boxShadow:`0 0 6px ${curS.h}88`}}/>{navItems.find(n=>n.key===screen)?.label}</div>}
-            {screen!=="home"&&isEd&&<TabB active={true} gold={true} onClick={()=>setIsEd(false)} color={curS.h} deep={curS.deep} flex={1}>{`✓ ${t.editorClose}`}</TabB>}
+            {screen==="home"&&!isEd&&cfg.schedView!=="card"&&<TabB active={effView==="list"} onClick={()=>setView("list")} color={curS.h} deep={curS.deep}>{t.list}</TabB>}
+            {screen==="home"&&!isEd&&cfg.schedView!=="list"&&<TabB active={effView==="card"} onClick={()=>setView("card")} color={curS.h} deep={curS.deep}>{t.card}</TabB>}
+            {/* Screen label on non-home screens — shows current tool when NOT editing */}
+            {screen!=="home"&&!isEd&&(
+              <div style={{flex:1,padding:"6px 12px",fontFamily:G.font,fontWeight:500,fontSize:11,color:curS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.3}}>
+                <span style={{width:6,height:6,borderRadius:"50%",background:curS.h,boxShadow:`0 0 6px ${curS.h}88`}}/>
+                {navItems.find(n=>n.key===screen)?.label}
+              </div>
+            )}
+            {/* In edit mode — show clear context "Du redigerar:" label */}
+            {isEd&&(
+              <div style={{flex:1,padding:"6px 12px",fontFamily:G.font,fontWeight:500,fontSize:11,color:curS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.3,minWidth:0}}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,opacity:0.7}}>
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                  {lang==="sv"?"Du redigerar":"Editing"}
+                </span>
+              </div>
+            )}
+            {/* Redigera / Stäng tab — available on all screens, not just home */}
+            <TabB active={isEd} gold={isEd} onClick={()=>setIsEd(e=>!e)} color={curS.h} deep={curS.deep} flex={isEd?1:1}>{isEd?t.editorClose:t.editorOpen}</TabB>
           </div>
         </div>
       </div>
       {/* BODY */}
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
-        {screen==="home"&&(
+        <div key={screen} style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",animation:"scrIn 0.4s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+          <style>{`@keyframes scrIn{0%{opacity:0}100%{opacity:1}}`}</style>
+          {screen==="home"&&(
           <div style={{flex:1,display:"flex",overflow:"hidden"}}>
             {sorted.length===0?(
-              <div style={{flex:1,textAlign:"center",marginTop:80}}>
-                <div style={{fontSize:52}}>📋</div>
-                <div style={{fontFamily:G.font,fontWeight:600,fontSize:16,marginTop:14,color:G.ink2}}>{t.noActs}</div>
+              <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 30px 100px",gap:14}}>
+                <style>{`@keyframes empBreath{0%,100%{transform:scale(1);opacity:0.7}50%{transform:scale(1.04);opacity:0.95}}`}</style>
+                <svg width="56" height="56" viewBox="0 0 64 64" style={{animation:"empBreath 4.8s ease-in-out infinite"}}>
+                  <circle cx="32" cy="32" r="26" fill="none" stroke={`${curS.h}55`} strokeWidth="1.4"/>
+                  <circle cx="32" cy="32" r="14" fill={`${curS.h}1A`} stroke={`${curS.h}66`} strokeWidth="1.4"/>
+                </svg>
+                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.ink,letterSpacing:-.4,lineHeight:1.1,textAlign:"center",marginTop:2}}>{t.dayOpen}</div>
+                <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",letterSpacing:.1,textAlign:"center",lineHeight:1.4}}>{t.noActs}</div>
               </div>
             ):!isEd&&active.length===0?(
-              <div style={{flex:1,textAlign:"center",marginTop:60}}>
-                <div style={{fontSize:72}}>🌟</div>
-                <div style={{fontFamily:G.serif,fontWeight:600,fontSize:24,color:G.ink,marginTop:12}}>Bra jobbat!</div>
-                <div style={{fontFamily:G.font,fontSize:15,color:G.ink2,marginTop:6}}>Alla aktiviteter är klara!</div>
+              <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 30px 100px",gap:18}}>
+                <style>{`@keyframes empBreath2{0%,100%{transform:scale(1);opacity:0.85}50%{transform:scale(1.025);opacity:1}}`}</style>
+                <svg width="72" height="72" viewBox="0 0 64 64" style={{animation:"empBreath2 4.2s ease-in-out infinite"}}>
+                  <defs>
+                    <radialGradient id="hmEm" cx="40%" cy="35%" r="65%">
+                      <stop offset="0%" stopColor="#FFFFFF"/>
+                      <stop offset="100%" stopColor={`${curS.h}33`}/>
+                    </radialGradient>
+                  </defs>
+                  <circle cx="32" cy="32" r="28" fill="url(#hmEm)" stroke={`${curS.h}40`} strokeWidth="1"/>
+                  <path d="M22,32 L29,40 L43,24" stroke={curS.deep} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.78"/>
+                </svg>
+                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:23,color:G.ink,letterSpacing:-.4,lineHeight:1.1,textAlign:"center"}}>{t.allActsDoneTitle}</div>
+                <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",letterSpacing:.1,textAlign:"center",marginTop:-6,lineHeight:1.4}}>{t.allActsDoneSub}</div>
               </div>
             ):effView==="card"&&!isEd?(
               <div style={{flex:1,overflowY:"auto",padding:"14px 14px 0 10px"}}>
-                <CardView acts={active} onTap={setDetail} t={t} isEditor={isEd} onEdit={item=>{setEditAct(item);setShowEd(true);}} onMarkDone={handleDone}/>
+                <CardView acts={active} onTap={item=>openDetail(item)} t={t} isEditor={isEd} onEdit={item=>{setEditAct(item);setShowEd(true);}} onMarkDone={handleDone}/>
               </div>
             ):(
               // Timeline view: Sigvard lamps + activities positioned at their times.
@@ -3246,7 +7418,7 @@ export default function App(){
                 isEd={isEd}
                 cfg={cfg}
                 t={t}
-                onTap={setDetail}
+                onTap={item=>openDetail(item)}
                 onEdit={item=>{setEditAct(item);setShowEd(true);}}
                 onMarkDone={handleDone}
                 now={now}
@@ -3254,51 +7426,86 @@ export default function App(){
             )}
           </div>
         )}
-        {screen==="timer"&&<TimerScreen t={t} cfg={cfg}/>}
+        {screen==="week"&&<WeekScreen acts={acts} dailyState={dailyState} isEd={isEd} t={t} lang={lang} now={now} cfg={cfg} onTap={openDetail} onEdit={item=>{setEditAct(item);setShowEd(true);}} onAdd={()=>{setEditAct(null);setShowEd(true);}} headerTapCount={headerTapCount}/>}
+        {screen==="timer"&&<TimerScreen t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} lang={lang}/>}
         {screen==="stories"&&<StoryScreen lang={lang} t={t} isEditor={isEd} stories={stories} setStories={setStories}/>}
-        {screen==="emotion"&&<EmotionScreen lang={lang} t={t} cfg={cfg}/>}
-        {screen==="calm"&&<CalmScreen t={t} cfg={cfg}/>}
+        {screen==="emotion"&&<EmotionScreen lang={lang} t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg}/>}
+        {screen==="calm"&&<CalmScreen t={t} lang={lang} cfg={cfg} isEditor={isEd} setCfg={setCfg}/>}
         {screen==="idcard"&&<IdCardScreen t={t} lang={lang} cfg={cfg} setCfg={setCfg} isEditor={isEd}/>}
-        {screen==="comm"&&<CommBoard lang={lang} t={t} isEditor={isEd}/>}
+        {screen==="comm"&&<CommBoard lang={lang} t={t} isEditor={isEd} cats={commCats} setCats={setCommCats} sel={commSel} setSel={setCommSel} openModal={setCommModal}/>}
+        </div>
       </div>
-      {/* ADD BUTTON */}
-      {screen==="home"&&isEd&&(
-        <div style={{position:"absolute",bottom:84,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 28px)",maxWidth:452,zIndex:10}}>
-          <button onClick={()=>{setEditAct(null);setShowEd(true);}} style={{width:"100%",padding:"15px 0",borderRadius:18,border:`1.5px dashed ${curS.h}80`,background:G.white,color:curS.deep,fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:`0 6px 20px ${curS.h}1F`}}>{t.addAct}</button>
+      {/* ADD BUTTON — shown on both Home and Week in editor mode. Single component → identical position. */}
+      {(screen==="home"||screen==="week")&&isEd&&(
+        <div style={{position:"absolute",bottom:"calc(110px + env(safe-area-inset-bottom, 0px))",left:"50%",transform:"translateX(-50%)",width:"calc(100% - 28px)",maxWidth:452,zIndex:10}}>
+          <button onClick={()=>{setEditAct(null);setShowEd(true);}} style={{width:"100%",padding:"15px 0",borderRadius:18,border:`1.5px dashed #9DC4D880`,background:G.white,color:"#5A8AA3",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:`0 6px 20px #9DC4D81F`,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.addAct}</button>
         </div>
       )}
       {/* UNDO TOAST */}
       {undoToast&&(
-        <div style={{position:"absolute",bottom:96,left:"50%",transform:"translateX(-50%)",zIndex:50,animation:"ftIn .25s ease",width:"calc(100% - 32px)",maxWidth:380}}>
-          <div style={{display:"flex",alignItems:"center",gap:12,background:G.ink,borderRadius:18,padding:"12px 12px 12px 18px",boxShadow:"0 14px 40px rgba(0,0,0,0.30)"}}>
+        <div style={{position:"absolute",bottom:"calc(132px + env(safe-area-inset-bottom, 0px))",left:"50%",transform:"translateX(-50%)",zIndex:50,width:"calc(100% - 32px)",maxWidth:380,animation:"undoToastIn .55s cubic-bezier(.34,1.56,.64,1) both"}}>
+          <style>{`
+            @keyframes undoToastIn{0%{opacity:0;transform:translateX(-50%) translateY(40px) scale(.92)}55%{opacity:1;transform:translateX(-50%) translateY(-4px) scale(1.02)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+            @keyframes undoBtnPulse{0%,100%{box-shadow:0 4px 12px rgba(255,255,255,0.15), 0 0 0 0 rgba(255,255,255,0.25)}50%{box-shadow:0 4px 12px rgba(255,255,255,0.25), 0 0 0 6px rgba(255,255,255,0)}}
+            @keyframes undoCountdown{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+          `}</style>
+          <div style={{position:"relative",display:"flex",alignItems:"center",gap:12,background:G.ink,borderRadius:18,padding:"12px 12px 12px 18px",boxShadow:"0 18px 50px rgba(0,0,0,0.35), 0 4px 14px rgba(0,0,0,0.2)",overflow:"hidden"}}>
+            {/* Countdown progress bar at top */}
+            <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
+              <div style={{height:"100%",background:`linear-gradient(90deg, ${undoToast.color}, ${undoToast.color}AA)`,transformOrigin:"left",animation:"undoCountdown 8s linear forwards"}}/>
+            </div>
             <div style={{width:32,height:32,borderRadius:"50%",background:`${undoToast.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"#fff",flexShrink:0,boxShadow:`0 4px 12px ${undoToast.color}88`}}>✓</div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontFamily:G.font,fontWeight:600,fontSize:14,color:"#fff",lineHeight:1.2}}>Klart!</div>
               <div style={{fontFamily:G.font,fontSize:12,color:"rgba(255,255,255,0.7)",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{undoToast.name}</div>
             </div>
-            <button onClick={handleUndo} style={{padding:"10px 16px",borderRadius:13,border:"none",background:"#fff",color:G.ink,fontFamily:G.font,fontWeight:700,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+            <button onClick={handleUndo} className="lt-press" style={{padding:"10px 16px",borderRadius:13,border:"none",background:"#fff",color:G.ink,fontFamily:G.font,fontWeight:700,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",gap:6,flexShrink:0,animation:"undoBtnPulse 2s ease-in-out 1.2s infinite"}}>
               <span style={{fontSize:14}}>↺</span>Ångra
             </button>
           </div>
         </div>
       )}
-      {/* BOTTOM NAV */}
-      <div style={{background:G.white,borderTop:`1px solid ${G.border}`,display:"flex",padding:"10px 0 26px",boxShadow:"0 -6px 24px rgba(31,27,46,0.06)",flexShrink:0,zIndex:20,overflowX:"auto"}}>
-        <style>{`@keyframes navUnder{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}@keyframes navIcon{from{transform:scale(.92) translateY(2px)}to{transform:scale(1) translateY(0)}}`}</style>
+      {/* BOTTOM NAV — floating, soft, no hard divisions. Respects iPhone home indicator. */}
+      <div style={{background:"rgba(255,255,255,0.96)",display:"flex",padding:"8px 0 calc(24px + env(safe-area-inset-bottom, 0px))",flexShrink:0,zIndex:20,overflowX:"auto",position:"relative"}}>
+        {/* Hairline gradient instead of solid border — softens the system edge */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg, transparent 0%, rgba(31,27,46,0.06) 50%, transparent 100%)",pointerEvents:"none"}}/>
+        <style>{`@keyframes navUnderSoft{0%{transform:scaleX(0);opacity:0}100%{transform:scaleX(1);opacity:1}}`}</style>
         {navItems.map(({key,icon,label,S})=>{const on=screen===key;return(
-          <button key={key} onClick={()=>{setScreen(key);}} style={{flex:navItems.length<=5?1:"0 0 auto",minWidth:navItems.length<=5?0:72,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 6px",position:"relative",transition:"transform .15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.92)"} onMouseUp={e=>e.currentTarget.style.transform=""} onMouseLeave={e=>e.currentTarget.style.transform=""}>
-            {/* Glow halo behind icon when active */}
-            {on&&<div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:42,height:42,borderRadius:21,background:`radial-gradient(circle, ${S.h}28 0%, ${S.h}00 70%)`,pointerEvents:"none"}}/>}
-            <span style={{fontSize:on?24:21,opacity:on?1:0.5,transition:"opacity .25s, font-size .25s, filter .25s",filter:on?`drop-shadow(0 2px 4px ${S.h}66)`:"none",animation:on?"navIcon .25s ease":"none",position:"relative"}}>{icon}</span>
-            <span style={{fontFamily:G.font,fontWeight:on?700:600,fontSize:11,color:on?S.deep:G.ink3,transition:"color .25s, font-weight .25s",whiteSpace:"nowrap",position:"relative"}}>{label}</span>
-            {on&&<div style={{width:24,height:3,borderRadius:2,background:`linear-gradient(90deg,${S.h},${S.deep})`,marginTop:2,boxShadow:`0 2px 8px ${S.h}80`,animation:"navUnder .3s cubic-bezier(.2,.7,.2,1) both",transformOrigin:"center"}}/>}
+          <button key={key} onClick={()=>{setScreen(key);}} className="lt-press" style={{flex:navItems.length<=5?1:"0 0 auto",minWidth:navItems.length<=5?0:64,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 6px 4px",position:"relative"}}>
+            {/* Soft active halo — barely visible bloom, no hard ring */}
+            {on&&<div style={{position:"absolute",top:2,left:"50%",transform:"translateX(-50%)",width:46,height:32,borderRadius:16,background:`radial-gradient(ellipse at center, ${S.h}1F 0%, ${S.h}00 70%)`,pointerEvents:"none",animation:"navHaloIn .45s cubic-bezier(0.32, 0.72, 0, 1) both"}}/>}
+            <div style={{position:"relative",height:24,display:"flex",alignItems:"center",justifyContent:"center",transform:on?"scale(1.08)":"scale(1)",transition:"transform .4s cubic-bezier(0.34, 1.56, 0.64, 1)"}}>
+              <NavIcon type={icon} active={on} color={S.deep} size={22}/>
+            </div>
+            <span style={{fontFamily:G.font,fontWeight:on?500:400,fontSize:10.5,color:on?S.deep:"#9892AA",transition:"color .35s ease, font-weight .35s ease",whiteSpace:"nowrap",position:"relative",letterSpacing:.2}}>{label}</span>
+            {/* Subtle dot indicator instead of solid bar — quieter active state */}
+            {on&&<div style={{width:4,height:4,borderRadius:"50%",background:S.h,marginTop:1,boxShadow:`0 0 4px ${S.h}88`,animation:"navUnderSoft .4s cubic-bezier(0.32, 0.72, 0, 1) both",transformOrigin:"center"}}/>}
+            <style>{`@keyframes navHaloIn{0%{opacity:0;transform:translateX(-50%) scale(0.85)}100%{opacity:1;transform:translateX(-50%) scale(1)}}`}</style>
           </button>
         );})}
       </div>
       {/* MODALS */}
-      {detail&&<ActivityDetail item={detail} onClose={()=>setDetail(null)} onCheck={handleCheck} t={t}/>}
+      {detail&&(()=>{
+        const dKey=detail.dKey||todayKey;
+        const item=detail.item;
+        const dayState=getDayState(item.id,dKey);
+        const isToday=dKey===todayKey;
+        return(
+          <ActivityDetail
+            item={item}
+            stepsDone={dayState.stepsDone}
+            readOnly={!isToday}
+            onClose={()=>setDetail(null)}
+            onCheck={isToday?handleCheck:undefined}
+            t={t}
+          />
+        );
+      })()}
       {showEd&&<EditModal item={editAct} onSave={handleSave} onDel={handleDel} onClose={()=>setShowEd(false)} t={t} existingActs={acts}/>}
-      {showSet&&<SettingsModal cfg={cfg} setCfg={setCfg} shareCode={shareCode} onClose={()=>setShowSet(false)} t={t} lang={lang} onOpenSupervisor={openSupervisor}/>}
+      {commModal&&<CommModals modal={commModal} onClose={()=>setCommModal(null)} cats={commCats} setCats={setCommCats} lang={lang} t={t} setSel={setCommSel}/>}
+      {showSet&&<SettingsModal cfg={cfg} setCfg={setCfg} shareCode={shareCode} onClose={()=>setShowSet(false)} t={t} lang={lang} onOpenSupervisor={openSupervisor} onOpenDemo={openDemo}/>}
+      {showDemo&&<DemoTour onClose={closeDemo}/>}
+      {startAlert&&<ActivityStartAlert activity={startAlert} onDismiss={dismissStartAlert} onOpen={openStartAlertActivity} t={t} lang={lang}/>}
       {showOnboarding&&(
         <div style={{position:"fixed",inset:0,zIndex:9500,background:"rgba(31,27,46,0.5)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24,animation:"ftIn .3s ease"}} onClick={finishOnboarding}>
           <div onClick={e=>e.stopPropagation()} style={{maxWidth:380,width:"100%",background:G.white,borderRadius:28,padding:"32px 26px 26px",boxShadow:"0 24px 60px rgba(0,0,0,0.25)",border:`1px solid ${G.border}`,position:"relative"}}>
@@ -3344,9 +7551,9 @@ export default function App(){
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:11,marginBottom:24}}>
               {[
-                {icon:"✏️",sv:"Tryck Redaktör för att skapa schema, berättelser och kort",en:"Tap Editor to create schedule, stories and cards"},
-                {icon:"🏠",sv:"Stäng redaktören — så ser användaren bara sitt schema",en:"Close the editor — the user only sees their schedule"},
-                {icon:"⚙️",sv:"Inställningar finns under kugghjulet i redaktörsläget",en:"Settings live behind the gear in editor mode"},
+                {icon:"✏️",sv:"Tryck Redigera för att skapa schema, berättelser och kort",en:"Tap Edit to create schedule, stories and cards"},
+                {icon:"🏠",sv:"Stäng redigeringen — så ser användaren bara sitt schema",en:"Close editing — the user only sees their schedule"},
+                {icon:"⚙️",sv:"Inställningar finns under kugghjulet när du redigerar",en:"Settings live behind the gear when editing"},
               ].map((item,i)=>(
                 <div key={i} style={{display:"flex",gap:12,alignItems:"flex-start",padding:"10px 12px",background:SCREENS.home.hb,borderRadius:13}}>
                   <div style={{width:32,height:32,borderRadius:10,background:G.white,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0,boxShadow:sh.xs}}>{item.icon}</div>
@@ -3369,6 +7576,7 @@ export default function App(){
           <button onClick={closeClient} style={{padding:"5px 11px",borderRadius:9,border:"none",background:"rgba(255,255,255,0.22)",color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:11,cursor:"pointer",backdropFilter:"blur(4px)"}}>← {lang==="sv"?"Tillbaka":"Back"}</button>
         </div>
       )}
+      </div>
     </div>
   );
 }
