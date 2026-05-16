@@ -2365,7 +2365,7 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
             <Sheet>
               <div style={{textAlign:"center",marginBottom:18}}>
                 <div style={{width:64,height:64,borderRadius:20,background:"linear-gradient(140deg,#FEF3E7,#FDE6D0)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,margin:"0 auto 14px"}}>⚠️</div>
-                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:24,color:G.ink,letterSpacing:-.4,marginBottom:8,lineHeight:1.1}}>{t.overlapTitle}</div>
+                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:24,color:G.inkSoft,letterSpacing:-.4,marginBottom:8,lineHeight:1.1}}>{t.overlapTitle}</div>
                 <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.45,maxWidth:320,margin:"0 auto"}}>{(t.overlapDesc||"Den nya aktiviteten {t} överlappar:").replace("{t}",`${fmtT(time,t)}${endTime?` – ${fmtT(endTime,t)}`:""}`)}</div>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:18}}>
@@ -2391,7 +2391,7 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
             <Sheet>
               <div style={{textAlign:"center",marginBottom:22}}>
                 <div style={{width:64,height:64,borderRadius:20,background:`linear-gradient(140deg,${S.hll},${S.hl})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,margin:"0 auto 14px"}}>💾</div>
-                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:24,color:G.ink,letterSpacing:-.4,marginBottom:8,lineHeight:1.15}}>{t.unsavedTitle}</div>
+                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:24,color:G.inkSoft,letterSpacing:-.4,marginBottom:8,lineHeight:1.15}}>{t.unsavedTitle}</div>
                 <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.45,maxWidth:300,margin:"0 auto"}}>{t.unsavedDesc}</div>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -3215,7 +3215,7 @@ function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
               <path d="M19 6l-1.2 14a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 6"/>
             </svg>
           </div>
-          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.ink,letterSpacing:-.3,lineHeight:1.2,marginBottom:8}}>
+          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.inkSoft,letterSpacing:-.3,lineHeight:1.2,marginBottom:8}}>
             {lang==="sv"?"Radera kategori?":"Delete category?"}
           </div>
           <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:G.ink2,lineHeight:1.45,marginBottom:22}}>
@@ -3474,12 +3474,72 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange}){
   // with the Rules of Hooks — the ref is only consumed in the user-view path
   // and harmlessly unused in editor mode.
   const inlinePanelRef=useRef(null);
+  const selectedTileRef=useRef(null);
+  const reasonInputRef=useRef(null);
+  // When the user picks an emotion we want a specific visual end state:
+  // the tile + label + input + save form a vertical "stack" anchored to
+  // the bottom of the visible area, sitting just above the keyboard. The
+  // tile is the topmost element, the Save button is the closest to the
+  // keyboard. This keeps the whole interaction in the user's eye line and
+  // means the keyboard never hides anything — the relationship between
+  // chosen feeling and reason field is preserved.
+  //
+  // Strategy: measure the InlinePanel's BOTTOM edge and scroll so that
+  // bottom lands ~12px above the keyboard's upper edge (or 12px above the
+  // window bottom if no keyboard). visualViewport.height shrinks when the
+  // iOS keyboard is up; we use that as the keyboard-top reference.
+  const positionForSel=()=>{
+    const tile=selectedTileRef.current;
+    const panel=inlinePanelRef.current;
+    if(!tile||!panel) return;
+    const scroller=tile.closest('[data-emotion-scroll]');
+    if(!scroller) return;
+    const vv=window.visualViewport;
+    // visibleBottom = y-coordinate of the bottom of the usable viewport
+    // (i.e. just above the keyboard when it's open). On iOS, when the
+    // keyboard is up, vv.height shrinks and we use vv.offsetTop + vv.height
+    // as the absolute bottom of usable space.
+    const visibleBottom=vv?vv.offsetTop+vv.height:window.innerHeight;
+    const panelRect=panel.getBoundingClientRect();
+    // We want panel.bottom to land at (visibleBottom - 12). Compute the
+    // delta to scroll. Positive delta = scroll down (panel currently above
+    // target → scroll less). Negative delta = scroll up.
+    const currentPanelBottom=panelRect.bottom;
+    const targetPanelBottom=visibleBottom-12;
+    const delta=currentPanelBottom-targetPanelBottom;
+    // Use scrollBy so we don't fight any other scroll state. Guarded against
+    // tiny movements that would look like noise.
+    if(Math.abs(delta)>2){
+      scroller.scrollBy({top:delta,behavior:"smooth"});
+    }
+  };
   useEffect(()=>{
-    if(!sel||!inlinePanelRef.current) return;
-    const id=setTimeout(()=>{
-      inlinePanelRef.current?.scrollIntoView({behavior:"smooth",block:"nearest"});
-    },120);
-    return()=>clearTimeout(id);
+    if(!sel) return;
+    // Focus the input immediately when a feeling is picked — this brings up
+    // the keyboard right away, which then triggers visualViewport resize and
+    // our positioning logic kicks in. Without this, the user would have to
+    // tap the input manually, and the layout would feel "frozen" in between.
+    // We delay slightly so the panel has rendered and the InlinePanel's
+    // animation in (.42s) has started.
+    const focusT=setTimeout(()=>{
+      reasonInputRef.current?.focus();
+    },200);
+    // Multiple re-positions over time catch the keyboard rising in stages
+    // on iOS (predictive bar appears first, full keys ~150ms later).
+    const t1=setTimeout(positionForSel,260);
+    const t2=setTimeout(positionForSel,500);
+    const t3=setTimeout(positionForSel,800);
+    // Reposition when keyboard fully appears (visualViewport shrinks).
+    const onVV=()=>{
+      setTimeout(positionForSel,60);
+    };
+    window.visualViewport?.addEventListener("resize",onVV);
+    return()=>{
+      clearTimeout(focusT);
+      clearTimeout(t1);clearTimeout(t2);clearTimeout(t3);
+      window.visualViewport?.removeEventListener("resize",onVV);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[sel?.id]);
 
   // ─── Editor view ───────────────────────────────────────────────────
@@ -3754,7 +3814,7 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange}){
   const reasonOn=cfg.emotionReasonEnabled!==false;
   const reasonLabel=(cfg.emotionReasonLabel&&cfg.emotionReasonLabel.trim())||t.emotionReason;
   const InlinePanel=sel?(
-    <div ref={inlinePanelRef} style={{animation:"emoReasonIn .42s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+    <div ref={inlinePanelRef} style={{animation:"emoReasonIn .42s cubic-bezier(0.32, 0.72, 0, 1) both",scrollMarginBottom:24}}>
       <style>{`@keyframes emoReasonIn{0%{opacity:0;transform:translateY(-6px)}100%{opacity:1;transform:translateY(0)}}`}</style>
       {!saved?(
         <>
@@ -3762,9 +3822,16 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange}){
             <div style={{height:3,width:42,borderRadius:2,background:`linear-gradient(90deg,${sel.color},${sel.color}55)`,marginBottom:14,boxShadow:`0 0 8px ${sel.color}55`}}/>
             <SLabel>{reasonLabel}</SLabel>
             <input
+              ref={reasonInputRef}
               value={reason}
               onChange={e=>setReason(e.target.value)}
-              onFocus={()=>onInputFocusChange?.(true)}
+              onFocus={()=>{
+                onInputFocusChange?.(true);
+                // iOS keyboard rises in stages; trigger several re-positions
+                // so the panel slides up with it across both predictive-bar
+                // and full keyboard phases.
+                [120,260,420].forEach(d=>setTimeout(positionForSel,d));
+              }}
               onBlur={()=>onInputFocusChange?.(false)}
               className="lt-input"
               style={{...INP,borderColor:`${sel.color}44`,background:`${sel.color}08`}}
@@ -3781,9 +3848,7 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange}){
               cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
               transition:"background .25s ease, color .25s ease",
             }}>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                <path d="M3 3 L11 11 M11 3 L3 11"/>
-              </svg>
+              <IconX size={14}/>
             </button>
             <button onClick={doSave} className="lt-press saveBtn" style={{flex:1,padding:"16px 0",borderRadius:16,border:"none",background:sel.color,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(sel.color),letterSpacing:.3,display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
               <svg className="saveTick" width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
@@ -3814,11 +3879,35 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange}){
   ):null;
 
   return(
-    <div style={{flex:1,display:"flex",flexDirection:"column",overflowY:"auto",background:S.hb}}>
-      <div style={{padding:"24px 22px 4px",display:"flex",justifyContent:"flex-end",alignItems:"center",marginBottom:18,gap:14}}>
-        <button onClick={()=>setShowH(h=>!h)} className="lt-press" style={{padding:"8px 14px",borderRadius:20,border:`1px solid ${G.border}`,background:showH?S.hl:"transparent",color:showH?S.deep:G.ink2,fontFamily:G.font,fontWeight:500,cursor:"pointer",fontSize:12,letterSpacing:.2}}>{t.emotionHistory}</button>
-      </div>
-      <div style={{flex:1,padding:"0 20px 20px",overflowY:"auto"}}>
+    <div data-emotion-scroll style={{flex:1,display:"flex",flexDirection:"column",overflowY:"auto",background:S.hb,position:"relative"}}>
+      {/* Historik-knappen — diskret floating-knapp uppe till höger. Var
+          tidigare en stor toggle-rad som tog 46px höjd och bröt det
+          vertikala flödet i skärmen. Position absolute så den inte
+          påverkar layouten i resten av tool-ytan. Göms när en känsla
+          är vald — fokus tillhör då helt den valda + anteckningsfältet. */}
+      <button onClick={()=>setShowH(h=>!h)} className="lt-press" aria-label={t.emotionHistory} aria-pressed={showH} style={{
+        position:"absolute",top:14,right:16,zIndex:5,
+        padding:"6px 12px",borderRadius:16,
+        border:`1px solid ${showH?S.deep:G.border}`,
+        background:showH?S.deep:"rgba(255,255,255,0.85)",
+        backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",
+        color:showH?"#fff":G.ink2,
+        fontFamily:G.font,fontWeight:showH?600:500,
+        cursor:"pointer",fontSize:11.5,letterSpacing:.2,
+        display:"inline-flex",alignItems:"center",gap:6,height:30,
+        boxShadow:showH?`0 4px 12px ${S.deep}44`:"none",
+        opacity:sel?0:1,
+        pointerEvents:sel?"none":"auto",
+        transform:sel?"translateY(-4px)":"translateY(0)",
+        transition:"background .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .3s ease, transform .3s ease",
+      }}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.85}}>
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 7v5l3 3"/>
+        </svg>
+        <span>{t.emotionHistory}</span>
+      </button>
+      <div style={{flex:1,padding:"18px 20px 20px",overflowY:"auto"}}>
         {showH?(hist.length===0?(
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"50px 30px 30px",gap:14}}>
             <style>{`@keyframes empHistFloat{0%,100%{transform:translateY(0);opacity:0.85}50%{transform:translateY(-3px);opacity:1}}`}</style>
@@ -3862,6 +3951,7 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange}){
             <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:24,flexWrap:"wrap"}}>
               {visibleEmos.map(e=>{
                 const on=sel?.id===e.id;
+                const dimmed=sel&&!on;
                 return(
                   <div key={e.id} onClick={()=>setSel(e)} style={{
                     display:"flex",flexDirection:"column",alignItems:"center",gap:6,
@@ -3874,7 +3964,9 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange}){
                       ?`0 12px 26px ${e.color}55, 0 3px 8px ${e.color}33, inset 0 1px 0 rgba(255,255,255,0.45)`
                       :`0 2px 6px ${e.color}14`,
                     transform:on?"scale(1.06)":"scale(1)",
-                    transition:"transform .42s cubic-bezier(0.34, 1.56, 0.64, 1), background .45s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .45s cubic-bezier(0.32, 0.72, 0, 1)",
+                    opacity:dimmed?0.32:1,
+                    filter:dimmed?"saturate(0.55)":"none",
+                    transition:"transform .42s cubic-bezier(0.34, 1.56, 0.64, 1), background .45s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .45s cubic-bezier(0.32, 0.72, 0, 1), opacity .35s ease, filter .35s ease",
                     minWidth:62,
                   }}>
                     <div style={{width:42,height:42,borderRadius:12,background:e.photo?"#000":"transparent",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,flexShrink:0}}>
@@ -3889,17 +3981,25 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange}){
             // Vertical layout: full-width stacked tiles, larger touch targets.
             // The reason+save panel expands inline RIGHT UNDER the selected tile
             // so the user never has to scroll down to find the save button.
+            // When ANY tile is selected, the unselected tiles dim sharply so
+            // visual focus lands cleanly on the chosen feeling + its panel.
             <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
               {visibleEmos.map(e=>{
                 const on=sel?.id===e.id;
+                const dimmed=sel&&!on; // some other emotion is selected
                 return(
                   <Fragment key={e.id}>
-                    <div onClick={()=>setSel(e)} className="lt-press-soft" style={{
+                    <div
+                      ref={on?selectedTileRef:undefined}
+                      onClick={()=>setSel(e)}
+                      className="lt-press-soft"
+                      style={{
                       display:"flex",alignItems:"center",gap:14,
                       padding:"16px 18px",borderRadius:20,
                       // Each tile lives in its emotion's own muted hue. Unselected = dov,
-                      // selected = saturated. No outlines anywhere; colour + shadow do all
-                      // the work. Two stops in the gradient keep it from looking flat.
+                      // selected = saturated. When something IS selected the unselected
+                      // tiles get an extra dimming layer (opacity + desaturate) to push
+                      // them firmly out of the user's focus.
                       background:on
                         ?`linear-gradient(135deg, ${e.color}66 0%, ${e.color}3D 100%)`
                         :`linear-gradient(135deg, ${e.color}1F 0%, ${e.color}11 100%)`,
@@ -3909,8 +4009,10 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange}){
                         :`0 2px 6px ${e.color}14`,
                       cursor:"pointer",
                       transform:on?"scale(1.025)":"scale(1)",
+                      opacity:dimmed?0.32:1,
+                      filter:dimmed?"saturate(0.55)":"none",
                       // Bouncy back-out on the scale (slight overshoot), longer crossfade on colour + shadow
-                      transition:"transform .42s cubic-bezier(0.34, 1.56, 0.64, 1), background .5s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .5s cubic-bezier(0.32, 0.72, 0, 1)",
+                      transition:"transform .42s cubic-bezier(0.34, 1.56, 0.64, 1), background .5s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .5s cubic-bezier(0.32, 0.72, 0, 1), opacity .35s ease, filter .35s ease",
                     }}>
                       <div style={{
                         width:54,height:54,borderRadius:16,
@@ -3994,7 +4096,7 @@ function CustomEmotionEditor({existing,onSave,onDelete,onClose,t,lang}){
   return(
     <Overlay onClose={onClose}>
       <Sheet scroll>
-        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:24,color:G.ink,marginBottom:24,letterSpacing:-.4,lineHeight:1.1}}>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:24,color:G.inkSoft,marginBottom:24,letterSpacing:-.4,lineHeight:1.1}}>
           {existing?t.editEmotion:t.addEmotion}
         </div>
 
@@ -4361,7 +4463,20 @@ function ActRow({item,cardStyle,isEditor,onEdit,onTap,onMarkDone,idx,lifeState="
                 <Tag col={item.color}>{item.repeat.type==="daily"?(t?.repDailyShort||"Dagligen"):item.repeat.type==="weekdays"?(t?.repWeekdays||"Vardagar"):item.repeat.type==="weekend"?(t?.repWeekend||"Helger"):(item.repeat.days||[]).length+" "+(t?.repDaysSuffix||"dagar")}</Tag>
               )}
               {item.steps?.length>0&&<Tag col={item.color}>{item.steps.length===1?(t?.stepCountOne||"1 steg"):(t?.stepCountMany||"{n} steg").replace("{n}",item.steps.length)}</Tag>}
-              {item.timer?.on&&<Tag col={item.timer.color||"#E89B89"}>{item.timer.min} min</Tag>}
+              {item.timer?.on&&(()=>{
+                const tColor=item.timer.color||"#E89B89";
+                return(
+                  <span style={{fontFamily:G.font,fontWeight:600,fontSize:10.5,color:tColor,background:`${tColor}1F`,borderRadius:7,padding:"3px 8px 3px 6px",letterSpacing:.3,whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:4}}>
+                    <style>{`@keyframes tmrTickAct{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-12deg)}}`}</style>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+                      <circle cx="12" cy="13" r="8"/>
+                      <line x1="9" y1="2" x2="15" y2="2"/>
+                      <line x1="12" y1="13" x2="12" y2="8" style={{transformOrigin:"12px 13px",animation:"tmrTickAct 2.4s ease-in-out infinite"}}/>
+                    </svg>
+                    {item.timer.min} min
+                  </span>
+                );
+              })()}
             </div>
           </div>
           {isEditor&&(
@@ -5512,10 +5627,7 @@ function StoryScreen({lang,t,isEditor,stories,setStories,onOpenStory}){
                 </div>
                 {isEditor&&(
                   <div style={{position:"absolute",top:8,right:8,width:24,height:24,borderRadius:8,background:G.white,boxShadow:sh.sm,color:s.color,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M11 4 H4 a2 2 0 0 0 -2 2 v14 a2 2 0 0 0 2 2 h14 a2 2 0 0 0 2 -2 v-7"/>
-                      <path d="M18.5 2.5 a2.121 2.121 0 0 1 3 3 L12 15 l-4 1 1 -4 z"/>
-                    </svg>
+                    <IconPencil size={11}/>
                   </div>
                 )}
               </div>
@@ -7345,17 +7457,14 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor}){
       <div style={{padding:"22px 18px 120px"}}>
         {isEditor&&(
           <button onClick={()=>setShowEdit(true)} className="lt-press-soft" style={{width:"100%",padding:"13px 0",borderRadius:14,border:`1px solid ${S.h}`,background:S.hl,color:S.deep,fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",marginBottom:16,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 4 H4 a2 2 0 0 0 -2 2 v14 a2 2 0 0 0 2 2 h14 a2 2 0 0 0 2 -2 v-7"/>
-              <path d="M18.5 2.5 a2.121 2.121 0 0 1 3 3 L12 15 l-4 1 1 -4 z"/>
-            </svg>
+            <IconPencil size={15}/>
             <span>{t.editCard}</span>
           </button>
         )}
         {isEmpty&&!isEditor?(
           <div style={{textAlign:"center",padding:"60px 24px"}}>
             <div style={{fontSize:64,marginBottom:18}}>🪪</div>
-            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:23,color:G.ink,letterSpacing:-.4,marginBottom:10,lineHeight:1.15}}>{t.emptyCardTitle}</div>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:23,color:G.inkSoft,letterSpacing:-.4,marginBottom:10,lineHeight:1.15}}>{t.emptyCardTitle}</div>
             <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.5,maxWidth:300,margin:"0 auto"}}>{t.emptyCardDesc}</div>
           </div>
         ):isEmpty&&isEditor?(
@@ -9003,7 +9112,7 @@ export default function App(){
         </div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,position:"relative",gap:12}}>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontFamily:G.font,fontWeight:400,fontSize:10.5,color:"#9892AA",textTransform:"capitalize",letterSpacing:.6,marginBottom:3}}>
+            <div style={{fontFamily:G.font,fontWeight:400,fontSize:10.5,color:"#9892AA",textTransform:"capitalize",letterSpacing:.6,marginBottom:3,textAlign:"left",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
               {isEd ? (screen==="home" ? t.schedule : navItems.find(n=>n.key===screen)?.label || "") : dateStr}
             </div>
             <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.inkSoft,lineHeight:1.05,letterSpacing:-.6,display:"flex",alignItems:"center",gap:10}}>
