@@ -18,12 +18,21 @@ const SCREENS = {
   home:    { h:"#9DC4D8", hl:"#EDF4F8", hll:"#F7FBFD", hb:"#F4FAFC", soft:"#C5DCE7", deep:"#5A8AA3" },
   timer:   { h:"#E89B89", hl:"#FBEDE7", hll:"#FEF7F3", hb:"#FEF7F2", soft:"#F5CDBC", deep:"#B36B57" },
   emotion: { h:"#B89DC4", hl:"#F2EBF6", hll:"#FAF7FC", hb:"#F8F4FB", soft:"#D5C5DD", deep:"#7B5D8C" },
-  comm:    { h:"#8AAFD2", hl:"#EBF1F8", hll:"#F6FAFD", hb:"#F4F9FD", soft:"#BFD3E6", deep:"#587FA8" },
+  // comm/Tala — was a cool steel-blue that read too similar to the week
+  // screen. Shifted toward a warmer dusty mineral-blue with a hint of green
+  // undertone, so it sits between aqua-home and cool-week without competing
+  // with either.
+  comm:    { h:"#8FB8B2", hl:"#EBF3F1", hll:"#F6FAF9", hb:"#F2F8F6", soft:"#BBD3CD", deep:"#557D78" },
   stories: { h:"#C9A875", hl:"#FAF2E4", hll:"#FDF9F0", hb:"#FCF7EC", soft:"#E5CEA0", deep:"#8C7038" },
   calm:    { h:"#A8C9B0", hl:"#EFF5F0", hll:"#F8FBF8", hb:"#F4F9F4", soft:"#CFDED2", deep:"#688D72" },
   idcard:  { h:"#D88B8B", hl:"#FAEAEA", hll:"#FDF5F5", hb:"#FCF3F3", soft:"#EDB8B8", deep:"#A35858" },
   tools:   { h:"#D9886B", hl:"#F8ECE5", hll:"#FCF7F3", hb:"#FBF5EE", soft:"#EDC1AE", deep:"#A2604A" },
-  week:    { h:"#A8B5C9", hl:"#EEF0F5", hll:"#F7F8FB", hb:"#F5F6FA", soft:"#C9D2DE", deep:"#5D6B82" },
+  // week — page tones lean toward home's aqua family but with a clearer
+  // cool-blue note throughout. Earlier the silver-gray (#F5F6FA) felt
+  // disconnected from the rest of the app. The new tones are visibly blue
+  // but slightly deeper/cooler than home so the screen still reads as
+  // distinct without feeling like an entirely different product.
+  week:    { h:"#9DAFCE", hl:"#E7EEF7", hll:"#F3F7FB", hb:"#EEF4F9", soft:"#BDCCDF", deep:"#576B8A" },
 };
 
 const G = {
@@ -1922,7 +1931,34 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now}){
       })()}
       <div ref={scrollRef} style={{flex:1,display:"flex",overflowY:"auto",padding:"14px 14px 30px 6px",position:"relative"}}>
       {!isEd&&(
+        // Time-of-day column on the far left, only used in user (non-editor) view.
+        // Width is locale-sensitive — "12 PM" needs more room than "06:00".
         <div style={{flexShrink:0,position:"relative",width:t?.myDay==="My Day"?56:38,height:totalContentH}}>
+          {/* Hour anchors — discrete time markers every hour give the empty
+              space a steady rhythm even when no activity sits at that hour.
+              Only shown when Sigvard lamps are OFF (when on, the lamps already
+              provide continuous time-of-day reference). Aligned to the activity
+              time labels so the column feels coherent when both kinds coexist. */}
+          {!cfg.showSigvard&&Array.from({length:25}).map((_,h)=>{
+            const yLine=yForTime(h*60);
+            // Skip hours where an activity starts within 12 minutes — the
+            // activity's vivid time label would clash with the gray marker.
+            const tooClose=positions.some(p=>{
+              const startM=hm(p.item.time);
+              return Math.abs(startM-h*60)<12;
+            });
+            if(tooClose) return null;
+            // Format consistently with activity labels (HH:MM in SV, h AM/PM in EN)
+            const lbl=t?.myDay==="My Day"
+              ? (h===0?"12 AM":h<12?`${h} AM`:h===12?"12 PM":h===24?"12 AM":`${h-12} PM`)
+              : String(h).padStart(2,"0")+":00";
+            return(
+              <div key={`hr-${h}`} style={{position:"absolute",top:yLine-5,right:6,fontFamily:G.font,fontWeight:500,fontSize:9.5,color:"#B5B0C2",letterSpacing:.4,fontVariantNumeric:"tabular-nums",whiteSpace:"nowrap",lineHeight:1,pointerEvents:"none"}}>
+                {lbl}
+              </div>
+            );
+          })}
+          {/* Activity start times — primary, in the activity's own color */}
           {positions.map(({item,y})=>(
             <div key={`tl-${item.id}`} style={{position:"absolute",top:y+2,right:6,fontFamily:G.font,fontWeight:700,fontSize:11,color:item.color,letterSpacing:0.3,fontVariantNumeric:"tabular-nums",whiteSpace:"nowrap",lineHeight:1}}>
               {fmtT(item.time,t)}
@@ -1935,7 +1971,14 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now}){
           <SigvardTimeline now={now} color={cfg.sigvardColor||"#FF4848"}/>
         </div>
       )}
-      <div style={{flex:1,position:"relative",height:totalContentH,marginLeft:cfg.showSigvard&&!isEd?10:0}}>
+      {/* Activity cards container.
+          marginLeft handles the gap between the schedule content and what
+          sits to its left. Sigvard ON → small 10px gap from the lamp pole.
+          Sigvard OFF → larger 16px gap from the time labels, because the
+          activity's coloured edge stripe (left:-8) would otherwise crowd
+          the time text. With Sigvard on, the lamp column itself separates
+          the two visually. */}
+      <div style={{flex:1,position:"relative",height:totalContentH,marginLeft:cfg.showSigvard&&!isEd?10:!isEd?16:0}}>
         {!isEd&&cfg.showNowLine!==false&&(()=>{
           // Horizontal "now" line — independently toggleable, with its own colour.
           // If cfg.nowLineColor is empty/falsy, falls back to the Sigvard lamp colour
@@ -2028,7 +2071,7 @@ function ActivityDetail({item,stepsDone,readOnly,onClose,onCheck,t}){
           <div style={{display:"flex",alignItems:"flex-start",gap:14,marginBottom:26,animation:"adSection 0.5s 0.08s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
             <div style={{fontSize:46,lineHeight:1,padding:14,borderRadius:18,background:`linear-gradient(140deg,${item.color}1A,${item.color}30)`,border:`1px solid ${item.color}25`}}>{item.emoji}</div>
             <div style={{flex:1,paddingTop:4}}>
-              <div style={{fontFamily:G.serif,fontWeight:500,fontSize:25,color:G.ink,lineHeight:1.05,letterSpacing:-.5}}>{item.name}</div>
+              <div style={{fontFamily:G.serif,fontWeight:500,fontSize:25,color:G.inkSoft,lineHeight:1.05,letterSpacing:-.5}}>{item.name}</div>
               <div style={{fontFamily:G.font,fontWeight:500,fontSize:12,color:item.color,marginTop:7,letterSpacing:.4}}>{fmtT(item.time,t)}</div>
             </div>
             <button onClick={onClose} className="lt-press" style={{width:36,height:36,borderRadius:12,border:`1px solid ${G.border}`,background:G.cream,color:G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><IconX size={14}/></button>
@@ -2693,10 +2736,25 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onO
 function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
   const[spoken,setSpoken]=useState(null);
   const tabBarRef=useRef(null);
+  /* Drag-to-reorder state for category pills (editor only).
+     Long-press a pill to "pick it up", then drag horizontally over neighbours
+     to swap their positions live. Release to drop. Tap (no drag) still works
+     normally for selecting / opening the edit modal. */
+  const[dragId,setDragId]=useState(null);     // id of pill being dragged, null = idle
+  const dragRef=useRef({
+    id:null,        // pill being dragged
+    startX:0,       // initial pointer X
+    startIdx:0,     // initial array index
+    pillRects:[],   // {id, left, right, width} for all pills at drag start
+    pressTimer:0,   // long-press timer
+  });
   // When selection changes (e.g. after adding a new category), scroll the tab-bar
-  // horizontally so the active category is visible — otherwise new cats hide off-screen
+  // horizontally so the active category is visible — otherwise new cats hide off-screen.
+  // Skipped while a pill is actively being dragged: selection often follows the
+  // dragged pill, which would cause the scroll to fight the drag motion.
   useEffect(()=>{
     if(!tabBarRef.current) return;
+    if(dragId) return; // mid-drag: don't compete with the user's gesture
     const bar=tabBarRef.current;
     const activeBtn=bar.children[sel];
     if(!activeBtn) return;
@@ -2706,45 +2764,322 @@ function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
     const viewRight=viewLeft+bar.clientWidth;
     if(right>viewRight) bar.scrollTo({left:right-bar.clientWidth+12,behavior:"smooth"});
     else if(left<viewLeft) bar.scrollTo({left:Math.max(0,left-12),behavior:"smooth"});
-  },[sel,cats.length]);
+  },[sel,cats.length,dragId]);
+
+  // When entering editor mode, scroll the tab bar to its end so the "+"
+  // (Lägg till / Add) button immediately reveals itself. This makes the
+  // affordance discoverable — otherwise users with many categories would
+  // never see that adding more is possible. Small delay so the bar has
+  // re-rendered with the new editor-mode children before we scroll.
+  useEffect(()=>{
+    if(!isEditor||!tabBarRef.current) return;
+    const bar=tabBarRef.current;
+    const id=setTimeout(()=>{
+      bar.scrollTo({left:bar.scrollWidth-bar.clientWidth,behavior:"smooth"});
+    },180);
+    return()=>clearTimeout(id);
+  },[isEditor]);
   const S=SCREENS.comm;
   const speak=card=>{setSpoken(card.id);setTimeout(()=>setSpoken(null),1400);if(window.speechSynthesis){const u=new SpeechSynthesisUtterance(lang==="sv"?card.sv:card.en);u.lang=lang==="sv"?"sv-SE":"en-US";window.speechSynthesis.speak(u);}};
+
+  /* ─── Category reorder via drag (editor mode only) ───
+     Architecture notes (key to making this smooth):
+     1. The dragged pill's translateX is mutated DIRECTLY on the DOM element
+        via a ref, not through React state. setState per pointermove caused
+        re-renders that fought the gesture on iOS. The dragId state still
+        flips to set up CSS (z-index, shadow) but offset is pure DOM mutation.
+     2. The cats array is read from a ref inside the move handler. React state
+        captured in closure goes stale after the first swap.
+     3. Swap rule uses pill centres + hysteresis: a swap fires only when the
+        dragged centre crosses the neighbour's centre by 18%. Without this the
+        pill flickers back and forth when held exactly at a boundary. */
+  const catsRef=useRef(cats);
+  useEffect(()=>{catsRef.current=cats;},[cats]);
+  const draggedElRef=useRef(null); // live DOM node of the dragged pill
+  const startDrag=(ev,catId,idx,el)=>{
+    if(!isEditor) return;
+    const pointerX=ev.touches?ev.touches[0].clientX:ev.clientX;
+    const pointerY0=ev.touches?ev.touches[0].clientY:ev.clientY;
+    let cancelled=false;
+    let movedBeforeTimer=false;
+    const onPreMove=(e)=>{
+      const px=e.touches?e.touches[0].clientX:e.clientX;
+      const py=e.touches?e.touches[0].clientY:e.clientY;
+      if(Math.abs(px-pointerX)>6||Math.abs(py-pointerY0)>6){
+        movedBeforeTimer=true;
+        cleanup();
+      }
+    };
+    const cleanup=()=>{
+      cancelled=true;
+      clearTimeout(dragRef.current.pressTimer);
+      window.removeEventListener("pointermove",onPreMove);
+      window.removeEventListener("touchmove",onPreMove);
+      window.removeEventListener("pointerup",cleanup);
+      window.removeEventListener("touchend",cleanup);
+    };
+    window.addEventListener("pointermove",onPreMove,{passive:true});
+    window.addEventListener("touchmove",onPreMove,{passive:true});
+    window.addEventListener("pointerup",cleanup,{passive:true});
+    window.addEventListener("touchend",cleanup,{passive:true});
+
+    dragRef.current.pressTimer=setTimeout(()=>{
+      if(cancelled||movedBeforeTimer) return;
+      window.removeEventListener("pointermove",onPreMove);
+      window.removeEventListener("touchmove",onPreMove);
+      window.removeEventListener("pointerup",cleanup);
+      window.removeEventListener("touchend",cleanup);
+      if(!tabBarRef.current||!el) return;
+      // Snapshot the rectangles of all pills at pickup time. These are used
+      // as fixed anchor points for hit-testing during the drag — we never
+      // re-measure during the gesture (re-measuring while sibling layout
+      // shifts causes the kind of jitter we're trying to eliminate).
+      const bar=tabBarRef.current;
+      const rects=[];
+      Array.from(bar.children).forEach((child,childIdx)=>{
+        if(childIdx>=catsRef.current.length) return; // skip "+" add button
+        const r=child.getBoundingClientRect();
+        rects.push({id:catsRef.current[childIdx].id,left:r.left,right:r.right,centre:(r.left+r.right)/2,width:r.width});
+      });
+      dragRef.current.id=catId;
+      dragRef.current.startX=pointerX;
+      dragRef.current.startIdx=idx;
+      dragRef.current.pillRects=rects;
+      dragRef.current.lastTargetIdx=idx;
+      draggedElRef.current=el;
+      setDragId(catId);
+      if(navigator.vibrate) navigator.vibrate(8);
+      window.addEventListener("pointermove",onDragMove,{passive:false});
+      window.addEventListener("touchmove",onDragMove,{passive:false});
+      window.addEventListener("pointerup",endDrag,{passive:true});
+      window.addEventListener("touchend",endDrag,{passive:true});
+      window.addEventListener("pointercancel",endDrag,{passive:true});
+    },280);
+  };
+  const onDragMove=(e)=>{
+    e.preventDefault?.();
+    const px=e.touches?e.touches[0].clientX:e.clientX;
+    const dx=px-dragRef.current.startX;
+    // Direct DOM mutation — no React re-render. The transform follows the
+    // finger at native compositor speed regardless of how fast you move.
+    const el=draggedElRef.current;
+    if(el) el.style.transform=`translateX(${dx}px) scale(1.04)`;
+    // Hit-test against frozen pickup-time rectangles. The dragged pill's
+    // VISUAL centre = its original centre + dx. We then ask: which neighbour
+    // does our visual centre fall inside, with hysteresis to avoid flicker.
+    const rects=dragRef.current.pillRects;
+    const cs=catsRef.current;
+    const idxNow=cs.findIndex(c=>c.id===dragRef.current.id);
+    if(idxNow<0) return;
+    const myRect=rects.find(rt=>rt.id===dragRef.current.id);
+    if(!myRect) return;
+    const myCentreNow=myRect.centre+dx;
+    // Decide target index: scan from current position outward. A swap fires
+    // when our centre passes a neighbour's centre by HYSTERESIS_PX — small
+    // enough to feel responsive, large enough that holding near a boundary
+    // doesn't oscillate.
+    const HYSTERESIS=12;
+    let targetIdx=dragRef.current.lastTargetIdx;
+    if(dx>0){
+      // Moving right — check pills to the right of current position
+      for(let i=targetIdx+1;i<rects.length;i++){
+        if(myCentreNow > rects[i].centre + HYSTERESIS){
+          targetIdx=i;
+        } else break;
+      }
+      // Also allow stepping back left (one pill) if user reverses
+      if(targetIdx>0 && myCentreNow < rects[targetIdx].centre - HYSTERESIS){
+        targetIdx--;
+      }
+    } else {
+      // Moving left — check pills to the left
+      for(let i=targetIdx-1;i>=0;i--){
+        if(myCentreNow < rects[i].centre - HYSTERESIS){
+          targetIdx=i;
+        } else break;
+      }
+      if(targetIdx<rects.length-1 && myCentreNow > rects[targetIdx].centre + HYSTERESIS){
+        targetIdx++;
+      }
+    }
+    if(targetIdx!==idxNow){
+      dragRef.current.lastTargetIdx=targetIdx;
+      // Swap in the cats array via setCats. catsRef updates next render via
+      // its useEffect, so subsequent move handlers see the new order.
+      const newCats=[...cs];
+      const[moved]=newCats.splice(idxNow,1);
+      newCats.splice(targetIdx,0,moved);
+      setCats(newCats);
+      if(sel===idxNow) setSel(targetIdx);
+      // After React commits and DOM reorders, the dragged pill jumps to a new
+      // slot. Compensate visually so it looks like it never moved: reset
+      // startX so dx represents offset from the NEW slot rather than old.
+      requestAnimationFrame(()=>{
+        if(!tabBarRef.current||!draggedElRef.current) return;
+        const bar=tabBarRef.current;
+        // Refresh rects so future swap decisions use new layout positions
+        const refreshed=[];
+        Array.from(bar.children).forEach((child,childIdx)=>{
+          if(childIdx>=newCats.length) return;
+          const r=child.getBoundingClientRect();
+          refreshed.push({id:newCats[childIdx].id,left:r.left,right:r.right,centre:(r.left+r.right)/2,width:r.width});
+        });
+        dragRef.current.pillRects=refreshed;
+        // Visual correction: figure out where the pill should be visually
+        // (at the finger) given its NEW base slot, and reset startX so dx
+        // produces that offset. This avoids any visible jump.
+        const myNew=refreshed.find(rt=>rt.id===dragRef.current.id);
+        if(myNew){
+          // The pill's natural centre is now myNew.centre. We want visual
+          // centre at the finger (px). So dx should be (px - myNew.centre).
+          dragRef.current.startX=px-(px-myNew.centre);
+          // Apply the new transform immediately to avoid a 1-frame flash
+          const newDx=px-dragRef.current.startX;
+          if(draggedElRef.current) draggedElRef.current.style.transform=`translateX(${newDx}px) scale(1.04)`;
+        }
+      });
+    }
+  };
+  const endDrag=()=>{
+    const el=draggedElRef.current;
+    if(el){
+      // Smoothly release the pill back to its slot — transform falls back to
+      // the static "translateX(0) scale(1)" applied via React style, but we
+      // also briefly enable a transition so the snap is animated.
+      el.style.transition="transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)";
+      el.style.transform="translateX(0) scale(1)";
+      // Clear the transition after it completes so it doesn't interfere with
+      // the next pickup (which needs immediate response).
+      setTimeout(()=>{
+        if(el){el.style.transition="";el.style.transform="";}
+      },300);
+    }
+    draggedElRef.current=null;
+    setDragId(null);
+    dragRef.current.id=null;
+    window.removeEventListener("pointermove",onDragMove);
+    window.removeEventListener("touchmove",onDragMove);
+    window.removeEventListener("pointerup",endDrag);
+    window.removeEventListener("touchend",endDrag);
+    window.removeEventListener("pointercancel",endDrag);
+  };
+  // Cleanup any dangling listeners if the component unmounts mid-drag
+  useEffect(()=>()=>{
+    clearTimeout(dragRef.current.pressTimer);
+    window.removeEventListener("pointermove",onDragMove);
+    window.removeEventListener("touchmove",onDragMove);
+    window.removeEventListener("pointerup",endDrag);
+    window.removeEventListener("touchend",endDrag);
+    window.removeEventListener("pointercancel",endDrag);
+  // eslint-disable-next-line
+  },[]);
+
   const cat=cats[sel];
   if(!cat) return null;
   return(
     <>
-    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:S.hb}}>
-      <div ref={tabBarRef} style={{padding:"16px 16px 0",display:"flex",gap:8,overflowX:"auto",alignItems:"center",scrollBehavior:"smooth"}}>
+    {/* Background adapts to the active category's color.
+        A very soft radial tint at the top of the screen fades down into
+        the neutral S.hb base, so switching categories feels like the screen
+        gently warming/cooling rather than jumping. 0.5s ease so the change
+        is perceived but never abrupt. The tint stays light enough that
+        contrast against cards is preserved. */}
+    <div style={{
+      flex:1,display:"flex",flexDirection:"column",overflow:"hidden",
+      background:`radial-gradient(ellipse 140% 70% at 50% 0%, ${cat.color}26 0%, ${cat.color}10 35%, ${S.hb} 75%)`,
+      transition:"background 0.5s ease",
+    }}>
+      {/* Tab bar — pills + "+" button all live inside the same scroll
+          container as flex children. The + button is just the rightmost
+          item, so it's always reachable by scrolling.
+
+          To make it discoverable, we auto-scroll to the end whenever the
+          user enters editor mode (see effect below). overflowX switches to
+          hidden during drag-reorder. */}
+      <div ref={tabBarRef} style={{padding:"18px 16px 10px",display:"flex",gap:8,overflowX:dragId?"hidden":"auto",alignItems:"center",scrollBehavior:"smooth",flexShrink:0}}>
         {cats.map((c,i)=>{
           const active=sel===i;
+          const isDragging=dragId===c.id;
+          // Other pills slide aside subtly during drag — handled implicitly by
+          // their natural flex layout shifting as the array reorders. The
+          // dragged pill's transform is mutated directly on the DOM (see
+          // drag handlers) rather than via React style — this is what keeps
+          // the gesture smooth.
           return(
-            <div key={c.id} style={{position:"relative",flexShrink:0,paddingTop:isEditor?6:0}}>
-              <button onClick={()=>{if(active&&isEditor){openModal({type:"editCat",catId:c.id});}else{setSel(i);}}} style={{padding:"9px 18px",borderRadius:22,border:"1px solid",borderColor:active?c.color:G.border,background:active?c.color:G.white,color:active?"#fff":G.ink2,fontFamily:G.font,fontWeight:700,fontSize:13,cursor:"pointer",whiteSpace:"nowrap",boxShadow:active?sh.c(c.color):sh.xs,display:"inline-flex",alignItems:"center",gap:active&&isEditor?6:0}}>
+            <div key={c.id} ref={el=>{if(isDragging) draggedElRef.current=el;}} style={{
+              position:"relative",flexShrink:0,paddingTop:isEditor?6:0,
+              transition:isDragging?"none":"transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
+              zIndex:isDragging?10:1,
+              touchAction:isEditor?"none":"auto",
+              willChange:isDragging?"transform":"auto",
+            }}>
+              <button
+                onPointerDown={isEditor?(e)=>startDrag(e,c.id,i,e.currentTarget.parentElement):undefined}
+                onClick={()=>{
+                  // Ignore the click if a drag just ended (the pointerup that
+                  // ended the drag also fires a click — suppress if we'd just
+                  // been dragging this pill).
+                  if(dragId===c.id) return;
+                  if(active&&isEditor){openModal({type:"editCat",catId:c.id});}else{setSel(i);}
+                }}
+                style={{
+                  padding:"9px 18px",borderRadius:22,border:"1px solid",
+                  borderColor:active?c.color:isDragging?c.color:G.border,
+                  background:active?c.color:G.white,
+                  color:active?"#fff":G.ink2,
+                  fontFamily:G.font,fontWeight:600,fontSize:13.5,
+                  cursor:isEditor?"grab":"pointer",
+                  whiteSpace:"nowrap",
+                  // Dragged: neutral compact shadow + colored ring. Stays small
+                  // enough to not bleed past the tab-bar's bottom edge into
+                  // the cards grid below. The colored ring (border) signals
+                  // identity, the neutral shadow signals depth/lift.
+                  boxShadow:isDragging
+                    ?`0 4px 10px rgba(31,27,46,0.14), 0 0 0 3px ${c.color}22`
+                    :active?sh.c(c.color):sh.xs,
+                  display:"inline-flex",alignItems:"center",gap:active&&isEditor?6:0,
+                  userSelect:"none",WebkitUserSelect:"none",
+                  transition:isDragging?"none":"box-shadow .22s ease, border-color .22s ease",
+                }}>
                 <span>{lang==="sv"?c.sv:c.en}</span>
                 {active&&isEditor&&(
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.8}}>
-                    <path d="M11 4 H4 a2 2 0 0 0 -2 2 v14 a2 2 0 0 0 2 2 h14 a2 2 0 0 0 2 -2 v-7"/>
-                    <path d="M18.5 2.5 a2.121 2.121 0 0 1 3 3 L12 15 l-4 1 1 -4 z"/>
-                  </svg>
+                  <span style={{opacity:0.85,display:"inline-flex",alignItems:"center"}}>
+                    <IconPencil size={11}/>
+                  </span>
                 )}
               </button>
               {isEditor&&cats.length>1&&(
-                <button onClick={e=>{e.stopPropagation();openModal({type:"confirmDel",catId:c.id});}} className="lt-press-soft" style={{position:"absolute",top:-2,right:-6,width:22,height:22,borderRadius:"50%",border:`1.5px solid ${G.white}`,background:"rgba(31,27,46,0.78)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,zIndex:2,boxShadow:"0 2px 6px rgba(31,27,46,0.18)"}}>
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"/>
-                    <line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
+                <button onClick={e=>{e.stopPropagation();openModal({type:"confirmDel",catId:c.id});}} aria-label="Ta bort kategori" className="lt-press-soft" style={{position:"absolute",top:-2,right:-6,width:22,height:22,borderRadius:"50%",border:`1.5px solid ${G.white}`,background:"rgba(31,27,46,0.72)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,zIndex:2,boxShadow:"0 2px 6px rgba(31,27,46,0.18)"}}>
+                  <IconX size={9}/>
                 </button>
               )}
             </div>
           );
         })}
         {isEditor&&(
-          <button onClick={()=>openModal({type:"addCat"})} className="lt-press-soft" style={{padding:"7px 12px",borderRadius:22,border:`1px dashed ${G.border2}`,background:"transparent",color:G.ink3,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",flexShrink:0,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:5,height:34}}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <button
+            type="button"
+            onClick={()=>openModal({type:"addCat"})}
+            className="lt-press-soft"
+            aria-label={t.addCat}
+            style={{
+              flexShrink:0,
+              padding:"7px 14px",borderRadius:22,
+              border:`1.5px dashed ${cat.color?withAlpha(cat.color,0.45):G.border2}`,
+              background:cat.color?withAlpha(cat.color,0.05):"transparent",
+              color:cat.color?shade(cat.color,-0.25):G.ink2,
+              fontFamily:G.font,fontWeight:600,fontSize:13,
+              cursor:"pointer",
+              display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6,
+              height:34,touchAction:"manipulation",
+              whiteSpace:"nowrap",
+              transition:"background .25s ease, border-color .25s ease, color .25s ease",
+            }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"/>
               <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
+            <span>{lang==="sv"?"Lägg till":"Add"}</span>
           </button>
         )}
       </div>
@@ -2771,13 +3106,10 @@ function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
               {card.photo
                 ? <img src={card.photo} alt="" style={{width:"100%",aspectRatio:"1/1",objectFit:"cover",borderRadius:14,display:"block"}}/>
                 : <span style={{fontSize:38}}>{card.emoji}</span>}
-              <span style={{fontFamily:G.font,fontWeight:700,fontSize:12,textAlign:"center",color:active?"#fff":G.ink,lineHeight:1.2}}>{lang==="sv"?card.sv:card.en}</span>
+              <span style={{fontFamily:G.font,fontWeight:600,fontSize:13,textAlign:"center",color:active?"#fff":G.ink,lineHeight:1.2,letterSpacing:-0.1}}>{lang==="sv"?card.sv:card.en}</span>
             </div>
-            {isEditor&&<button onClick={()=>setCats(cs=>cs.map((c,i)=>i!==sel?c:{...c,cards:c.cards.filter(x=>x.id!==card.id)}))} className="lt-press-soft" style={{position:"absolute",top:5,right:5,width:24,height:24,borderRadius:"50%",border:`1.5px solid ${G.white}`,background:"rgba(31,27,46,0.55)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,zIndex:2,boxShadow:"0 2px 6px rgba(31,27,46,0.18)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)"}}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
+            {isEditor&&<button onClick={()=>setCats(cs=>cs.map((c,i)=>i!==sel?c:{...c,cards:c.cards.filter(x=>x.id!==card.id)}))} aria-label="Ta bort kort" className="lt-press-soft" style={{position:"absolute",top:5,right:5,width:24,height:24,borderRadius:"50%",border:`1.5px solid ${G.white}`,background:"rgba(31,27,46,0.55)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0,zIndex:2,boxShadow:"0 2px 6px rgba(31,27,46,0.18)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)"}}>
+              <IconX size={10}/>
             </button>}
           </div>
         );})}
@@ -2789,7 +3121,7 @@ function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
                 <line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
             </div>
-            <span style={{fontWeight:600,fontSize:11.5,letterSpacing:.1,color:cat.color}}>{t.addCard}</span>
+            <span style={{fontWeight:600,fontSize:12,letterSpacing:.1,color:cat.color}}>{lang==="sv"?"Nytt kort":"New card"}</span>
           </button>
         )}
       </div>
@@ -2993,11 +3325,14 @@ function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
               const n=name.trim();
               if(!n)return;
               const newId="c"+Date.now();
-              setCats(cs=>{
-                const next=[...cs,{id:newId,sv:n,en:n,color,cards:[]}];
-                setSel(next.length-1);
-                return next;
-              });
+              const newCat={id:newId,sv:n,en:n,color,cards:[]};
+              // Use functional updater for cats but call setSel separately —
+              // calling setState inside another setState's updater is fragile.
+              setCats(cs=>[...cs,newCat]);
+              // Select the new category — its index is the current length
+              // (before the add), but since we're using a functional updater
+              // we need to fall back to reading the parent's cats prop.
+              setSel(cats.length);
               onClose();
             }} className="lt-press" style={{flex:2,padding:"14px 0",borderRadius:14,border:"none",background:color,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:`0 8px 20px ${color}55, 0 2px 6px ${color}33`}}>{t.save}</button>
           </div>
@@ -3471,7 +3806,7 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange}){
               {sel.photo?<img src={sel.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:sel.emoji}
             </div>
           </div>
-          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:24,color:G.ink,letterSpacing:-.3,marginBottom:6,lineHeight:1.1}}>{t.emotionSaved}</div>
+          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:24,color:G.inkSoft,letterSpacing:-.3,marginBottom:6,lineHeight:1.1}}>{t.emotionSaved}</div>
           <div style={{fontFamily:G.font,fontSize:13,color:sel.color,fontWeight:600,letterSpacing:.3}}>{labelFor(sel)}</div>
         </div>
       )}
@@ -4299,7 +4634,7 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
           transition:"opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
         }}>
           <div style={{fontFamily:G.font,fontWeight:600,fontSize:11,color:item.color,letterSpacing:2.5,textTransform:"uppercase",marginBottom:6,pointerEvents:"none",position:"relative"}}>{fmtT(item.time,t)}</div>
-          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:24,color:G.ink,lineHeight:1.2,letterSpacing:-.4,pointerEvents:"none",position:"relative"}}>{item.name}</div>
+          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:24,color:G.inkSoft,lineHeight:1.2,letterSpacing:-.4,pointerEvents:"none",position:"relative"}}>{item.name}</div>
           {item.steps?.length>0&&<div style={{display:"flex",gap:8,justifyContent:"center",marginTop:14,flexWrap:"wrap",pointerEvents:"none",position:"relative"}}>{item.steps.slice(0,5).map(s=><span key={s.id} style={{fontSize:22}}>{s.emoji}</span>)}{item.steps.length>5&&<span style={{fontFamily:G.font,fontSize:13,color:G.ink2}}>+{item.steps.length-5}</span>}</div>}
         </div>
       </div>
@@ -6303,10 +6638,10 @@ function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange}){
                 ):ex.emoji}
               </div>
               <div style={{flex:1}}>
-                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:19,color:G.ink,letterSpacing:-.3,lineHeight:1.15}}>{ex.title}</div>
+                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:19,color:G.inkSoft,letterSpacing:-.3,lineHeight:1.15}}>{ex.title}</div>
                 <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",marginTop:5,letterSpacing:.1}}>{ex.desc}</div>
               </div>
-              <div style={{fontSize:22,color:ex.color,opacity:.4}}>›</div>
+              <span style={{color:ex.color,opacity:.5,display:"inline-flex",alignItems:"center"}}><IconChevron dir="right" size={14}/></span>
             </div>
           ))}
           {exercises.length===0&&<div style={{textAlign:"center",color:G.ink3,fontFamily:G.font,marginTop:40}}>Aktivera övningar i Inställningar</div>}
@@ -6347,10 +6682,16 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
   const TIME_W=lang==="en"?44:34;
   const scrollRef=useRef(null);
   // Pill is only relevant when the target activity is BELOW the visible
-  // viewport — pointing down to where the user needs to scroll. If the user
-  // has scrolled past (target above) or it's already in view, the pill stays
-  // quiet. Matches the day-view smart-shortcut rule for consistency.
+  // viewport. Single state, only toggled when value changes — minimal renders.
   const[targetBelow,setTargetBelow]=useState(false);
+  // Refs for direct DOM manipulation of collapse-driven elements. We avoid
+  // React state for the collapse value entirely because re-rendering the
+  // entire WeekScreen (7 day columns × N activities × hour grid) on every
+  // scroll frame caused stutter on iOS even with rAF throttling. Imperative
+  // style mutation on a handful of targeted elements is ~50× cheaper per frame.
+  const titleAreaRef=useRef(null);
+  const weekRangeRef=useRef(null);
+  const dayHeaderRowRef=useRef(null);
 
   // Current week's Monday → Sunday
   const today=new Date(now);
@@ -6444,30 +6785,72 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
     scrollRef.current.scrollTo({top:Math.max(0,y-viewH/3),behavior:"smooth"});
   };
 
-  /* Watch scroll position to fade pill in/out. Pill is visible only when the
-     target activity is BELOW the visible viewport — it acts as a "scroll down
-     to find your next activity" hint. Once the user reaches it (or scrolls
-     past), the pill goes quiet. */
+  /* Watch scroll position. Two effects:
+     1. Pill visibility — only setState when boolean changes (≤2 renders total)
+     2. Header collapse — IMPERATIVE DOM mutation, zero React re-renders.
+
+     React state for the collapse value caused stutter on iOS during fast
+     scrolling because each scroll frame re-rendered the entire WeekScreen
+     tree (7 day-columns, hour grid, activity tiles, all absolute-positioned
+     with transitions). Even rAF throttling couldn't compensate for the cost
+     of those re-renders. Direct style mutation via refs is what scroll-driven
+     UI is supposed to use; collapse now updates at native scroll speed. */
   useEffect(()=>{
     const el=scrollRef.current;
-    if(!el||!pillTarget) {
-      setTargetBelow(false);
-      return;
-    }
-    const targetY=yForAct(pillTarget);
-    const check=()=>{
-      const top=el.scrollTop;
-      const viewH=el.clientHeight;
-      // Target is "below" if its top edge sits past the visible bottom margin.
-      const visibleBot=top+viewH-80;
-      setTargetBelow(targetY>visibleBot);
+    if(!el) return;
+    const targetY=pillTarget?yForAct(pillTarget):null;
+    let lastBelow=null;
+    let rafPending=false;
+    let pendingTop=0;
+    /* Single frame of work — runs at most 60Hz. Reads the latest scrollTop
+       (captured at scroll-event time) and applies styles directly to DOM. */
+    const applyFrame=()=>{
+      rafPending=false;
+      const top=pendingTop;
+      const raw=top<0?0:top>120?1:top/120;
+      const eased=raw*raw*(3-2*raw); // smoothstep — gentle at both ends
+      // Title area — paddings, max-height, opacity on its inner range label
+      const ta=titleAreaRef.current;
+      if(ta){
+        ta.style.paddingTop=(24-eased*22)+"px";
+        ta.style.paddingBottom=(14-eased*12)+"px";
+        ta.style.maxHeight=eased>0.9?"0px":"60px";
+      }
+      const wr=weekRangeRef.current;
+      if(wr) wr.style.opacity=String(1-eased);
+      // Day-header row paddings (the row that contains MÅN/TIS/.../SÖN discs)
+      const dh=dayHeaderRowRef.current;
+      if(dh){
+        dh.style.paddingTop=(18-eased*10)+"px";
+        dh.style.paddingBottom=(12-eased*6)+"px";
+        // CSS variable lets day-tile children read collapse via inheritance.
+        // No re-render needed: tiles read this in their style via calc()/var().
+        dh.style.setProperty("--collapse",String(eased));
+      }
     };
-    check();
-    el.addEventListener("scroll",check,{passive:true});
-    window.addEventListener("resize",check);
-    return ()=>{
-      el.removeEventListener("scroll",check);
-      window.removeEventListener("resize",check);
+    const onScroll=()=>{
+      const top=el.scrollTop;
+      pendingTop=top;
+      // Pill below-state — cheap check, only setState on real transitions
+      if(targetY!==null){
+        const visibleBot=top+el.clientHeight-80;
+        const below=targetY>visibleBot;
+        if(below!==lastBelow){
+          lastBelow=below;
+          setTargetBelow(below);
+        }
+      }
+      if(!rafPending){
+        rafPending=true;
+        requestAnimationFrame(applyFrame);
+      }
+    };
+    onScroll(); // initial
+    el.addEventListener("scroll",onScroll,{passive:true});
+    window.addEventListener("resize",onScroll);
+    return()=>{
+      el.removeEventListener("scroll",onScroll);
+      window.removeEventListener("resize",onScroll);
     };
   // eslint-disable-next-line
   },[pillTarget?.id,pillTarget?.time,pillTarget?.endTime]);
@@ -6487,36 +6870,44 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
         @keyframes wkNowPulse{0%,100%{opacity:1}50%{opacity:0.55}}
       `}</style>
 
-      {/* Title area — minimal breathing room. Top header already shows "Vecka".
-          The week range stays as a small contextual label, and the back-to-today
-          affordance sits to the right. */}
-      <div style={{padding:"24px 22px 14px",flexShrink:0,cursor:focusedDay!==null?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-        <div style={{fontFamily:G.font,fontWeight:400,fontSize:11,color:"#9892AA",letterSpacing:.6,textTransform:"capitalize"}}>{weekRange}</div>
-        {/* Subtle "back to today" hint — only when peeking at another day. Tappable. */}
-        <div
-          onClick={e=>{e.stopPropagation();setFocusedDay(null);}}
-          className="lt-press-soft"
-          style={{
-            opacity:focusedDay!==null?1:0,
-            transform:focusedDay!==null?"translateY(0)":"translateY(4px)",
-            transition:"opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1), transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
-            pointerEvents:focusedDay!==null?"auto":"none",
-            display:"flex",alignItems:"center",gap:5,
-            padding:"6px 10px 6px 8px",borderRadius:14,
-            background:"rgba(255,255,255,0.7)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",
-            border:"1px solid rgba(31,27,46,0.06)",
-            fontFamily:G.font,fontWeight:500,fontSize:11,color:G.ink2,letterSpacing:.2,
-            cursor:"pointer",
-          }}>
-          <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 11L5 7l4-4"/>
-          </svg>
-          <span>{lang==="sv"?"Idag":"Today"}</span>
-        </div>
+      {/* Title area — collapses on scroll via direct DOM mutation (see
+          scroll effect above). Style values are initial; the scroll handler
+          rewrites padding/maxHeight imperatively without triggering React
+          re-renders. The "Idag" pill lives separately to avoid clipping. */}
+      <div ref={titleAreaRef} style={{padding:"24px 22px 14px",flexShrink:0,maxHeight:60,overflow:"hidden"}}>
+        <div ref={weekRangeRef} style={{fontFamily:G.font,fontWeight:400,fontSize:11,color:"#9892AA",letterSpacing:.6,textTransform:"capitalize"}}>{weekRange}</div>
       </div>
 
-      {/* Day-header row — sticky context, today header extends upward like a bookmark */}
-      <div style={{display:"flex",padding:"18px 6px 12px 6px",flexShrink:0,position:"relative",alignItems:"flex-end"}}>
+      {/* "Idag" pill — lifted out into its own absolute overlay so it can stay
+          visible and intact regardless of the title-area's collapse. Lives in
+          the top-right corner; only shown when peeking at another day. Tap to
+          return focus to today's column. */}
+      <div
+        onClick={e=>{e.stopPropagation();setFocusedDay(null);}}
+        className="lt-press-soft"
+        style={{
+          position:"absolute",top:14,right:14,zIndex:25,
+          opacity:focusedDay!==null?1:0,
+          transform:focusedDay!==null?"translateY(0)":"translateY(-4px)",
+          transition:"opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1), transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
+          pointerEvents:focusedDay!==null?"auto":"none",
+          display:"flex",alignItems:"center",gap:5,
+          padding:"6px 10px 6px 8px",borderRadius:14,
+          background:"rgba(255,255,255,0.85)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",
+          border:"1px solid rgba(31,27,46,0.06)",
+          boxShadow:"0 2px 8px rgba(31,27,46,0.06)",
+          fontFamily:G.font,fontWeight:500,fontSize:11,color:G.ink2,letterSpacing:.2,
+          cursor:"pointer",
+        }}>
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 11L5 7l4-4"/>
+        </svg>
+        <span>{lang==="sv"?"Idag":"Today"}</span>
+      </div>
+
+      {/* Day-header row — sticky context, today header extends upward like a bookmark.
+          Padding collapses via direct DOM mutation in the scroll handler. */}
+      <div ref={dayHeaderRowRef} style={{display:"flex",padding:"18px 6px 12px 6px",flexShrink:0,position:"relative",alignItems:"flex-end"}}>
         <div style={{width:TIME_W,flexShrink:0}}/>
         {weekDays.map((d,i)=>{
           const dCol=weekColors[d.jsDay]||S.h;
@@ -6530,13 +6921,12 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
           // Match column flex widths EXACTLY so the disc centers over the colored strip.
           // These must mirror the colFlex logic in the day-column rendering below.
           const headerFlex = showStrong ? 1.85 : todaySofter ? 1.50 : showMedium ? 1.00 : d.isPast ? 0.5 : 0.7;
-          // Disc and number sizing follow the same hierarchy as colFlex:
-          // today (strong) is biggest; today-while-peeking still clearly larger than peeked;
-          // peeked day grows above normal; past shrinks.
-          const discSize = showStrong ? 46 : todaySofter ? 36 : showMedium ? 34 : d.isPast ? 18 : 30;
-          const numSize  = showStrong ? 21 : todaySofter ? 17 : showMedium ? 16 : d.isPast ? 9 : 13.5;
-          // Today's whole header extends upward — like a tall bookmark sticking up above the row
-          const headerExtend = d.isToday ? -16 : 0;
+          // Base sizes — actual rendered size scales via CSS variable
+          // --collapse (set on the dayHeaderRow by the scroll handler).
+          // Using transform:scale ensures GPU compositing; no layout/paint
+          // cost per frame. Today's bookmark extension uses the same var.
+          const discBase = showStrong ? 46 : todaySofter ? 36 : showMedium ? 34 : d.isPast ? 18 : 30;
+          const numBase  = showStrong ? 21 : todaySofter ? 17 : showMedium ? 16 : d.isPast ? 9 : 13.5;
           return(
             <div key={i}
               onClick={e=>{
@@ -6550,12 +6940,19 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
                 }
               }}
               className="lt-press-soft"
-              style={{flex:headerFlex,textAlign:"center",padding:"4px 0 6px",marginTop:headerExtend,opacity:d.isPast?0.28:1,filter:d.isPast?"saturate(0.4)":"none",transition:"flex .5s cubic-bezier(0.32, 0.72, 0, 1), margin-top .5s cubic-bezier(0.32, 0.72, 0, 1), opacity .6s cubic-bezier(0.32, 0.72, 0, 1), filter .6s cubic-bezier(0.32, 0.72, 0, 1)",position:"relative",cursor:"pointer"}}>
+              style={{flex:headerFlex,textAlign:"center",padding:"4px 0 6px",
+                marginTop:d.isToday?`calc(-16px * (1 - var(--collapse, 0)))`:0,
+                opacity:d.isPast?0.28:1,filter:d.isPast?"saturate(0.4)":"none",
+                transition:"flex .5s cubic-bezier(0.32, 0.72, 0, 1), opacity .6s cubic-bezier(0.32, 0.72, 0, 1), filter .6s cubic-bezier(0.32, 0.72, 0, 1)",
+                position:"relative",cursor:"pointer"}}>
               {/* Day label — quiet */}
               <div style={{fontFamily:G.font,fontWeight:500,fontSize:9.5,color:showStrong||showMedium||todaySofter?G.ink:"#9892AA",letterSpacing:.7,marginBottom:5,transition:"color .35s ease"}}>{labels[i]}</div>
-              {/* Date number — wrapped in color disc */}
+              {/* Date number — wrapped in color disc. transform:scale driven by
+                  --collapse CSS variable on the parent row so the shrink happens
+                  on the compositor thread, not in JS. willChange tells the
+                  browser to keep this on its own layer for cheap repaints. */}
               <div style={{
-                width:discSize,height:discSize,borderRadius:"50%",margin:"0 auto",
+                width:discBase,height:discBase,borderRadius:"50%",margin:"0 auto",
                 display:"flex",alignItems:"center",justifyContent:"center",
                 background:showStrong||showMedium||todaySofter?dCol:`${dCol}33`,
                 border:`1px solid ${isLight?"rgba(31,27,46,0.18)":"rgba(31,27,46,0.04)"}`,
@@ -6566,10 +6963,11 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
                   :todaySofter
                   ?`0 3px 8px ${dCol}44, inset 0 1px 0 rgba(255,255,255,0.45)`
                   :"inset 0 1px 0 rgba(255,255,255,0.35)",
-                transition:"width .5s cubic-bezier(0.32, 0.72, 0, 1), height .5s cubic-bezier(0.32, 0.72, 0, 1), background .4s ease, box-shadow .4s ease, transform .35s cubic-bezier(0.32, 0.72, 0, 1)",
-                transform:showMedium?"scale(1.04)":"scale(1)",
+                transition:"background .4s ease, box-shadow .4s ease",
+                transform:`scale(${showMedium?1.04:1}) scale(calc(1 - 0.30 * var(--collapse, 0)))`,
+                willChange:"transform",
               }}>
-                <span style={{fontFamily:G.serif,fontWeight:showStrong||showMedium||todaySofter?600:500,fontSize:numSize,color:showStrong||showMedium||todaySofter?"#FFFFFF":G.ink,textShadow:(showStrong||showMedium||todaySofter)&&(isLight||dCol==="#F5E26B")?"0 1px 2px rgba(31,27,46,0.45), 0 0 1px rgba(31,27,46,0.35)":"none",lineHeight:1,letterSpacing:-.3,transition:"font-size .5s cubic-bezier(0.32, 0.72, 0, 1), color .35s ease"}}>{d.day}</span>
+                <span style={{fontFamily:G.serif,fontWeight:showStrong||showMedium||todaySofter?600:500,fontSize:numBase,color:showStrong||showMedium||todaySofter?"#FFFFFF":G.ink,textShadow:(showStrong||showMedium||todaySofter)&&(isLight||dCol==="#F5E26B")?"0 1px 2px rgba(31,27,46,0.45), 0 0 1px rgba(31,27,46,0.35)":"none",lineHeight:1,letterSpacing:-.3,transition:"color .35s ease"}}>{d.day}</span>
               </div>
               {/* "Today" indicator — always visible under today's disc, regardless of focus */}
               {d.isToday&&(
@@ -6681,8 +7079,8 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
             const todayFlex=flexFor(weekDays[todayIdx]);
             const dotCenterPct=((leftFlex+todayFlex/2)/totalFlex)*100;
             return(
-              <div style={{position:"absolute",top:nowY,left:TIME_W,right:6,height:1.5,background:`linear-gradient(90deg, transparent 0%, ${G.ink}AA 8%, ${G.ink}AA 92%, transparent 100%)`,zIndex:3,pointerEvents:"none",transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1)"}}>
-                <div style={{position:"absolute",left:`calc(${dotCenterPct}% - 4px)`,top:-3.5,width:8,height:8,borderRadius:"50%",background:G.ink,boxShadow:`0 0 8px ${G.ink}66`,animation:"wkNowPulse 2.6s ease-in-out infinite",transition:"left .5s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
+              <div style={{position:"absolute",top:nowY,left:TIME_W,right:6,height:1.5,background:`linear-gradient(90deg, transparent 0%, ${G.inkSoft}99 8%, ${G.inkSoft}99 92%, transparent 100%)`,boxShadow:`0 0 8px ${G.inkSoft}33`,zIndex:3,pointerEvents:"none",transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1)"}}>
+                <div style={{position:"absolute",left:`calc(${dotCenterPct}% - 4px)`,top:-3.5,width:8,height:8,borderRadius:"50%",background:G.inkSoft,boxShadow:`0 0 8px ${G.inkSoft}66`,animation:"wkNowPulse 2.6s ease-in-out infinite",transition:"left .5s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
               </div>
             );
           })()}
@@ -8400,6 +8798,24 @@ export default function App(){
     {key:"idcard",icon:"idcard",label:t.idcard,always:false,S:SCREENS.idcard},
   ].filter(n=>n.always||cfg.tools[n.key]||isEd);
   const curS=SCREENS[screen]||SCREENS.home;
+  /* On the Comm/Tala screen, the header palette adapts to the active
+     category's colour — same idea as the screen background. We synthesise
+     soft tints from the active colour and feed them where the header reads
+     S.hl / S.h / S.soft / S.deep. Falls back to the base comm palette if
+     anything's missing. The whole top of the app then warms/cools in sync
+     with the category pills, instead of holding a constant green hue. */
+  const effS=(()=>{
+    if(screen!=="comm") return curS;
+    const c=commCats?.[commSel]?.color;
+    if(!c) return curS;
+    return{
+      ...curS,
+      h:c,
+      hl:withAlpha(c,0.14),   // soft tinted header gradient start
+      soft:withAlpha(c,0.34), // ambient halo
+      deep:shade(c,-0.35),    // Luma logo gradient bottom — darker variant
+    };
+  })();
   // Subtle time-of-day tint that gently blends with screen background.
   // Morning: cool sunrise hint. Day: neutral. Evening: warm amber. Night: deep dusk.
   const hour=now?.getHours?.()??new Date().getHours();
@@ -8540,8 +8956,8 @@ export default function App(){
       {/* Ambient time-of-day overlay — extremely subtle, sits above background */}
       <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg, ${ambientTint} 0%, transparent 60%)`,pointerEvents:"none",zIndex:0,transition:"background 2s ease"}}/>
       {/* HEADER — respects iPhone notch via safe-area-inset-top. Tapping the header signals subscreens (e.g. WeekScreen) to reset their internal focus. */}
-      <div onClick={()=>setHeaderTapCount(c=>c+1)} style={{background:`linear-gradient(170deg,${curS.hl} 0%,${G.white} 100%)`,padding:"calc(14px + env(safe-area-inset-top, 0px)) 22px 12px",borderBottom:`1px solid ${G.border}`,flexShrink:0,position:"relative",overflow:"hidden",transition:"background .4s",cursor:"pointer"}}>
-        <div style={{position:"absolute",top:-50,right:-30,width:140,height:140,borderRadius:"50%",background:`radial-gradient(circle,${curS.soft}44,transparent 70%)`,pointerEvents:"none"}}/>
+      <div onClick={()=>setHeaderTapCount(c=>c+1)} style={{background:`linear-gradient(170deg,${effS.hl} 0%,${G.white} 100%)`,padding:"calc(14px + env(safe-area-inset-top, 0px)) 22px 12px",borderBottom:`1px solid ${G.border}`,flexShrink:0,position:"relative",overflow:"hidden",transition:"background .4s",cursor:"pointer"}}>
+        <div style={{position:"absolute",top:-50,right:-30,width:140,height:140,borderRadius:"50%",background:`radial-gradient(circle,${effS.soft}44,transparent 70%)`,pointerEvents:"none"}}/>
         {/* Luma wordmark — stylized sun with rays */}
         <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:8,position:"relative"}}>
           <style>{`
@@ -8555,13 +8971,13 @@ export default function App(){
               <radialGradient id="lumaCore" cx="35%" cy="30%" r="70%">
                 <stop offset="0%" stopColor="#FFFFFF"/>
                 <stop offset="20%" stopColor="#FFFAF0" stopOpacity="0.95"/>
-                <stop offset="55%" stopColor={curS.h}/>
-                <stop offset="100%" stopColor={curS.deep}/>
+                <stop offset="55%" stopColor={effS.h}/>
+                <stop offset="100%" stopColor={effS.deep}/>
               </radialGradient>
               <radialGradient id="lumaOuterGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="40%" stopColor={curS.h} stopOpacity="0"/>
-                <stop offset="70%" stopColor={curS.h} stopOpacity="0.18"/>
-                <stop offset="100%" stopColor={curS.h} stopOpacity="0"/>
+                <stop offset="40%" stopColor={effS.h} stopOpacity="0"/>
+                <stop offset="70%" stopColor={effS.h} stopOpacity="0.18"/>
+                <stop offset="100%" stopColor={effS.h} stopOpacity="0"/>
               </radialGradient>
             </defs>
             {/* Outer soft glow */}
@@ -8574,7 +8990,7 @@ export default function App(){
                 const r1=8.5, r2=isLong?12.2:11;
                 const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
                 const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
-                return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={curS.h} strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"rayFade1":"rayFade2"} ${3+i*0.18}s ease-in-out infinite`}}/>;
+                return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={effS.h} strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"rayFade1":"rayFade2"} ${3+i*0.18}s ease-in-out infinite`}}/>;
               })}
             </g>
             {/* Core orb */}
@@ -8583,7 +8999,7 @@ export default function App(){
               <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
             </g>
           </svg>
-          <span style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:curS.deep,letterSpacing:0.8,lineHeight:1}}>Luma</span>
+          <span style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:effS.deep,letterSpacing:0.8,lineHeight:1}}>Luma</span>
         </div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,position:"relative",gap:12}}>
           <div style={{flex:1,minWidth:0}}>
@@ -8596,8 +9012,8 @@ export default function App(){
                   <span>{lang==="sv"?"Redigerar":"Editing"}</span>
                   <span style={{
                     width:8,height:8,borderRadius:"50%",
-                    background:curS.h,
-                    boxShadow:`0 0 8px ${curS.h}88, 0 0 14px ${curS.h}44`,
+                    background:effS.h,
+                    boxShadow:`0 0 8px ${effS.h}88, 0 0 14px ${effS.h}44`,
                     animation:"editDot 2.4s ease-in-out infinite",
                     flexShrink:0,
                   }}/>
@@ -8628,18 +9044,18 @@ export default function App(){
         </div>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{display:"flex",gap:4,flex:1,background:G.white,borderRadius:12,padding:3,border:`1px solid ${G.border}`,boxShadow:sh.xs}}>
-            {screen==="home"&&!isEd&&cfg.schedView!=="card"&&<TabB active={effView==="list"} onClick={()=>setView("list")} color={curS.h} deep={curS.deep}>{t.list}</TabB>}
-            {screen==="home"&&!isEd&&cfg.schedView!=="list"&&<TabB active={effView==="card"} onClick={()=>setView("card")} color={curS.h} deep={curS.deep}>{t.card}</TabB>}
+            {screen==="home"&&!isEd&&cfg.schedView!=="card"&&<TabB active={effView==="list"} onClick={()=>setView("list")} color={effS.h} deep={effS.deep}>{t.list}</TabB>}
+            {screen==="home"&&!isEd&&cfg.schedView!=="list"&&<TabB active={effView==="card"} onClick={()=>setView("card")} color={effS.h} deep={effS.deep}>{t.card}</TabB>}
             {/* Screen label on non-home screens — shows current tool when NOT editing */}
             {screen!=="home"&&!isEd&&(
-              <div style={{flex:1,padding:"6px 12px",fontFamily:G.font,fontWeight:500,fontSize:11,color:curS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.3}}>
-                <span style={{width:6,height:6,borderRadius:"50%",background:curS.h,boxShadow:`0 0 6px ${curS.h}88`}}/>
+              <div style={{flex:1,padding:"6px 12px",fontFamily:G.font,fontWeight:500,fontSize:11,color:effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.3}}>
+                <span style={{width:6,height:6,borderRadius:"50%",background:effS.h,boxShadow:`0 0 6px ${effS.h}88`}}/>
                 {navItems.find(n=>n.key===screen)?.label}
               </div>
             )}
             {/* In edit mode — show clear context "Du redigerar:" label */}
             {isEd&&(
-              <div style={{flex:1,padding:"6px 12px",fontFamily:G.font,fontWeight:500,fontSize:11,color:curS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.3,minWidth:0}}>
+              <div style={{flex:1,padding:"6px 12px",fontFamily:G.font,fontWeight:500,fontSize:11,color:effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.3,minWidth:0}}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,opacity:0.7}}>
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -8650,7 +9066,7 @@ export default function App(){
               </div>
             )}
             {/* Redigera / Stäng tab — available on all screens, not just home */}
-            <TabB active={isEd} gold={isEd} onClick={()=>setIsEd(e=>!e)} color={curS.h} deep={curS.deep} flex={isEd?1:1}>{isEd?t.editorClose:t.editorOpen}</TabB>
+            <TabB active={isEd} gold={isEd} onClick={()=>setIsEd(e=>!e)} color={effS.h} deep={effS.deep} flex={isEd?1:1}>{isEd?t.editorClose:t.editorOpen}</TabB>
           </div>
         </div>
       </div>
@@ -8664,8 +9080,8 @@ export default function App(){
               <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 30px 100px",gap:14}}>
                 <style>{`@keyframes empBreath{0%,100%{transform:scale(1);opacity:0.7}50%{transform:scale(1.04);opacity:0.95}}`}</style>
                 <svg width="56" height="56" viewBox="0 0 64 64" style={{animation:"empBreath 4.8s ease-in-out infinite"}}>
-                  <circle cx="32" cy="32" r="26" fill="none" stroke={`${curS.h}55`} strokeWidth="1.4"/>
-                  <circle cx="32" cy="32" r="14" fill={`${curS.h}1A`} stroke={`${curS.h}66`} strokeWidth="1.4"/>
+                  <circle cx="32" cy="32" r="26" fill="none" stroke={`${effS.h}55`} strokeWidth="1.4"/>
+                  <circle cx="32" cy="32" r="14" fill={`${effS.h}1A`} stroke={`${effS.h}66`} strokeWidth="1.4"/>
                 </svg>
                 <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.inkSoft,letterSpacing:-.4,lineHeight:1.1,textAlign:"center",marginTop:2}}>{t.dayOpen}</div>
                 <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",letterSpacing:.1,textAlign:"center",lineHeight:1.4}}>{t.noActs}</div>
@@ -8683,7 +9099,7 @@ export default function App(){
                   <circle cx="32" cy="32" r="28" fill="url(#hmEm)" stroke={`${curS.h}40`} strokeWidth="1"/>
                   <path d="M22,32 L29,40 L43,24" stroke={curS.deep} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.78"/>
                 </svg>
-                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:23,color:G.ink,letterSpacing:-.4,lineHeight:1.1,textAlign:"center"}}>{t.allActsDoneTitle}</div>
+                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:23,color:G.inkSoft,letterSpacing:-.4,lineHeight:1.1,textAlign:"center"}}>{t.allActsDoneTitle}</div>
               </div>
             ):effView==="card"&&!isEd?(
               <div style={{flex:1,overflowY:"auto",padding:"14px 14px 0 10px"}}>
