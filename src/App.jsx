@@ -28,9 +28,19 @@ const SCREENS = {
 
 const G = {
   ink:"#1F1B2E", ink2:"#6E6882", ink3:"#A8A4BB",
+  // inkSoft — used for large display headings (h1/h2) so screen titles don't
+  // feel heavy on a calm app. Hue stays in the same aubergine family as ink,
+  // but lifted enough that pure-black weight is gone. Tested for WCAG AAA
+  // contrast on white (~6.8:1) so headings remain readable for low-vision
+  // users while losing the heavy "shouting" feel at full ink strength.
+  inkSoft:"#524D6B",
   white:"#FFFFFF", cream:"#FCFBFE", border:"#EEEAF5", border2:"#E0DBEF",
   font:"'Inter',system-ui,sans-serif",
-  serif:"'General Sans','Inter',system-ui,sans-serif",
+  // Nunito — humanist sans with softly rounded terminals. Rhymes with Luma's
+  // round visual language (12-20px radii everywhere, circular sun logo, soft
+  // toggles). Stays warm without becoming juvenile when used at weight 500+.
+  // Loaded via @import at the App root (see global <style> block).
+  serif:"'Nunito','Inter',system-ui,sans-serif",
 };
 
 const sh = {
@@ -40,6 +50,91 @@ const sh = {
   lg:"0 4px 12px rgba(31,27,46,0.06), 0 24px 60px rgba(31,27,46,0.12), 0 8px 20px rgba(31,27,46,0.06)",
   c: col=>`0 2px 5px ${col}1A, 0 10px 26px ${col}3D, 0 4px 10px ${col}22`,
 };
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM TOKENS
+   These are intentionally NEW and used in NEW code. Legacy callsites
+   can migrate incrementally — both can coexist until the migration completes.
+═══════════════════════════════════════════════════════════════════════ */
+
+// Type scale — modular, 6 sizes. Each value pairs with its conventional
+// letter-spacing so headings feel composed instead of hand-tuned per spot.
+const TYPO = {
+  caption:  { size: 11, tracking:  0.4, weight: 500 },  // aria-style, uppercase labels with caps tracking
+  small:    { size: 12, tracking:  0.1, weight: 500 },  // helper text, hints
+  body:     { size: 14, tracking:  0.1, weight: 500 },  // default UI text
+  bodyLg:   { size: 16, tracking:  0,   weight: 500 },  // inputs, primary buttons
+  h3:       { size: 18, tracking: -0.2, weight: 600 },  // tile titles, section headers in cards
+  h2:       { size: 22, tracking: -0.3, weight: 500 },  // sub-screen headings (serif)
+  h1:       { size: 28, tracking: -0.5, weight: 500 },  // screen titles (serif)
+};
+
+// Spacing grid — strict 4px multiples. Use these for paddings, gaps, margins.
+// Discourages the 7/11/13/22 fractional values that have crept in over time.
+const SPACE = { xs:4, sm:8, md:12, lg:16, xl:20, xxl:24, x3:32, x4:40, x5:48 };
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ICON COMPONENTS — shared SVG vocabulary
+   All UI icons (not content emoji) come from here. One source of truth for
+   each glyph, plus consistent stroke, line-cap and joining behaviour.
+═══════════════════════════════════════════════════════════════════════ */
+
+// Pencil — used on every edit affordance. Animates via .lumaPen class when
+// wrapped in a .lumaPenBtn parent (hover/press tilts the tip toward writing).
+const IconPencil = ({size=16, className="lumaPen"})=>(
+  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4 H4 a2 2 0 0 0 -2 2 v14 a2 2 0 0 0 2 2 h14 a2 2 0 0 0 2 -2 v-7"/>
+    <path d="M18.5 2.5 a2.121 2.121 0 0 1 3 3 L12 15 l-4 1 1 -4 z"/>
+  </svg>
+);
+
+// Trash — destructive action across editors. Stroke matches pencil weight.
+const IconTrash = ({size=16})=>(
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 6 h18"/>
+    <path d="M8 6 V4 a2 2 0 0 1 2-2 h4 a2 2 0 0 1 2 2 v2"/>
+    <path d="M19 6 l-1 14 a2 2 0 0 1 -2 2 H8 a2 2 0 0 1 -2 -2 L5 6"/>
+    <line x1="10" y1="11" x2="10" y2="17"/>
+    <line x1="14" y1="11" x2="14" y2="17"/>
+  </svg>
+);
+
+// X — close/cancel affordance. Slightly thicker stroke (2.2) for visibility at small sizes.
+const IconX = ({size=14, strokeWidth=2.2})=>(
+  <svg width={size} height={size} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round">
+    <path d="M3 3 L11 11 M11 3 L3 11"/>
+  </svg>
+);
+
+// Check — save confirmation, "done" markers. Has the .saveTick class so the
+// stroke animates when first rendered (drawn in, then springs on hover).
+const IconCheck = ({size=15, className="saveTick", strokeWidth=2.4})=>(
+  <svg className={className} width={size} height={size} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2.5 7.2 L5.8 10.5 L11.5 3.5"/>
+  </svg>
+);
+
+// Chevron — directional navigation (next/prev, drilldown).
+const IconChevron = ({dir="right", size=14, strokeWidth=2.2})=>{
+  const points = dir==="left" ? "15 18 9 12 15 6"
+              : dir==="right" ? "9 18 15 12 9 6"
+              : dir==="up"    ? "18 15 12 9 6 15"
+              : "6 9 12 15 18 9"; // down
+  return(
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <polyline points={points}/>
+    </svg>
+  );
+};
+
+// Camera — photo upload affordances. Used across editors (activity, emotion,
+// ID card) so it deserves a shared component for consistency.
+const IconCamera = ({size=15})=>(
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M23 19 a2 2 0 0 1 -2 2 H3 a2 2 0 0 1 -2 -2 V8 a2 2 0 0 1 2 -2 h4 l2 -3 h6 l2 3 h4 a2 2 0 0 1 2 2 z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+);
 
 const ACT_C=["#E89B89","#C2607A","#8FBFA1","#9683C2","#D9B868","#8AAFD2","#B58CD0","#E89A9A","#7CB8A0","#8E92D2","#F0B5C8"];
 const TMR_C=["#E89B89","#C2607A","#D9B868","#8FBFA1","#9683C2","#8AAFD2","#B58CD0","#E89A9A","#F0B5C8","#1F1B2E"];
@@ -161,11 +256,47 @@ const DAY_PALETTE=[
   "#F5F2EE",
 ];
 
-const CFG0={cardStyle:"normal",schedView:"both",showSigvard:true,weekColors:SIGVARD0,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,tools:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","lava"],defaultType:"wave",defaultMin:5,defaultColor:"#8AAFD2"},visibleEmotions:[1,2,3,4,5],calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]},toolsVisible:{firstthen:true,choices:true,rewards:true,recipes:true}};
+/* ─── Color utilities (used by Sigvard lamps + now-line) ─── */
+// Parse "#RRGGBB" → [r,g,b]. Returns null for invalid input.
+function hexToRgb(hex){
+  if(typeof hex!=="string") return null;
+  const h=hex.replace("#","").trim();
+  if(h.length!==6) return null;
+  const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+  if(isNaN(r)||isNaN(g)||isNaN(b)) return null;
+  return[r,g,b];
+}
+// Mix color toward white (amt>0) or black (amt<0). amt in [-1, +1].
+function shade(hex,amt){
+  const rgb=hexToRgb(hex); if(!rgb) return hex;
+  const target=amt>=0?255:0, t=Math.abs(amt);
+  const[r,g,b]=rgb.map(c=>Math.round(c+(target-c)*t));
+  return`rgb(${r},${g},${b})`;
+}
+// Hex with alpha suffix — for shadow/border tints. alpha in [0,1].
+function withAlpha(hex,alpha){
+  const a=Math.max(0,Math.min(1,alpha));
+  const hh=Math.round(a*255).toString(16).padStart(2,"0").toUpperCase();
+  return`${hex}${hh}`;
+}
+
+// Curated palette for Sigvard lamps — warm/visible glow colors only.
+const SIGVARD_LAMP_PALETTE=[
+  "#FF4848", // classic red (default)
+  "#FF7A3D", // orange
+  "#F5B400", // amber
+  "#7AC178", // green
+  "#3DB5E0", // cyan
+  "#5B7CE0", // blue
+  "#A87BD8", // purple
+  "#E66BB5", // pink
+];
+
+const CFG0={cardStyle:"normal",schedView:"both",showSigvard:true,sigvardColor:"#FF4848",showBanner:true,showNowLine:true,nowLineColor:"",weekColors:SIGVARD0,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,tools:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","lava"],defaultType:"wave",defaultMin:5,defaultColor:"#8AAFD2"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]},toolsVisible:{firstthen:true,choices:true,rewards:true,recipes:true}};
 
 const TR={
-  sv:{other:"EN",myDay:"Min dag",editorOpen:"Redigera",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Inga aktiviteter – tryck Redigera",addAct:"+ Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Solnedgång",lava:"Lava",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redigering & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Hem",comm:"Tala",sigvardOn:"Sigvard-lampor",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – tryck Redigera för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng",week:"Vecka",myWeek:"Min vecka",weekEmpty:"Inga aktiviteter den här veckan",weekAdd:"Lägg till aktivitet",dayColors:"Veckodagsfärger",dayColorsHint:"Tryck på en dag för att välja färg",resetColors:"Återställ till standard",monday:"Måndag",tuesday:"Tisdag",wednesday:"Onsdag",thursday:"Torsdag",friday:"Fredag",saturday:"Lördag",sunday:"Söndag",skylight:"Himmel",skyHint:"Låt blicken vila",notTodayHint:"Du tittar på en annan dag. Stegen kan inte bockas av nu.",editStory:"Redigera berättelse",storyType:"Typ",typeSeq:"Steg-för-steg",typeSeqDesc:"Flera sidor",typeFT:"Först-Sedan",typeFTDesc:"Först → Sedan",coverImage:"Huvudbild",camera:"Kamera",gallery:"Galleri",emoji:"Emoji",removePhoto:"Ta bort foto",storyPlacehSeq:"t.ex. Städa rummet",storyPlacehFT:"t.ex. Först läxor, sedan TV",ftLabels:"Etiketter (visas över korten)",ftSection:"Först och Sedan",pageImage:"Bild på sidan",pageTextPH:"Skriv vad som händer på sidan…",pageTimer:"Timer på sidan",off:"Av",sunset:"Solnedgång",editingLabel:"Redigerar",duEditing:"Du redigerar",cover:"Huvudbild",schedule:"Schema",doneTitle:"Klart",doneSub:"Du kan vila en stund.",dayOpen:"Din dag är öppen",allActsDoneTitle:"Alla aktiviteter är klara",allActsDoneSub:"Du kan vila resten av dagen.",windDown:"Vi byter snart",lampOne:"1 lampa = 1 minut",lampMany:"1 lampa = {n} minuter",stepCountOne:"1 steg",stepCountMany:"{n} steg",noName:"(Utan namn)",overlapTitle:"Tidskrock",overlapDesc:"Den nya aktiviteten {t} överlappar:",goBack:"Gå tillbaka",saveAnyway:"Spara ändå"},
-  en:{other:"SV",myDay:"My Day",editorOpen:"Edit",editorClose:"Close",list:"List",card:"Cards",noActs:"No activities – tap Edit",addAct:"+ New activity",save:"Save",cancel:"Cancel",actName:"Activity name",actTime:"Time",pickEmoji:"Pick emoji",pickColor:"Colour",steps:"Checklist",stepPH:"e.g. Put on shoes",timerAct:"Timer – activity",timerType:"Timer type",timerMin:"Minutes",timerColor:"Timer colour",sector:"Time Timer",ring:"Ring",dots:"Dot timer",wave:"Wave",sun:"Sunset",lava:"Lava",pause:"Pause",resume:"Start",reset:"Reset",next:"Next",prev:"Back",min:"min",settings:"Settings",cardStyle:"Card style",styleNormal:"Normal",styleCompact:"Compact",styleBig:"Large",syncTitle:"Sharing",sameDevice:"Same device",syncMode:"Via code",sameDeviceDesc:"Edit & user view on same device.",syncModeDesc:"Share schedule via code.",yourCode:"Your code",codeHint:"Give this code to the user",enterCode:"Enter code",connect:"Connect",wrongCode:"Not found.",copied:"Copied ✓",openTimer:"Start timer",allDoneMsg:"Great job! 🌟",emotions:"How are you?",emotionSaved:"Saved! ✓",emotionReason:"Why?",emotionHistory:"History",noHistory:"No history",toolsTimer:"Timer",toolsEmotion:"Mood",home:"Home",comm:"Talk",sigvardOn:"Sigvard lamps",visibleTools:"Visible tools",schedView:"Schedule view",viewBoth:"List + Cards",viewList:"List only",viewCard:"Cards only",addCard:"+ New card",addCat:"+ New category",catName:"Category name",autoTimer:"Syncs with start time",preview:"Preview",startTimer:"Start",timerSettings:"Timer settings for user view",allowedTimers:"Allowed timers",defaultTimer:"Default timer",visibleEmotions:"Visible emotions",enlarge:"Enlarge",cardImage:"Image",uploadPhoto:"Upload photo",useEmoji:"Use emoji instead",stories:"Stories",newStory:"New story",storyTitle:"Title",pages:"Pages",addPage:"+ Add page",pageNum:"Page",storyText:"Page text",noStories:"No stories – tap Edit to create",renameCat:"Rename category",calm:"Calm",calmTitle:"Find calm",breathing:"Breathe",grounding:"54321",breathIn:"Breathe in",breathHold:"Hold",breathOut:"Breathe out",breathDone:"Well done",groundIntro:"Pause. Let's do this together.",groundStart:"Begin",see5:"5 things you can see",hear4:"4 things you can hear",touch3:"3 things you can touch",smell2:"2 things you can smell",taste1:"1 thing you can taste",iAmHere:"I am here. I am safe.",roundsDone:"Done",calmSettings:"Calm – exercises",idcard:"My card",myName:"My name",myAge:"Age",aboutMe:"About me",myTriggers:"This can be hard",whatHelps:"This helps me",emergencyContacts:"Call",contactName:"Name",contactPhone:"Phone",contactRelation:"Relation",addContact:"+ Add contact",call:"Call",idHint:"Show this to someone who wants to help","editCard":"Edit my card",tools:"Tools",firstthen:"First-Then",choices:"Choices",rewards:"Reward",recipes:"Recipes",first:"First",then:"Then",ftDone:"Done!",chQuestion:"What do you want?",chTap:"Tap to choose",stars:"stars",goalReached:"You've earned your reward! 🎉",reward:"Reward",starsGoal:"Goal – number of stars",addChoice:"+ New choice",newCategory:"+ New category",rewardEmoji:"Emoji",rewardText:"Reward",ingredients:"Ingredients",instructions:"How to make it",servings:"Servings",time:"Time",newRecipe:"New recipe",step:"Step",addStep:"+ Add step",useReward:"Give star when done",resetStars:"Reset stars",starsEarned:"Stars earned",bannerNowOngoing:"Happening now",bannerNextUp:"Next up",bannerDayLabel:"Today",bannerNoActsLeft:"Nothing left today",close:"Close",week:"Week",myWeek:"My week",weekEmpty:"No activities this week",weekAdd:"Add activity",dayColors:"Day colours",dayColorsHint:"Tap a day to pick a colour",resetColors:"Reset to default",monday:"Monday",tuesday:"Tuesday",wednesday:"Wednesday",thursday:"Thursday",friday:"Friday",saturday:"Saturday",sunday:"Sunday",skylight:"Sky",skyHint:"Let your gaze rest",notTodayHint:"You're viewing a different day. Steps can't be checked off now.",editStory:"Edit story",storyType:"Type",typeSeq:"Step-by-step",typeSeqDesc:"Multiple pages",typeFT:"First-Then",typeFTDesc:"First → Then",coverImage:"Cover image",camera:"Camera",gallery:"Gallery",emoji:"Emoji",removePhoto:"Remove photo",storyPlacehSeq:"e.g. Clean the room",storyPlacehFT:"e.g. First homework, then TV",ftLabels:"Labels (shown above the cards)",ftSection:"First and Then",pageImage:"Page image",pageTextPH:"Write what happens on this page…",pageTimer:"Page timer",off:"Off",sunset:"Sunset",editingLabel:"Editing",duEditing:"Editing",cover:"Cover",schedule:"Schedule",doneTitle:"Done",doneSub:"Take a moment to rest.",dayOpen:"Your day is open",allActsDoneTitle:"All activities done",allActsDoneSub:"You can rest the rest of the day.",windDown:"Almost done",lampOne:"1 lamp = 1 minute",lampMany:"1 lamp = {n} minutes",stepCountOne:"1 step",stepCountMany:"{n} steps",noName:"(No name)",overlapTitle:"Time conflict",overlapDesc:"The new activity {t} overlaps:",goBack:"Go back",saveAnyway:"Save anyway"},
+  sv:{other:"EN",myDay:"Min dag",editorOpen:"Redigera",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Inga aktiviteter – tryck Redigera",addAct:"+ Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Solnedgång",lava:"Lava",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redigering & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Hem",comm:"Tala",sigvardOn:"Sigvard-lampor",sigvardColor:"Färg på lampor",sigvardColorHint:"Tidslinjen följer samma färg",schedVisuals:"Visa i schemat",schedVisualsHint:"Slå av om det blir för mycket – båda kan användas, en av dem, eller inget alls.",bannerLabel:"\"Pågår nu\"-rad",bannerHint:"Liten rad högst upp som visar pågående eller nästa aktivitet.",nowLineLabel:"Tidsstreck",nowLineHint:"Linjen som följer aktuell tid genom dagen.",nowLineColor:"Färg på strecket",nowLineSameAsSig:"Samma som lamporna",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",barometerStyle:"Mätarens stil",barometerStyleHint:"Hur känslorna visas för användaren.",styleArc:"Bågformad",styleVertical:"Lodrät",addEmotion:"+ Lägg till känsla",editEmotion:"Redigera känsla",emotionName:"Namn",emotionNamePH:"t.ex. Stressad",customLabel:"Egen",changePhoto:"Byt foto",resetEmotions:"Återställ förvalda",resetEmotionsHint:"Sätter tillbaka standardkänslorna till sina ursprungliga namn, emojis och färger.",confirmDeleteEmotion:"Ta bort?",reasonField:"Anteckningsfält",reasonFieldHint:"Användaren får skriva några ord om sin känsla. Stäng av om det är för mycket.",reasonLabelPH:"t.ex. Varför? eller Vad hände?",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – tryck Redigera för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",helloMyNameIs:"Hej, jag heter",yearsOld:"år",emptyCardTitle:"Kortet är inte ifyllt än",emptyCardDesc:"Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Tryck Redigera för att fylla i det.",createCardTitle:"Skapa mitt-mig-kortet",createCardDesc:"Sammanfattar viktig information — namn, kontaktpersoner, och vad som hjälper i pressade situationer. Visas vid behov.",showLarge:"Visa stort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng",week:"Vecka",myWeek:"Min vecka",weekEmpty:"Inga aktiviteter den här veckan",weekAdd:"Lägg till aktivitet",dayColors:"Veckodagsfärger",dayColorsHint:"Tryck på en dag för att välja färg",resetColors:"Återställ till standard",monday:"Måndag",tuesday:"Tisdag",wednesday:"Onsdag",thursday:"Torsdag",friday:"Fredag",saturday:"Lördag",sunday:"Söndag",skylight:"Himmel",skyHint:"Låt blicken vila",notTodayHint:"Du tittar på en annan dag. Stegen kan inte bockas av nu.",editStory:"Redigera berättelse",storyType:"Typ",typeSeq:"Steg-för-steg",typeSeqDesc:"Flera sidor",typeFT:"Först-Sedan",typeFTDesc:"Först → Sedan",coverImage:"Huvudbild",camera:"Kamera",gallery:"Galleri",emoji:"Emoji",removePhoto:"Ta bort foto",storyPlacehSeq:"t.ex. Städa rummet",storyPlacehFT:"t.ex. Först läxor, sedan TV",ftLabels:"Etiketter (visas över korten)",ftSection:"Först och Sedan",pageImage:"Bild på sidan",pageTextPH:"Skriv vad som händer på sidan…",pageTimer:"Timer på sidan",off:"Av",sunset:"Solnedgång",editingLabel:"Redigerar",duEditing:"Du redigerar",cover:"Huvudbild",schedule:"Schema",doneTitle:"Klart",doneSub:"Du kan vila en stund.",dayOpen:"Din dag är öppen",allActsDoneTitle:"Alla aktiviteter är klara",allActsDoneSub:"Du kan vila resten av dagen.",windDown:"Vi byter snart",lampOne:"1 lampa = 1 minut",lampMany:"1 lampa = {n} minuter",stepCountOne:"1 steg",stepCountMany:"{n} steg",noName:"(Utan namn)",unsavedTitle:"Osparade ändringar",unsavedDesc:"Vill du spara innan du stänger?",discardChanges:"Släng",keepEditing:"Fortsätt redigera",overlapTitle:"Tidskrock",overlapDesc:"Den nya aktiviteten {t} överlappar:",goBack:"Gå tillbaka",saveAnyway:"Spara ändå",editAct:"Redigera aktivitet",newAct:"Ny aktivitet",actNamePH:"t.ex. Frukost",timeStart:"Start",timeEnd:"Slut (frivilligt)",repeat:"Upprepa",repNone:"Endast idag",repDaily:"Varje dag",repWeekdays:"Vardagar",repWeekend:"Helger",repPickDays:"Välj veckodagar",repDailyShort:"Dagligen",repDaysSuffix:"dagar",daysShort:["sön","mån","tis","ons","tor","fre","lör"],resetSection:"Återställ",resetDataDesc:"Rensar alla aktiviteter, berättelser, känslohistorik och inställningar. Kan inte ångras.",resetDataBtn:"Rensa all data",resetDataConfirm:"Är du säker? Allt data raderas och kan inte återskapas."},
+  en:{other:"SV",myDay:"My Day",editorOpen:"Edit",editorClose:"Close",list:"List",card:"Cards",noActs:"No activities – tap Edit",addAct:"+ New activity",save:"Save",cancel:"Cancel",actName:"Activity name",actTime:"Time",pickEmoji:"Pick emoji",pickColor:"Colour",steps:"Checklist",stepPH:"e.g. Put on shoes",timerAct:"Timer – activity",timerType:"Timer type",timerMin:"Minutes",timerColor:"Timer colour",sector:"Time Timer",ring:"Ring",dots:"Dot timer",wave:"Wave",sun:"Sunset",lava:"Lava",pause:"Pause",resume:"Start",reset:"Reset",next:"Next",prev:"Back",min:"min",settings:"Settings",cardStyle:"Card style",styleNormal:"Normal",styleCompact:"Compact",styleBig:"Large",syncTitle:"Sharing",sameDevice:"Same device",syncMode:"Via code",sameDeviceDesc:"Edit & user view on same device.",syncModeDesc:"Share schedule via code.",yourCode:"Your code",codeHint:"Give this code to the user",enterCode:"Enter code",connect:"Connect",wrongCode:"Not found.",copied:"Copied ✓",openTimer:"Start timer",allDoneMsg:"Great job! 🌟",emotions:"How are you?",emotionSaved:"Saved! ✓",emotionReason:"Why?",emotionHistory:"History",noHistory:"No history",toolsTimer:"Timer",toolsEmotion:"Mood",home:"Home",comm:"Talk",sigvardOn:"Sigvard lamps",sigvardColor:"Lamp colour",sigvardColorHint:"The time line follows the same colour",schedVisuals:"Show in schedule",schedVisualsHint:"Turn off if it gets noisy – use both, one of them, or neither.",bannerLabel:"\"Happening now\" bar",bannerHint:"Small bar at the top showing the current or upcoming activity.",nowLineLabel:"Time line",nowLineHint:"The line that follows the current time through the day.",nowLineColor:"Line colour",nowLineSameAsSig:"Same as lamps",visibleTools:"Visible tools",schedView:"Schedule view",viewBoth:"List + Cards",viewList:"List only",viewCard:"Cards only",addCard:"+ New card",addCat:"+ New category",catName:"Category name",autoTimer:"Syncs with start time",preview:"Preview",startTimer:"Start",timerSettings:"Timer settings for user view",allowedTimers:"Allowed timers",defaultTimer:"Default timer",visibleEmotions:"Visible emotions",barometerStyle:"Barometer style",barometerStyleHint:"How feelings are shown to the user.",styleArc:"Arc",styleVertical:"Vertical",addEmotion:"+ Add feeling",editEmotion:"Edit feeling",emotionName:"Name",emotionNamePH:"e.g. Stressed",customLabel:"Custom",changePhoto:"Change photo",resetEmotions:"Reset defaults",resetEmotionsHint:"Restores the standard feelings to their original names, emojis and colours.",confirmDeleteEmotion:"Remove?",reasonField:"Notes field",reasonFieldHint:"User can write a few words about their feeling. Turn off if it's too much.",reasonLabelPH:"e.g. Why? or What happened?",enlarge:"Enlarge",cardImage:"Image",uploadPhoto:"Upload photo",useEmoji:"Use emoji instead",stories:"Stories",newStory:"New story",storyTitle:"Title",pages:"Pages",addPage:"+ Add page",pageNum:"Page",storyText:"Page text",noStories:"No stories – tap Edit to create",renameCat:"Rename category",calm:"Calm",calmTitle:"Find calm",breathing:"Breathe",grounding:"54321",breathIn:"Breathe in",breathHold:"Hold",breathOut:"Breathe out",breathDone:"Well done",groundIntro:"Pause. Let's do this together.",groundStart:"Begin",see5:"5 things you can see",hear4:"4 things you can hear",touch3:"3 things you can touch",smell2:"2 things you can smell",taste1:"1 thing you can taste",iAmHere:"I am here. I am safe.",roundsDone:"Done",calmSettings:"Calm – exercises",idcard:"My card",myName:"My name",myAge:"Age",aboutMe:"About me",myTriggers:"This can be hard",whatHelps:"This helps me",emergencyContacts:"Call",contactName:"Name",contactPhone:"Phone",contactRelation:"Relation",addContact:"+ Add contact",call:"Call",idHint:"Show this to someone who wants to help","editCard":"Edit my card",helloMyNameIs:"Hi, my name is",yearsOld:"years old",emptyCardTitle:"The card isn't filled in yet",emptyCardDesc:"My card shows important information that can be valuable in situations where you need help. Tap Edit to fill it in.",createCardTitle:"Create your card",createCardDesc:"A summary of important information — name, contacts, and what helps in stressful moments. Shown when needed.",showLarge:"Show large",tools:"Tools",firstthen:"First-Then",choices:"Choices",rewards:"Reward",recipes:"Recipes",first:"First",then:"Then",ftDone:"Done!",chQuestion:"What do you want?",chTap:"Tap to choose",stars:"stars",goalReached:"You've earned your reward! 🎉",reward:"Reward",starsGoal:"Goal – number of stars",addChoice:"+ New choice",newCategory:"+ New category",rewardEmoji:"Emoji",rewardText:"Reward",ingredients:"Ingredients",instructions:"How to make it",servings:"Servings",time:"Time",newRecipe:"New recipe",step:"Step",addStep:"+ Add step",useReward:"Give star when done",resetStars:"Reset stars",starsEarned:"Stars earned",bannerNowOngoing:"Happening now",bannerNextUp:"Next up",bannerDayLabel:"Today",bannerNoActsLeft:"Nothing left today",close:"Close",week:"Week",myWeek:"My week",weekEmpty:"No activities this week",weekAdd:"Add activity",dayColors:"Day colours",dayColorsHint:"Tap a day to pick a colour",resetColors:"Reset to default",monday:"Monday",tuesday:"Tuesday",wednesday:"Wednesday",thursday:"Thursday",friday:"Friday",saturday:"Saturday",sunday:"Sunday",skylight:"Sky",skyHint:"Let your gaze rest",notTodayHint:"You're viewing a different day. Steps can't be checked off now.",editStory:"Edit story",storyType:"Type",typeSeq:"Step-by-step",typeSeqDesc:"Multiple pages",typeFT:"First-Then",typeFTDesc:"First → Then",coverImage:"Cover image",camera:"Camera",gallery:"Gallery",emoji:"Emoji",removePhoto:"Remove photo",storyPlacehSeq:"e.g. Clean the room",storyPlacehFT:"e.g. First homework, then TV",ftLabels:"Labels (shown above the cards)",ftSection:"First and Then",pageImage:"Page image",pageTextPH:"Write what happens on this page…",pageTimer:"Page timer",off:"Off",sunset:"Sunset",editingLabel:"Editing",duEditing:"Editing",cover:"Cover",schedule:"Schedule",doneTitle:"Done",doneSub:"Take a moment to rest.",dayOpen:"Your day is open",allActsDoneTitle:"All activities done",allActsDoneSub:"You can rest the rest of the day.",windDown:"Almost done",lampOne:"1 lamp = 1 minute",lampMany:"1 lamp = {n} minutes",stepCountOne:"1 step",stepCountMany:"{n} steps",noName:"(No name)",unsavedTitle:"Unsaved changes",unsavedDesc:"Save before closing?",discardChanges:"Discard",keepEditing:"Keep editing",overlapTitle:"Time conflict",overlapDesc:"The new activity {t} overlaps:",goBack:"Go back",saveAnyway:"Save anyway",editAct:"Edit activity",newAct:"New activity",actNamePH:"e.g. Breakfast",timeStart:"Start",timeEnd:"End (optional)",repeat:"Repeat",repNone:"Today only",repDaily:"Every day",repWeekdays:"Weekdays",repWeekend:"Weekends",repPickDays:"Pick days of week",repDailyShort:"Daily",repDaysSuffix:"days",daysShort:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],resetSection:"Reset",resetDataDesc:"Clears all activities, stories, mood history and settings. Cannot be undone.",resetDataBtn:"Clear all data",resetDataConfirm:"Are you sure? All data will be erased and cannot be recovered."},
 };
 
 const TTYPES=["sector","ring","dots","wave","sun","lava"];
@@ -382,7 +513,7 @@ function DoneBadge({color,t}){
         </svg>
       </div>
       {/* Primary text — settled, no exclamation */}
-      <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.ink,letterSpacing:-.2,animation:"dbTextIn 0.7s 0.7s cubic-bezier(0.32, 0.72, 0, 1) both"}}>{doneTxt}</div>
+      <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.inkSoft,letterSpacing:-.2,animation:"dbTextIn 0.7s 0.7s cubic-bezier(0.32, 0.72, 0, 1) both"}}>{doneTxt}</div>
       {/* Subtitle — a gentle handover to whatever's next */}
       <div style={{fontFamily:G.font,fontWeight:500,fontSize:13,color:G.ink3,letterSpacing:.3,animation:"dbTextIn 0.7s 1.1s cubic-bezier(0.32, 0.72, 0, 1) both"}}>{restTxt}</div>
     </div>
@@ -1288,7 +1419,7 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
         @keyframes ftIn{from{opacity:0}to{opacity:1}}
         @keyframes ftActIn{0%{opacity:0;transform:translateY(-8px) scale(0.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
       `}</style>
-      <button onClick={onClose} style={{position:"absolute",top:20,right:20,width:42,height:42,borderRadius:21,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:2}}>✕</button>
+      <button onClick={onClose} style={{position:"absolute",top:20,right:20,width:42,height:42,borderRadius:21,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:2}}><IconX size={14}/></button>
       {/* Activity context — emoji + name shown above the timer so the user always knows what they're timing */}
       {activity&&(
         <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 18px 12px 14px",background:G.white,borderRadius:22,boxShadow:`0 8px 22px ${activity.color}1F, 0 2px 6px rgba(31,27,46,0.06)`,border:`1px solid ${activity.color}30`,maxWidth:"calc(100% - 40px)",animation:"ftActIn 0.5s 0.15s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
@@ -1488,38 +1619,52 @@ function TimerThumb({type,color,size=120,min=30}){
 }
 
 /* ═══ Sigvard lamps ═══ */
-/* ═══ Sigvard timeline lamps ═══
-   Simple model:
-   - Lamp count adapts to available height
-   - All lamps in the column lit RED = upcoming time, mörka = passerad tid
-   - As time passes, the topmost lit lamps go dark one by one
-   - This means: at the start of the day all lamps lit; as time ticks down, the column "drains" from the top
-*/
 /* ═══ Sigvard timeline — 24h day clock ═══
-   - Always shows full day 00:00 → 24:00
-   - One lamp per fixed interval (default 30 min = 48 lamps, or 1h = 24 lamps)
-   - Black = past, red = future, brighter red at "now"
-   - Independent of activities — it's a day clock
+   Tick model (strict):
+   - 48 lamps, one per 30-min tick across the full day (00:00 … 23:30)
+   - yForLamp(i) = vertical center of the lamp marking minute i*30
+   - yForTime(min) = where the now-line sits for any minute of the day
+   - By construction: yForTime(i*SIGVARD_MIN_PER_LAMP) === yForLamp(i)
+     so the line and lamp positions are pixel-locked.
+
+   Lit/dark logic — strict tick boundary:
+   - Past (dark): the moment the line crosses the lamp's centre, the lamp
+     goes dark. No lit lamp ever sits ABOVE the descending line.
+   - Now (bright + pulsing): the lamp the line is APPROACHING from above —
+     within ½ step (15 min) of the lamp's centre. Signals what's coming next.
+   - Future (calm lit): everything below the "approaching" window.
 */
 const SIGVARD_MIN_PER_LAMP=30; // 30 minutes per lamp → 48 lamps total
 const SIGVARD_LAMP=8, SIGVARD_GAP=42, SIGVARD_PAD_V=14;
 const SIGVARD_STEP=SIGVARD_LAMP+SIGVARD_GAP;
 const SIGVARD_TOTAL_LAMPS=Math.ceil(24*60/SIGVARD_MIN_PER_LAMP);
+const SIGVARD_HALF_STEP_MIN=SIGVARD_MIN_PER_LAMP/2;
 // Vertical center of lamp i (relative to lamps container top) in px
 const yForLamp=(i)=>SIGVARD_PAD_V+i*SIGVARD_STEP+SIGVARD_LAMP/2;
-// Vertical center for any time (minutes-of-day)
+// Vertical center for any time (minutes-of-day) — clamped to the lamp column.
+// At minute i*30 this equals yForLamp(i) exactly.
 const yForTime=(min)=>{
-  const lampIdx=min/SIGVARD_MIN_PER_LAMP;
+  const clamped=Math.max(0,Math.min(24*60,min));
+  const lampIdx=clamped/SIGVARD_MIN_PER_LAMP;
   return SIGVARD_PAD_V+lampIdx*SIGVARD_STEP+SIGVARD_LAMP/2;
 };
 const SIGVARD_TOTAL_HEIGHT=SIGVARD_PAD_V*2+SIGVARD_TOTAL_LAMPS*SIGVARD_LAMP+(SIGVARD_TOTAL_LAMPS-1)*SIGVARD_GAP;
 
-function SigvardTimeline({now}){
-  const nowM=now.getHours()*60+now.getMinutes();
+function SigvardTimeline({now,color="#FF4848"}){
+  const nowM=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+  // Pre-compute color variants once per render — used for all 48 lamps.
+  const cLight=shade(color,0.18); // inner highlight of the radial gradient
+  const cDeep =shade(color,-0.45); // outer/edge of the lit gradient
+  const cBorder=withAlpha(color,0.35);
+  // Unique animation name so multiple Sigvard columns with different colors don't fight
+  const animId=`lampNow_${color.replace("#","")}`;
+  // a11y: announce current time once, since the lamps themselves are decorative
+  const hh=String(now.getHours()).padStart(2,"0");
+  const mm=String(now.getMinutes()).padStart(2,"0");
   return(
-    <div style={{display:"flex",alignItems:"stretch",gap:4,flexShrink:0,alignSelf:"flex-start"}}>
-      <style>{`@keyframes lampNow{0%,100%{box-shadow:0 0 10px #FF4848AA, 0 0 20px #FF484866;transform:scale(1)}50%{box-shadow:0 0 18px #FF4848DD, 0 0 32px #FF484899, 0 0 48px #FF484844;transform:scale(1.18)}}`}</style>
-      <div style={{
+    <div role="img" aria-label={`Tidslinje, klockan är ${hh}:${mm}`} style={{display:"flex",alignItems:"stretch",gap:4,flexShrink:0,alignSelf:"flex-start"}}>
+      <style>{`@keyframes ${animId}{0%,100%{box-shadow:0 0 10px ${withAlpha(color,0.67)}, 0 0 20px ${withAlpha(color,0.4)};transform:scale(1)}50%{box-shadow:0 0 18px ${withAlpha(color,0.87)}, 0 0 32px ${withAlpha(color,0.6)}, 0 0 48px ${withAlpha(color,0.27)};transform:scale(1.18)}}`}</style>
+      <div aria-hidden="true" style={{
         display:"flex",flexDirection:"column",alignItems:"center",
         padding:`${SIGVARD_PAD_V}px 6px`,
         background:`linear-gradient(180deg, ${G.white} 0%, #FBFAFE 100%)`,
@@ -1530,30 +1675,34 @@ function SigvardTimeline({now}){
       }}>
         {Array.from({length:SIGVARD_TOTAL_LAMPS}).map((_,i)=>{
           const lampMin=i*SIGVARD_MIN_PER_LAMP;
-          const isPast=lampMin+SIGVARD_MIN_PER_LAMP<=nowM;
-          const isNow=lampMin<=nowM && nowM<lampMin+SIGVARD_MIN_PER_LAMP;
+          // Strict tick model — the user's mental model:
+          //   • Past: line has crossed the lamp's centre, even by a fraction
+          //     of a minute → lamp goes DARK immediately. No lit lamp above
+          //     the descending line, ever.
+          //   • Now: line is APPROACHING this lamp (within ½ step below it)
+          //     → lamp pulses brightly, signalling what's coming next.
+          //   • Future: everything else → calm lit.
+          const isPast=nowM > lampMin;
+          const isNow =!isPast && (lampMin - nowM) <= SIGVARD_HALF_STEP_MIN;
           return <div key={i} style={{
             width:SIGVARD_LAMP,height:SIGVARD_LAMP,borderRadius:"50%",
             marginBottom:i===SIGVARD_TOTAL_LAMPS-1?0:SIGVARD_GAP,
-            background:isPast?"radial-gradient(circle at 30% 30%, #4A4258, #1F1B2E)":(isNow?"radial-gradient(circle at 30% 30%, #FF6A6A, #E62525)":"radial-gradient(circle at 30% 30%, #FF6060, #C92020)"),
+            background:isPast
+              ?"radial-gradient(circle at 30% 30%, #4A4258, #1F1B2E)"
+              :(isNow
+                ?`radial-gradient(circle at 30% 30%, ${cLight}, ${color})`
+                :`radial-gradient(circle at 30% 30%, ${color}, ${cDeep})`),
             boxShadow:isPast
               ?"inset 0 1px 2px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.1)"
-              :(isNow?undefined:"0 0 6px #E9404099, inset 0 -1px 1px rgba(0,0,0,0.15)"),
-            border:`1px solid ${isPast?"#2C2640":"#E9404055"}`,
-            transition:"all .4s",
-            animation:isNow?"lampNow 2.4s ease-in-out infinite":undefined,
+              :(isNow?undefined:`0 0 6px ${withAlpha(color,0.6)}, inset 0 -1px 1px rgba(0,0,0,0.15)`),
+            border:`1px solid ${isPast?"#2C2640":cBorder}`,
+            transition:"background .4s, box-shadow .4s, border-color .4s",
+            animation:isNow?`${animId} 2.4s ease-in-out infinite`:undefined,
           }}/>;
         })}
       </div>
     </div>
   );
-}
-
-// Legacy alias for backward compatibility
-function SigvardLamps(props){
-  const[now,setNow]=useState(new Date());
-  useEffect(()=>{const id=setInterval(()=>setNow(new Date()),15000);return()=>clearInterval(id);},[]);
-  return <SigvardTimeline now={now}/>;
 }
 
 /* ═══ Timeline view: Sigvard + activities scroll together, auto-scroll to "now" ═══ */
@@ -1623,23 +1772,81 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now}){
     scrollRef.current.scrollTo({top:Math.max(0,targetY-80),behavior:"smooth"});
   };
 
-  // Banner is fully visible at top of scroll, dims away when scrolled down at all
-  const[scrolled,setScrolled]=useState(false);
+  /* ───────── Viewport-vs-target tracking ─────────
+     Two independent UI signals derived from scroll + target position:
+
+     (1) targetInView — is the target activity currently visible on screen?
+         Drives the compact "Nästa"-pill: it should appear ONLY when the
+         user is looking at an empty stretch of the day (target off-screen)
+         and offer a shortcut to jump to it. Once they've scrolled to where
+         the activity is, the pill must disappear — otherwise it visually
+         overlaps the actual activity tile (the bug we're fixing).
+
+     (2) bannerCollide — would the full top banner visually overlap the
+         target activity tile? The banner is sticky-positioned at the top
+         of the scroller, so a tile that has scrolled up to the top edge
+         is essentially "under" the banner. When that happens, the banner
+         dims away so the tile breathes — but it returns once the user
+         scrolls past again, keeping it as a standing presence. */
+  const[targetInView,setTargetInView]=useState(false);
+  // Target is BELOW the current viewport — the user hasn't scrolled to it yet.
+  // The smart-shortcut banner only appears in this case: its purpose is to
+  // help the user navigate DOWN to the schedule. If the target is above the
+  // viewport (user has consciously scrolled past it), the banner stays quiet
+  // — popping back up would feel like the app second-guessing the user.
+  const[targetBelow,setTargetBelow]=useState(false);
+  const[bannerCollide,setBannerCollide]=useState(false);
+  // Latest target position kept in a ref so the scroll listener (set up once)
+  // can read current values without re-attaching on every render.
+  const targetMetaRef=useRef({y:-99999,h:0});
+  useEffect(()=>{
+    const pos=target?positions.find(p=>p.item.id===target.id):null;
+    targetMetaRef.current={y:pos?.y??-99999,h:pos?.h??0};
+  });
   useEffect(()=>{
     if(!scrollRef.current) return;
     const scroller=scrollRef.current;
-    const check=()=>setScrolled(scroller.scrollTop>20);
+    const BANNER_H=110; // banner zone at top of scroller (sticky banner ~90 + margin)
+    const check=()=>{
+      const{y,h}=targetMetaRef.current;
+      if(y<-9000){setTargetInView(false);setTargetBelow(false);setBannerCollide(false);return;}
+      const top=scroller.scrollTop;
+      const viewH=scroller.clientHeight;
+      // Target activity overlaps the comfortable visible band of the viewport.
+      // Comfortable band excludes the banner zone at top and a small bottom margin.
+      const inView=(y+h)>top+50 && y<(top+viewH-30);
+      setTargetInView(inView);
+      // Target is positioned BELOW the visible viewport — user needs to scroll
+      // down to reach it. Only this case warrants the smart-shortcut banner.
+      setTargetBelow(y>=top+viewH-30);
+      // Target overlaps the banner's sticky zone (top of the scroller).
+      // When the activity tile crosses into the banner area, the banner dims.
+      const collide=(y-top)<BANNER_H && (y+h-top)>0;
+      setBannerCollide(collide);
+    };
     check();
     scroller.addEventListener("scroll",check,{passive:true});
-    return()=>scroller.removeEventListener("scroll",check);
+    window.addEventListener("resize",check);
+    return()=>{
+      scroller.removeEventListener("scroll",check);
+      window.removeEventListener("resize",check);
+    };
   },[]);
 
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",position:"relative",minHeight:0}}>
-      {/* Sticky "Nu" banner */}
-      {!isEd&&(
-        <div style={{position:"sticky",top:0,zIndex:10,maxHeight:scrolled?0:90,opacity:scrolled?0:1,overflow:"hidden",transition:"max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease",pointerEvents:scrolled?"none":"auto"}}>
-        <button onClick={jumpToTarget} className="lt-press-soft" style={{margin:"10px 14px 0",padding:"10px 14px",borderRadius:14,border:`1px solid ${G.border}`,background:"linear-gradient(135deg,#FFFFFF 0%, #FCFAFE 60%, #F8F5FC 100%)",boxShadow:"0 4px 14px rgba(31,27,46,0.05), inset 0 1px 0 rgba(255,255,255,0.95)",display:"flex",alignItems:"center",gap:10,cursor:"pointer",textAlign:"left",transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .2s",overflow:"hidden",width:"calc(100% - 28px)"}}>
+      {/* ═══════════════ Mode A: SMART SHORTCUT (default — banner toggle OFF) ═══════════════
+          The wide top banner here acts as a directional pop-up: visible only
+          when the target activity is BELOW the viewport, i.e. the user needs
+          to scroll DOWN to reach it. Once the target is in view (or above,
+          meaning the user has consciously scrolled past), the banner stays
+          quiet. Popping back up after the user has passed something would
+          feel like the app second-guessing the user. */}
+      {!isEd&&cfg.showBanner===false&&target&&(()=>{
+        const show=targetBelow;
+        return(
+        <div style={{position:"sticky",top:0,zIndex:10,maxHeight:show?90:0,opacity:show?1:0,overflow:"hidden",transition:"max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease",pointerEvents:show?"auto":"none"}}>
+        <button onClick={jumpToTarget} className="lt-press-soft" style={{margin:"10px 14px 0",padding:"10px 14px",borderRadius:14,border:`1px solid ${G.border}`,background:"linear-gradient(135deg,#FFFFFF 0%, #FCFAFE 60%, #F8F5FC 100%)",boxShadow:"0 4px 14px rgba(31,27,46,0.05), inset 0 1px 0 rgba(255,255,255,0.95)",display:"flex",alignItems:"center",gap:10,cursor:"pointer",textAlign:"left",transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .2s",overflow:"hidden",width:"calc(100% - 28px)",position:"relative"}}>
           <style>{`@keyframes bannerSweep{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}`}</style>
           {/* Subtle shimmer overlay */}
           <div style={{position:"absolute",inset:0,background:`linear-gradient(105deg, transparent 30%, ${SCREENS.home.h}0D 50%, transparent 70%)`,animation:"bannerSweep 6s ease-in-out infinite",pointerEvents:"none"}}/>
@@ -1661,10 +1868,58 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now}){
               </>
             )}
           </div>
-          <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:G.ink3,flexShrink:0,opacity:.5,position:"relative",zIndex:1}}>↓</div>
+          <span style={{color:G.ink3,flexShrink:0,position:"relative",zIndex:1,opacity:.7,display:"inline-flex",alignItems:"center",animation:"bannerChev 2.6s ease-in-out infinite"}}>
+            <IconChevron dir="down" size={13} strokeWidth={2.2}/>
+          </span>
+          <style>{`@keyframes bannerChev{0%,100%{transform:translateY(0);opacity:0.65}50%{transform:translateY(2px);opacity:1}}`}</style>
         </button>
         </div>
-      )}
+        );
+      })()}
+      {/* ═══════════════ Mode B: CONFIGURABLE BANNER (toggle ON) ═══════════════
+          The compact pill is the persistent presence the user opted into.
+          Always shown when banner toggle is enabled; dims away only when an
+          activity tile reaches the banner zone at top (to avoid overlapping
+          the actual tile content). Returns once the tile scrolls past. */}
+      {!isEd&&cfg.showBanner!==false&&target&&(()=>{
+        const isEn=t?.myDay==="My Day";
+        const show=!bannerCollide;
+        return(
+        <button onClick={jumpToTarget} aria-label={isEn?"Back to now":"Tillbaka till nu"} className="lt-press-soft" style={{
+          position:"absolute",top:14,left:"50%",zIndex:11,
+          transform:show?"translate(-50%,0) scale(1)":"translate(-50%,-12px) scale(0.92)",
+          opacity:show?1:0,
+          pointerEvents:show?"auto":"none",
+          padding:"8px 14px 8px 12px",borderRadius:999,
+          border:`1px solid ${G.border}`,
+          background:"linear-gradient(135deg, rgba(255,255,255,0.96), rgba(252,250,254,0.96))",
+          backdropFilter:"saturate(180%) blur(14px)",
+          WebkitBackdropFilter:"saturate(180%) blur(14px)",
+          boxShadow:"0 6px 20px rgba(31,27,46,0.12), inset 0 1px 0 rgba(255,255,255,0.9)",
+          display:"flex",alignItems:"center",gap:7,cursor:"pointer",
+          fontFamily:G.font,fontWeight:600,fontSize:12,color:G.ink,letterSpacing:.2,
+          transition:"opacity 0.32s ease, transform 0.36s cubic-bezier(0.32, 0.72, 0, 1)",
+          whiteSpace:"nowrap",maxWidth:"calc(100% - 28px)",
+        }}>
+          <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:8,height:8,borderRadius:"50%",background:target.color,boxShadow:`0 0 8px ${target.color}AA, 0 0 0 2px ${target.color}22`,animation:"pillDot 2.2s ease-in-out infinite",flexShrink:0}}/>
+          <style>{`@keyframes pillDot{0%,100%{box-shadow:0 0 6px ${target.color}99, 0 0 0 2px ${target.color}1F;transform:scale(1)}50%{box-shadow:0 0 12px ${target.color}EE, 0 0 0 3px ${target.color}33;transform:scale(1.18)}}`}</style>
+          <span style={{overflow:"hidden",textOverflow:"ellipsis",flex:1,minWidth:0}}>
+            {currentAct
+              ? (isEn?"Now":"Pågår nu")
+              : (isEn?"Next":"Nästa")}
+            <span style={{color:G.ink2,fontWeight:500,marginLeft:6}}>· {target.name}</span>
+          </span>
+          {/* Subtle chevron — signals "tappable, jumps down". Matches week-pill
+              vocabulary. Animation only when target is below the viewport;
+              otherwise stays static so it doesn't imply a direction that isn't
+              currently true. */}
+          <span style={{color:G.ink3,flexShrink:0,marginLeft:2,display:"inline-flex",alignItems:"center",opacity:.7,animation:targetBelow?"dayPillChev 2.6s ease-in-out infinite":"none"}}>
+            <IconChevron dir="down" size={12} strokeWidth={2.2}/>
+          </span>
+          <style>{`@keyframes dayPillChev{0%,100%{transform:translateY(0);opacity:0.6}50%{transform:translateY(1.5px);opacity:1}}`}</style>
+        </button>
+        );
+      })()}
       <div ref={scrollRef} style={{flex:1,display:"flex",overflowY:"auto",padding:"14px 14px 30px 6px",position:"relative"}}>
       {!isEd&&(
         <div style={{flexShrink:0,position:"relative",width:t?.myDay==="My Day"?56:38,height:totalContentH}}>
@@ -1677,17 +1932,27 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now}){
       )}
       {cfg.showSigvard&&!isEd&&(
         <div style={{flexShrink:0,position:"relative",zIndex:5}}>
-          <SigvardTimeline now={now}/>
+          <SigvardTimeline now={now} color={cfg.sigvardColor||"#FF4848"}/>
         </div>
       )}
       <div style={{flex:1,position:"relative",height:totalContentH,marginLeft:cfg.showSigvard&&!isEd?10:0}}>
-        {!isEd&&(
-          <>
-            {/* Pulsing now-line */}
-            <div style={{position:"absolute",top:yForTime(nowM)-1,left:-12,right:0,height:2,background:"linear-gradient(90deg,#FF3030 0%, #FF6060 40%, #FF303033 100%)",borderRadius:1,zIndex:1,pointerEvents:"none",animation:"nowPulse 2.4s ease-in-out infinite"}}/>
-            <style>{`@keyframes nowPulse{0%,100%{box-shadow:0 0 6px #FF303055;opacity:.85}50%{box-shadow:0 0 14px #FF3030AA, 0 0 22px #FF303044;opacity:1}}`}</style>
-          </>
-        )}
+        {!isEd&&cfg.showNowLine!==false&&(()=>{
+          // Horizontal "now" line — independently toggleable, with its own colour.
+          // If cfg.nowLineColor is empty/falsy, falls back to the Sigvard lamp colour
+          // for visual cohesion (the historical behaviour). Setting any colour breaks
+          // the link and the line uses that colour instead.
+          const lineColor=cfg.nowLineColor||cfg.sigvardColor||"#FF4848";
+          const lineMin=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
+          const lineY=yForTime(lineMin);
+          // Unique keyframe id per color (avoids clashes if multiple lines existed)
+          const pulseId=`nowPulse_${lineColor.replace("#","")}`;
+          return(
+            <>
+              <div style={{position:"absolute",top:lineY-1,left:-12,right:0,height:2,background:`linear-gradient(90deg, ${shade(lineColor,-0.1)} 0%, ${shade(lineColor,0.1)} 40%, ${withAlpha(lineColor,0.2)} 100%)`,borderRadius:1,zIndex:1,pointerEvents:"none",animation:`${pulseId} 2.4s ease-in-out infinite`,transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
+              <style>{`@keyframes ${pulseId}{0%,100%{box-shadow:0 0 6px ${withAlpha(lineColor,0.33)};opacity:.85}50%{box-shadow:0 0 14px ${withAlpha(lineColor,0.67)}, 0 0 22px ${withAlpha(lineColor,0.27)};opacity:1}}`}</style>
+            </>
+          );
+        })()}
         {positions.map(({item,y,naturalY,h},i)=>{
           const startM=hm(item.time);
           const endM=item.endTime?hm(item.endTime):null;
@@ -1766,7 +2031,7 @@ function ActivityDetail({item,stepsDone,readOnly,onClose,onCheck,t}){
               <div style={{fontFamily:G.serif,fontWeight:500,fontSize:25,color:G.ink,lineHeight:1.05,letterSpacing:-.5}}>{item.name}</div>
               <div style={{fontFamily:G.font,fontWeight:500,fontSize:12,color:item.color,marginTop:7,letterSpacing:.4}}>{fmtT(item.time,t)}</div>
             </div>
-            <button onClick={onClose} className="lt-press" style={{width:36,height:36,borderRadius:12,border:`1px solid ${G.border}`,background:G.cream,color:G.ink2,fontSize:16,cursor:"pointer"}}>✕</button>
+            <button onClick={onClose} className="lt-press" style={{width:36,height:36,borderRadius:12,border:`1px solid ${G.border}`,background:G.cream,color:G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><IconX size={14}/></button>
           </div>
           {readOnly&&(
             <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:12,background:`${item.color}10`,border:`1px solid ${item.color}25`,marginBottom:18,animation:"adSection 0.5s 0.16s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
@@ -1840,8 +2105,35 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
   const[showStepE,setShowStepE]=useState(false);
   const[repeat,setRepeat]=useState(item?.repeat||{type:"none",days:[]});
   const[conflicts,setConflicts]=useState(null); // array of overlapping activities or null
+  const[discardOpen,setDiscardOpen]=useState(false); // "Spara ändringar?"-dialog
   const[sepage,setSEpage]=useState(0);
   const[epage,setEpage]=useState(0);
+  // Snapshot the initial field values once, on mount. We compare against this
+  // to know whether the modal has unsaved changes when the user tries to close.
+  const initial=useRef({
+    name:item?.name||"",
+    time:item?.time||"09:00",
+    endTime:item?.endTime||"",
+    emoji:item?.emoji||"🌅",
+    photo:item?.photo||null,
+    color:item?.color||ACT_C[0],
+    steps:JSON.stringify(item?.steps||[]),
+    timerOn:item?.timer?.on||false,
+    timerType:item?.timer?.type||"sector",
+    timerMin:item?.timer?.min||10,
+    timerCol:item?.timer?.color||"#E89B89",
+    repeat:JSON.stringify(item?.repeat||{type:"none",days:[]}),
+  });
+  const isDirty=()=>{
+    const v=initial.current;
+    return name!==v.name||time!==v.time||endTime!==v.endTime||emoji!==v.emoji
+      ||photo!==v.photo||color!==v.color||JSON.stringify(steps)!==v.steps
+      ||timerOn!==v.timerOn||timerType!==v.timerType||timerMin!==v.timerMin||timerCol!==v.timerCol
+      ||JSON.stringify(repeat)!==v.repeat;
+  };
+  // Intercepts every "close" path (overlay tap, cancel button, back gesture).
+  // If there are unsaved edits, ask before throwing them away.
+  const attemptClose=()=>{ if(isDirty()) setDiscardOpen(true); else onClose(); };
   const pp=40, esl=EMOJIS.slice(epage*pp,(epage+1)*pp);
   const addStep=()=>{if(!stepTxt.trim())return;setSteps(s=>[...s,{id:Date.now(),emoji:stepEmoji,text:stepTxt.trim()}]);setStepTxt("");};
   const buildSaved=()=>({id:item?.id||Date.now(),name:name||(t?.noName||"(Utan namn)"),time,endTime:endTime||undefined,emoji,photo,color,done:false,stepsDone:{},steps,timer:{on:timerOn,type:timerType,min:timerMin,color:timerCol},repeat});
@@ -1867,12 +2159,12 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
   };
   const confirmConflictSave=()=>{onSave(buildSaved());setConflicts(null);onClose();};
   const toggleDay=d=>setRepeat(r=>{const days=r.days||[];return{type:"custom",days:days.includes(d)?days.filter(x=>x!==d):[...days,d].sort()};});
-  const DAYS_SV=["sön","mån","tis","ons","tor","fre","lör"];
+  const DAYS=t.daysShort||["sön","mån","tis","ons","tor","fre","lör"];
   const S=SCREENS.home;
   return(
-    <Overlay onClose={onClose}>
+    <Overlay onClose={attemptClose}>
       <Sheet scroll>
-        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:28,letterSpacing:-.5,lineHeight:1.1}}>{item?.id?"Redigera aktivitet":"Ny aktivitet"}</div>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.inkSoft,marginBottom:28,letterSpacing:-.5,lineHeight:1.1}}>{item?.id?t.editAct:t.newAct}</div>
 
         <SLabel>{t.cardImage}</SLabel>
         <div style={{display:"flex",gap:12,marginBottom:18,alignItems:"flex-start"}}>
@@ -1880,8 +2172,8 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
             {photo?<img src={photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:emoji}
           </div>
           <div style={{flex:1,display:"flex",flexDirection:"column",gap:7}}>
-            <label style={{padding:"9px 13px",borderRadius:11,background:G.white,border:`1px solid ${G.border}`,fontFamily:G.font,fontSize:12,color:G.ink,cursor:"pointer",fontWeight:600,textAlign:"center"}}>
-              📷 {photo?"Byt foto":t.uploadPhoto}
+            <label style={{padding:"9px 13px",borderRadius:11,background:G.white,border:`1px solid ${G.border}`,fontFamily:G.font,fontSize:12,color:G.ink,cursor:"pointer",fontWeight:600,textAlign:"center",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7}}>
+              <IconCamera size={14}/> {photo?(lang==="sv"?"Byt foto":"Change photo"):t.uploadPhoto}
               <input type="file" accept="image/*" onChange={e=>{
                 const f=e.target.files?.[0]; if(!f) return;
                 const r=new FileReader();
@@ -1912,15 +2204,15 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
           {Array.from({length:Math.ceil(EMOJIS.length/pp)}).map((_,i)=><button key={i} onClick={()=>setEpage(i)} style={{padding:"3px 10px",borderRadius:8,fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",border:`1px solid ${i===epage?S.h:G.border}`,background:i===epage?S.h:"transparent",color:i===epage?"#fff":G.ink2}}>{i+1}</button>)}
         </div>
         <SLabel>{t.actName}</SLabel>
-        <input value={name} onChange={e=>setName(e.target.value)} className="lt-input" style={INP} placeholder="t.ex. Frukost"/>
+        <input value={name} onChange={e=>setName(e.target.value)} className="lt-input" style={INP} placeholder={t.actNamePH}/>
         <SLabel>{t.actTime}</SLabel>
         <div style={{display:"flex",gap:10,marginBottom:16}}>
           <div style={{flex:1}}>
-            <div style={{fontFamily:G.font,fontWeight:500,fontSize:10,color:G.ink3,letterSpacing:.5,marginBottom:4}}>Start</div>
+            <div style={{fontFamily:G.font,fontWeight:500,fontSize:10,color:G.ink3,letterSpacing:.5,marginBottom:4}}>{t.timeStart}</div>
             <input type="time" value={time} onChange={e=>setTime(e.target.value)} className="lt-input" style={{...INP,marginBottom:0}}/>
           </div>
           <div style={{flex:1}}>
-            <div style={{fontFamily:G.font,fontWeight:500,fontSize:10,color:G.ink3,letterSpacing:.5,marginBottom:4}}>Slut (frivilligt)</div>
+            <div style={{fontFamily:G.font,fontWeight:500,fontSize:10,color:G.ink3,letterSpacing:.5,marginBottom:4}}>{t.timeEnd}</div>
             <input type="time" value={endTime} onChange={e=>setEndTime(e.target.value)} className="lt-input" style={{...INP,marginBottom:0}}/>
           </div>
         </div>
@@ -1928,21 +2220,21 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
         <div style={{display:"flex",gap:9,marginBottom:22,flexWrap:"wrap"}}>
           {ACT_C.map(col=><div key={col} onClick={()=>setColor(col)} style={{width:32,height:32,borderRadius:"50%",background:col,cursor:"pointer",outline:color===col?`3px solid ${col}`:"none",outlineOffset:2,boxShadow:color===col?sh.c(col):"none"}}/>)}
         </div>
-        <SLabel>Upprepa</SLabel>
+        <SLabel>{t.repeat}</SLabel>
         <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:7,marginBottom:10}}>
           {[
-            {k:"none",l:"Endast idag"},
-            {k:"daily",l:"Varje dag"},
-            {k:"weekdays",l:"Vardagar"},
-            {k:"weekend",l:"Helger"},
+            {k:"none",l:t.repNone},
+            {k:"daily",l:t.repDaily},
+            {k:"weekdays",l:t.repWeekdays},
+            {k:"weekend",l:t.repWeekend},
           ].map(opt=>(
             <button key={opt.k} onClick={()=>setRepeat({type:opt.k,days:[]})} style={{padding:"10px 8px",borderRadius:12,border:`1px solid ${repeat.type===opt.k?S.h:G.border}`,background:repeat.type===opt.k?S.hl:G.white,color:repeat.type===opt.k?S.deep:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",transition:"all .15s"}}>{opt.l}</button>
           ))}
-          <button onClick={()=>setRepeat(r=>r.type==="custom"?r:{type:"custom",days:[]})} style={{gridColumn:"1 / -1",padding:"10px 8px",borderRadius:12,border:`1px solid ${repeat.type==="custom"?S.h:G.border}`,background:repeat.type==="custom"?S.hl:G.white,color:repeat.type==="custom"?S.deep:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer"}}>Välj veckodagar</button>
+          <button onClick={()=>setRepeat(r=>r.type==="custom"?r:{type:"custom",days:[]})} style={{gridColumn:"1 / -1",padding:"10px 8px",borderRadius:12,border:`1px solid ${repeat.type==="custom"?S.h:G.border}`,background:repeat.type==="custom"?S.hl:G.white,color:repeat.type==="custom"?S.deep:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer"}}>{t.repPickDays}</button>
         </div>
         {repeat.type==="custom"&&(
           <div style={{display:"flex",gap:5,marginBottom:18,justifyContent:"space-between"}}>
-            {DAYS_SV.map((d,i)=>{const on=(repeat.days||[]).includes(i);return(
+            {DAYS.map((d,i)=>{const on=(repeat.days||[]).includes(i);return(
               <button key={i} onClick={()=>toggleDay(i)} style={{flex:1,padding:"10px 0",borderRadius:10,border:`1px solid ${on?S.h:G.border}`,background:on?S.h:G.white,color:on?"#fff":G.ink2,fontFamily:G.font,fontWeight:700,fontSize:11,cursor:"pointer",textTransform:"capitalize"}}>{d}</button>
             );})}
           </div>
@@ -1953,7 +2245,7 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
           <div key={s.id} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",background:S.hll,borderRadius:12,border:`1px solid ${G.border}`,marginBottom:8}}>
             <span style={{fontSize:17}}>{s.emoji}</span>
             <span style={{fontFamily:G.font,fontWeight:500,color:G.ink,flex:1,fontSize:14}}>{s.text}</span>
-            <button onClick={()=>setSteps(ss=>ss.filter(x=>x.id!==s.id))} style={{background:"none",border:"none",color:G.ink3,cursor:"pointer",fontSize:16}}>✕</button>
+            <button onClick={()=>setSteps(ss=>ss.filter(x=>x.id!==s.id))} aria-label="Ta bort steg" style={{background:"none",border:"none",color:G.ink3,cursor:"pointer",padding:6,display:"inline-flex",alignItems:"center",justifyContent:"center"}}><IconX size={13}/></button>
           </div>
         ))}
         <div style={{display:"flex",gap:7,marginBottom:22}}>
@@ -1980,7 +2272,13 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
         </div>
         {timerOn&&(
           <div style={{background:SCREENS.timer.hll,borderRadius:18,padding:18,marginBottom:20,border:`1px solid ${SCREENS.timer.hl}`}}>
-            <div style={{fontFamily:G.font,fontSize:12,color:SCREENS.timer.deep,background:SCREENS.timer.hl,borderRadius:10,padding:"8px 12px",marginBottom:14}}>⏰ {t.autoTimer}</div>
+            <div style={{fontFamily:G.font,fontSize:12,color:SCREENS.timer.deep,background:SCREENS.timer.hl,borderRadius:10,padding:"8px 12px",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,opacity:0.85}}>
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              {t.autoTimer}
+            </div>
             <SLabel>{t.timerType}</SLabel>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:16}}>
               {TTYPES.map(k=><button key={k} onClick={()=>setTType(k)} style={{padding:"14px 4px 10px",borderRadius:13,border:"1px solid",fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",borderColor:timerType===k?timerCol:G.border,background:timerType===k?timerCol:"transparent",color:timerType===k?"#fff":G.ink2,display:"flex",flexDirection:"column",alignItems:"center",gap:6,transition:"all .2s"}}><TimerIcon type={k} size={18} color={timerType===k?"#fff":G.ink2}/><div>{tlbl(k,t)}</div></button>)}
@@ -2000,9 +2298,24 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
           </div>
         )}
         <div style={{display:"flex",gap:8}}>
-          {item?.id&&<button onClick={()=>{onDel(item.id);onClose();}} style={{padding:"14px 16px",borderRadius:14,border:"none",background:"#FEF2F2",color:"#EF4444",cursor:"pointer",fontSize:17}}>🗑</button>}
-          <button onClick={onClose} style={{flex:1,...GHOST}}>{t.cancel}</button>
-          <button onClick={doSave} style={{flex:2,padding:"15px 0",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h)}}>{t.save}</button>
+          {item?.id&&(
+            <button onClick={()=>{onDel(item.id);onClose();}} aria-label={t.cancel} className="lt-press" style={{padding:"14px 16px",borderRadius:14,border:"none",background:"#FEF2F2",color:"#EF4444",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6 h18"/>
+                <path d="M8 6 V4 a2 2 0 0 1 2-2 h4 a2 2 0 0 1 2 2 v2"/>
+                <path d="M19 6 l-1 14 a2 2 0 0 1 -2 2 H8 a2 2 0 0 1 -2 -2 L5 6"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+            </button>
+          )}
+          <button onClick={attemptClose} style={{flex:1,...GHOST}}>{t.cancel}</button>
+          <button onClick={doSave} className="lt-press saveBtn" style={{flex:2,padding:"15px 0",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h),display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <svg className="saveTick" width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+              <path d="M2.5 7.2 L5.8 10.5 L11.5 3.5"/>
+            </svg>
+            {t.save}
+          </button>
         </div>
         {conflicts&&(
           <Overlay onClose={()=>setConflicts(null)}>
@@ -2030,16 +2343,36 @@ function EditModal({item,onSave,onDel,onClose,t,existingActs=[]}){
             </Sheet>
           </Overlay>
         )}
+        {discardOpen&&(
+          <Overlay onClose={()=>setDiscardOpen(false)}>
+            <Sheet>
+              <div style={{textAlign:"center",marginBottom:22}}>
+                <div style={{width:64,height:64,borderRadius:20,background:`linear-gradient(140deg,${S.hll},${S.hl})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,margin:"0 auto 14px"}}>💾</div>
+                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:24,color:G.ink,letterSpacing:-.4,marginBottom:8,lineHeight:1.15}}>{t.unsavedTitle}</div>
+                <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.45,maxWidth:300,margin:"0 auto"}}>{t.unsavedDesc}</div>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                <button onClick={()=>{setDiscardOpen(false);doSave();}} style={{padding:"14px 0",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h),letterSpacing:.2}}>{t.save}</button>
+                <button onClick={()=>{setDiscardOpen(false);onClose();}} style={{padding:"13px 0",borderRadius:14,border:`1px solid ${G.border}`,background:"transparent",color:"#EF4444",fontFamily:G.font,fontWeight:600,fontSize:14,cursor:"pointer",letterSpacing:.2}}>{t.discardChanges}</button>
+                <button onClick={()=>setDiscardOpen(false)} style={{padding:"12px 0",borderRadius:14,border:"none",background:"transparent",color:G.ink2,fontFamily:G.font,fontWeight:500,fontSize:13,cursor:"pointer",letterSpacing:.2}}>{t.keepEditing}</button>
+              </div>
+            </Sheet>
+          </Overlay>
+        )}
       </Sheet>
     </Overlay>
   );
 }
 
 /* ═══ Settings ═══ */
-function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onOpenDemo}){
+function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onOpenDemo,onOpenWelcomeTour}){
   const[cs,setCs]=useState(cfg.cardStyle);
   const[sv,setSv]=useState(cfg.schedView);
   const[sig,setSig]=useState(cfg.showSigvard);
+  const[sigC,setSigC]=useState(cfg.sigvardColor||"#FF4848");
+  const[banner,setBanner]=useState(cfg.showBanner!==false);
+  const[nowLn,setNowLn]=useState(cfg.showNowLine!==false);
+  const[nowLnC,setNowLnC]=useState(cfg.nowLineColor||"");
   const[wc,setWc]=useState(()=>{
     const base=Array.isArray(cfg.weekColors)?cfg.weekColors:SIGVARD0;
     // Ensure 7 entries — fall back to SIGVARD0 for any missing index
@@ -2055,7 +2388,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onO
   const[err,setErr]=useState("");
   const copy=()=>{navigator.clipboard?.writeText(shareCode).catch(()=>{});setCp(true);setTimeout(()=>setCp(false),2200);};
   const conn=()=>{const c=code.toUpperCase().trim();if(SYNC_DB[c]){setCfg(x=>({...x,childCode:c,isChild:true}));onClose();}else setErr(t.wrongCode);};
-  const save=()=>{setCfg(x=>({...x,cardStyle:cs,schedView:sv,showSigvard:sig,weekColors:wc,tools,timerCfg:tc,visibleEmotions:vEmos}));onClose();};
+  const save=()=>{setCfg(x=>({...x,cardStyle:cs,schedView:sv,showSigvard:sig,sigvardColor:sigC,showBanner:banner,showNowLine:nowLn,nowLineColor:nowLnC,weekColors:wc,tools,timerCfg:tc,visibleEmotions:vEmos}));onClose();};
   // Display order Mon→Sun mapped to JS day index (0=Sun)
   const DAY_ORDER=[1,2,3,4,5,6,0];
   const dayLabel=jsDay=>{const map=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];return t[map[jsDay]];};
@@ -2064,7 +2397,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onO
   return(
     <Overlay onClose={save}>
       <Sheet scroll>
-        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:30,letterSpacing:-.5,lineHeight:1.05}}>{t.settings}</div>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.inkSoft,marginBottom:30,letterSpacing:-.5,lineHeight:1.05}}>{t.settings}</div>
         <SLabel>{t.cardStyle}</SLabel>
         <div style={{display:"flex",gap:7,marginBottom:22}}>
           {[["normal",t.styleNormal],["compact",t.styleCompact],["big",t.styleBig]].map(([k,lb])=><button key={k} onClick={()=>setCs(k)} style={{flex:1,padding:"12px 0",borderRadius:13,border:`1px solid ${cs===k?S.h:G.border}`,background:cs===k?S.h:"transparent",color:cs===k?"#fff":G.ink2,fontFamily:G.font,fontWeight:600,cursor:"pointer",fontSize:13}}>{lb}</button>)}
@@ -2073,9 +2406,111 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onO
         <div style={{display:"flex",gap:7,marginBottom:22}}>
           {[["both",t.viewBoth],["list",t.viewList],["card",t.viewCard]].map(([k,lb])=><button key={k} onClick={()=>setSv(k)} style={{flex:1,padding:"10px 4px",borderRadius:13,border:`1px solid ${sv===k?S.h:G.border}`,background:sv===k?S.h:"transparent",color:sv===k?"#fff":G.ink2,fontFamily:G.font,fontWeight:600,cursor:"pointer",fontSize:11}}>{lb}</button>)}
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:S.hll,borderRadius:14,border:`1px solid ${S.hl}`,marginBottom:18}}>
-          <Toggle on={sig} onChange={()=>setSig(s=>!s)} color="#E94040"/>
-          <div><div style={{fontFamily:G.font,fontWeight:700,fontSize:14,color:G.ink}}>💡 {t.sigvardOn}</div><div style={{fontFamily:G.font,fontSize:12,color:G.ink2,marginTop:2}}>Röda lampor · tid till nästa aktivitet</div></div>
+        {/* ─────────── Visa i schemat ───────────
+            Three visual signals competing for attention in the schedule view.
+            Layout: each tool is a flex row with the toggle in a fixed left
+            column and ALL its content (title + hint + own colour picker) in
+            the right column — so colour pickers visually "belong to" their
+            parent toggle through indentation alone. Hairline separators
+            between tools start at the content column, not under the toggle. */}
+        <div style={{padding:SPACE.lg,background:S.hll,borderRadius:SPACE.lg,border:`1px solid ${S.hl}`,marginBottom:SPACE.lg}}>
+          <div style={{fontFamily:G.font,fontWeight:600,fontSize:TYPO.body.size,color:S.deep,letterSpacing:TYPO.body.tracking,marginBottom:SPACE.xs}}>{t.schedVisuals}</div>
+          <div style={{fontFamily:G.font,fontWeight:TYPO.small.weight,fontSize:TYPO.small.size,color:G.ink2,lineHeight:1.45,letterSpacing:TYPO.small.tracking,marginBottom:SPACE.lg}}>{t.schedVisualsHint}</div>
+
+          {/* ── Verktyg 1: Bannret ── */}
+          <div style={{display:"flex",alignItems:"flex-start",gap:SPACE.md,paddingBottom:SPACE.lg}}>
+            <div style={{flexShrink:0,paddingTop:2}}>
+              <Toggle on={banner} onChange={()=>setBanner(b=>!b)} color={S.h}/>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontFamily:G.font,fontWeight:600,fontSize:TYPO.body.size,color:G.ink,letterSpacing:TYPO.body.tracking,opacity:banner?1:0.55,transition:"opacity .3s ease"}}>{t.bannerLabel}</div>
+              <div style={{fontFamily:G.font,fontWeight:TYPO.small.weight,fontSize:TYPO.small.size,color:G.ink2,marginTop:SPACE.xs/2,lineHeight:1.45,letterSpacing:TYPO.small.tracking,opacity:banner?1:0.65,transition:"opacity .3s ease"}}>{t.bannerHint}</div>
+            </div>
+          </div>
+
+          {/* ── Verktyg 2: Sigvard-lampor — färgväljare nestlad i höger­kolumn ── */}
+          <div style={{display:"flex",alignItems:"flex-start",gap:SPACE.md,paddingTop:SPACE.lg,paddingBottom:SPACE.lg,borderTop:`1px solid ${S.hl}`}}>
+            <div style={{flexShrink:0,paddingTop:2}}>
+              <Toggle on={sig} onChange={()=>setSig(s=>!s)} color={sigC}/>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontFamily:G.font,fontWeight:600,fontSize:TYPO.body.size,color:G.ink,letterSpacing:TYPO.body.tracking,opacity:sig?1:0.55,transition:"opacity .3s ease"}}>{t.sigvardOn}</div>
+              <div style={{fontFamily:G.font,fontWeight:TYPO.small.weight,fontSize:TYPO.small.size,color:G.ink2,marginTop:SPACE.xs/2,lineHeight:1.45,letterSpacing:TYPO.small.tracking,opacity:sig?1:0.65,transition:"opacity .3s ease"}}>{t.sigvardColorHint}</div>
+              {sig&&(
+                <div style={{marginTop:SPACE.md,padding:SPACE.md,background:G.white,borderRadius:SPACE.sm+2,border:`1px solid ${S.hl}`,animation:"adSection 0.35s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+                  <div style={{fontFamily:G.font,fontWeight:TYPO.caption.weight,fontSize:TYPO.caption.size,color:G.ink3,letterSpacing:TYPO.caption.tracking,textTransform:"uppercase",marginBottom:SPACE.sm}}>{t.sigvardColor}</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:SPACE.sm}}>
+                    {SIGVARD_LAMP_PALETTE.map(c=>{
+                      const selected=c.toLowerCase()===sigC.toLowerCase();
+                      return(
+                        <button key={c} onClick={()=>setSigC(c)} className="lt-press" aria-label={c} style={{
+                          width:32,height:32,borderRadius:16,
+                          background:`radial-gradient(circle at 30% 30%, ${shade(c,0.2)}, ${c})`,
+                          border:selected?`2px solid ${G.ink}`:`1px solid ${withAlpha(c,0.4)}`,
+                          boxShadow:selected
+                            ?`0 4px 14px ${withAlpha(c,0.55)}, 0 0 0 3px ${G.white}, 0 0 0 4px ${G.ink}`
+                            :`0 2px 8px ${withAlpha(c,0.35)}, inset 0 1px 0 rgba(255,255,255,0.4)`,
+                          cursor:"pointer",padding:0,
+                          transition:"transform .2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .2s ease",
+                          transform:selected?"scale(1.06)":"scale(1)",
+                        }}/>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Verktyg 3: Tidsstrecket — färgväljare med AUTO-länk ── */}
+          <div style={{display:"flex",alignItems:"flex-start",gap:SPACE.md,paddingTop:SPACE.lg,borderTop:`1px solid ${S.hl}`}}>
+            <div style={{flexShrink:0,paddingTop:2}}>
+              <Toggle on={nowLn} onChange={()=>setNowLn(n=>!n)} color={nowLnC||sigC}/>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontFamily:G.font,fontWeight:600,fontSize:TYPO.body.size,color:G.ink,letterSpacing:TYPO.body.tracking,opacity:nowLn?1:0.55,transition:"opacity .3s ease"}}>{t.nowLineLabel}</div>
+              <div style={{fontFamily:G.font,fontWeight:TYPO.small.weight,fontSize:TYPO.small.size,color:G.ink2,marginTop:SPACE.xs/2,lineHeight:1.45,letterSpacing:TYPO.small.tracking,opacity:nowLn?1:0.65,transition:"opacity .3s ease"}}>{t.nowLineHint}</div>
+              {nowLn&&(
+                <div style={{marginTop:SPACE.md,padding:SPACE.md,background:G.white,borderRadius:SPACE.sm+2,border:`1px solid ${S.hl}`,animation:"adSection 0.35s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+                  <div style={{fontFamily:G.font,fontWeight:TYPO.caption.weight,fontSize:TYPO.caption.size,color:G.ink3,letterSpacing:TYPO.caption.tracking,textTransform:"uppercase",marginBottom:SPACE.sm}}>{t.nowLineColor}</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:SPACE.sm,alignItems:"center"}}>
+                    <button onClick={()=>setNowLnC("")} className="lt-press" aria-label={t.nowLineSameAsSig} style={{
+                      width:32,height:32,borderRadius:16,padding:0,
+                      background:G.white,
+                      border:nowLnC===""?`2px solid ${G.ink}`:`1px dashed ${G.ink3}`,
+                      boxShadow:nowLnC===""
+                        ?`0 4px 14px rgba(31,27,46,0.18), 0 0 0 3px ${G.white}, 0 0 0 4px ${G.ink}`
+                        :`0 2px 8px rgba(31,27,46,0.06)`,
+                      cursor:"pointer",
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      fontFamily:G.font,fontSize:8.5,fontWeight:700,color:G.ink2,letterSpacing:.4,
+                      transition:"transform .2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .2s ease",
+                      transform:nowLnC===""?"scale(1.06)":"scale(1)",
+                    }}>AUTO</button>
+                    {SIGVARD_LAMP_PALETTE.map(c=>{
+                      const selected=c.toLowerCase()===nowLnC.toLowerCase();
+                      return(
+                        <button key={c} onClick={()=>setNowLnC(c)} className="lt-press" aria-label={c} style={{
+                          width:32,height:32,borderRadius:16,
+                          background:`radial-gradient(circle at 30% 30%, ${shade(c,0.2)}, ${c})`,
+                          border:selected?`2px solid ${G.ink}`:`1px solid ${withAlpha(c,0.4)}`,
+                          boxShadow:selected
+                            ?`0 4px 14px ${withAlpha(c,0.55)}, 0 0 0 3px ${G.white}, 0 0 0 4px ${G.ink}`
+                            :`0 2px 8px ${withAlpha(c,0.35)}, inset 0 1px 0 rgba(255,255,255,0.4)`,
+                          cursor:"pointer",padding:0,
+                          transition:"transform .2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .2s ease",
+                          transform:selected?"scale(1.06)":"scale(1)",
+                        }}/>
+                      );
+                    })}
+                  </div>
+                  {nowLnC===""&&(
+                    <div style={{fontFamily:G.font,fontSize:TYPO.caption.size,color:G.ink3,marginTop:SPACE.sm,letterSpacing:TYPO.caption.tracking,fontStyle:"italic"}}>{t.nowLineSameAsSig}</div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Day color editor — Sigvard weekday colours */}
@@ -2147,7 +2582,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onO
         )}
         <div style={{height:1,background:G.border,marginBottom:20}}/>
         <SLabel>{t.syncTitle}</SLabel>
-        {[[false,"📱 "+t.sameDevice,t.sameDeviceDesc],[true,"🔗 "+t.syncMode,t.syncModeDesc]].map(([v,title,desc])=>(
+        {[[false,t.sameDevice,t.sameDeviceDesc],[true,t.syncMode,t.syncModeDesc]].map(([v,title,desc])=>(
           <div key={String(v)} onClick={()=>setSm(v)} style={{borderRadius:14,border:`1px solid ${sm===v?S.h:G.border}`,background:sm===v?S.hll:"transparent",padding:"13px 16px",marginBottom:10,cursor:"pointer"}}>
             <div style={{fontFamily:G.font,fontWeight:700,fontSize:14,color:sm===v?S.h:G.ink,marginBottom:2}}>{title}</div>
             <div style={{fontFamily:G.font,fontSize:12,color:G.ink2}}>{desc}</div>
@@ -2158,7 +2593,16 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onO
             <SLabel>{t.yourCode}</SLabel>
             <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
               <div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color:S.h,letterSpacing:5,background:G.white,padding:"10px 22px",borderRadius:12,border:`1px solid ${S.hl}`}}>{shareCode}</div>
-              <button onClick={copy} style={{...GHOST,padding:"10px 13px"}}>{cp?t.copied:"📋"}</button>
+              <button onClick={copy} className="lt-press-soft" style={{...GHOST,padding:"10px 13px",display:"flex",alignItems:"center",gap:6}}>
+                {cp?(
+                  <><IconCheck size={14} className="" strokeWidth={2.4}/><span>{t.copied.replace(" ✓","")}</span></>
+                ):(
+                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                    <path d="M5 15 H4 a2 2 0 0 1 -2 -2 V4 a2 2 0 0 1 2 -2 h9 a2 2 0 0 1 2 2 v1"/>
+                  </svg>
+                )}
+              </button>
             </div>
             <div style={{fontFamily:G.font,fontSize:12,color:G.ink2,marginBottom:14}}>{t.codeHint}</div>
             <SLabel>{t.enterCode}</SLabel>
@@ -2169,7 +2613,12 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onO
             {err&&<div style={{color:"#EF4444",fontFamily:G.font,fontSize:12,marginTop:6}}>{err}</div>}
           </div>
         )}
-        <button onClick={save} style={{marginTop:20,width:"100%",padding:"15px 0",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h)}}>{t.save}</button>
+        <button onClick={save} className="lt-press saveBtn" style={{marginTop:20,width:"100%",padding:"15px 0",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h),display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          <svg className="saveTick" width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+            <path d="M2.5 7.2 L5.8 10.5 L11.5 3.5"/>
+          </svg>
+          {t.save}
+        </button>
 
         {/* Caregiver demo entry */}
         {onOpenDemo&&(
@@ -2181,6 +2630,16 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onO
             <button onClick={onOpenDemo} style={{width:"100%",padding:"13px 0",borderRadius:13,border:"none",background:"linear-gradient(135deg,#1F1B2E,#3A3450)",color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:"0 8px 18px rgba(31,27,46,0.18)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
               ▶ {lang==="sv"?"Visa demo":"Play demo"}
             </button>
+            {/* Replay welcome → demo as if first-run, without wiping any data */}
+            {onOpenWelcomeTour&&(
+              <button onClick={onOpenWelcomeTour} className="lt-press-soft" style={{width:"100%",marginTop:8,padding:"11px 0",borderRadius:12,border:`1px solid ${G.border}`,background:"transparent",color:G.ink2,fontFamily:G.font,fontWeight:500,fontSize:13,cursor:"pointer",letterSpacing:.2,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M3 12 a9 9 0 1 0 3 -6.7 L3 8"/>
+                  <polyline points="3 3 3 8 8 8"/>
+                </svg>
+                {lang==="sv"?"Visa rundtur från början":"Replay welcome tour"}
+              </button>
+            )}
           </div>
         )}
 
@@ -2190,8 +2649,14 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onO
             <div style={{fontFamily:G.font,fontSize:12,color:G.ink2,marginBottom:10,lineHeight:1.4}}>
               {lang==="sv"?"Förhandstitt på webbverktyget där pedagoger hanterar flera klienter på distans.":"Preview of the web tool where caregivers manage multiple clients remotely."}
             </div>
-            <button onClick={onOpenSupervisor} style={{width:"100%",padding:"13px 0",borderRadius:13,border:"none",background:`linear-gradient(135deg,${S.h},${S.deep})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:sh.c(S.h),display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              🧑‍⚕️ {lang==="sv"?"Öppna stödpersonsvy":"Open caregiver view"}
+            <button onClick={onOpenSupervisor} style={{width:"100%",padding:"13px 0",borderRadius:13,border:"none",background:`linear-gradient(135deg,${S.h},${S.deep})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:sh.c(S.h),display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M17 21 v-2 a4 4 0 0 0 -4 -4 H5 a4 4 0 0 0 -4 4 v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21 v-2 a4 4 0 0 0 -3 -3.87"/>
+                <path d="M16 3.13 a4 4 0 0 1 0 7.75"/>
+              </svg>
+              {lang==="sv"?"Öppna stödpersonsvy":"Open caregiver view"}
               <span style={{fontFamily:G.font,fontWeight:600,fontSize:10,padding:"2px 7px",borderRadius:5,background:"rgba(255,255,255,0.25)",letterSpacing:1}}>DEMO</span>
             </button>
           </div>
@@ -2199,16 +2664,25 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,onOpenSupervisor,onO
 
         {/* Reset all data — destructive action at the bottom */}
         <div style={{marginTop:32,paddingTop:24,borderTop:`1px solid ${G.border}`}}>
-          <SLabel>Återställ</SLabel>
-          <div style={{fontFamily:G.font,fontSize:12,color:G.ink2,marginBottom:10,lineHeight:1.4}}>Rensar alla aktiviteter, berättelser, känslohistorik och inställningar. Kan inte ångras.</div>
+          <SLabel>{t.resetSection}</SLabel>
+          <div style={{fontFamily:G.font,fontSize:12,color:G.ink2,marginBottom:10,lineHeight:1.4}}>{t.resetDataDesc}</div>
           <button onClick={()=>{
-            if(typeof window!=="undefined"&&window.confirm("Är du säker? Allt data raderas och kan inte återskapas.")){
+            if(typeof window!=="undefined"&&window.confirm(t.resetDataConfirm)){
               try{
                 Object.keys(localStorage).forEach(k=>{if(k.startsWith("luma_v1_"))localStorage.removeItem(k);});
                 window.location.reload();
               }catch(_){}
             }
-          }} style={{width:"100%",padding:"12px 0",borderRadius:12,border:`1px solid #EF444433`,background:"#FEF2F2",color:"#EF4444",fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer"}}>🗑 Rensa all data</button>
+          }} className="lt-press-soft" style={{width:"100%",padding:"12px 0",borderRadius:12,border:`1px solid #EF444433`,background:"#FEF2F2",color:"#EF4444",fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6 h18"/>
+              <path d="M8 6 V4 a2 2 0 0 1 2-2 h4 a2 2 0 0 1 2 2 v2"/>
+              <path d="M19 6 l-1 14 a2 2 0 0 1 -2 2 H8 a2 2 0 0 1 -2 -2 L5 6"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+            {t.resetDataBtn}
+          </button>
         </div>
       </Sheet>
     </Overlay>
@@ -2439,7 +2913,7 @@ function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
     return(
       <Overlay onClose={onClose}>
         <Sheet scroll>
-          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:6,letterSpacing:-.5}}>{t.renameCat}</div>
+          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.inkSoft,marginBottom:6,letterSpacing:-.5}}>{t.renameCat}</div>
           <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:G.ink3,marginBottom:24,lineHeight:1.4}}>{lang==="sv"?"Ändra namn och färg.":"Change name and color."}</div>
           <SLabel>{t.catName}</SLabel>
           <input value={name} onChange={e=>setName(e.target.value)} className="lt-input" style={INP} autoFocus/>
@@ -2485,7 +2959,7 @@ function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
     return(
       <Overlay onClose={onClose}>
         <Sheet scroll>
-          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:6,letterSpacing:-.5}}>{t.addCat}</div>
+          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.inkSoft,marginBottom:6,letterSpacing:-.5}}>{t.addCat}</div>
           <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:G.ink3,marginBottom:24,lineHeight:1.4}}>{lang==="sv"?"Skapa en ny kategori för dina kort.":"Create a new category for your cards."}</div>
           <SLabel>{t.catName}</SLabel>
           <input value={name} onChange={e=>setName(e.target.value)} className="lt-input" style={INP} placeholder="t.ex. Mat" autoFocus/>
@@ -2538,7 +3012,7 @@ function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
     return(
       <Overlay onClose={onClose}>
         <Sheet scroll>
-          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:6,letterSpacing:-.5}}>{t.addCard}</div>
+          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.inkSoft,marginBottom:6,letterSpacing:-.5}}>{t.addCard}</div>
           <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:G.ink3,marginBottom:24,lineHeight:1.4}}>{lang==="sv"?`Skapa ett nytt kort i "${cat.sv}".`:`Add a new card to "${cat.en}".`}</div>
 
           <SLabel>{t.cardImage}</SLabel>
@@ -2624,74 +3098,389 @@ function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
 }
 
 /* ═══ Emotion screen ═══ */
-function EmotionScreen({lang,t,cfg,isEditor,setCfg}){
+function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange}){
   const[sel,setSel]=useState(null);
   const[reason,setReason]=useState("");
   const[saved,setSaved]=useState(false);
   const[hist,setHist]=usePersistentState("emotionHist",[]);
   const[showH,setShowH]=useState(false);
+  const[editingEmo,setEditingEmo]=useState(null); // null | "new" | emotion-being-edited
   const S=SCREENS.emotion;
+  // Safety net: if user navigates away mid-focus (without onBlur firing) make
+  // sure the nav comes back. Cleans up on unmount.
+  useEffect(()=>{
+    return()=>onInputFocusChange?.(false);
+  // eslint-disable-next-line
+  },[]);
 
-  // Editor view — toggle which emotions are visible
+  // Combined emotion list, with full editability of built-ins:
+  //   • cfg.emotionOverrides[id] = {name, emoji, photo, color} merges on top of EMOS[id]
+  //   • cfg.deletedBuiltinEmotions = [id, …] filters built-ins out completely
+  //   • cfg.customEmotions = user-added ones, IDs are "c_<ts>"
+  const overrides=cfg.emotionOverrides||{};
+  const deleted=cfg.deletedBuiltinEmotions||[];
+  const customEmos=cfg.customEmotions||[];
+  const allEmos=useMemo(()=>{
+    const builtins=EMOS
+      .filter(e=>!deleted.includes(e.id))
+      .map(e=>overrides[e.id]?{...e,...overrides[e.id]}:e);
+    return[...builtins,...customEmos];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[JSON.stringify(overrides),JSON.stringify(deleted),customEmos]);
+  const isBuiltin=e=>typeof e.id==="number";
+  const isCustom=e=>typeof e.id==="string"&&e.id.startsWith("c_");
+  const isOverridden=e=>isBuiltin(e)&&overrides[e.id];
+  // Built-ins have sv/en pairs; once overridden they have `name` instead.
+  const labelFor=e=>e.name||(lang==="sv"?e.sv:e.en);
+
+  // Inline panel scrolls itself into view when an emotion is selected, so the
+  // save button & notes field are never hidden below the fold. The ref + effect
+  // sit at the top of the component (before any conditional return) to comply
+  // with the Rules of Hooks — the ref is only consumed in the user-view path
+  // and harmlessly unused in editor mode.
+  const inlinePanelRef=useRef(null);
+  useEffect(()=>{
+    if(!sel||!inlinePanelRef.current) return;
+    const id=setTimeout(()=>{
+      inlinePanelRef.current?.scrollIntoView({behavior:"smooth",block:"nearest"});
+    },120);
+    return()=>clearTimeout(id);
+  },[sel?.id]);
+
+  // ─── Editor view ───────────────────────────────────────────────────
   if(isEditor){
     const visible=cfg.visibleEmotions||[1,2,3,4,5];
-    const toggle=(id)=>{
+    const toggle=id=>{
       const has=visible.includes(id);
-      const next=has?visible.filter(x=>x!==id):[...visible,id].sort();
-      if(next.length===0) return; // need at least one
+      const next=has?visible.filter(x=>x!==id):[...visible,id];
+      if(next.length===0) return;
       setCfg(x=>({...x,visibleEmotions:next}));
     };
+    const setStyle=style=>setCfg(x=>({...x,emotionStyle:style}));
+
+    // Save: routes to overrides for built-ins, customEmotions for custom IDs, or a new custom entry.
+    const saveEmo=emo=>{
+      if(typeof emo.id==="number"){
+        // Built-in: write an override
+        setCfg(x=>({
+          ...x,
+          emotionOverrides:{
+            ...(x.emotionOverrides||{}),
+            [emo.id]:{name:emo.name,emoji:emo.emoji,photo:emo.photo,color:emo.color},
+          },
+        }));
+      } else if(typeof emo.id==="string"&&emo.id.startsWith("c_")){
+        // Custom: update existing
+        setCfg(x=>({
+          ...x,
+          customEmotions:(x.customEmotions||[]).map(e=>e.id===emo.id?{...e,...emo}:e),
+        }));
+      } else {
+        // New custom
+        const newId=`c_${Date.now()}`;
+        setCfg(x=>({
+          ...x,
+          customEmotions:[...(x.customEmotions||[]),{...emo,id:newId}],
+          visibleEmotions:[...(x.visibleEmotions||[]),newId],
+        }));
+      }
+      setEditingEmo(null);
+    };
+
+    // Delete: built-ins go into deletedBuiltinEmotions; customs are removed entirely.
+    // Either way, ensure visibleEmotions stays non-empty.
+    const deleteEmo=id=>{
+      setCfg(x=>{
+        let nextCustom=x.customEmotions||[];
+        let nextDeleted=x.deletedBuiltinEmotions||[];
+        let nextOverrides=x.emotionOverrides||{};
+        if(typeof id==="number"){
+          nextDeleted=[...nextDeleted,id];
+          // Strip its override too — no point keeping it
+          if(nextOverrides[id]){
+            nextOverrides={...nextOverrides};
+            delete nextOverrides[id];
+          }
+        } else {
+          nextCustom=nextCustom.filter(e=>e.id!==id);
+        }
+        const availIds=[
+          ...EMOS.filter(e=>!nextDeleted.includes(e.id)).map(e=>e.id),
+          ...nextCustom.map(e=>e.id),
+        ];
+        let nextVisible=(x.visibleEmotions||[]).filter(v=>v!==id&&availIds.includes(v));
+        if(nextVisible.length===0) nextVisible=availIds;
+        return{...x,customEmotions:nextCustom,deletedBuiltinEmotions:nextDeleted,emotionOverrides:nextOverrides,visibleEmotions:nextVisible};
+      });
+      setEditingEmo(null);
+    };
+
+    // Reset: brings back all default built-ins and clears all overrides.
+    // Custom emotions are NOT touched.
+    const resetDefaults=()=>{
+      setCfg(x=>{
+        const restoredVisible=[1,2,3,4,5];
+        // Preserve any visible custom IDs the user had
+        const customVisible=(x.visibleEmotions||[]).filter(v=>typeof v==="string");
+        return{
+          ...x,
+          emotionOverrides:{},
+          deletedBuiltinEmotions:[],
+          visibleEmotions:[...restoredVisible,...customVisible],
+        };
+      });
+    };
+
+    const currentStyle=cfg.emotionStyle||"arc";
+    const hasAnyEdits=Object.keys(overrides).length>0||deleted.length>0;
+
     return(
       <div style={{flex:1,overflowY:"auto",background:S.hb,padding:"24px 22px 120px",display:"flex",flexDirection:"column",gap:18}}>
-        <div style={{background:G.white,borderRadius:22,padding:"20px 20px 18px",border:`1px solid ${G.border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
-          <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,marginBottom:6,letterSpacing:.2}}>{lang==="en"?"Visible emotions":"Synliga känslor"}</div>
-          <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:G.ink2,lineHeight:1.5}}>{lang==="en"?"Choose which feelings the user can pick. Fewer options can make it easier to choose.":"Välj vilka känslor användaren kan välja mellan. Färre alternativ kan göra det lättare att bestämma."}</div>
+        {/* Style picker — arc vs vertical */}
+        <div style={{background:G.white,borderRadius:22,padding:"18px 20px",border:`1px solid ${G.border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
+          <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,marginBottom:6,letterSpacing:.2}}>{t.barometerStyle}</div>
+          <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:G.ink2,lineHeight:1.5,marginBottom:14}}>{t.barometerStyleHint}</div>
+          <div style={{display:"flex",gap:8}}>
+            {[
+              ["arc",t.styleArc,(
+                <svg width={26} height={18} viewBox="0 0 26 18" fill="none">
+                  <path d="M2 16 Q13 -2 24 16" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round"/>
+                  <line x1={13} y1={16} x2={17} y2={6} stroke="currentColor" strokeWidth={1.6} strokeLinecap="round"/>
+                  <circle cx={13} cy={16} r={1.5} fill="currentColor"/>
+                </svg>
+              )],
+              ["vertical",t.styleVertical,(
+                <svg width={26} height={18} viewBox="0 0 22 18" fill="none">
+                  <rect x={3} y={2} width={16} height={3} rx={1.5} stroke="currentColor" strokeWidth={1.4}/>
+                  <rect x={3} y={7.5} width={16} height={3} rx={1.5} stroke="currentColor" strokeWidth={1.4}/>
+                  <rect x={3} y={13} width={16} height={3} rx={1.5} stroke="currentColor" strokeWidth={1.4}/>
+                </svg>
+              )],
+            ].map(([k,lb,icon])=>{
+              const on=currentStyle===k;
+              return(
+                <button key={k} onClick={()=>setStyle(k)} className="lt-press" style={{flex:1,padding:"14px 6px",borderRadius:13,border:`1px solid ${on?S.h:G.border}`,background:on?S.hl:"transparent",color:on?S.deep:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6,transition:"all .2s ease"}}>
+                  {icon}
+                  {lb}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Visible emotions intro */}
+        <div style={{background:G.white,borderRadius:22,padding:"20px 20px 18px",border:`1px solid ${G.border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
+          <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,marginBottom:6,letterSpacing:.2}}>{t.visibleEmotions}</div>
+          <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:G.ink2,lineHeight:1.5}}>{lang==="en"?"Choose which feelings the user can pick. Add your own — with a photo or emoji.":"Välj vilka känslor användaren kan välja mellan. Lägg till egna — med foto eller emoji."}</div>
+        </div>
+
+        {/* Emotions list — built-in + custom, all editable */}
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {EMOS.map(e=>{
+          {allEmos.map(e=>{
             const on=visible.includes(e.id);
+            const custom=isCustom(e);
+            const edited=isOverridden(e);
             return(
-              <div key={e.id} onClick={()=>toggle(e.id)} className="lt-press-soft" style={{
-                background:G.white,borderRadius:18,padding:"14px 18px",cursor:"pointer",
-                border:`1px solid ${on?e.color+"66":"rgba(31,27,46,0.06)"}`,
-                boxShadow:on?`0 6px 18px ${e.color}22`:"0 1px 3px rgba(31,27,46,0.04)",
+              <div key={e.id} className="lt-press-soft" onClick={()=>toggle(e.id)} style={{
+                // Dov bas: a soft, very low-saturation wash of the emotion's own colour
+                // even when off. On = the same gradient at higher intensity. No harsh
+                // outlines anywhere — just colour and shadow speak for themselves.
+                background:on
+                  ?`linear-gradient(135deg, ${e.color}26 0%, ${e.color}12 100%)`
+                  :`linear-gradient(135deg, ${e.color}10 0%, ${e.color}06 100%)`,
+                borderRadius:18,padding:"14px 16px",
+                border:"none",
+                boxShadow:on
+                  ?`0 8px 22px ${e.color}33, inset 0 1px 0 rgba(255,255,255,0.5)`
+                  :"0 1px 3px rgba(31,27,46,0.04)",
                 display:"flex",alignItems:"center",gap:14,
-                opacity:on?1:0.55,
-                transition:"all .25s ease",
+                opacity:on?1:0.5,
+                cursor:"pointer",
+                transform:on?"scale(1)":"scale(0.99)",
+                transition:"background .4s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .4s cubic-bezier(0.32, 0.72, 0, 1), opacity .35s ease, transform .4s cubic-bezier(0.34, 1.56, 0.64, 1)",
               }}>
                 <div style={{
                   width:48,height:48,borderRadius:14,
-                  background:on?`linear-gradient(140deg,${e.color}40,${e.color}28)`:"#F4F2F8",
-                  border:`1px solid ${on?e.color+"33":"rgba(31,27,46,0.06)"}`,
+                  background:e.photo?"#000":`linear-gradient(140deg,${e.color}55,${e.color}33)`,
                   display:"flex",alignItems:"center",justifyContent:"center",
                   fontSize:26,flexShrink:0,
-                  filter:on?"none":"grayscale(0.7)",
-                }}>{e.emoji}</div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontFamily:G.serif,fontWeight:500,fontSize:16,color:G.ink,letterSpacing:-.1}}>{lang==="en"?e.en:e.sv}</div>
+                  filter:on?"none":"saturate(0.7)",
+                  overflow:"hidden",
+                  boxShadow:on?`inset 0 1px 0 rgba(255,255,255,0.4)`:"none",
+                  transition:"filter .35s ease, box-shadow .35s ease",
+                }}>
+                  {e.photo?<img src={e.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:e.emoji}
                 </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:G.serif,fontWeight:500,fontSize:16,color:G.ink,letterSpacing:-.1}}>{labelFor(e)}</div>
+                  {(custom||edited)&&(
+                    <span style={{display:"inline-block",fontFamily:G.font,fontSize:9,fontWeight:700,color:on?e.color:G.ink3,marginTop:5,letterSpacing:.9,textTransform:"uppercase",padding:"2px 8px",borderRadius:6,background:on?`${e.color}28`:"rgba(31,27,46,0.06)"}}>{t.customLabel}</span>
+                  )}
+                </div>
+                {/* Edit pencil — same outline-icon vocabulary used elsewhere in
+                    the app (IdCard, schedule edit). Tilts and lifts on hover/press
+                    via the lumaPen class — defined once in a <style> block at the
+                    top of the editor below. */}
+                <button onClick={(ev)=>{ev.stopPropagation();setEditingEmo(e);}} aria-label={t.editEmotion} className="lt-press-soft lumaPenBtn" style={{padding:"8px 10px",borderRadius:10,border:"none",background:"transparent",color:G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <svg className="lumaPen" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 4 H4 a2 2 0 0 0 -2 2 v14 a2 2 0 0 0 2 2 h14 a2 2 0 0 0 2 -2 v-7"/>
+                    <path d="M18.5 2.5 a2.121 2.121 0 0 1 3 3 L12 15 l-4 1 1 -4 z"/>
+                  </svg>
+                </button>
                 <Toggle on={on} onChange={()=>toggle(e.id)} color={e.color}/>
               </div>
             );
           })}
         </div>
+
+        {/* Add custom emotion */}
+        <button onClick={()=>setEditingEmo("new")} className="lt-press" style={{
+          padding:"15px 0",borderRadius:16,
+          border:`1.5px dashed ${S.h}77`,background:"transparent",color:S.deep,
+          fontFamily:G.font,fontWeight:600,fontSize:14,cursor:"pointer",
+          display:"flex",alignItems:"center",justifyContent:"center",gap:6,
+          letterSpacing:.2,
+        }}>{t.addEmotion}</button>
+
+        {/* Reason-field config — toggle the notes field on/off and customise its label */}
+        {(()=>{
+          const reasonOn=cfg.emotionReasonEnabled!==false;
+          const customLabel=cfg.emotionReasonLabel||"";
+          const setReasonOn=v=>setCfg(x=>({...x,emotionReasonEnabled:v}));
+          const setReasonLabel=v=>setCfg(x=>({...x,emotionReasonLabel:v}));
+          return(
+            <div style={{background:G.white,borderRadius:22,padding:"18px 20px",border:`1px solid ${G.border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:reasonOn?14:0,transition:"margin-bottom .3s ease"}}>
+                <Toggle on={reasonOn} onChange={()=>setReasonOn(!reasonOn)} color={S.h}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,letterSpacing:.2}}>{t.reasonField}</div>
+                  <div style={{fontFamily:G.font,fontSize:11.5,color:G.ink2,marginTop:3,lineHeight:1.45}}>{t.reasonFieldHint}</div>
+                </div>
+              </div>
+              {reasonOn&&(
+                <div style={{animation:"adSection 0.32s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+                  <input
+                    value={customLabel}
+                    onChange={ev=>setReasonLabel(ev.target.value)}
+                    placeholder={t.emotionReason||t.reasonLabelPH}
+                    className="lt-input"
+                    style={{...INP,marginBottom:0,background:S.hll,borderColor:S.hl}}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Reset to defaults — only shown if user has edited or deleted built-ins */}
+        {hasAnyEdits&&(
+          <div style={{marginTop:8,paddingTop:18,borderTop:`1px solid ${G.border}`,animation:"adSection 0.35s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+            <div style={{fontFamily:G.font,fontSize:11.5,color:G.ink2,marginBottom:10,lineHeight:1.5,letterSpacing:.1}}>{t.resetEmotionsHint}</div>
+            <button onClick={resetDefaults} className="lt-press-soft" style={{width:"100%",padding:"11px 0",borderRadius:12,border:`1px solid ${G.border}`,background:"transparent",color:G.ink2,fontFamily:G.font,fontWeight:500,fontSize:13,cursor:"pointer",letterSpacing:.2}}>↺ {t.resetEmotions}</button>
+          </div>
+        )}
+
+        {editingEmo&&<CustomEmotionEditor existing={editingEmo==="new"?null:editingEmo} onSave={saveEmo} onDelete={deleteEmo} onClose={()=>setEditingEmo(null)} t={t} lang={lang}/>}
       </div>
     );
   }
 
-  const visibleEmos=EMOS.filter(e=>(cfg.visibleEmotions||[1,2,3,4,5]).includes(e.id));
-  const doSave=()=>{if(!sel)return;const e={...sel,reason,time:new Date().toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"}),date:new Date().toLocaleDateString("sv-SE")};setHist(h=>[e,...h].slice(0,20));setSaved(true);setTimeout(()=>{setSaved(false);setSel(null);setReason("");},2200);};
-  const R2=78, cx=120, cy=115;
+  // ─── User view ─────────────────────────────────────────────────────
+  const visibleEmos=allEmos.filter(e=>(cfg.visibleEmotions||[1,2,3,4,5]).includes(e.id));
+  const doSave=()=>{
+    if(!sel)return;
+    const e={
+      id:sel.id,emoji:sel.emoji,photo:sel.photo||null,color:sel.color,
+      // Normalise label for history rendering across both languages
+      sv:sel.sv||sel.name||"",
+      en:sel.en||sel.name||"",
+      reason,
+      time:new Date().toLocaleTimeString("sv-SE",{hour:"2-digit",minute:"2-digit"}),
+      date:new Date().toLocaleDateString("sv-SE"),
+    };
+    setHist(h=>[e,...h].slice(0,20));
+    setSaved(true);
+    setTimeout(()=>{setSaved(false);setSel(null);setReason("");},2200);
+  };
+  // Arc gauge geometry — used only when style==="arc"
+  const R2=78,cx=120,cy=115;
   const ap=a=>({x:cx+R2*Math.cos(a),y:cy-R2*Math.sin(a)});
   const N=Math.max(1,visibleEmos.length);
   const arcs=visibleEmos.map((e,i)=>{const s=Math.PI-(i/N)*Math.PI,en=Math.PI-((i+1)/N)*Math.PI;const p1=ap(s),p2=ap(en);return{i,d:`M${p1.x},${p1.y} A${R2},${R2} 0 0,1 ${p2.x},${p2.y}`,col:e.color};});
   const selIdx=sel?visibleEmos.findIndex(e=>e.id===sel.id):-1;
   const needleA=selIdx>=0?Math.PI-(selIdx+0.5)/N*Math.PI:Math.PI/2;
   const np=ap(needleA);
+
+  const style=cfg.emotionStyle||"arc";
+
+  // The reason input + save button (or the saved-celebration once doSave fires)
+  // — rendered once, placed in two different positions depending on layout:
+  // inline under the selected tile in vertical mode; below the gauge row in arc.
+  const reasonOn=cfg.emotionReasonEnabled!==false;
+  const reasonLabel=(cfg.emotionReasonLabel&&cfg.emotionReasonLabel.trim())||t.emotionReason;
+  const InlinePanel=sel?(
+    <div ref={inlinePanelRef} style={{animation:"emoReasonIn .42s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+      <style>{`@keyframes emoReasonIn{0%{opacity:0;transform:translateY(-6px)}100%{opacity:1;transform:translateY(0)}}`}</style>
+      {!saved?(
+        <>
+          {reasonOn&&(<>
+            <div style={{height:3,width:42,borderRadius:2,background:`linear-gradient(90deg,${sel.color},${sel.color}55)`,marginBottom:14,boxShadow:`0 0 8px ${sel.color}55`}}/>
+            <SLabel>{reasonLabel}</SLabel>
+            <input
+              value={reason}
+              onChange={e=>setReason(e.target.value)}
+              onFocus={()=>onInputFocusChange?.(true)}
+              onBlur={()=>onInputFocusChange?.(false)}
+              className="lt-input"
+              style={{...INP,borderColor:`${sel.color}44`,background:`${sel.color}08`}}
+              placeholder=""
+            />
+          </>)}
+          {/* Action row: dismiss (X) + primary save. The dismiss button gives an
+              escape route if the user tapped a feeling by mistake — clears sel
+              and reason so the panel collapses back to the default list. */}
+          <div style={{display:"flex",gap:8,alignItems:"stretch"}}>
+            <button onClick={()=>{setSel(null);setReason("");}} aria-label={t.cancel} className="lt-press-soft" style={{
+              width:54,padding:0,borderRadius:16,border:"none",
+              background:"rgba(31,27,46,0.05)",color:G.ink2,
+              cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+              transition:"background .25s ease, color .25s ease",
+            }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                <path d="M3 3 L11 11 M11 3 L3 11"/>
+              </svg>
+            </button>
+            <button onClick={doSave} className="lt-press saveBtn" style={{flex:1,padding:"16px 0",borderRadius:16,border:"none",background:sel.color,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(sel.color),letterSpacing:.3,display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
+              <svg className="saveTick" width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+                <path d="M2.5 7.2 L5.8 10.5 L11.5 3.5"/>
+              </svg>
+              {t.save}
+            </button>
+          </div>
+        </>
+      ):(
+        <div style={{position:"relative",textAlign:"center",padding:"36px 20px 28px",animation:"emoSavedIn .55s cubic-bezier(0.34, 1.56, 0.64, 1) both"}}>
+          <style>{`
+            @keyframes emoSavedIn{0%{opacity:0;transform:translateY(8px) scale(0.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
+            @keyframes emoSavedBubble{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+            @keyframes emoSavedRipple{0%{transform:scale(0.7);opacity:0.45}100%{transform:scale(2.6);opacity:0}}
+          `}</style>
+          <div style={{position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",width:118,height:118,marginBottom:16}}>
+            <div style={{position:"absolute",inset:9,borderRadius:"50%",background:sel.color,animation:"emoSavedRipple 1.8s ease-out infinite",pointerEvents:"none"}}/>
+            <div style={{position:"relative",width:100,height:100,borderRadius:"50%",background:`linear-gradient(135deg,${sel.color}66,${sel.color}3D)`,boxShadow:`0 14px 36px ${sel.color}55, inset 0 1px 0 rgba(255,255,255,0.55)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:54,overflow:"hidden",animation:"emoSavedBubble 2s ease-in-out infinite"}}>
+              {sel.photo?<img src={sel.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:sel.emoji}
+            </div>
+          </div>
+          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:24,color:G.ink,letterSpacing:-.3,marginBottom:6,lineHeight:1.1}}>{t.emotionSaved}</div>
+          <div style={{fontFamily:G.font,fontSize:13,color:sel.color,fontWeight:600,letterSpacing:.3}}>{labelFor(sel)}</div>
+        </div>
+      )}
+    </div>
+  ):null;
+
   return(
     <div style={{flex:1,display:"flex",flexDirection:"column",overflowY:"auto",background:S.hb}}>
-      <div style={{padding:"30px 22px 4px",display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:22,gap:14}}>
-        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:28,color:G.ink,letterSpacing:-.6,lineHeight:1.05}}>{t.emotions}</div>
+      <div style={{padding:"24px 22px 4px",display:"flex",justifyContent:"flex-end",alignItems:"center",marginBottom:18,gap:14}}>
         <button onClick={()=>setShowH(h=>!h)} className="lt-press" style={{padding:"8px 14px",borderRadius:20,border:`1px solid ${G.border}`,background:showH?S.hl:"transparent",color:showH?S.deep:G.ink2,fontFamily:G.font,fontWeight:500,cursor:"pointer",fontSize:12,letterSpacing:.2}}>{t.emotionHistory}</button>
       </div>
       <div style={{flex:1,padding:"0 20px 20px",overflowY:"auto"}}>
@@ -2699,7 +3488,6 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg}){
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"50px 30px 30px",gap:14}}>
             <style>{`@keyframes empHistFloat{0%,100%{transform:translateY(0);opacity:0.85}50%{transform:translateY(-3px);opacity:1}}`}</style>
             <svg width="64" height="64" viewBox="0 0 64 64" style={{animation:"empHistFloat 4s ease-in-out infinite"}}>
-              {/* Calendar/journal page illustration */}
               <rect x="12" y="14" width="40" height="40" rx="4" fill={`${SCREENS.emotion.h}18`} stroke={`${SCREENS.emotion.h}66`} strokeWidth="1.5"/>
               <line x1="20" y1="10" x2="20" y2="18" stroke={`${SCREENS.emotion.h}88`} strokeWidth="2" strokeLinecap="round"/>
               <line x1="44" y1="10" x2="44" y2="18" stroke={`${SCREENS.emotion.h}88`} strokeWidth="2" strokeLinecap="round"/>
@@ -2713,37 +3501,250 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg}){
             <div style={{fontFamily:G.font,fontSize:12,color:"#9892AA",textAlign:"center",lineHeight:1.4,maxWidth:240}}>{lang==="sv"?"Dina känslor sparas här när du registrerar dem.":"Your feelings will appear here once you log them."}</div>
           </div>
         ):hist.map((e,i)=>(
-          <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:G.white,borderRadius:16,marginBottom:10,border:`1px solid ${e.color}22`,boxShadow:sh.xs}}>
-            <span style={{fontSize:28}}>{e.emoji}</span>
-            <div style={{flex:1}}><div style={{fontFamily:G.font,fontWeight:700,color:e.color,fontSize:15}}>{lang==="sv"?e.sv:e.en}</div>{e.reason&&<div style={{fontFamily:G.font,fontSize:13,color:G.ink2,marginTop:2}}>{e.reason}</div>}</div>
-            <div style={{fontFamily:G.font,fontSize:11,color:G.ink3,textAlign:"right"}}><div>{fmtT(e.time,lang)}</div><div>{e.date}</div></div>
+          <div key={i} style={{
+            display:"flex",alignItems:"center",gap:12,padding:"14px 16px",
+            background:`linear-gradient(125deg, ${G.white} 0%, ${G.white} 35%, ${e.color}0E 80%, ${e.color}1A 100%)`,
+            borderRadius:16,marginBottom:10,
+            border:`1px solid ${e.color}33`,
+            boxShadow:`0 4px 12px ${e.color}14, inset 0 1px 0 rgba(255,255,255,0.5)`,
+          }}>
+            <div style={{width:42,height:42,borderRadius:12,background:e.photo?"#000":`linear-gradient(140deg,${e.color}26,${e.color}3A)`,border:`1px solid ${e.color}33`,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>
+              {e.photo?<img src={e.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:e.emoji}
+            </div>
+            <div style={{flex:1,minWidth:0}}><div style={{fontFamily:G.font,fontWeight:700,color:e.color,fontSize:15}}>{lang==="sv"?e.sv:e.en}</div>{e.reason&&<div style={{fontFamily:G.font,fontSize:13,color:G.ink2,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{e.reason}</div>}</div>
+            <div style={{fontFamily:G.font,fontSize:11,color:G.ink3,textAlign:"right",flexShrink:0,fontVariantNumeric:"tabular-nums"}}><div>{fmtT(e.time,lang)}</div><div>{e.date}</div></div>
           </div>
         ))):(<>
-          <div style={{display:"flex",justifyContent:"center",marginBottom:14,background:G.white,borderRadius:24,padding:18,boxShadow:sh.sm,border:`1px solid ${G.border}`}}>
-            <svg width={240} height={128}>
-              {arcs.map(arc=><path key={arc.i} d={arc.d} fill="none" stroke={arc.col} strokeWidth={20} strokeLinecap="butt"/>)}
-              <line x1={cx} y1={cy} x2={np.x} y2={np.y} stroke={sel?sel.color:G.ink3} strokeWidth={4} strokeLinecap="round" style={{transition:"all .55s cubic-bezier(.34,1.56,.64,1)"}}/>
-              <circle cx={cx} cy={cy} r={11} fill={sel?sel.color:G.ink3}/>
-              <circle cx={cx} cy={cy} r={5} fill="#fff"/>
-            </svg>
-          </div>
-          <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:24,flexWrap:"wrap"}}>
-            {visibleEmos.map(e=>(
-              <div key={e.id} onClick={()=>setSel(e)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,cursor:"pointer",padding:"14px 10px",borderRadius:18,background:sel?.id===e.id?`${e.color}18`:G.white,border:`1px solid ${sel?.id===e.id?e.color:G.border}`,boxShadow:sel?.id===e.id?sh.c(e.color):sh.xs,transform:sel?.id===e.id?"scale(1.06)":"scale(1)",transition:"all .22s ease",minWidth:62}}>
-                <span style={{fontSize:32}}>{e.emoji}</span>
-                <span style={{fontFamily:G.font,fontWeight:700,fontSize:9,color:e.color,whiteSpace:"nowrap"}}>{lang==="sv"?e.sv:e.en}</span>
-              </div>
-            ))}
-          </div>
-          {sel&&!saved&&(<>
-            <SLabel>{t.emotionReason}</SLabel>
-            <input value={reason} onChange={e=>setReason(e.target.value)} className="lt-input" style={INP} placeholder="..."/>
-            <button onClick={doSave} style={{width:"100%",padding:"16px 0",borderRadius:16,border:"none",background:sel.color,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(sel.color)}}>💾 {t.save}</button>
-          </>)}
-          {saved&&<div style={{textAlign:"center",padding:28,fontFamily:G.serif,fontWeight:600,fontSize:24,color:S.deep}}>{t.emotionSaved}</div>}
+          {style==="arc"?(<>
+            <div style={{display:"flex",justifyContent:"center",marginBottom:14,background:G.white,borderRadius:24,padding:18,boxShadow:sh.sm,border:`1px solid ${G.border}`}}>
+              <svg width={240} height={128}>
+                {arcs.map(arc=><path key={arc.i} d={arc.d} fill="none" stroke={arc.col} strokeWidth={20} strokeLinecap="butt"/>)}
+                <line x1={cx} y1={cy} x2={np.x} y2={np.y} stroke={sel?sel.color:G.ink3} strokeWidth={4} strokeLinecap="round" style={{transition:"all .55s cubic-bezier(.34,1.56,.64,1)"}}/>
+                <circle cx={cx} cy={cy} r={11} fill={sel?sel.color:G.ink3}/>
+                <circle cx={cx} cy={cy} r={5} fill="#fff"/>
+              </svg>
+            </div>
+            <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:24,flexWrap:"wrap"}}>
+              {visibleEmos.map(e=>{
+                const on=sel?.id===e.id;
+                return(
+                  <div key={e.id} onClick={()=>setSel(e)} style={{
+                    display:"flex",flexDirection:"column",alignItems:"center",gap:6,
+                    cursor:"pointer",padding:"14px 10px",borderRadius:18,
+                    background:on
+                      ?`linear-gradient(160deg, ${e.color}66 0%, ${e.color}3D 100%)`
+                      :`linear-gradient(160deg, ${e.color}1F 0%, ${e.color}11 100%)`,
+                    border:"none",
+                    boxShadow:on
+                      ?`0 12px 26px ${e.color}55, 0 3px 8px ${e.color}33, inset 0 1px 0 rgba(255,255,255,0.45)`
+                      :`0 2px 6px ${e.color}14`,
+                    transform:on?"scale(1.06)":"scale(1)",
+                    transition:"transform .42s cubic-bezier(0.34, 1.56, 0.64, 1), background .45s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .45s cubic-bezier(0.32, 0.72, 0, 1)",
+                    minWidth:62,
+                  }}>
+                    <div style={{width:42,height:42,borderRadius:12,background:e.photo?"#000":"transparent",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,flexShrink:0}}>
+                      {e.photo?<img src={e.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:e.emoji}
+                    </div>
+                    <span style={{fontFamily:G.font,fontWeight:700,fontSize:9,color:on?G.ink:e.color,whiteSpace:"nowrap",transition:"color .35s ease"}}>{labelFor(e)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </>):(
+            // Vertical layout: full-width stacked tiles, larger touch targets.
+            // The reason+save panel expands inline RIGHT UNDER the selected tile
+            // so the user never has to scroll down to find the save button.
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
+              {visibleEmos.map(e=>{
+                const on=sel?.id===e.id;
+                return(
+                  <Fragment key={e.id}>
+                    <div onClick={()=>setSel(e)} className="lt-press-soft" style={{
+                      display:"flex",alignItems:"center",gap:14,
+                      padding:"16px 18px",borderRadius:20,
+                      // Each tile lives in its emotion's own muted hue. Unselected = dov,
+                      // selected = saturated. No outlines anywhere; colour + shadow do all
+                      // the work. Two stops in the gradient keep it from looking flat.
+                      background:on
+                        ?`linear-gradient(135deg, ${e.color}66 0%, ${e.color}3D 100%)`
+                        :`linear-gradient(135deg, ${e.color}1F 0%, ${e.color}11 100%)`,
+                      border:"none",
+                      boxShadow:on
+                        ?`0 14px 32px ${e.color}55, 0 4px 10px ${e.color}33, inset 0 1px 0 rgba(255,255,255,0.45)`
+                        :`0 2px 6px ${e.color}14`,
+                      cursor:"pointer",
+                      transform:on?"scale(1.025)":"scale(1)",
+                      // Bouncy back-out on the scale (slight overshoot), longer crossfade on colour + shadow
+                      transition:"transform .42s cubic-bezier(0.34, 1.56, 0.64, 1), background .5s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .5s cubic-bezier(0.32, 0.72, 0, 1)",
+                    }}>
+                      <div style={{
+                        width:54,height:54,borderRadius:16,
+                        background:e.photo?"#000":`linear-gradient(140deg,${e.color}AA,${e.color}77)`,
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        fontSize:30,flexShrink:0,overflow:"hidden",
+                        boxShadow:on?"inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 6px rgba(31,27,46,0.08)":"inset 0 1px 0 rgba(255,255,255,0.25)",
+                        transition:"box-shadow .4s ease",
+                      }}>
+                        {e.photo?<img src={e.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:e.emoji}
+                      </div>
+                      <div style={{flex:1,minWidth:0,fontFamily:G.serif,fontWeight:600,fontSize:18,color:G.ink,letterSpacing:-.2}}>{labelFor(e)}</div>
+                      {/* Checkmark fades + scales in on selection — no jump */}
+                      <div style={{
+                        width:30,height:30,borderRadius:"50%",
+                        background:e.color,
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        color:"#fff",fontSize:15,fontWeight:700,
+                        boxShadow:`0 4px 12px ${e.color}77`,
+                        opacity:on?1:0,
+                        transform:on?"scale(1)":"scale(0.4)",
+                        transition:"opacity .35s ease, transform .42s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                      }}>✓</div>
+                    </div>
+                    {/* Inline expansion: panel slides in right under the selected tile */}
+                    {on&&(
+                      <div style={{padding:"4px 4px 8px"}}>
+                        {InlinePanel}
+                      </div>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </div>
+          )}
+          {/* Arc layout: panel below the tiles row (no inline expansion since the
+              gauge + tiles are a horizontal cluster, not a vertical list) */}
+          {style==="arc"&&InlinePanel}
         </>)}
       </div>
     </div>
+  );
+}
+
+/* ═══ Custom emotion editor — add/edit/delete a user-defined feeling ═══ */
+function CustomEmotionEditor({existing,onSave,onDelete,onClose,t,lang}){
+  // For built-ins (no .name yet), seed with the current-language label so the user
+  // doesn't have to retype it just to change the colour or photo.
+  const initialName=existing?.name||(existing&&(lang==="sv"?existing.sv:existing.en))||"";
+  const[name,setName]=useState(initialName);
+  const[emoji,setEmoji]=useState(existing?.emoji||"😊");
+  const[photo,setPhoto]=useState(existing?.photo||null);
+  const[color,setColor]=useState(existing?.color||ACT_C[0]);
+  const[showEmojiPicker,setShowEmojiPicker]=useState(false);
+  const[confirmDel,setConfirmDel]=useState(false); // two-tap delete confirmation
+  const Sc=SCREENS.emotion;
+
+  const handlePhoto=ev=>{
+    const f=ev.target.files?.[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const c=document.createElement("canvas");
+        const max=500;
+        const s=Math.min(1,max/Math.max(img.width,img.height));
+        c.width=img.width*s; c.height=img.height*s;
+        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+        setPhoto(c.toDataURL("image/jpeg",0.75));
+      };
+      img.src=r.result;
+    };
+    r.readAsDataURL(f);
+  };
+
+  const save=()=>{
+    const finalName=name.trim()||(lang==="sv"?"Min känsla":"My feeling");
+    onSave({id:existing?.id,name:finalName,emoji,photo,color});
+  };
+
+  return(
+    <Overlay onClose={onClose}>
+      <Sheet scroll>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:24,color:G.ink,marginBottom:24,letterSpacing:-.4,lineHeight:1.1}}>
+          {existing?t.editEmotion:t.addEmotion}
+        </div>
+
+        {/* Image/emoji preview + actions */}
+        <SLabel>{t.cardImage}</SLabel>
+        <div style={{display:"flex",gap:12,marginBottom:18,alignItems:"flex-start"}}>
+          <div style={{width:84,height:84,borderRadius:18,background:photo?"#000":`linear-gradient(140deg,${color}25,${color}45)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:44,overflow:"hidden",border:`1px solid ${color}40`,flexShrink:0}}>
+            {photo?<img src={photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:emoji}
+          </div>
+          <div style={{flex:1,display:"flex",flexDirection:"column",gap:7}}>
+            <label style={{padding:"10px 13px",borderRadius:11,background:G.white,border:`1px solid ${G.border}`,fontFamily:G.font,fontSize:12,color:G.ink,cursor:"pointer",fontWeight:600,textAlign:"center",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7}}>
+              <IconCamera size={14}/> {photo?t.changePhoto:t.uploadPhoto}
+              <input type="file" accept="image/*" onChange={handlePhoto} style={{display:"none"}}/>
+            </label>
+            {photo
+              ?<button onClick={()=>setPhoto(null)} style={{padding:"9px 13px",borderRadius:11,background:"transparent",border:`1px solid ${G.border}`,fontFamily:G.font,fontSize:12,color:G.ink2,cursor:"pointer",fontWeight:500}}>{t.removePhoto}</button>
+              :<button onClick={()=>setShowEmojiPicker(p=>!p)} style={{padding:"9px 13px",borderRadius:11,background:showEmojiPicker?Sc.hl:"transparent",border:`1px solid ${showEmojiPicker?Sc.h:G.border}`,fontFamily:G.font,fontSize:12,color:showEmojiPicker?Sc.deep:G.ink2,cursor:"pointer",fontWeight:500}}>{t.pickEmoji}</button>
+            }
+          </div>
+        </div>
+
+        {showEmojiPicker&&!photo&&(
+          <div style={{background:G.cream,borderRadius:14,padding:12,marginBottom:18,maxHeight:200,overflowY:"auto",border:`1px solid ${G.border}`}}>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+              {EMOJIS.map(em=>(
+                <button key={em} onClick={()=>{setEmoji(em);setShowEmojiPicker(false);}} style={{width:38,height:38,borderRadius:10,border:emoji===em?`2px solid ${color}`:"1px solid transparent",background:emoji===em?`${color}22`:"transparent",fontSize:20,cursor:"pointer",padding:0}}>{em}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Name */}
+        <SLabel>{t.emotionName}</SLabel>
+        <input value={name} onChange={ev=>setName(ev.target.value)} className="lt-input" style={INP} placeholder={t.emotionNamePH}/>
+
+        {/* Color picker */}
+        <SLabel>{t.pickColor}</SLabel>
+        <div style={{display:"flex",gap:9,flexWrap:"wrap",marginBottom:24}}>
+          {ACT_C.map(c=>(
+            <div key={c} onClick={()=>setColor(c)} style={{width:32,height:32,borderRadius:"50%",background:c,cursor:"pointer",outline:color===c?`3px solid ${c}`:"none",outlineOffset:2,boxShadow:color===c?`0 4px 12px ${c}66`:"none",transition:"box-shadow .2s ease"}}/>
+          ))}
+        </div>
+
+        {/* Action buttons */}
+        <div style={{display:"flex",gap:8,alignItems:"stretch"}}>
+          {existing&&(
+            // Two-tap delete: first tap expands to red confirm pill ("Ta bort?"),
+            // second tap commits. Animates smoothly so it feels intentional, not jarring.
+            <button onClick={()=>{
+              if(confirmDel){onDelete(existing.id);onClose();}
+              else{
+                setConfirmDel(true);
+                // Auto-cancel after 3.5s so the destructive state doesn't linger
+                setTimeout(()=>setConfirmDel(false),3500);
+              }
+            }} style={{
+              padding:confirmDel?"14px 18px":"14px 16px",
+              borderRadius:14,border:"none",
+              background:confirmDel?"#EF4444":"#FEF2F2",
+              color:confirmDel?"#fff":"#EF4444",
+              cursor:"pointer",fontSize:confirmDel?13:17,
+              fontFamily:G.font,fontWeight:700,
+              boxShadow:confirmDel?"0 6px 16px rgba(239,68,68,0.35)":"none",
+              transition:"all .35s cubic-bezier(0.32, 0.72, 0, 1)",
+              whiteSpace:"nowrap",display:"flex",alignItems:"center",justifyContent:"center",
+            }}>{confirmDel?t.confirmDeleteEmotion:(
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6 h18"/>
+                <path d="M8 6 V4 a2 2 0 0 1 2-2 h4 a2 2 0 0 1 2 2 v2"/>
+                <path d="M19 6 l-1 14 a2 2 0 0 1 -2 2 H8 a2 2 0 0 1 -2 -2 L5 6"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+            )}</button>
+          )}
+          <button onClick={onClose} style={{flex:1,...GHOST}}>{t.cancel}</button>
+          <button onClick={save} className="lt-press saveBtn" style={{flex:2,padding:"15px 0",borderRadius:14,border:"none",background:Sc.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(Sc.h),display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <svg className="saveTick" width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+              <path d="M2.5 7.2 L5.8 10.5 L11.5 3.5"/>
+            </svg>
+            {t.save}
+          </button>
+        </div>
+      </Sheet>
+    </Overlay>
   );
 }
 
@@ -3018,17 +4019,21 @@ function ActRow({item,cardStyle,isEditor,onEdit,onTap,onMarkDone,idx,lifeState="
           <div style={{marginLeft:4}}/>
           {!big&&<div style={{fontSize:compact?30:38,lineHeight:1,minWidth:compact?44:54,height:compact?44:54,borderRadius:compact?12:14,background:item.photo?"#000":`linear-gradient(140deg,${item.color}18,${item.color}30)`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${item.color}25`,flexShrink:0,overflow:"hidden"}}>{item.photo?<img src={item.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:item.emoji}</div>}
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontFamily:G.serif,fontWeight:400,fontSize:compact?16:19,color:G.ink,lineHeight:1.2,letterSpacing:-.3}}>{item.name}</div>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:compact?16:19,color:G.ink,lineHeight:1.2,letterSpacing:-.3}}>{item.name}</div>
             <div style={{display:"flex",alignItems:"center",gap:7,marginTop:6,flexWrap:"wrap"}}>
               <span style={{fontFamily:G.font,fontWeight:500,fontSize:11.5,color:item.color,letterSpacing:.5}}>{fmtT(item.time,t)}{item.endTime?` – ${fmtT(item.endTime,t)}`:""}</span>
               {item.repeat&&item.repeat.type&&item.repeat.type!=="none"&&(
-                <Tag col={item.color}>{item.repeat.type==="daily"?"Dagligen":item.repeat.type==="weekdays"?"Vardagar":item.repeat.type==="weekend"?"Helger":(item.repeat.days||[]).length+" dagar"}</Tag>
+                <Tag col={item.color}>{item.repeat.type==="daily"?(t?.repDailyShort||"Dagligen"):item.repeat.type==="weekdays"?(t?.repWeekdays||"Vardagar"):item.repeat.type==="weekend"?(t?.repWeekend||"Helger"):(item.repeat.days||[]).length+" "+(t?.repDaysSuffix||"dagar")}</Tag>
               )}
               {item.steps?.length>0&&<Tag col={item.color}>{item.steps.length===1?(t?.stepCountOne||"1 steg"):(t?.stepCountMany||"{n} steg").replace("{n}",item.steps.length)}</Tag>}
               {item.timer?.on&&<Tag col={item.timer.color||"#E89B89"}>{item.timer.min} min</Tag>}
             </div>
           </div>
-          {isEditor&&<button onClick={e=>{e.stopPropagation();onEdit(item);}} className="lt-press" style={{background:"transparent",border:`1px solid ${G.border}`,borderRadius:11,width:36,height:36,cursor:"pointer",fontSize:13,color:G.ink3,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✏</button>}
+          {isEditor&&(
+            <button onClick={e=>{e.stopPropagation();onEdit(item);}} aria-label={t?.edit||"Edit"} className="lt-press lumaPenBtn" style={{background:"transparent",border:`1px solid ${G.border}`,borderRadius:12,width:40,height:40,cursor:"pointer",color:G.ink2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"border-color .25s ease, color .25s ease"}}>
+              <IconPencil size={15}/>
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -3062,7 +4067,7 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
       <circle cx="32" cy="32" r="28" fill="url(#emFace)" stroke={`${SCREENS.home.h}40`} strokeWidth="1"/>
       <path d="M22,32 L29,40 L43,24" stroke={SCREENS.home.deep} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.75"/>
     </svg>
-    <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.ink,letterSpacing:-.4,lineHeight:1.1}}>Alla aktiviteter är klara</div>
+    <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.inkSoft,letterSpacing:-.4,lineHeight:1.1}}>Alla aktiviteter är klara</div>
     <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",marginTop:-4,letterSpacing:.1}}>Du kan vila resten av dagen.</div>
   </div>;
 
@@ -3441,7 +4446,7 @@ function Sheet({children,scroll}){
 }
 function Toggle({on,onChange,color}){return(<div onClick={onChange} className="lt-press-soft" style={{width:52,height:30,borderRadius:15,background:on?color:G.border2,cursor:"pointer",position:"relative",transition:"background .3s cubic-bezier(0.32, 0.72, 0, 1)",flexShrink:0}}><div style={{width:24,height:24,borderRadius:"50%",background:G.white,position:"absolute",top:3,left:on?25:3,transition:"left .35s cubic-bezier(0.34, 1.56, 0.64, 1)",boxShadow:"0 2px 6px rgba(0,0,0,.18)"}}/></div>);}
 function SLabel({children}){return <div style={{fontFamily:G.font,fontWeight:500,fontSize:10.5,color:"#9892AA",letterSpacing:1.4,textTransform:"uppercase",marginBottom:14}}>{children}</div>;}
-function Tag({col,children}){return <span style={{fontFamily:G.font,fontWeight:500,fontSize:10.5,color:col,background:`${col}14`,borderRadius:7,padding:"3px 8px",letterSpacing:.3}}>{children}</span>;}
+function Tag({col,children}){return <span style={{fontFamily:G.font,fontWeight:600,fontSize:10.5,color:col,background:`${col}1F`,borderRadius:7,padding:"3px 8px",letterSpacing:.3,whiteSpace:"nowrap"}}>{children}</span>;}
 const INP={width:"100%",padding:"13px 16px",borderRadius:14,border:`1px solid ${G.border}`,fontSize:15,outline:"none",fontFamily:G.font,color:G.ink,boxSizing:"border-box",marginBottom:16,background:G.cream};
 const GHOST={padding:"13px 20px",borderRadius:14,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:14,cursor:"pointer"};
 
@@ -3487,7 +4492,7 @@ function StoryViewer({story,lang,t,onClose}){
             )}
             <div style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:story.color,letterSpacing:-.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lsText(story,lang)}</div>
           </div>
-          <button onClick={onClose} style={{width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:20,cursor:"pointer",boxShadow:sh.sm,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
+          <button onClick={onClose} style={{width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,cursor:"pointer",boxShadow:sh.sm,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><IconX size={16}/></button>
         </div>
         <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"20px 18px",gap:10}}>
           {/* FIRST */}
@@ -3570,7 +4575,7 @@ function StoryViewer({story,lang,t,onClose}){
           )}
           <div style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:story.color,letterSpacing:-.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lsText(story,lang)}</div>
         </div>
-        <button onClick={onClose} style={{width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:20,cursor:"pointer",boxShadow:sh.sm,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
+        <button onClick={onClose} style={{width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,cursor:"pointer",boxShadow:sh.sm,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><IconX size={16}/></button>
       </div>
       <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:showTimer?"flex-start":"center",padding:"20px 30px",gap:20,transition:"justify-content .4s ease"}}>
         {/* Page image — shrinks when timer is active so both fit */}
@@ -3647,13 +4652,70 @@ function StoryViewer({story,lang,t,onClose}){
           </div>
         )}
       </div>
-      <div style={{padding:"0 24px 32px"}}>
-        <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:22}}>
-          {story.pages.map((_,i)=><div key={i} onClick={()=>setIdx(i)} style={{height:9,width:i===idx?28:9,borderRadius:5,background:i===idx?story.color:`${story.color}33`,cursor:"pointer",transition:"all .3s"}}/>)}
-        </div>
-        <div style={{display:"flex",gap:10,justifyContent:"center"}}>
-          <button onClick={()=>setIdx(i=>Math.max(0,i-1))} disabled={idx===0} style={{padding:"13px 22px",borderRadius:16,border:"none",fontFamily:G.font,fontWeight:600,fontSize:14,cursor:idx===0?"default":"pointer",background:idx===0?G.cream:`${story.color}18`,color:idx===0?G.ink3:story.color}}>{t.prev}</button>
-          <button onClick={()=>{if(idx<story.pages.length-1)setIdx(i=>i+1);else onClose();}} style={{padding:"13px 28px",borderRadius:16,border:"none",fontFamily:G.font,fontWeight:700,fontSize:14,background:`linear-gradient(135deg,${story.color},${story.color}DC)`,color:"#fff",cursor:"pointer",boxShadow:sh.c(story.color)}}>{idx<story.pages.length-1?t.next:"✓ Klar"}</button>
+      <div style={{padding:"0 18px 32px"}}>
+        {/* Navigation row — large circular arrow buttons flanking the page dots.
+            Sized for accessibility (56px minimum tap target), high-contrast in the
+            story's own colour, impossible to miss for users with cognitive or
+            motor limitations. The "done" state on the last page swaps the right
+            arrow for a checkmark. */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:16}}>
+          {/* Previous — disabled visual when at first page but still visible */}
+          <button
+            onClick={()=>setIdx(i=>Math.max(0,i-1))}
+            disabled={idx===0}
+            aria-label={t.prev}
+            className="lt-press"
+            style={{
+              width:60,height:60,borderRadius:"50%",border:"none",flexShrink:0,
+              background:idx===0?G.cream:G.white,
+              color:idx===0?G.ink3:story.color,
+              cursor:idx===0?"default":"pointer",
+              boxShadow:idx===0?"none":`0 6px 18px ${story.color}33, 0 2px 6px ${story.color}1A`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              opacity:idx===0?0.4:1,
+              transition:"opacity .3s ease, box-shadow .3s ease, background .3s ease",
+            }}
+          >
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+
+          {/* Page indicators — also serve as direct jump-to */}
+          <div style={{display:"flex",gap:6,justifyContent:"center",alignItems:"center",flex:1,flexWrap:"wrap"}}>
+            {story.pages.map((_,i)=>(
+              <button key={i} onClick={()=>setIdx(i)} aria-label={`${t.pageNum} ${i+1}`} className="lt-press-soft" style={{
+                padding:"10px 4px",border:"none",background:"transparent",cursor:"pointer",
+                display:"flex",alignItems:"center",justifyContent:"center",
+              }}>
+                <div style={{height:9,width:i===idx?28:9,borderRadius:5,background:i===idx?story.color:`${story.color}44`,transition:"all .3s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
+              </button>
+            ))}
+          </div>
+
+          {/* Next / Done — primary action, filled with story colour for emphasis */}
+          <button
+            onClick={()=>{if(idx<story.pages.length-1)setIdx(i=>i+1);else onClose();}}
+            aria-label={idx<story.pages.length-1?t.next:(t.ftDone||(lang==="sv"?"Klar":"Done"))}
+            className="lt-press"
+            style={{
+              width:60,height:60,borderRadius:"50%",border:"none",flexShrink:0,
+              background:`linear-gradient(135deg,${story.color},${story.color}DC)`,
+              color:"#fff",cursor:"pointer",
+              boxShadow:`0 10px 26px ${story.color}55, 0 3px 8px ${story.color}33, inset 0 1px 0 rgba(255,255,255,0.25)`,
+              display:"flex",alignItems:"center",justifyContent:"center",
+            }}
+          >
+            {idx<story.pages.length-1?(
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            ):(
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            )}
+          </button>
         </div>
       </div>
     </div>
@@ -3692,7 +4754,7 @@ function PageEditor({page,idx,total,onUpdate,onRemove,onMoveUp,onMoveDown,color,
         <div style={{flex:1}}/>
         <button onClick={onMoveUp} disabled={idx===0} style={{padding:"4px 9px",borderRadius:8,border:"none",background:idx===0?G.white:G.border,color:idx===0?G.ink3:G.ink2,cursor:idx===0?"default":"pointer",fontSize:11}}>↑</button>
         <button onClick={onMoveDown} disabled={idx===total-1} style={{padding:"4px 9px",borderRadius:8,border:"none",background:idx===total-1?G.white:G.border,color:idx===total-1?G.ink3:G.ink2,cursor:idx===total-1?"default":"pointer",fontSize:11}}>↓</button>
-        <button onClick={onRemove} style={{padding:"4px 9px",borderRadius:8,border:"none",background:"#FEF2F2",color:"#EF4444",cursor:"pointer",fontSize:11}}>✕</button>
+        <button onClick={onRemove} aria-label="Ta bort" style={{padding:"6px 9px",borderRadius:8,border:"none",background:"#FEF2F2",color:"#EF4444",cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center"}}><IconX size={11}/></button>
       </div>
 
       {/* Top row — bild + textfält */}
@@ -3927,7 +4989,7 @@ function StoryEditor({story,onSave,onDel,onClose,t,lang}){
   return(
     <Overlay onClose={onClose}>
       <Sheet scroll>
-        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:24,letterSpacing:-.5,lineHeight:1.1}}>{story?.id?t.editStory:t.newStory}</div>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.inkSoft,marginBottom:24,letterSpacing:-.5,lineHeight:1.1}}>{story?.id?t.editStory:t.newStory}</div>
 
         {/* Type selector */}
         <SLabel>{t.storyType}</SLabel>
@@ -4018,9 +5080,24 @@ function StoryEditor({story,onSave,onDel,onClose,t,lang}){
 
         {/* Save / Cancel / Delete row */}
         <div style={{display:"flex",gap:8,marginTop:isFT?20:0,marginBottom:20}}>
-          {story?.id&&<button onClick={()=>{onDel(story.id);onClose();}} style={{padding:"14px 16px",borderRadius:14,border:"none",background:"#FEF2F2",color:"#EF4444",cursor:"pointer",fontSize:17}}>🗑</button>}
+          {story?.id&&(
+            <button onClick={()=>{onDel(story.id);onClose();}} aria-label={t.cancel} className="lt-press" style={{padding:"14px 16px",borderRadius:14,border:"none",background:"#FEF2F2",color:"#EF4444",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6 h18"/>
+                <path d="M8 6 V4 a2 2 0 0 1 2-2 h4 a2 2 0 0 1 2 2 v2"/>
+                <path d="M19 6 l-1 14 a2 2 0 0 1 -2 2 H8 a2 2 0 0 1 -2 -2 L5 6"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+            </button>
+          )}
           <button onClick={onClose} style={{flex:1,...GHOST}}>{t.cancel}</button>
-          <button onClick={doSave} style={{flex:2,padding:"15px 0",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h)}}>{t.save}</button>
+          <button onClick={doSave} className="lt-press saveBtn" style={{flex:2,padding:"15px 0",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h),display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <svg className="saveTick" width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+              <path d="M2.5 7.2 L5.8 10.5 L11.5 3.5"/>
+            </svg>
+            {t.save}
+          </button>
         </div>
         {/* Extra spacer at the very bottom so Save row clears any bottom nav overlap on iOS */}
         <div style={{height:80}}/>
@@ -4043,16 +5120,13 @@ function StoryEditor({story,onSave,onDel,onClose,t,lang}){
 }
 
 /* ═══ Story list screen ═══ */
-function StoryScreen({lang,t,isEditor,stories,setStories}){
-  const[viewer,setViewer]=useState(null);
+function StoryScreen({lang,t,isEditor,stories,setStories,onOpenStory}){
   const[editor,setEditor]=useState(null);
   const S=SCREENS.stories;
   return(
     <div style={{flex:1,overflowY:"auto",background:S.hb}}>
-      {viewer&&<StoryViewer story={viewer} lang={lang} t={t} onClose={()=>setViewer(null)}/>}
       {editor&&<StoryEditor story={editor.id?editor:null} t={t} lang={lang} onSave={s=>setStories(ss=>editor.id?ss.map(x=>x.id===s.id?s:x):[...ss,s])} onDel={id=>setStories(ss=>ss.filter(x=>x.id!==id))} onClose={()=>setEditor(null)}/>}
       <div style={{padding:"32px 22px 120px"}}>
-        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:28,color:G.ink,marginBottom:22,letterSpacing:-.6,lineHeight:1.05}}>{t.stories}</div>
         {stories.length===0&&!isEditor?(
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"60px 30px 60px",gap:18}}>
             <style>{`@keyframes empStoryBreath{0%,100%{transform:scale(1);opacity:0.85}50%{transform:scale(1.025);opacity:1}}`}</style>
@@ -4072,7 +5146,7 @@ function StoryScreen({lang,t,isEditor,stories,setStories}){
               <line x1="36" y1="31" x2="46" y2="30" stroke={`${S.h}88`} strokeWidth="1.2" strokeLinecap="round"/>
               <line x1="36" y1="37" x2="44" y2="36" stroke={`${S.h}66`} strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
-            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.ink,letterSpacing:-.4,lineHeight:1.1,textAlign:"center",marginTop:2}}>{lang==="sv"?"Inga berättelser än":"No stories yet"}</div>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.inkSoft,letterSpacing:-.4,lineHeight:1.1,textAlign:"center",marginTop:2}}>{lang==="sv"?"Inga berättelser än":"No stories yet"}</div>
             <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",letterSpacing:.1,textAlign:"center",lineHeight:1.4,maxWidth:240}}>{t.noStories}</div>
           </div>
         ):(
@@ -4082,7 +5156,7 @@ function StoryScreen({lang,t,isEditor,stories,setStories}){
               const timerCount=(s.pages||[]).filter(p=>p.timer?.on).length;
               return(
               <div key={s.id} style={{position:"relative",animation:`storyCardIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) ${i*0.05}s both`}}>
-                <div onClick={()=>isEditor?setEditor(s):setViewer(s)} className="lt-press-soft" style={{background:G.white,borderRadius:20,padding:"22px 14px 18px",cursor:"pointer",border:`1px solid ${s.color}25`,boxShadow:`0 6px 20px ${s.color}14`,transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .2s ease"}}>
+                <div onClick={()=>isEditor?setEditor(s):onOpenStory(s)} className="lt-press-soft" style={{background:G.white,borderRadius:20,padding:"22px 14px 18px",cursor:"pointer",border:`1px solid ${s.color}25`,boxShadow:`0 6px 20px ${s.color}14`,transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .2s ease"}}>
                   <div style={{width:84,height:84,margin:"0 auto 12px",borderRadius:20,background:s.photo?"transparent":`linear-gradient(140deg,${s.color}1F,${s.color}3A)`,border:`1px solid ${s.color}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:46,overflow:"hidden"}}>
                     {s.photo?<img src={s.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:s.emoji}
                   </div>
@@ -4224,7 +5298,7 @@ function BreathingExercise({onClose,t}){
   }
   return(
     <div style={{position:"fixed",inset:0,zIndex:9000,background:"#FFFFFF",backgroundImage:`linear-gradient(165deg,${BLUE}14 0%,#FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,animation:"ftIn .25s ease"}}>
-      <button onClick={onClose} style={{position:"absolute",top:24,right:24,width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:20,cursor:"pointer",boxShadow:sh.sm,zIndex:5}}>✕</button>
+      <button onClick={onClose} style={{position:"absolute",top:24,right:24,width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:5}}><IconX size={16}/></button>
       {!started?(
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:24,padding:30,textAlign:"center"}}>
           <style>{`@keyframes bePreviewBreath{0%,100%{transform:scale(0.92)}50%{transform:scale(1.04)}}`}</style>
@@ -4233,7 +5307,7 @@ function BreathingExercise({onClose,t}){
             <div style={{position:"absolute",width:60,height:36,top:24,left:32,borderRadius:"50%",background:"radial-gradient(ellipse, rgba(255,255,255,0.7), transparent 70%)",filter:"blur(2px)"}}/>
             <div style={{position:"absolute",width:24,height:14,top:30,left:40,borderRadius:"50%",background:"rgba(255,255,255,0.9)",filter:"blur(1px)"}}/>
           </div>
-          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color:G.ink,letterSpacing:-.3}}>{t.breathing}</div>
+          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color:G.inkSoft,letterSpacing:-.3}}>{t.breathing}</div>
           <div style={{fontFamily:G.font,fontSize:15,color:G.ink2,maxWidth:280,lineHeight:1.5}}>Följ bubblan. Andas in när den växer, håll, andas ut när den krymper.</div>
           <button onClick={()=>{const t=Date.now();setT0(t);setStartedAt(t);setStarted(true);}} style={{padding:"16px 42px",borderRadius:18,border:"none",background:`linear-gradient(135deg,${BLUE},${DEEP})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:16,cursor:"pointer",boxShadow:sh.c(BLUE),marginTop:8}}>▶ {t.groundStart}</button>
         </div>
@@ -4540,7 +5614,7 @@ function GroundingExercise({onClose,t}){
           @keyframes gIntroBreathe{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.07);filter:brightness(1.1)}}
           @keyframes gIntroTextIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         `}</style>
-        <button onClick={onClose} style={{position:"absolute",top:24,right:24,width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:20,cursor:"pointer",boxShadow:sh.sm}}>✕</button>
+        <button onClick={onClose} style={{position:"absolute",top:24,right:24,width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm}}><IconX size={16}/></button>
         {/* Breathing mandala — slimmer than completion screen, sets the calm tone */}
         <div style={{width:100,height:100,display:"flex",alignItems:"center",justifyContent:"center",animation:"gIntroIn 1s cubic-bezier(0.22,1,0.36,1) both"}}>
           <svg width={100} height={100} viewBox="0 0 100 100" style={{overflow:"visible"}}>
@@ -4581,11 +5655,11 @@ function GroundingExercise({onClose,t}){
         <div style={{display:"flex",gap:6}}>
           {steps.map((s,i)=><div key={i} style={{width:i===idx?28:10,height:8,borderRadius:4,background:i<=idx?s.color:`${s.color}44`,transition:"all .3s"}}/>)}
         </div>
-        <button onClick={onClose} style={{width:40,height:40,borderRadius:20,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:18,cursor:"pointer",boxShadow:sh.sm}}>✕</button>
+        <button onClick={onClose} style={{width:40,height:40,borderRadius:20,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm}}><IconX size={14}/></button>
       </div>
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:36,padding:"0 20px"}}>
         <GroundIcon type={cur.type} color={cur.color} size={140}/>
-        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color:G.ink,textAlign:"center",lineHeight:1.25,letterSpacing:-.3}}>{cur.label}</div>
+        <div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color:G.inkSoft,textAlign:"center",lineHeight:1.25,letterSpacing:-.3}}>{cur.label}</div>
         {/* Counter dots — tappa för att kryssa av */}
         <div style={{display:"flex",gap:14,flexWrap:"wrap",justifyContent:"center",maxWidth:300}}>
           {Array.from({length:cur.count}).map((_,i)=>{
@@ -5045,7 +6119,7 @@ function SkylightExercise({onClose,t,lang}){
       })}
 
       {/* Subtle close button — top-right, glassmorphic */}
-      <button onClick={onClose} className="lt-press" style={{position:"absolute",top:22,right:22,width:38,height:38,borderRadius:19,border:`1px solid ${isDark?"rgba(255,255,255,0.25)":"rgba(31,27,46,0.12)"}`,background:isDark?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.45)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",color:isDark?"#FFFFFF":G.ink,fontSize:14,cursor:"pointer",zIndex:10,fontWeight:500,transition:"background .8s ease, color .8s ease, border-color .8s ease",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+      <button onClick={onClose} className="lt-press" style={{position:"absolute",top:22,right:22,width:38,height:38,borderRadius:19,border:`1px solid ${isDark?"rgba(255,255,255,0.25)":"rgba(31,27,46,0.12)"}`,background:isDark?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.45)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",color:isDark?"#FFFFFF":G.ink,cursor:"pointer",zIndex:10,fontWeight:500,transition:"background .8s ease, color .8s ease, border-color .8s ease",display:"flex",alignItems:"center",justifyContent:"center"}}><IconX size={14}/></button>
 
       {/* Minimal guidance text — bottom center, fades in and out */}
       <div style={{position:"absolute",bottom:48,left:0,right:0,textAlign:"center",pointerEvents:"none",zIndex:5}}>
@@ -5064,9 +6138,19 @@ function SkylightExercise({onClose,t,lang}){
 }
 
 /* ═══ Calm screen — pick exercise ═══ */
-function CalmScreen({t,lang,cfg,isEditor,setCfg}){
+function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange}){
   const S=SCREENS.calm;
   const[active,setActive]=useState(null);
+
+  // Tell App when an immersive exercise is running so it can hide bottom nav.
+  // Exercises are full-screen, calming experiences — chrome (the tab bar) would
+  // break immersion and steal attention. Cleanup ensures nav comes back even
+  // if the user navigates away while in an exercise.
+  useEffect(()=>{
+    onImmersiveChange?.(!!active);
+    return()=>onImmersiveChange?.(false);
+  // eslint-disable-next-line
+  },[active]);
 
   // Editor view — toggle exercises on/off
   if(isEditor){
@@ -5127,8 +6211,6 @@ function CalmScreen({t,lang,cfg,isEditor,setCfg}){
       {active==="grounding"&&<GroundingExercise onClose={()=>setActive(null)} t={t}/>}
       {active==="skylight"&&<SkylightExercise onClose={()=>setActive(null)} t={t} lang={lang}/>}
       <div style={{padding:"32px 22px 120px"}}>
-        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:28,color:G.ink,marginBottom:8,letterSpacing:-.6,lineHeight:1.05}}>{t.calmTitle}</div>
-        <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:"#9892AA",marginBottom:32,letterSpacing:.1,lineHeight:1.4}}>Välj en övning som passar dig nu.</div>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           {exercises.map(ex=>(
             <div key={ex.key} onClick={()=>setActive(ex.key)} className="lt-press-soft" style={{background:G.white,borderRadius:24,padding:"24px 22px",cursor:"pointer",border:`1px solid ${ex.color}25`,boxShadow:`0 10px 30px ${ex.color}1F`,display:"flex",alignItems:"center",gap:18}}>
@@ -5251,7 +6333,11 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
   // Build per-day date key for state lookup
   const dKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   const HOUR_H=58;
-  const HOUR_START=6;
+  // Full 24-hour day — midnight to midnight. Earlier this started at 06:00 to
+  // save vertical space, but that hid early-morning activities entirely. With
+  // initial scroll positioned to "now" (or first activity) the user still
+  // lands somewhere relevant — they can simply scroll up to see earlier hours.
+  const HOUR_START=0;
   const HOUR_END=24; // extends to midnight so day-column color reaches the actual day boundary
   const HOURS=Array.from({length:HOUR_END-HOUR_START},(_,i)=>HOUR_START+i);
   const TOTAL_H=HOURS.length*HOUR_H;
@@ -5260,6 +6346,11 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
   const MIDNIGHT_PAD=14;
   const TIME_W=lang==="en"?44:34;
   const scrollRef=useRef(null);
+  // Pill is only relevant when the target activity is BELOW the visible
+  // viewport — pointing down to where the user needs to scroll. If the user
+  // has scrolled past (target above) or it's already in view, the pill stays
+  // quiet. Matches the day-view smart-shortcut rule for consistency.
+  const[targetBelow,setTargetBelow]=useState(false);
 
   // Current week's Monday → Sunday
   const today=new Date(now);
@@ -5318,6 +6409,69 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
   // Any activity at all on the current week's days?
   const anyActs=acts.some(a=>weekDays.some(d=>onJsDay(a,d.jsDay)));
 
+  /* ─────────── "Nästa aktivitet" pill target ───────────
+     Mirrors the day-view pill: shows the currently-happening activity, or the
+     next upcoming one today. Falls back to nothing once today's activities are
+     all in the past — at which point the pill simply doesn't render. Editor
+     mode hides this entirely (no need for navigation aids while authoring). */
+  const todayJsDay=now.getDay();
+  const todayDateKey=dKey(now);
+  const todayActsForPill=isEd ? [] : acts.filter(a=>{
+    if(!onJsDay(a,todayJsDay)) return false;
+    if(dailyState?.[todayDateKey]?.[a.id]?.done) return false;
+    const endM=a.endTime?hm(a.endTime):hm(a.time)+30;
+    return endM>nowMin; // Future end → still in play
+  }).sort((x,y)=>hm(x.time)-hm(y.time));
+  // Prefer the in-progress one if any; otherwise the next upcoming.
+  const pillCurrent=todayActsForPill.find(a=>{
+    const sM=hm(a.time);
+    const eM=a.endTime?hm(a.endTime):sM+30;
+    return sM<=nowMin&&eM>nowMin;
+  });
+  const pillNext=todayActsForPill.find(a=>hm(a.time)>nowMin);
+  const pillTarget=pillCurrent||pillNext||null;
+
+  /* Tap → jump to target. Two effects:
+     1. If user has another day "peeked" (focused), clear it so today's column
+        becomes wide and the user actually sees what they tapped.
+     2. Scroll the timeline so the target activity lands ~1/3 down the viewport,
+        same composition rule as the day view's auto-scroll. */
+  const jumpToPillTarget=()=>{
+    if(!pillTarget||!scrollRef.current) return;
+    setFocusedDay(null);
+    const y=yForAct(pillTarget);
+    const viewH=scrollRef.current.clientHeight;
+    scrollRef.current.scrollTo({top:Math.max(0,y-viewH/3),behavior:"smooth"});
+  };
+
+  /* Watch scroll position to fade pill in/out. Pill is visible only when the
+     target activity is BELOW the visible viewport — it acts as a "scroll down
+     to find your next activity" hint. Once the user reaches it (or scrolls
+     past), the pill goes quiet. */
+  useEffect(()=>{
+    const el=scrollRef.current;
+    if(!el||!pillTarget) {
+      setTargetBelow(false);
+      return;
+    }
+    const targetY=yForAct(pillTarget);
+    const check=()=>{
+      const top=el.scrollTop;
+      const viewH=el.clientHeight;
+      // Target is "below" if its top edge sits past the visible bottom margin.
+      const visibleBot=top+viewH-80;
+      setTargetBelow(targetY>visibleBot);
+    };
+    check();
+    el.addEventListener("scroll",check,{passive:true});
+    window.addEventListener("resize",check);
+    return ()=>{
+      el.removeEventListener("scroll",check);
+      window.removeEventListener("resize",check);
+    };
+  // eslint-disable-next-line
+  },[pillTarget?.id,pillTarget?.time,pillTarget?.endTime]);
+
   return(
     <div
       style={{flex:1,display:"flex",flexDirection:"column",background:S.hb,overflow:"hidden",position:"relative"}}
@@ -5333,12 +6487,11 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
         @keyframes wkNowPulse{0%,100%{opacity:1}50%{opacity:0.55}}
       `}</style>
 
-      {/* Title area — generous breathing room before content. Clicking here returns focus to today. */}
-      <div style={{padding:"30px 22px 18px",flexShrink:0,cursor:focusedDay!==null?"pointer":"default",display:"flex",alignItems:"flex-end",justifyContent:"space-between",gap:12}}>
-        <div>
-          <div style={{fontFamily:G.font,fontWeight:400,fontSize:10.5,color:"#9892AA",letterSpacing:.6,textTransform:"capitalize",marginBottom:4}}>{weekRange}</div>
-          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,letterSpacing:-.6,lineHeight:1.05}}>{t.myWeek}</div>
-        </div>
+      {/* Title area — minimal breathing room. Top header already shows "Vecka".
+          The week range stays as a small contextual label, and the back-to-today
+          affordance sits to the right. */}
+      <div style={{padding:"24px 22px 14px",flexShrink:0,cursor:focusedDay!==null?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+        <div style={{fontFamily:G.font,fontWeight:400,fontSize:11,color:"#9892AA",letterSpacing:.6,textTransform:"capitalize"}}>{weekRange}</div>
         {/* Subtle "back to today" hint — only when peeking at another day. Tappable. */}
         <div
           onClick={e=>{e.stopPropagation();setFocusedDay(null);}}
@@ -5434,6 +6587,60 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
 
       {/* Grid body — scrollable. paddingBottom gives clearance so the App-level "Add activity" button never overlaps the last hour at scroll-bottom. */}
       <div ref={scrollRef} style={{flex:1,overflowY:"auto",position:"relative",paddingBottom:140}}>
+        {/* ───── "Nästa aktivitet" pill ─────
+            Sticky at the top of the scroll viewport so it remains reachable
+            no matter where the user has scrolled. Tap to jump the timeline to
+            the target activity. Same visual vocabulary as the day-view pill
+            (white glassmorphic, pulsing colored dot, ellipsised activity name).
+            Hidden when there's no relevant target (editor mode, or all of
+            today's activities have already ended). */}
+        {pillTarget&&(()=>{
+          const isEn=t?.myDay==="My Day";
+          const isCurrent=!!pillCurrent;
+          // Hidden when the target activity is visible in the viewport.
+          // Pill is shown only when target activity is BELOW the viewport
+          // (user needs to scroll down to reach it). Hidden when in view or
+          // when user has scrolled past — popping back up after the user has
+          // moved past feels like the app pulling them backwards.
+          const visible=targetBelow;
+          return(
+            <div style={{position:"sticky",top:8,zIndex:20,display:"flex",justifyContent:"center",pointerEvents:"none",padding:"0 16px",marginBottom:-32}}>
+              <button onClick={jumpToPillTarget} aria-label={isEn?"Jump to next activity":"Hoppa till nästa aktivitet"} className="lt-press-soft" style={{
+                pointerEvents:visible?"auto":"none",
+                opacity:visible?1:0,
+                transform:visible?"translateY(0) scale(1)":"translateY(-10px) scale(0.94)",
+                transition:"opacity 0.32s ease, transform 0.36s cubic-bezier(0.32, 0.72, 0, 1)",
+                padding:"8px 14px 8px 12px",borderRadius:999,
+                border:`1px solid ${G.border}`,
+                background:"linear-gradient(135deg, rgba(255,255,255,0.96), rgba(252,250,254,0.96))",
+                backdropFilter:"saturate(180%) blur(14px)",
+                WebkitBackdropFilter:"saturate(180%) blur(14px)",
+                boxShadow:"0 6px 20px rgba(31,27,46,0.12), inset 0 1px 0 rgba(255,255,255,0.9)",
+                display:"flex",alignItems:"center",gap:7,cursor:"pointer",
+                fontFamily:G.font,fontWeight:600,fontSize:12,color:G.ink,letterSpacing:.2,
+                whiteSpace:"nowrap",maxWidth:"calc(100% - 16px)",
+              }}>
+                <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:8,height:8,borderRadius:"50%",background:pillTarget.color,boxShadow:`0 0 8px ${pillTarget.color}AA, 0 0 0 2px ${pillTarget.color}22`,animation:"wkPillDot 2.2s ease-in-out infinite",flexShrink:0}}/>
+                <style>{`@keyframes wkPillDot{0%,100%{box-shadow:0 0 6px ${pillTarget.color}99, 0 0 0 2px ${pillTarget.color}1F;transform:scale(1)}50%{box-shadow:0 0 12px ${pillTarget.color}EE, 0 0 0 3px ${pillTarget.color}33;transform:scale(1.18)}}`}</style>
+                <span style={{overflow:"hidden",textOverflow:"ellipsis",flex:1,minWidth:0}}>
+                  {isCurrent ? (isEn?"Now":"Pågår nu") : (isEn?"Next":"Nästa")}
+                  <span style={{color:G.ink2,fontWeight:500,marginLeft:6}}>· {pillTarget.name}</span>
+                </span>
+                {/* Down-chevron — quietly signals "tap to jump down to this".
+                    Slightly dimmed so it doesn't pull focus from the activity
+                    name; the pulse animation on the colour dot already draws
+                    the eye. Hidden when target is currently in progress (no
+                    jump needed — user is already there in time). */}
+                {!isCurrent&&(
+                  <span style={{color:G.ink3,flexShrink:0,marginLeft:2,display:"inline-flex",alignItems:"center",animation:"wkPillChev 2.6s ease-in-out infinite"}}>
+                    <IconChevron dir="down" size={12} strokeWidth={2.2}/>
+                  </span>
+                )}
+                <style>{`@keyframes wkPillChev{0%,100%{transform:translateY(0);opacity:0.7}50%{transform:translateY(1.5px);opacity:1}}`}</style>
+              </button>
+            </div>
+          );
+        })()}
         {!anyActs&&isEd?null:!anyActs?(
           <div style={{padding:"60px 30px",textAlign:"center"}}>
             <style>{`@keyframes wkEmpty{0%,100%{transform:scale(1);opacity:0.85}50%{transform:scale(1.025);opacity:1}}`}</style>
@@ -5444,7 +6651,7 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
               <line x1="39.4" y1="24" x2="39.4" y2="54" stroke={`${S.h}33`} strokeWidth="1"/>
               <path d="M22 10 v6 M42 10 v6" stroke={`${S.h}88`} strokeWidth="1.6" strokeLinecap="round"/>
             </svg>
-            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:21,color:G.ink,letterSpacing:-.4,lineHeight:1.1,marginBottom:8}}>{t.weekEmpty}</div>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:21,color:G.inkSoft,letterSpacing:-.4,lineHeight:1.1,marginBottom:8}}>{t.weekEmpty}</div>
             <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",letterSpacing:.1,lineHeight:1.4}}>Lägg till aktiviteter via redigeringsläget.</div>
           </div>
         ):null}
@@ -5487,9 +6694,11 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
                 <div style={{fontFamily:G.font,fontSize:9.5,fontWeight:500,color:"#A8A4BB",letterSpacing:.4}}>{lang==="sv"?String(h).padStart(2,"0"):(h===0?"12 AM":h<12?`${h} AM`:h===12?"12 PM":`${h-12} PM`)}</div>
               </div>
             ))}
-            {/* Midnight marker at the very end so the column reaches the full day boundary */}
+            {/* End-of-day marker at the very bottom. Reads "24" in Swedish
+                (24h convention for day-end) and "12 AM" in English. This is
+                distinct from the "00" label at the top which marks day-start. */}
             <div style={{position:"absolute",top:HOURS.length*HOUR_H,left:0,right:0,paddingRight:6,textAlign:"right",transform:"translateY(-50%)"}}>
-              <div style={{fontFamily:G.font,fontSize:9.5,fontWeight:500,color:"#A8A4BB",letterSpacing:.4}}>{lang==="sv"?"00":"12 AM"}</div>
+              <div style={{fontFamily:G.font,fontSize:9.5,fontWeight:500,color:"#A8A4BB",letterSpacing:.4}}>{lang==="sv"?"24":"12 AM"}</div>
             </div>
           </div>
 
@@ -5680,9 +6889,9 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor}){
           {c.photo?<img src={c.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:"🙂"}
         </div>
         <div style={{flex:1,minWidth:0}}>
-          <div style={{fontFamily:G.font,fontWeight:600,fontSize:big?11:10,color:S.deep,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>Hej, jag heter</div>
+          <div style={{fontFamily:G.font,fontWeight:600,fontSize:big?11:10,color:S.deep,letterSpacing:2,textTransform:"uppercase",marginBottom:4}}>{t.helloMyNameIs}</div>
           <div style={{fontFamily:G.serif,fontWeight:600,fontSize:big?30:24,color:G.ink,lineHeight:1.1,letterSpacing:-.4,wordBreak:"break-word"}}>{c.name||"—"}</div>
-          {c.age&&<div style={{fontFamily:G.font,fontWeight:500,fontSize:big?15:13,color:G.ink2,marginTop:3}}>{c.age} år</div>}
+          {c.age&&<div style={{fontFamily:G.font,fontWeight:500,fontSize:big?15:13,color:G.ink2,marginTop:3}}>{c.age} {t.yearsOld}</div>}
         </div>
       </div>
       <div style={{padding:big?"22px 28px 28px":"18px 22px 22px"}}>
@@ -5691,19 +6900,23 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor}){
           <div style={{fontFamily:G.serif,fontWeight:500,fontSize:big?18:16,color:G.ink,lineHeight:1.4,letterSpacing:-.1}}>{c.condition}</div>
         </>)}
         {c.triggers&&(<>
-          <div style={{fontFamily:G.font,fontWeight:600,fontSize:big?11:10,color:S.deep,letterSpacing:2,textTransform:"uppercase",marginTop:18,marginBottom:6}}>⚠️ {t.myTriggers}</div>
+          <div style={{fontFamily:G.font,fontWeight:600,fontSize:big?11:10,color:S.deep,letterSpacing:2,textTransform:"uppercase",marginTop:18,marginBottom:6}}>{t.myTriggers}</div>
           <div style={{fontFamily:G.font,fontWeight:500,fontSize:big?16:14,color:G.ink,lineHeight:1.4,background:S.hll,borderRadius:big?14:12,padding:big?"12px 15px":"10px 13px",border:`1px solid ${S.hl}`}}>{c.triggers}</div>
         </>)}
         {c.helpful&&(<>
-          <div style={{fontFamily:G.font,fontWeight:600,fontSize:big?11:10,color:S.deep,letterSpacing:2,textTransform:"uppercase",marginTop:14,marginBottom:6}}>💚 {t.whatHelps}</div>
+          <div style={{fontFamily:G.font,fontWeight:600,fontSize:big?11:10,color:S.deep,letterSpacing:2,textTransform:"uppercase",marginTop:14,marginBottom:6}}>{t.whatHelps}</div>
           <div style={{fontFamily:G.font,fontWeight:500,fontSize:big?16:14,color:G.ink,lineHeight:1.4,background:SCREENS.emotion.hll,borderRadius:big?14:12,padding:big?"12px 15px":"10px 13px",border:`1px solid ${SCREENS.emotion.hl}`}}>{c.helpful}</div>
         </>)}
         {contacts.filter(k=>k.name&&k.phone).length>0&&(<>
-          <div style={{fontFamily:G.font,fontWeight:600,fontSize:big?11:10,color:S.deep,letterSpacing:2,textTransform:"uppercase",marginTop:18,marginBottom:8}}>📞 {t.emergencyContacts}</div>
+          <div style={{fontFamily:G.font,fontWeight:600,fontSize:big?11:10,color:S.deep,letterSpacing:2,textTransform:"uppercase",marginTop:18,marginBottom:8}}>{t.emergencyContacts}</div>
           <div style={{display:"flex",flexDirection:"column",gap:big?10:8}}>
             {contacts.filter(k=>k.name&&k.phone).map(k=>(
               <a key={k.id} href={`tel:${k.phone.replace(/\s/g,"")}`} style={{textDecoration:"none",display:"flex",alignItems:"center",gap:12,padding:big?"15px 16px":"13px 14px",borderRadius:big?16:14,background:`linear-gradient(135deg,${S.h}EE,${S.h}DC)`,boxShadow:sh.c(S.h),color:"#fff"}}>
-                <div style={{width:big?44:38,height:big?44:38,borderRadius:"50%",background:"rgba(255,255,255,0.22)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:big?20:18}}>📞</div>
+                <div style={{width:big?44:38,height:big?44:38,borderRadius:"50%",background:"rgba(255,255,255,0.22)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  <svg width={big?22:18} height={big?22:18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M22 16.92 v3 a2 2 0 0 1 -2.18 2 a19.79 19.79 0 0 1 -8.63 -3.07 a19.5 19.5 0 0 1 -6 -6 a19.79 19.79 0 0 1 -3.07 -8.67 A2 2 0 0 1 4.11 2 h3 a2 2 0 0 1 2 1.72 a12.84 12.84 0 0 0 0.7 2.81 a2 2 0 0 1 -0.45 2.11 L8.09 9.91 a16 16 0 0 0 6 6 l1.27 -1.27 a2 2 0 0 1 2.11 -0.45 a12.84 12.84 0 0 0 2.81 0.7 A2 2 0 0 1 22 16.92 z"/>
+                  </svg>
+                </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontFamily:G.serif,fontWeight:600,fontSize:big?17:15,letterSpacing:-.1}}>{k.name}{k.relation?` · ${k.relation}`:""}</div>
                   <div style={{fontFamily:G.font,fontWeight:500,fontSize:big?15:13,opacity:.92,marginTop:2,fontVariantNumeric:"tabular-nums"}}>{k.phone}</div>
@@ -5722,7 +6935,7 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor}){
   if(showMode){
     return(
       <div style={{position:"fixed",inset:0,zIndex:9000,background:"#FFFFFF",backgroundImage:`linear-gradient(165deg,${S.hb} 0%,#FFFFFF 100%)`,display:"flex",flexDirection:"column",padding:"20px 16px",animation:"ftIn .25s ease",overflowY:"auto"}}>
-        <button onClick={()=>setShowMode(false)} style={{position:"absolute",top:18,right:18,width:42,height:42,borderRadius:21,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:2}}>✕</button>
+        <button onClick={()=>setShowMode(false)} style={{position:"absolute",top:18,right:18,width:42,height:42,borderRadius:21,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:2}}><IconX size={14}/></button>
         <div style={{maxWidth:440,margin:"32px auto 24px",width:"100%"}}><Card big/></div>
       </div>
     );
@@ -5744,21 +6957,21 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor}){
         {isEmpty&&!isEditor?(
           <div style={{textAlign:"center",padding:"60px 24px"}}>
             <div style={{fontSize:64,marginBottom:18}}>🪪</div>
-            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:23,color:G.ink,letterSpacing:-.4,marginBottom:10,lineHeight:1.15}}>Kortet är inte ifyllt än</div>
-            <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.5,maxWidth:300,margin:"0 auto"}}>Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Tryck Redigera för att fylla i det.</div>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:23,color:G.ink,letterSpacing:-.4,marginBottom:10,lineHeight:1.15}}>{t.emptyCardTitle}</div>
+            <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,lineHeight:1.5,maxWidth:300,margin:"0 auto"}}>{t.emptyCardDesc}</div>
           </div>
         ):isEmpty&&isEditor?(
           <div style={{textAlign:"center",padding:"40px 24px",background:G.white,borderRadius:24,border:`1px dashed ${S.h}66`}}>
             <div style={{fontSize:48,marginBottom:14}}>🪪</div>
-            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:18,color:G.ink,marginBottom:6}}>Skapa mitt-mig-kortet</div>
-            <div style={{fontFamily:G.font,fontSize:13,color:G.ink2,lineHeight:1.5,marginBottom:18,maxWidth:300,margin:"0 auto 18px"}}>Sammanfattar viktig information — namn, kontaktpersoner, och vad som hjälper i pressade situationer. Visas vid behov.</div>
+            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:18,color:G.ink,marginBottom:6}}>{t.createCardTitle}</div>
+            <div style={{fontFamily:G.font,fontSize:13,color:G.ink2,lineHeight:1.5,marginBottom:18,maxWidth:300,margin:"0 auto 18px"}}>{t.createCardDesc}</div>
             <button onClick={()=>setShowEdit(true)} style={{padding:"13px 28px",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:sh.c(S.h)}}>+ {t.editCard}</button>
           </div>
         ):(<>
           <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:G.ink3,letterSpacing:1,textTransform:"uppercase",textAlign:"center",marginBottom:10}}>{t.idHint}</div>
           <Card/>
           {!isEditor&&(
-            <button onClick={()=>setShowMode(true)} style={{width:"100%",padding:"15px 0",borderRadius:16,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h),marginTop:18,letterSpacing:.3}}>⤢ Visa stort</button>
+            <button onClick={()=>setShowMode(true)} style={{width:"100%",padding:"15px 0",borderRadius:16,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h),marginTop:18,letterSpacing:.3}}>⤢ {t.showLarge}</button>
           )}
         </>)}
       </div>
@@ -5796,14 +7009,14 @@ function IdCardEditor({cfg,setCfg,onClose,t}){
   return(
     <Overlay onClose={onClose}>
       <Sheet scroll>
-        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,marginBottom:28,letterSpacing:-.5,lineHeight:1.05}}>{t.editCard}</div>
+        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.inkSoft,marginBottom:28,letterSpacing:-.5,lineHeight:1.05}}>{t.editCard}</div>
         <div style={{display:"flex",gap:14,marginBottom:18,alignItems:"center"}}>
           <div style={{width:78,height:78,borderRadius:22,background:c.photo?"transparent":S.hll,border:`1px solid ${G.border}`,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,flexShrink:0}}>
             {c.photo?<img src={c.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:"🙂"}
           </div>
           <div style={{flex:1,display:"flex",flexDirection:"column",gap:7}}>
             <input ref={fileRef} type="file" accept="image/*" onChange={onPhoto} style={{display:"none"}}/>
-            <button onClick={()=>fileRef.current?.click()} style={{padding:"10px 14px",borderRadius:11,border:`1px solid ${S.h}`,background:S.hl,color:S.deep,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer"}}>📷 {t.uploadPhoto}</button>
+            <button onClick={()=>fileRef.current?.click()} style={{padding:"10px 14px",borderRadius:11,border:`1px solid ${S.h}`,background:S.hl,color:S.deep,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7}}><IconCamera size={14}/> {t.uploadPhoto}</button>
             {c.photo&&<button onClick={()=>setC(x=>({...x,photo:null}))} style={{padding:"8px 12px",borderRadius:11,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer"}}>↺ Ta bort</button>}
           </div>
         </div>
@@ -5813,16 +7026,16 @@ function IdCardEditor({cfg,setCfg,onClose,t}){
         <input value={c.age} onChange={e=>setC(x=>({...x,age:e.target.value}))} className="lt-input" style={INP} placeholder="t.ex. 9" inputMode="numeric"/>
         <SLabel>{t.aboutMe}</SLabel>
         <textarea value={c.condition} onChange={e=>setC(x=>({...x,condition:e.target.value}))} className="lt-input" style={{...INP,minHeight:64,resize:"vertical"}} placeholder="t.ex. Jag har autism och kan behöva extra tid"/>
-        <SLabel>⚠️ {t.myTriggers}</SLabel>
+        <SLabel>{t.myTriggers}</SLabel>
         <textarea value={c.triggers} onChange={e=>setC(x=>({...x,triggers:e.target.value}))} className="lt-input" style={{...INP,minHeight:64,resize:"vertical"}} placeholder="t.ex. Höga ljud, mycket folk"/>
-        <SLabel>💚 {t.whatHelps}</SLabel>
+        <SLabel>{t.whatHelps}</SLabel>
         <textarea value={c.helpful} onChange={e=>setC(x=>({...x,helpful:e.target.value}))} className="lt-input" style={{...INP,minHeight:64,resize:"vertical"}} placeholder="t.ex. Lugn röst, tid att tänka"/>
-        <SLabel>📞 {t.emergencyContacts}</SLabel>
+        <SLabel>{t.emergencyContacts}</SLabel>
         {c.contacts.map(k=>(
           <div key={k.id} style={{background:S.hll,borderRadius:14,padding:13,marginBottom:10,border:`1px solid ${S.hl}`}}>
             <div style={{display:"flex",gap:8,marginBottom:8}}>
               <input value={k.name} onChange={e=>updC(k.id,"name",e.target.value)} className="lt-input" style={{...INP,marginBottom:0,flex:1}} placeholder={t.contactName}/>
-              <button onClick={()=>rmC(k.id)} style={{padding:"0 13px",borderRadius:12,border:"none",background:"#FEF2F2",color:"#EF4444",cursor:"pointer",fontSize:15}}>✕</button>
+              <button onClick={()=>rmC(k.id)} aria-label="Ta bort" style={{padding:"0 13px",borderRadius:12,border:"none",background:"#FEF2F2",color:"#EF4444",cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center"}}><IconX size={13}/></button>
             </div>
             <input value={k.phone} onChange={e=>updC(k.id,"phone",e.target.value)} className="lt-input" style={{...INP,marginBottom:8}} placeholder={t.contactPhone} inputMode="tel"/>
             <input value={k.relation} onChange={e=>updC(k.id,"relation",e.target.value)} className="lt-input" style={{...INP,marginBottom:0}} placeholder={t.contactRelation+" (t.ex. Mamma)"}/>
@@ -5831,7 +7044,12 @@ function IdCardEditor({cfg,setCfg,onClose,t}){
         <button onClick={addContact} style={{width:"100%",padding:"12px 0",borderRadius:13,border:`1.5px dashed ${S.h}66`,background:G.white,color:S.deep,fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",marginBottom:22}}>{t.addContact}</button>
         <div style={{display:"flex",gap:8}}>
           <button onClick={onClose} style={{flex:1,...GHOST}}>{t.cancel}</button>
-          <button onClick={doSave} style={{flex:2,padding:"15px 0",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h)}}>{t.save}</button>
+          <button onClick={doSave} className="lt-press saveBtn" style={{flex:2,padding:"15px 0",borderRadius:14,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h),display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <svg className="saveTick" width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+              <path d="M2.5 7.2 L5.8 10.5 L11.5 3.5"/>
+            </svg>
+            {t.save}
+          </button>
         </div>
       </Sheet>
     </Overlay>
@@ -5903,7 +7121,7 @@ function SupervisorDemo({onClose,onOpenClient,lang}){
           <span style={{fontFamily:G.font,fontWeight:600,fontSize:10,color:S.deep,background:S.hl,borderRadius:6,padding:"3px 8px",letterSpacing:1.2,textTransform:"uppercase"}}>{lang==="sv"?"Stödperson":"Caregiver"}</span>
           <span style={{fontFamily:G.font,fontWeight:600,fontSize:9,color:G.ink3,background:"#FEF3C7",border:"1px solid #FCD34D40",borderRadius:6,padding:"3px 8px",letterSpacing:1.2,textTransform:"uppercase"}}>Demo</span>
         </div>
-        <button onClick={onClose} style={{width:38,height:38,borderRadius:19,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,fontSize:18,cursor:"pointer",boxShadow:sh.xs}}>✕</button>
+        <button onClick={onClose} style={{width:38,height:38,borderRadius:19,border:`1px solid ${G.border}`,background:G.white,color:G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.xs}}><IconX size={14}/></button>
       </div>
 
       {stage==="login"&&(
@@ -5919,7 +7137,7 @@ function SupervisorDemo({onClose,onOpenClient,lang}){
 
             <button onClick={doLogin} style={{width:"100%",padding:"14px 0",borderRadius:14,border:"none",background:`linear-gradient(135deg,${S.h},${S.deep})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(S.h),marginTop:8,marginBottom:14}}>{lang==="sv"?"Logga in":"Sign in"}</button>
 
-            <button onClick={()=>setShowHint(s=>!s)} style={{width:"100%",padding:"10px 0",borderRadius:11,border:`1px dashed ${G.border2}`,background:"transparent",color:G.ink3,fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer"}}>{showHint?"↑ Dölj":lang==="sv"?"💡 Hur funkar demon?":"💡 How does the demo work?"}</button>
+            <button onClick={()=>setShowHint(s=>!s)} style={{width:"100%",padding:"10px 0",borderRadius:11,border:`1px dashed ${G.border2}`,background:"transparent",color:G.ink3,fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer"}}>{showHint?(lang==="sv"?"Dölj":"Hide"):(lang==="sv"?"Hur funkar demon?":"How does the demo work?")}</button>
             {showHint&&(
               <div style={{marginTop:14,padding:"12px 14px",background:S.hb,borderRadius:12,fontFamily:G.font,fontSize:12,color:G.ink2,lineHeight:1.55,border:`1px solid ${G.border}`}}>
                 {lang==="sv"?"Detta är en visuell demo av hur stödpersonsvyn skulle fungera. Skriv vad du vill i fälten — vilket login som helst släpps in. I skarpt läge skulle pedagoger ha riktiga konton med säker inloggning, och ändringar synkas mot klienternas appar i realtid.":"This is a visual demo of the caregiver view. Type anything in the fields — any login is accepted. In production, caregivers would have real accounts with secure sign-in, and changes sync to clients' apps in real time."}
@@ -5971,7 +7189,11 @@ function SupervisorDemo({onClose,onOpenClient,lang}){
 
           {/* Demo note */}
           <div style={{marginTop:32,padding:"14px 18px",background:"#FEF3C7",borderRadius:14,border:"1px solid #FCD34D40",fontFamily:G.font,fontSize:12,color:"#92400E",lineHeight:1.55,display:"flex",alignItems:"flex-start",gap:10}}>
-            <span style={{fontSize:14,flexShrink:0}}>💡</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,marginTop:1}} aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
             <span>{lang==="sv"?"Detta är en demo. I skarpt läge synkas alla ändringar direkt till klientens enhet. Klicka på en klient för att öppna deras app — du redigerar samma data som klienten ser.":"This is a demo. In production, all changes sync directly to the client's device. Click a client to open their app — you'll edit the same data the client sees."}</span>
           </div>
         </div>
@@ -5992,11 +7214,11 @@ function ActivityStartAlert({activity,onDismiss,onOpen,t,lang}){
         @keyframes asaEmojiPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
         @keyframes asaRingPulse{0%{box-shadow:0 0 0 0 ${activity.color}55,0 16px 40px ${activity.color}30}70%{box-shadow:0 0 0 22px ${activity.color}00,0 16px 40px ${activity.color}30}100%{box-shadow:0 0 0 0 ${activity.color}00,0 16px 40px ${activity.color}30}}
       `}</style>
-      <div onClick={e=>e.stopPropagation()} style={{background:G.white,borderRadius:30,padding:"30px 28px 24px",maxWidth:380,width:"100%",textAlign:"center",boxShadow:"0 30px 70px rgba(31,27,46,0.22), 0 4px 12px rgba(31,27,46,0.08)",border:`1px solid ${G.border}`,animation:"asaPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both"}}>
-        <div style={{width:108,height:108,margin:"0 auto 20px",borderRadius:"50%",background:`linear-gradient(140deg, ${activity.color}30, ${activity.color}55)`,border:`2px solid ${activity.color}45`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:54,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.7)`,animation:"asaRingPulse 2.2s ease-out infinite, asaEmojiPulse 2.6s ease-in-out infinite"}}>{activity.emoji}</div>
-        <div style={{fontFamily:G.font,fontSize:11,color:G.ink3,letterSpacing:1.6,textTransform:"uppercase",fontWeight:700,marginBottom:8}}>{lang==="sv"?"Det är dags":"It's time"}</div>
+      <div onClick={e=>e.stopPropagation()} style={{background:G.white,borderRadius:30,padding:"28px 28px 22px",maxWidth:380,width:"100%",textAlign:"center",boxShadow:"0 30px 70px rgba(31,27,46,0.22), 0 4px 12px rgba(31,27,46,0.08)",border:`1px solid ${G.border}`,animation:"asaPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both"}}>
+        <div style={{width:96,height:96,margin:"0 auto 18px",borderRadius:"50%",background:`linear-gradient(140deg, ${activity.color}30, ${activity.color}55)`,border:`2px solid ${activity.color}45`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:48,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.7)`,animation:"asaRingPulse 2.2s ease-out infinite, asaEmojiPulse 2.6s ease-in-out infinite"}}>{activity.emoji}</div>
+        <div style={{fontFamily:G.font,fontSize:11,color:G.ink3,letterSpacing:1.4,textTransform:"uppercase",fontWeight:600,marginBottom:6}}>{lang==="sv"?"Det är dags":"It's time"}</div>
         <div style={{fontFamily:G.serif,fontSize:26,fontWeight:600,color:G.ink,letterSpacing:-0.3,lineHeight:1.15,marginBottom:6}}>{activity.name}</div>
-        <div style={{fontFamily:G.font,fontSize:14,fontWeight:700,color:activity.color,letterSpacing:0.3,marginBottom:24}}>{fmtT(activity.time,lang)}</div>
+        <div style={{fontFamily:G.font,fontSize:14,fontWeight:600,color:activity.color,letterSpacing:0.3,marginBottom:22}}>{fmtT(activity.time,lang)}</div>
         <div style={{display:"flex",gap:10}}>
           <button onClick={onOpen} className="lt-press" style={{flex:1,padding:"14px 0",borderRadius:14,border:`1px solid ${G.border}`,background:G.cream,color:G.ink2,fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer"}}>{lang==="sv"?"Visa":"Show"}</button>
           <button onClick={onDismiss} className="lt-press" style={{flex:1.5,padding:"14px 0",borderRadius:14,border:"none",background:`linear-gradient(135deg, ${activity.color}, ${activity.color}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:`0 8px 18px ${activity.color}55`}}>OK</button>
@@ -6774,7 +7996,7 @@ function DemoTour({onClose}){
       {/* Header bar: scene counter + close */}
       <div style={{flexShrink:0,padding:"10px 24px 0",display:"flex",justifyContent:"space-between",alignItems:"center",zIndex:3}}>
         <div style={{fontFamily:G.font,fontSize:10,fontWeight:700,color:G.ink3,letterSpacing:1.4,textTransform:"uppercase"}}>{idx+1} / {scenes.length}</div>
-        <button onClick={onClose} aria-label="Stäng demo" style={{width:38,height:38,borderRadius:19,border:`1px solid ${G.border}`,background:"rgba(255,255,255,0.95)",backdropFilter:"blur(10px)",color:G.ink2,fontSize:15,cursor:"pointer",boxShadow:"0 4px 14px rgba(31,27,46,0.08)",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+        <button onClick={onClose} aria-label="Stäng demo" style={{width:38,height:38,borderRadius:19,border:`1px solid ${G.border}`,background:"rgba(255,255,255,0.95)",backdropFilter:"blur(10px)",color:G.ink2,cursor:"pointer",boxShadow:"0 4px 14px rgba(31,27,46,0.08)",display:"flex",alignItems:"center",justifyContent:"center"}}><IconX size={14}/></button>
       </div>
 
       {/* Scene canvas — strictly contained */}
@@ -6979,12 +8201,31 @@ export default function App(){
   const[showOnboarding,setShowOnboarding]=useState(false);
   const[showSupervisor,setShowSupervisor]=useState(false);
   const[showDemo,setShowDemo]=useState(()=>typeof window!=="undefined"&&window.location.hash==="#demo");
+  // Story viewer state lives at the App root (not inside StoryScreen) so the
+  // viewer renders OUTSIDE the screen container and its animation-context.
+  // Otherwise position:fixed would be constrained and the bottom nav arrows
+  // would be hidden behind the main tab bar.
+  const[storyViewer,setStoryViewer]=useState(null);
+  // When an input is focused on certain screens (e.g. the emotion reason field),
+  // the bottom nav slides away to give the user room to see both the form and
+  // what they're typing without the keyboard squeezing the content.
+  const[inputFocused,setInputFocused]=useState(false);
+  // Set true while an immersive experience is running (breathing, grounding,
+  // skylight exercises). Bottom nav slides away so the calming visuals get
+  // the full screen and chrome doesn't break the moment.
+  const[immersiveMode,setImmersiveMode]=useState(false);
+  // Combined signal for hiding the bottom nav. Either reason qualifies.
+  const navHidden=inputFocused||immersiveMode;
   const[notifShown,setNotifShown]=usePersistentState("notifShown",{});
   const[startAlert,setStartAlert]=useState(null);
   const[supervisorClient,setSupervisorClient]=useState(null);
   useEffect(()=>{
-    // Show onboarding once on first visit, after mount so layout settles
-    if(!hasOnboarded){
+    // Show onboarding once on first visit, after mount so layout settles.
+    // Also re-trigger if URL hash is #welcome — handy for testing or for
+    // showing the welcome to someone on an already-onboarded device, without
+    // wiping their saved schedule via "Rensa all data".
+    const wantsWelcome=typeof window!=="undefined"&&window.location.hash==="#welcome";
+    if(!hasOnboarded||wantsWelcome){
       const t=setTimeout(()=>setShowOnboarding(true),300);
       return()=>clearTimeout(t);
     }
@@ -6996,9 +8237,15 @@ export default function App(){
     }
   // eslint-disable-next-line
   },[]);
-  // Listen to URL hash to open demo (e.g. luma-app.vercel.app/#demo)
+  // Listen to URL hash to open demo (#demo) or replay welcome (#welcome).
+  // Lets caregivers send "luma-app.vercel.app/#welcome" as a quick share link
+  // and have the welcome+demo open even on already-onboarded devices.
   useEffect(()=>{
-    const onHashChange=()=>setShowDemo(window.location.hash==="#demo");
+    const onHashChange=()=>{
+      if(window.location.hash==="#demo") setShowDemo(true);
+      else if(window.location.hash==="#welcome") setShowOnboarding(true);
+      else setShowDemo(h=>h&&window.location.hash==="#demo"?h:false);
+    };
     window.addEventListener("hashchange",onHashChange);
     return()=>window.removeEventListener("hashchange",onHashChange);
   },[]);
@@ -7040,6 +8287,9 @@ export default function App(){
     if(window.location.hash==="#demo") history.replaceState(null,"",window.location.pathname+window.location.search);
   };
   const openDemo=()=>{setShowSet(false);setShowDemo(true);};
+  // Re-trigger the welcome + demo tour as if it's first run. Settings closes,
+  // welcome appears, and tapping "Visa mig" hands off to the demo as usual.
+  const openWelcomeTour=()=>{setShowSet(false);setShowOnboarding(true);};
   const finishOnboarding=()=>{setShowOnboarding(false);setHasOnboarded(true);setTimeout(()=>setShowDemo(true),400);};
   const openSupervisor=()=>{setShowSet(false);setShowSupervisor(true);};
   const openClient=(client)=>{
@@ -7256,6 +8506,36 @@ export default function App(){
         /* Modal entrance */
         @keyframes ovlIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes shtIn { from { transform: translateY(102%); } to { transform: translateY(0); } }
+        /* ───────── Webfont loading ─────────
+           Nunito from Google Fonts. Variable weight for clean rendering
+           across all heading scales. Loaded via @import (rather than <link>)
+           so it travels with the artifact and works offline. */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+
+        /* Global type rendering — enables kerning, common ligatures, contextual
+           alternates, and lets variable-font optical sizing follow the rendered
+           size. Without these, even good fonts look slightly mechanical. */
+        html, body {
+          font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+          font-optical-sizing: auto;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
+        }
+
+        /* Pencil icon — sits in any "edit" affordance across the app (schedule
+           row, emotion editor, ID card, etc). Idle = neutral. Hover/press =
+           tilts toward the upper-left as if about to write, then springs back
+           via bouncy back-out easing. */
+        .lumaPen { transform-origin: 80% 80%; transition: transform .35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .lumaPenBtn:hover .lumaPen, .lumaPenBtn:active .lumaPen { transform: rotate(-14deg) translateY(-1px) scale(1.08); }
+        /* Save-button checkmark — draws itself in once when the panel appears
+           (the stroke offset animates from full length to zero), then on hover/
+           press does a satisfying bounce. Stays subtle: the visual confirmation
+           lives in the post-save celebration. */
+        .saveTick { stroke-dasharray: 22; stroke-dashoffset: 22; animation: saveTickDraw .55s cubic-bezier(0.32, 0.72, 0, 1) .15s forwards; transition: transform .35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .saveBtn:hover .saveTick, .saveBtn:active .saveTick { transform: scale(1.2); }
+        @keyframes saveTickDraw { from { stroke-dashoffset: 22; } to { stroke-dashoffset: 0; } }
       `}</style>
       {/* Ambient time-of-day overlay — extremely subtle, sits above background */}
       <div style={{position:"absolute",inset:0,background:`linear-gradient(180deg, ${ambientTint} 0%, transparent 60%)`,pointerEvents:"none",zIndex:0,transition:"background 2s ease"}}/>
@@ -7310,7 +8590,7 @@ export default function App(){
             <div style={{fontFamily:G.font,fontWeight:400,fontSize:10.5,color:"#9892AA",textTransform:"capitalize",letterSpacing:.6,marginBottom:3}}>
               {isEd ? (screen==="home" ? t.schedule : navItems.find(n=>n.key===screen)?.label || "") : dateStr}
             </div>
-            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.ink,lineHeight:1.05,letterSpacing:-.6,display:"flex",alignItems:"center",gap:10}}>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:G.inkSoft,lineHeight:1.05,letterSpacing:-.6,display:"flex",alignItems:"center",gap:10}}>
               {isEd ? (
                 <>
                   <span>{lang==="sv"?"Redigerar":"Editing"}</span>
@@ -7328,9 +8608,9 @@ export default function App(){
               )}
             </div>
           </div>
-          <button onClick={e=>{e.stopPropagation();setLang(l=>l==="sv"?"en":"sv");}} className="lt-press" style={{background:"transparent",border:`1px solid ${G.border}`,borderRadius:10,padding:"6px 11px",color:G.ink2,fontFamily:G.font,fontWeight:500,cursor:"pointer",fontSize:11,flexShrink:0,letterSpacing:.4}}>{lang.toUpperCase()}</button>
+          <button onClick={e=>{e.stopPropagation();setLang(l=>l==="sv"?"en":"sv");}} aria-label="Toggle language" className="lt-press" style={{background:"transparent",border:`1px solid ${G.border}`,borderRadius:10,padding:"8px 12px",color:G.ink2,fontFamily:G.font,fontWeight:500,cursor:"pointer",fontSize:11,flexShrink:0,letterSpacing:.4,minHeight:36}}>{lang.toUpperCase()}</button>
           {isEd&&(
-            <button onClick={e=>{e.stopPropagation();setShowSet(true);}} className="lt-gear-btn" style={{background:"transparent",border:`1px solid ${G.border}`,borderRadius:10,padding:"6px 8px",color:G.ink2,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",height:28,width:32,transition:"background .25s ease, border-color .25s ease"}}>
+            <button onClick={e=>{e.stopPropagation();setShowSet(true);}} aria-label={t.settings} className="lt-gear-btn" style={{background:"transparent",border:`1px solid ${G.border}`,borderRadius:10,padding:"8px 10px",color:G.ink2,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",height:36,minWidth:36,transition:"background .25s ease, border-color .25s ease"}}>
               <style>{`
                 @keyframes gearSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
                 .lt-gear-btn:hover{background:${G.cream};border-color:${G.ink3}66}
@@ -7387,7 +8667,7 @@ export default function App(){
                   <circle cx="32" cy="32" r="26" fill="none" stroke={`${curS.h}55`} strokeWidth="1.4"/>
                   <circle cx="32" cy="32" r="14" fill={`${curS.h}1A`} stroke={`${curS.h}66`} strokeWidth="1.4"/>
                 </svg>
-                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.ink,letterSpacing:-.4,lineHeight:1.1,textAlign:"center",marginTop:2}}>{t.dayOpen}</div>
+                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.inkSoft,letterSpacing:-.4,lineHeight:1.1,textAlign:"center",marginTop:2}}>{t.dayOpen}</div>
                 <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",letterSpacing:.1,textAlign:"center",lineHeight:1.4}}>{t.noActs}</div>
               </div>
             ):!isEd&&active.length===0?(
@@ -7404,7 +8684,6 @@ export default function App(){
                   <path d="M22,32 L29,40 L43,24" stroke={curS.deep} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.78"/>
                 </svg>
                 <div style={{fontFamily:G.serif,fontWeight:500,fontSize:23,color:G.ink,letterSpacing:-.4,lineHeight:1.1,textAlign:"center"}}>{t.allActsDoneTitle}</div>
-                <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",letterSpacing:.1,textAlign:"center",marginTop:-6,lineHeight:1.4}}>{t.allActsDoneSub}</div>
               </div>
             ):effView==="card"&&!isEd?(
               <div style={{flex:1,overflowY:"auto",padding:"14px 14px 0 10px"}}>
@@ -7428,9 +8707,9 @@ export default function App(){
         )}
         {screen==="week"&&<WeekScreen acts={acts} dailyState={dailyState} isEd={isEd} t={t} lang={lang} now={now} cfg={cfg} onTap={openDetail} onEdit={item=>{setEditAct(item);setShowEd(true);}} onAdd={()=>{setEditAct(null);setShowEd(true);}} headerTapCount={headerTapCount}/>}
         {screen==="timer"&&<TimerScreen t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} lang={lang}/>}
-        {screen==="stories"&&<StoryScreen lang={lang} t={t} isEditor={isEd} stories={stories} setStories={setStories}/>}
-        {screen==="emotion"&&<EmotionScreen lang={lang} t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg}/>}
-        {screen==="calm"&&<CalmScreen t={t} lang={lang} cfg={cfg} isEditor={isEd} setCfg={setCfg}/>}
+        {screen==="stories"&&<StoryScreen lang={lang} t={t} isEditor={isEd} stories={stories} setStories={setStories} onOpenStory={setStoryViewer}/>}
+        {screen==="emotion"&&<EmotionScreen lang={lang} t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} onInputFocusChange={setInputFocused}/>}
+        {screen==="calm"&&<CalmScreen t={t} lang={lang} cfg={cfg} isEditor={isEd} setCfg={setCfg} onImmersiveChange={setImmersiveMode}/>}
         {screen==="idcard"&&<IdCardScreen t={t} lang={lang} cfg={cfg} setCfg={setCfg} isEditor={isEd}/>}
         {screen==="comm"&&<CommBoard lang={lang} t={t} isEditor={isEd} cats={commCats} setCats={setCommCats} sel={commSel} setSel={setCommSel} openModal={setCommModal}/>}
         </div>
@@ -7465,8 +8744,24 @@ export default function App(){
           </div>
         </div>
       )}
-      {/* BOTTOM NAV — floating, soft, no hard divisions. Respects iPhone home indicator. */}
-      <div style={{background:"rgba(255,255,255,0.96)",display:"flex",padding:"8px 0 calc(24px + env(safe-area-inset-bottom, 0px))",flexShrink:0,zIndex:20,overflowX:"auto",position:"relative"}}>
+      {/* BOTTOM NAV — floating, soft, no hard divisions. Respects iPhone home indicator.
+          Slides down out of view when navHidden is true. Two triggers feed this:
+          (1) an input is focused (e.g. emotion reason field) — gives the user
+          vertical space to see the form + keyboard; (2) an immersive calm
+          exercise is running — chrome would break the calm moment. Both reasons
+          unmount the nav with the same animation; it comes back on blur/exit. */}
+      <div style={{
+        background:"rgba(255,255,255,0.96)",display:"flex",
+        padding:"8px 0 calc(24px + env(safe-area-inset-bottom, 0px))",
+        flexShrink:0,zIndex:20,overflowX:"auto",position:"relative",
+        maxHeight:navHidden?0:300,
+        opacity:navHidden?0:1,
+        paddingTop:navHidden?0:8,
+        paddingBottom:navHidden?0:"calc(24px + env(safe-area-inset-bottom, 0px))",
+        overflow:navHidden?"hidden":"auto",
+        pointerEvents:navHidden?"none":"auto",
+        transition:"max-height .35s cubic-bezier(0.32, 0.72, 0, 1), opacity .25s ease, padding .35s cubic-bezier(0.32, 0.72, 0, 1)",
+      }}>
         {/* Hairline gradient instead of solid border — softens the system edge */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:"linear-gradient(90deg, transparent 0%, rgba(31,27,46,0.06) 50%, transparent 100%)",pointerEvents:"none"}}/>
         <style>{`@keyframes navUnderSoft{0%{transform:scaleX(0);opacity:0}100%{transform:scaleX(1);opacity:1}}`}</style>
@@ -7503,15 +8798,19 @@ export default function App(){
       })()}
       {showEd&&<EditModal item={editAct} onSave={handleSave} onDel={handleDel} onClose={()=>setShowEd(false)} t={t} existingActs={acts}/>}
       {commModal&&<CommModals modal={commModal} onClose={()=>setCommModal(null)} cats={commCats} setCats={setCommCats} lang={lang} t={t} setSel={setCommSel}/>}
-      {showSet&&<SettingsModal cfg={cfg} setCfg={setCfg} shareCode={shareCode} onClose={()=>setShowSet(false)} t={t} lang={lang} onOpenSupervisor={openSupervisor} onOpenDemo={openDemo}/>}
+      {showSet&&<SettingsModal cfg={cfg} setCfg={setCfg} shareCode={shareCode} onClose={()=>setShowSet(false)} t={t} lang={lang} onOpenSupervisor={openSupervisor} onOpenDemo={openDemo} onOpenWelcomeTour={openWelcomeTour}/>}
       {showDemo&&<DemoTour onClose={closeDemo}/>}
+      {/* StoryViewer rendered HERE at App root — not inside StoryScreen —
+          so its position:fixed escapes the screen-container's animation context
+          and truly covers the viewport including the bottom tab bar. */}
+      {storyViewer&&<StoryViewer story={storyViewer} lang={lang} t={t} onClose={()=>setStoryViewer(null)}/>}
       {startAlert&&<ActivityStartAlert activity={startAlert} onDismiss={dismissStartAlert} onOpen={openStartAlertActivity} t={t} lang={lang}/>}
       {showOnboarding&&(
         <div style={{position:"fixed",inset:0,zIndex:9500,background:"rgba(31,27,46,0.5)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24,animation:"ftIn .3s ease"}} onClick={finishOnboarding}>
-          <div onClick={e=>e.stopPropagation()} style={{maxWidth:380,width:"100%",background:G.white,borderRadius:28,padding:"32px 26px 26px",boxShadow:"0 24px 60px rgba(0,0,0,0.25)",border:`1px solid ${G.border}`,position:"relative"}}>
-            {/* Luma mark — animated sun */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:13,marginBottom:18}}>
-              <svg width={48} height={48} viewBox="0 0 26 26" style={{overflow:"visible"}}>
+          <div onClick={e=>e.stopPropagation()} style={{maxWidth:380,width:"100%",background:G.white,borderRadius:28,padding:"40px 30px 30px",boxShadow:"0 24px 60px rgba(0,0,0,0.25)",border:`1px solid ${G.border}`,position:"relative"}}>
+            {/* Luma mark — animated sun, centered above brand name */}
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,marginBottom:26}}>
+              <svg width={64} height={64} viewBox="0 0 26 26" style={{overflow:"visible"}}>
                 <defs>
                   <radialGradient id="onbCore" cx="35%" cy="30%" r="70%">
                     <stop offset="0%" stopColor="#FFFFFF"/>
@@ -7541,28 +8840,20 @@ export default function App(){
                   <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
                 </g>
               </svg>
-              <span style={{fontFamily:G.serif,fontWeight:600,fontSize:30,color:G.ink,letterSpacing:0.6}}>Luma</span>
+              <span style={{fontFamily:G.serif,fontWeight:600,fontSize:36,color:G.ink,letterSpacing:0.4,lineHeight:1}}>Luma</span>
             </div>
-            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:20,color:G.ink,textAlign:"center",letterSpacing:-.3,marginBottom:8,lineHeight:1.25}}>{lang==="sv"?"Välkommen":"Welcome"}</div>
-            <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,textAlign:"center",lineHeight:1.5,marginBottom:22}}>
+            {/* Soul of the app — one calm sentence. The interactive demo (next)
+                takes care of teaching the user "where to tap". */}
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:19,color:G.ink,textAlign:"center",letterSpacing:-.3,marginBottom:10,lineHeight:1.3}}>
+              {lang==="sv"?"En dag, ett steg i taget":"A day, one step at a time"}
+            </div>
+            <div style={{fontFamily:G.font,fontSize:14,color:G.ink2,textAlign:"center",lineHeight:1.55,marginBottom:30,maxWidth:300,marginLeft:"auto",marginRight:"auto"}}>
               {lang==="sv"
-                ?"Luma är en lugn, anpassbar dagsapp. Stödpersonen anpassar — användaren följer."
-                :"Luma is a calm, customizable daily app. The supporter sets it up — the user follows."}
+                ?"Anpassa själv — eller låt någon hjälpa till."
+                :"Make it your own — or let someone help."}
             </div>
-            <div style={{display:"flex",flexDirection:"column",gap:11,marginBottom:24}}>
-              {[
-                {icon:"✏️",sv:"Tryck Redigera för att skapa schema, berättelser och kort",en:"Tap Edit to create schedule, stories and cards"},
-                {icon:"🏠",sv:"Stäng redigeringen — så ser användaren bara sitt schema",en:"Close editing — the user only sees their schedule"},
-                {icon:"⚙️",sv:"Inställningar finns under kugghjulet när du redigerar",en:"Settings live behind the gear when editing"},
-              ].map((item,i)=>(
-                <div key={i} style={{display:"flex",gap:12,alignItems:"flex-start",padding:"10px 12px",background:SCREENS.home.hb,borderRadius:13}}>
-                  <div style={{width:32,height:32,borderRadius:10,background:G.white,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0,boxShadow:sh.xs}}>{item.icon}</div>
-                  <div style={{flex:1,fontFamily:G.font,fontSize:13,color:G.ink,lineHeight:1.4,paddingTop:7}}>{lang==="sv"?item.sv:item.en}</div>
-                </div>
-              ))}
-            </div>
-            <button onClick={finishOnboarding} style={{width:"100%",padding:"14px 0",borderRadius:14,border:"none",background:`linear-gradient(135deg,${SCREENS.home.h},${SCREENS.home.deep})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(SCREENS.home.h),letterSpacing:0.2}}>
-              {lang==="sv"?"Kom igång":"Get started"}
+            <button onClick={finishOnboarding} className="lt-press" style={{width:"100%",padding:"15px 0",borderRadius:14,border:"none",background:`linear-gradient(135deg,${SCREENS.home.h},${SCREENS.home.deep})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:sh.c(SCREENS.home.h),letterSpacing:0.3}}>
+              {lang==="sv"?"Visa mig":"Show me"}
             </button>
           </div>
         </div>
