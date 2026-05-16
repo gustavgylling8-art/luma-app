@@ -4501,13 +4501,18 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
   const pickTimer=useRef(null);
   const trashRef=useRef(null);
   const imgRef=useRef(null);
+  // Trash centre coordinate — captured when trash first appears so we can
+  // smoothly interpolate the image's scale based on finger-to-trash distance.
+  // This is what powers the gradual shrink as the user approaches the bin,
+  // instead of an instant jolt the moment the finger enters the hitbox.
+  const trashCentre=useRef({x:0,y:0});
   const item=acts[idx];
-  const HOLD_MS=420;
+  const HOLD_MS=340;
   useEffect(()=>{if(idx>=acts.length&&acts.length>0) setIdx(Math.max(0,acts.length-1));},[acts.length,idx]);
   useEffect(()=>()=>{if(pickTimer.current)clearTimeout(pickTimer.current);},[]);
   if(!item) return <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:40}}>
-    <style>{`@keyframes emptyBreath{0%,100%{transform:scale(1);opacity:0.85}50%{transform:scale(1.03);opacity:1}}`}</style>
-    <svg width="64" height="64" viewBox="0 0 64 64" style={{animation:"emptyBreath 4.2s ease-in-out infinite"}}>
+    <style>{`@keyframes emptyBreath{0%,100%{transform:scale(1);opacity:0.85}50%{transform:scale(1.04);opacity:1}}`}</style>
+    <svg width="68" height="68" viewBox="0 0 64 64" style={{animation:"emptyBreath 5s ease-in-out infinite"}}>
       <defs>
         <radialGradient id="emFace" cx="40%" cy="35%" r="65%">
           <stop offset="0%" stopColor="#FFFFFF"/>
@@ -4517,13 +4522,26 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
       <circle cx="32" cy="32" r="28" fill="url(#emFace)" stroke={`${SCREENS.home.h}40`} strokeWidth="1"/>
       <path d="M22,32 L29,40 L43,24" stroke={SCREENS.home.deep} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.75"/>
     </svg>
-    <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.inkSoft,letterSpacing:-.4,lineHeight:1.1}}>Alla aktiviteter är klara</div>
-    <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",marginTop:-4,letterSpacing:.1}}>Du kan vila resten av dagen.</div>
+    <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:G.inkSoft,letterSpacing:-.4,lineHeight:1.1,textAlign:"center"}}>{t?.allActsDoneTitle||"Alla aktiviteter är klara"}</div>
+    <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:"#9892AA",marginTop:-4,letterSpacing:.1,textAlign:"center"}}>{t?.allActsDoneSub||"Du kan vila resten av dagen."}</div>
   </div>;
 
   const cancelPickTimer=()=>{
     if(pickTimer.current){clearTimeout(pickTimer.current);pickTimer.current=null;}
   };
+  // Capture trash centre after it mounts/transitions in — used to drive the
+  // smooth scale-down as the dragged image approaches.
+  useEffect(()=>{
+    if(!showTrash) return;
+    const raf=requestAnimationFrame(()=>{
+      if(trashRef.current){
+        const r=trashRef.current.getBoundingClientRect();
+        trashCentre.current={x:(r.left+r.right)/2,y:(r.top+r.bottom)/2};
+      }
+    });
+    return()=>cancelAnimationFrame(raf);
+  // eslint-disable-next-line
+  },[pickState]);
   const resetAll=()=>{
     cancelPickTimer();
     setPickState("idle");
@@ -4554,7 +4572,11 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
       setDrag({x:dx,y:dy});
       if(trashRef.current){
         const r=trashRef.current.getBoundingClientRect();
-        const over=x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;
+        // Hysteresis: must be 8px inside trash bounds to activate, 8px
+        // outside to deactivate. Prevents flicker at the boundary which
+        // made the interaction feel "studsig".
+        const inset=overTrash?-8:8;
+        const over=x>=r.left+inset&&x<=r.right-inset&&y>=r.top+inset&&y<=r.bottom-inset;
         if(over!==overTrash) setOverTrash(over);
       }
     }
@@ -4571,7 +4593,10 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
         setTimeout(()=>{
           chime();
           onMarkDone(item.id);
-          setIdx(prev=>Math.min(prev,acts.length-2));
+          // After this onMarkDone, acts.length will decrement by 1.
+          // Clamp idx so it stays valid: at most (newLength - 1) = acts.length - 2,
+          // but never negative (if we just removed the only card).
+          setIdx(prev=>Math.max(0,Math.min(prev,acts.length-2)));
           resetAll();
         },420);
       } else {
@@ -4651,20 +4676,24 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
       <style>{`
         @keyframes trashIn{from{opacity:0;transform:translateX(-50%) translateY(30px) scale(0.7)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
         @keyframes trashOut{from{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}to{opacity:0;transform:translateX(-50%) translateY(30px) scale(0.7)}}
+        @keyframes pickupPulse{0%{transform:scale(0.9);opacity:0.55}100%{transform:scale(1.45);opacity:0}}
+        @keyframes trashGlow{0%,100%{box-shadow:0 18px 40px rgba(31,27,46,0.10), 0 4px 10px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.95)}50%{box-shadow:0 22px 46px rgba(31,27,46,0.14), 0 6px 14px rgba(31,27,46,0.08), inset 0 1px 0 rgba(255,255,255,0.95)}}
       `}</style>
 
-      {/* Background dim — soft veil over everything except the lifted card and trash */}
+      {/* Background dim — gentle veil that softens the surroundings without
+          making it feel like the card is floating in a void. The card and
+          trash sit above via higher z-index. */}
       {showDim && (
         <div style={{
           position:"fixed",
           inset:0,
-          background:"rgba(31,27,46,0.32)",
-          backdropFilter:"blur(6px)",
-          WebkitBackdropFilter:"blur(6px)",
+          background:"rgba(31,27,46,0.22)",
+          backdropFilter:"blur(4px)",
+          WebkitBackdropFilter:"blur(4px)",
           opacity: pickState==="returning"?0:1,
           transition: pickState==="returning"
-            ? "opacity 0.4s cubic-bezier(0.32, 0.72, 0, 1), backdrop-filter 0.4s ease"
-            : "opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), backdrop-filter 0.3s ease",
+            ? "opacity 0.45s cubic-bezier(0.32, 0.72, 0, 1), backdrop-filter 0.45s ease"
+            : "opacity 0.35s cubic-bezier(0.32, 0.72, 0, 1), backdrop-filter 0.35s ease",
           zIndex:40,
           pointerEvents:"none",
         }}/>
@@ -4677,41 +4706,64 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
         draggable={false}
         style={{
           width:"100%",maxWidth:340,
-          background: cardLifted
-            ? `linear-gradient(180deg, ${G.white}, ${G.cream})`
-            : G.white,
+          // When lifted: card frame disappears entirely so only the image
+          // remains, floating against the dim. This prevents a ghost-card
+          // shape sitting where the image used to be — which made the dragged
+          // image look semi-transparent by visual comparison.
+          background: cardLifted ? "transparent" : G.white,
           borderRadius:30,padding:"34px 26px 28px",textAlign:"center",
           cursor:cardLifted?"grabbing":"pointer",
           boxShadow: cardLifted
-            ? `0 18px 44px ${item.color}1F, 0 4px 10px rgba(31,27,46,0.08)`
+            ? "none"
             : `0 18px 60px ${item.color}1F`,
-          border:`1px solid ${item.color}25`,
-          transition:"box-shadow .35s ease, background .35s ease",
+          border:`1px solid ${cardLifted?"transparent":`${item.color}25`}`,
+          transition:"box-shadow .35s ease, background .35s ease, border-color .35s ease",
           position:"relative",
           overflow:"visible",
           touchAction: pickState==="picked"?"none":"pan-x",
           zIndex: cardLifted?50:1,
           WebkitUserSelect:"none",userSelect:"none",WebkitTouchCallout:"none",
         }}>
-        {/* Image wrapper — gets the offset transform during pickup so only the image drags.
-            Same proven offset-pattern that worked on the whole card, just applied here. */}
+        {/* Image wrapper — translates with the finger, and scales smoothly
+            based on distance to the trash zone. Far from trash: full
+            presence (1.08). Approaching: gradual shrink. Over: smallest
+            (0.68). The shrink is proportional so the user sees the image
+            actively "preparing to drop" rather than rabbit-jumping when it
+            crosses an invisible threshold. */}
+        {(()=>{
+          // Compute current finger position in viewport coords
+          const fx=(startPt.current?.x||0)+drag.x;
+          const fy=(startPt.current?.y||0)+drag.y;
+          const dxT=fx-trashCentre.current.x;
+          const dyT=fy-trashCentre.current.y;
+          const distToTrash=Math.sqrt(dxT*dxT+dyT*dyT);
+          // Far threshold: 220px → no shrink yet
+          // Near threshold: 50px → fully shrunk
+          // In between: smooth interpolation with ease-out so the last
+          // 80px gives the most visible feedback
+          const FAR=220, NEAR=50;
+          const tRaw=Math.max(0,Math.min(1,(distToTrash-NEAR)/(FAR-NEAR)));
+          // Ease-out: 1-(1-t)² — gives slower start, accelerating shrink near trash
+          const eased=1-Math.pow(1-tRaw,2);
+          const liveScale=0.68+(1.08-0.68)*eased;
+          return(
         <div ref={imgRef} style={{
           display:"inline-block",
           transform:
             pickState==="picked"
-              ? `translate(${drag.x}px, ${drag.y}px) scale(${overTrash?0.55:1.08}) rotate(${Math.max(-6,Math.min(6,drag.x*0.04))}deg)`
+              ? `translate(${drag.x}px, ${drag.y}px) scale(${liveScale}) rotate(${Math.max(-4,Math.min(4,drag.x*0.025))}deg)`
             : pickState==="dropping"
-              ? `translate(${drag.x}px, ${drag.y}px) scale(0.15) rotate(12deg)`
+              ? `translate(${drag.x}px, ${drag.y}px) scale(0.2) rotate(8deg)`
             : pickState==="returning"
               ? "translate(0,0) scale(1) rotate(0deg)"
             : "none",
           transition:
             pickState==="picked"
-              ? "transform 0.06s linear"
+              ? "transform 0.14s cubic-bezier(0.32, 0.72, 0, 1)"
             : pickState==="dropping"
-              ? "transform 0.46s cubic-bezier(.5,0,.75,0), opacity 0.42s ease"
+              ? "transform 0.5s cubic-bezier(.4,0,.6,1), opacity 0.42s ease 0.1s"
             : pickState==="returning"
-              ? "transform 0.42s cubic-bezier(.34,1.56,.64,1)"
+              ? "transform 0.42s cubic-bezier(.34,1.5,.64,1)"
             : "transform 0.2s ease",
           opacity: pickState==="dropping"?0:1,
           willChange:"transform",
@@ -4723,7 +4775,7 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
               width:140,height:140,borderRadius:24,overflow:"hidden",margin:"0 auto 14px",
               position:"relative",background:"#FFFFFF",
               boxShadow: cardLifted
-                ? `0 28px 48px rgba(31,27,46,0.38), 0 10px 20px rgba(31,27,46,0.22), 0 2px 6px rgba(31,27,46,0.14), 0 0 0 3px #FFFFFF, 0 0 0 4px ${item.color}30`
+                ? `0 0 70px 30px rgba(255,255,255,0.55), 0 32px 56px rgba(31,27,46,0.45), 0 12px 24px rgba(31,27,46,0.28), 0 0 0 5px #FFFFFF, 0 0 0 8px ${item.color}AA`
                 : `0 8px 24px ${item.color}33`,
               transition:"box-shadow 0.4s cubic-bezier(0.32, 0.72, 0, 1)",
             }}>
@@ -4732,21 +4784,28 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
           ):(
             <div style={{
               fontSize:76,lineHeight:1,marginBottom:14,display:"inline-block",padding:18,borderRadius:24,
+              // Background must be OPAQUE when lifted — the previous 10-19%
+              // colored gradient was semi-transparent, letting the dim
+              // overlay underneath darken the visual. Now: full white-to-
+              // pastel gradient at lift (opaque, blocks dim), regular tinted
+              // gradient when at rest (calm, fits screen palette).
               background:cardLifted
-                ? `linear-gradient(140deg, #FFFFFF, ${item.color}14)`
+                ? `linear-gradient(140deg, #FFFFFF, ${item.color}1A)`
                 : `linear-gradient(140deg,${item.color}1A,${item.color}30)`,
               pointerEvents:"none",position:"relative",
               boxShadow: cardLifted
-                ? `0 28px 48px rgba(31,27,46,0.28), 0 10px 20px rgba(31,27,46,0.18), 0 2px 6px rgba(31,27,46,0.10), 0 0 0 3px #FFFFFF, 0 0 0 4px ${item.color}30`
+                ? `0 0 70px 30px rgba(255,255,255,0.55), 0 32px 56px rgba(31,27,46,0.40), 0 12px 24px rgba(31,27,46,0.24), 0 0 0 5px #FFFFFF, 0 0 0 8px ${item.color}AA`
                 : "none",
               transition:"box-shadow 0.4s cubic-bezier(0.32, 0.72, 0, 1), background 0.32s ease",
             }}>{item.emoji}</div>
           )}
         </div>
-        {/* Text content fades together as a unit when card is lifted — image stays bright */}
+        );})()}
+        {/* Text content disappears completely when card is lifted — image
+            is the only thing visible against the dim. */}
         <div style={{
-          opacity: cardLifted?0.28:1,
-          transition:"opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
+          opacity: cardLifted?0:1,
+          transition:"opacity 0.28s cubic-bezier(0.32, 0.72, 0, 1)",
         }}>
           <div style={{fontFamily:G.font,fontWeight:600,fontSize:11,color:item.color,letterSpacing:2.5,textTransform:"uppercase",marginBottom:6,pointerEvents:"none",position:"relative"}}>{fmtT(item.time,t)}</div>
           <div style={{fontFamily:G.serif,fontWeight:600,fontSize:24,color:G.inkSoft,lineHeight:1.2,letterSpacing:-.4,pointerEvents:"none",position:"relative"}}>{item.name}</div>
@@ -4754,34 +4813,42 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
         </div>
       </div>
 
-      {/* Trash drop target — appears when card is picked up */}
+      {/* Trash drop target — appears when card is picked up.
+          When idle (not hovered): breathing glow + soft white background
+          signals "this is a drop zone, drop here".
+          When hovered: solid colored fill + clear scale-up + intensified
+          shadow signals "yes, this will accept the drop". The trash itself
+          carries all the hover feedback so the dragged image stays at
+          constant scale — no jolts on the user's finger. */}
       {showTrash&&(
         <div
           ref={trashRef}
           style={{
-            position:"absolute",bottom:22,left:"50%",
-            transform:`translateX(-50%) scale(${overTrash?1.28:1})`,
-            width:80,height:80,borderRadius:26,
+            position:"absolute",bottom:32,left:"50%",
+            transform:`translateX(-50%) scale(${overTrash?1.24:1})`,
+            width:84,height:84,borderRadius:28,
             background: overTrash
               ? `linear-gradient(135deg, ${item.color}, ${item.color}D0)`
-              : "rgba(255,255,255,0.92)",
+              : "rgba(255,255,255,0.94)",
             backdropFilter:"blur(16px)",
             WebkitBackdropFilter:"blur(16px)",
-            border:`1.5px solid ${overTrash?`${item.color}`:"rgba(31,27,46,0.08)"}`,
+            border:`1.5px solid ${overTrash?`${item.color}`:"rgba(31,27,46,0.06)"}`,
             display:"flex",alignItems:"center",justifyContent:"center",
             color: overTrash?"#fff":G.ink2,
-            transition:"transform .28s cubic-bezier(.34,1.56,.64,1), background .25s ease, border-color .25s ease, color .25s ease, box-shadow .3s ease",
+            transition:"transform .32s cubic-bezier(.34,1.5,.64,1), background .28s ease, border-color .28s ease, color .28s ease, box-shadow .35s ease",
             pointerEvents:"none",
             zIndex:100,
             animation: pickState==="returning"
               ? "trashOut 0.32s cubic-bezier(.4,0,.6,1) forwards"
-              : "trashIn 0.46s cubic-bezier(.34,1.56,.64,1) both",
+              : overTrash
+                ? "trashIn 0.46s cubic-bezier(.34,1.56,.64,1) both"
+                : "trashIn 0.46s cubic-bezier(.34,1.56,.64,1) both, trashGlow 2.4s ease-in-out 0.5s infinite",
             boxShadow: overTrash
-              ? `0 28px 60px ${item.color}55, 0 8px 18px ${item.color}33, inset 0 1px 0 rgba(255,255,255,0.30)`
-              : "0 18px 40px rgba(31,27,46,0.10), 0 4px 10px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.95)",
+              ? `0 32px 64px ${item.color}66, 0 12px 24px ${item.color}44, 0 0 0 8px ${item.color}22, inset 0 1px 0 rgba(255,255,255,0.30)`
+              : undefined,
           }}
         >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{transition:"transform .25s cubic-bezier(.34,1.56,.64,1)",transform:overTrash?"scale(1.08)":"scale(1)"}}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{transition:"transform .28s cubic-bezier(.34,1.56,.64,1)",transform:overTrash?"scale(1.12)":"scale(1)"}}>
             <path d="M3 6h18"/>
             <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
             <path d="M19 6l-1.2 14a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 6"/>
@@ -4791,15 +4858,74 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone}){
         </div>
       )}
 
-      {/* Pagination dots — hidden when picked */}
-      <div style={{display:"flex",gap:8,opacity:cardLifted?0:1,transition:"opacity .25s ease"}}>{acts.map((_,i)=><div key={i} onClick={()=>setIdx(i)} style={{height:8,width:i===idx?24:8,borderRadius:5,background:i===idx?item.color:G.border,cursor:"pointer",transition:"all .3s"}}/>)}</div>
+      {/* Interaction hint — subtle text + finger-press icon that teaches
+          the hold-to-complete gesture. Shows only in user mode and only
+          when card is not lifted. */}
+      {!isEditor&&(
+        <div style={{
+          display:"inline-flex",alignItems:"center",gap:7,
+          fontFamily:G.font,fontWeight:500,fontSize:11,color:G.ink3,
+          letterSpacing:.2,textAlign:"center",
+          opacity:cardLifted?0:0.7,
+          transition:"opacity .3s ease",
+          marginTop:-2,
+        }}>
+          <style>{`@keyframes hintRipple{0%{transform:scale(0.5);opacity:0.9}100%{transform:scale(1.6);opacity:0}}`}</style>
+          <svg width="13" height="13" viewBox="0 0 24 24" style={{flexShrink:0}}>
+            <circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.7"/>
+            <circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" strokeWidth="1.4" style={{transformOrigin:"12px 12px",animation:"hintRipple 2s ease-out infinite"}}/>
+          </svg>
+          <span>{t?.myDay==="My Day"?"Hold to complete":"Håll för att markera klar"}</span>
+        </div>
+      )}
 
-      {/* Subtle navigation row — hidden when picked */}
-      <div style={{display:"flex",gap:10,alignItems:"center",opacity:cardLifted?0:1,transition:"opacity .25s ease",pointerEvents:cardLifted?"none":"auto"}}>
-        <button onClick={()=>setIdx(i=>Math.max(0,i-1))} disabled={idx===0} style={{padding:"8px 18px",borderRadius:12,border:"none",fontFamily:G.font,fontWeight:600,fontSize:12,cursor:idx===0?"default":"pointer",background:idx===0?G.cream:SCREENS.home.hl,color:idx===0?G.ink3:SCREENS.home.deep}}>←</button>
-        <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:G.ink3,letterSpacing:.5,minWidth:36,textAlign:"center"}}>{idx+1} / {acts.length}</div>
-        <button onClick={()=>setIdx(i=>Math.min(acts.length-1,i+1))} disabled={idx===acts.length-1} style={{padding:"8px 18px",borderRadius:12,border:"none",fontFamily:G.font,fontWeight:600,fontSize:12,cursor:idx===acts.length-1?"default":"pointer",background:idx===acts.length-1?G.cream:SCREENS.home.hl,color:idx===acts.length-1?G.ink3:SCREENS.home.deep}}>→</button>
-      </div>
+      {/* Pagination dots — color-synced with the active card, hidden when picked.
+          Only shown when there are 2+ activities (no need with just one). */}
+      {acts.length>1&&(
+        <div style={{display:"flex",gap:7,opacity:cardLifted?0:1,transition:"opacity .25s ease",marginTop:6}}>
+          {acts.map((_,i)=>(
+            <div key={i} onClick={()=>setIdx(i)} style={{
+              height:7,
+              width:i===idx?22:7,
+              borderRadius:4,
+              background:i===idx?item.color:`${item.color}33`,
+              cursor:"pointer",
+              transition:"all .35s cubic-bezier(.34,1.5,.64,1)",
+              flexShrink:0,
+            }}/>
+          ))}
+        </div>
+      )}
+
+      {/* Subtle navigation — chevrons instead of arrows for visual vocabulary
+          consistency. Hidden when picked. Only shown when multiple cards. */}
+      {acts.length>1&&(
+        <div style={{display:"flex",gap:14,alignItems:"center",opacity:cardLifted?0:1,transition:"opacity .25s ease",pointerEvents:cardLifted?"none":"auto"}}>
+          <button onClick={()=>setIdx(i=>Math.max(0,i-1))} disabled={idx===0} aria-label={t?.prev||"Tillbaka"} className="lt-press-soft" style={{
+            width:36,height:36,padding:0,borderRadius:"50%",border:"none",
+            background:idx===0?"transparent":`${item.color}1A`,
+            color:idx===0?G.ink3:item.color,
+            cursor:idx===0?"default":"pointer",
+            display:"inline-flex",alignItems:"center",justifyContent:"center",
+            opacity:idx===0?0.35:1,
+            transition:"background .25s ease, opacity .25s ease, color .25s ease",
+          }}>
+            <IconChevron dir="left" size={16}/>
+          </button>
+          <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:G.ink3,letterSpacing:.5,minWidth:42,textAlign:"center",fontVariantNumeric:"tabular-nums"}}>{idx+1} / {acts.length}</div>
+          <button onClick={()=>setIdx(i=>Math.min(acts.length-1,i+1))} disabled={idx===acts.length-1} aria-label={t?.next||"Nästa"} className="lt-press-soft" style={{
+            width:36,height:36,padding:0,borderRadius:"50%",border:"none",
+            background:idx===acts.length-1?"transparent":`${item.color}1A`,
+            color:idx===acts.length-1?G.ink3:item.color,
+            cursor:idx===acts.length-1?"default":"pointer",
+            display:"inline-flex",alignItems:"center",justifyContent:"center",
+            opacity:idx===acts.length-1?0.35:1,
+            transition:"background .25s ease, opacity .25s ease, color .25s ease",
+          }}>
+            <IconChevron dir="right" size={16}/>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
