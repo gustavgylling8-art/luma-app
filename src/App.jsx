@@ -215,10 +215,12 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     gloss.addColorStop(1, "rgba(255,255,255,0)");
     g.fillStyle = gloss;
     g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.fill();
-    // (7) Wordmark below the sun — "Luma" in the serif weight used in-app
+    // (7) Wordmark below the sun — "Luma" in the same font family used in-app
+    // ("Nunito" via G.serif). Falls back to rounded system fonts if Nunito
+    // isn't yet loaded when the splash canvas renders.
     g.fillStyle = dark ? "#E9E5F2" : "#1F1B2E";
     g.textAlign = "center"; g.textBaseline = "middle";
-    g.font = `600 ${Math.round(R*0.95)}px -apple-system, "SF Pro Display", "Inter", serif`;
+    g.font = `700 ${Math.round(R*0.95)}px "Nunito", -apple-system, system-ui, sans-serif`;
     g.fillText("Luma", cx, cy + R*3.6);
     return c.toDataURL("image/png");
   };
@@ -1943,12 +1945,17 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const W=size, H=Math.round(size*1.34);
   const horizonY=Math.round(H*0.55);
 
-  // Progress: 0 → 1 across full duration
+  // Progress: 0 → 1 across full duration. Curve choice matters:
+  // - Smoothstep (cubic) is too flat at the start — sun appears frozen the
+  //   first 15-20s of any timer, which reads as "not working".
+  // - Linear feels mechanical, like a thermometer.
+  // - Gentle ease-out (1-(1-e)^1.6) gives immediate visible movement plus a
+  //   natural slowing-toward-horizon feel — like a real sunset.
   const elapsed = 1 - c.pctSmooth;
   let progress;
   if(elapsed<0.94){
     const e=elapsed/0.94;
-    progress=e*e*(3-2*e)*0.88;
+    progress=(1-Math.pow(1-e,1.6))*0.88;
   } else {
     const e=(elapsed-0.94)/0.06;
     progress=0.88+Math.pow(e,1.4)*0.12;
@@ -5100,7 +5107,6 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
             </div>
             <div>
               <div style={{fontFamily:G.serif,fontWeight:500,fontSize:15,color:tk().inkSoft,letterSpacing:-.1,lineHeight:1.1}}>{t.themeLabel}</div>
-              <div style={{fontFamily:G.font,fontWeight:400,fontSize:11.5,color:tk().ink3,marginTop:2,lineHeight:1.25,maxWidth:180}}>{t.themeHint}</div>
             </div>
           </div>
           <div style={{display:"flex",gap:6,background:tk().cream,borderRadius:11,padding:3,flexShrink:0}}>
@@ -7080,7 +7086,9 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
           position:"absolute",inset:0,zIndex:30,
           display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
           padding:"32px 24px",cursor:"pointer",
-          background:`radial-gradient(ellipse at 50% 42%, ${S.hb}D8 0%, ${S.hb}EE 55%, ${S.hb}F8 100%)`,
+          background:isDark()
+            ?`radial-gradient(ellipse at 50% 42%, ${sel.color}26 0%, rgba(15,13,22,0.92) 50%, rgba(10,8,16,0.98) 100%)`
+            :`radial-gradient(ellipse at 50% 42%, ${S.hb}D8 0%, ${S.hb}EE 55%, ${S.hb}F8 100%)`,
           backdropFilter:"blur(4px)",WebkitBackdropFilter:"blur(4px)",
           animation:"emoSavedFade .4s ease both",
         }}>
@@ -7105,7 +7113,7 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
                 <div key={`s${i}`} style={{position:"absolute",left:`calc(50% + ${s.x}px)`,top:"30%",fontSize:13,color:sel.color,animation:`emoSavedSpark 1.4s ease-out ${s.d}s infinite`,pointerEvents:"none"}}>✦</div>
               ))}
               {/* emoji capsule — clean, with colored glow */}
-              <div style={{position:"relative",width:106,height:106,borderRadius:"50%",background:`linear-gradient(160deg, #FFFFFF 0%, ${sel.color}1F 100%)`,border:`1px solid ${sel.color}3A`,boxShadow:`0 16px 40px ${sel.color}4E, 0 0 0 6px ${sel.color}14, inset 0 2px 4px rgba(255,255,255,0.9)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:56,overflow:"hidden",animation:"emoSavedBubble 2.4s ease-in-out infinite"}}>
+              <div style={{position:"relative",width:106,height:106,borderRadius:"50%",background:isDark()?`linear-gradient(160deg, rgba(255,255,255,0.08) 0%, ${sel.color}26 100%)`:`linear-gradient(160deg, #FFFFFF 0%, ${sel.color}1F 100%)`,border:`1px solid ${sel.color}${isDark()?"55":"3A"}`,boxShadow:isDark()?`0 16px 40px ${sel.color}55, 0 0 0 6px ${sel.color}1E, inset 0 1px 0 rgba(255,255,255,0.18)`:`0 16px 40px ${sel.color}4E, 0 0 0 6px ${sel.color}14, inset 0 2px 4px rgba(255,255,255,0.9)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:56,overflow:"hidden",animation:"emoSavedBubble 2.4s ease-in-out infinite"}}>
                 {sel.photo?<img src={sel.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:sel.emoji}
               </div>
               {/* gradient checkmark badge */}
@@ -7114,8 +7122,8 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
               </div>
             </div>
             <div style={{fontFamily:G.serif,fontWeight:600,fontSize:27,color:tk().inkSoft,letterSpacing:-.4,marginBottom:10,lineHeight:1.05}}>{lang==="sv"?"Sparat":"Saved"}</div>
-            <div style={{display:"inline-flex",alignItems:"center",padding:"6px 16px",borderRadius:16,background:`${sel.color}16`,border:`1px solid ${sel.color}2E`}}>
-              <span style={{fontFamily:G.font,fontSize:14,color:sel.color,fontWeight:600,letterSpacing:.2}}>{labelFor(sel)}</span>
+            <div style={{display:"inline-flex",alignItems:"center",padding:"6px 16px",borderRadius:16,background:isDark()?`${sel.color}26`:`${sel.color}16`,border:`1px solid ${sel.color}${isDark()?"4A":"2E"}`}}>
+              <span style={{fontFamily:G.font,fontSize:14,color:isDark()?"#F4F1FA":sel.color,fontWeight:600,letterSpacing:.2}}>{labelFor(sel)}</span>
             </div>
           </div>
         </div>
