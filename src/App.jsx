@@ -2861,7 +2861,7 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
           </div>
         </div>
       )}
-      <TimerComp type={type} totalSec={totalSec} color={color} t={t} autoRun={autoRun} size={(type==="wave"||type==="sun")?Math.round(Math.min(size*1.22,(typeof window!=="undefined"?(window.innerWidth>window.innerHeight?window.innerWidth:Math.min(window.innerWidth,480)):440)-20)):size} mode={type==="dots"?dotsMode:undefined} setMode={type==="dots"?setDotsMode:undefined}/>
+      <TimerComp type={type} totalSec={totalSec} color={color} t={t} autoRun={autoRun} size={size} mode={type==="dots"?dotsMode:undefined} setMode={type==="dots"?setDotsMode:undefined}/>
     </div>
   );
 }
@@ -13231,6 +13231,29 @@ export default function App(){
       setMigrWaveDone(true);
     }
   },[migrWaveDone,cfgRaw,setCfg,setMigrWaveDone]);
+  // One-time migration: empty out the legacy seed activities. The previous
+  // build shipped 6 example activities (Frukost / Skolan / Lunch / Gymma /
+  // Middag / Läggdags) as defaults; new product direction is for new users
+  // to start with an empty day and add a routine via the in-app templates.
+  // We only clear if the user hasn't actually touched anything — detected
+  // by seeing the exact original shape of ids 1-6. Users who already
+  // customised their day keep their work.
+  const[migrSeedDone,setMigrSeedDone]=usePersistentState("migr_seed_empty",false);
+  useEffect(()=>{
+    if(migrSeedDone) return;
+    const SEED_NAMES=["Frukost","Skolan","Lunch","Gymma","Middag","Läggdags"];
+    const looksLikeSeed=
+      Array.isArray(acts) &&
+      acts.length===6 &&
+      acts.every((a,i)=>a&&a.id===i+1&&a.name===SEED_NAMES[i]);
+    if(looksLikeSeed){
+      // Also wipe any per-day progress on those ids so the home screen reads
+      // truly empty rather than "0 of 6 done"
+      setActs([]);
+      setDailyState({});
+    }
+    setMigrSeedDone(true);
+  },[migrSeedDone,acts,setActs,setDailyState,setMigrSeedDone]);
   // One-time migration: make the new Monster timer available to existing users.
   // Their persisted allowedTypes (without "monster") would otherwise override
   // the new CFG0 default and hide it from the standalone Timer tool.
@@ -13600,11 +13623,22 @@ export default function App(){
   })();
   return(
     <div style={{position:"relative",minHeight:"100dvh",background:isDark()
-      ? `radial-gradient(90% 26% at 50% 0%, ${effS.h}3A 0%, transparent 46%), radial-gradient(70% 22% at 86% 3%, ${effS.h}24 0%, transparent 48%), linear-gradient(180deg,#1C1A33 0%, #15131F 24%, #100E18 52%, #0A0810 100%)`
+      ? "#0A0810" /* solid base = matches html/body — no edge band possible */
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
-      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative"}}>
+      {/* Dark-mode atmospheric glow — lives as an overlay inside the solid
+          base, so there's NO lighter band peeking through safe-area
+          paddings at the screen edges. Pointer-events:none so it never
+          intercepts taps. */}
+      {isDark()&&(
+        <div aria-hidden="true" style={{
+          position:"absolute",inset:0,pointerEvents:"none",zIndex:0,
+          background:`radial-gradient(90% 26% at 50% 0%, ${effS.h}3A 0%, transparent 46%), radial-gradient(70% 22% at 86% 3%, ${effS.h}24 0%, transparent 48%), linear-gradient(180deg, rgba(28,26,51,0.55) 0%, rgba(21,19,31,0.35) 24%, rgba(16,14,24,0.1) 52%, transparent 100%)`,
+          transition:"background .5s ease",
+        }}/>
+      )}
+      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",zIndex:1}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
         /* === UNIVERSAL DEVICE ADAPTATION ===
@@ -14392,7 +14426,7 @@ export default function App(){
             width: 32px;
             pointer-events: none;
             background: linear-gradient(90deg, transparent, ${isDark()?"rgba(13,11,20,0.85)":"rgba(255,255,255,0.92)"});
-            opacity: ${navItems.length>5?1:0};
+            opacity: ${navItems.length>6?1:0};
             transition: opacity .35s ease;
             z-index: 5;
           }
@@ -14426,7 +14460,7 @@ export default function App(){
         {/* Top hairline — colored, fades from sides, matches header bottom hairline vocabulary */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:`linear-gradient(90deg, transparent 0%, ${effS.h}25 50%, transparent 100%)`,pointerEvents:"none",transition:"background .5s ease"}}/>
         {navItems.map(({key,icon,label,S})=>{const on=screen===key;return(
-          <button key={key} onClick={()=>{setScreen(key);}} className="lt-press" style={{flex:navItems.length<=5?1:"0 0 auto",minWidth:navItems.length<=5?0:64,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"10px 6px 4px",position:"relative",zIndex:1}}>
+          <button key={key} onClick={()=>{setScreen(key);}} className="lt-press" style={{flex:navItems.length<=6?1:"0 0 auto",minWidth:navItems.length<=6?0:64,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"10px 4px 4px",position:"relative",zIndex:1}}>
             {/* Aurora glow behind active tab — breathes gently. Same vocabulary
                 as the header's aurora, scaled down for the nav. */}
             {on&&(
