@@ -39,30 +39,42 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // Theme colour — soft Luma sky.
   setMeta("theme-color", "#FBFDFE");
 
-  // The Luma sun icon — a self-contained SVG (sky-gradient rounded tile + sun
-  // core + rays), matching the in-app mark. Maskable-safe (art well inside edges).
+  // The Luma sun icon — matches the in-app wordmark sun EXACTLY: cool blue
+  // accent rays, pearl-white core with the Luma palette gradient. The previous
+  // version was generic orange/yellow which didn't reflect Luma's calm blue
+  // identity. Maskable-safe (art well inside edges).
   const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
     <defs>
       <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#EAF2FB"/><stop offset="55%" stop-color="#F6FAFD"/><stop offset="100%" stop-color="#FFFFFF"/>
       </linearGradient>
-      <radialGradient id="core" cx="42%" cy="36%" r="70%">
-        <stop offset="0%" stop-color="#FFFFFF"/><stop offset="24%" stop-color="#FFF6E2"/>
-        <stop offset="60%" stop-color="#FFD27A"/><stop offset="100%" stop-color="#F2A93B"/>
+      <radialGradient id="core" cx="34%" cy="28%" r="74%">
+        <stop offset="0%" stop-color="#FFFFFF"/>
+        <stop offset="16%" stop-color="#FFFDF7" stop-opacity="0.98"/>
+        <stop offset="46%" stop-color="#86B6D4"/>
+        <stop offset="82%" stop-color="#86B6D4"/>
+        <stop offset="100%" stop-color="#557E9E"/>
       </radialGradient>
       <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-        <stop offset="40%" stop-color="#FFC85E" stop-opacity="0"/>
-        <stop offset="78%" stop-color="#FFC85E" stop-opacity="0.30"/>
-        <stop offset="100%" stop-color="#FFC85E" stop-opacity="0"/>
+        <stop offset="40%" stop-color="#86B6D4" stop-opacity="0"/>
+        <stop offset="78%" stop-color="#86B6D4" stop-opacity="0.22"/>
+        <stop offset="100%" stop-color="#86B6D4" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="gloss" cx="32%" cy="26%" r="46%">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.7"/>
+        <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0.12"/>
+        <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
       </radialGradient>
     </defs>
     <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-    <circle cx="256" cy="256" r="150" fill="url(#halo)"/>
-    <g stroke="#F4B14A" stroke-width="17" stroke-linecap="round">
-      ${Array.from({length:8}).map((_,i)=>{const a=(i/8)*2*Math.PI;const long=i%2===0;const r1=118,r2=long?168:152;const x1=256+r1*Math.cos(a),y1=256+r1*Math.sin(a),x2=256+r2*Math.cos(a),y2=256+r2*Math.sin(a);return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"${long?"":' stroke-width="13"'}/>`;}).join("")}
+    <circle cx="256" cy="256" r="160" fill="url(#halo)"/>
+    <circle cx="256" cy="256" r="118" fill="none" stroke="#86B6D4" stroke-width="3" stroke-opacity="0.22"/>
+    <g stroke="#86B6D4" stroke-linecap="round">
+      ${Array.from({length:8}).map((_,i)=>{const a=(i/8)*2*Math.PI;const long=i%2===0;const r1=132,r2=long?188:166;const x1=256+r1*Math.sin(a),y1=256-r1*Math.cos(a),x2=256+r2*Math.sin(a),y2=256-r2*Math.cos(a);return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${long?17:13}"/>`;}).join("")}
     </g>
-    <circle cx="256" cy="256" r="92" fill="url(#core)"/>
-    <ellipse cx="228" cy="226" rx="34" ry="26" fill="#FFFFFF" opacity="0.55"/>
+    <circle cx="256" cy="256" r="100" fill="url(#core)"/>
+    <circle cx="256" cy="256" r="100" fill="none" stroke="#557E9E" stroke-width="2" stroke-opacity="0.35"/>
+    <circle cx="221" cy="220" r="36" fill="url(#gloss)"/>
   </svg>`;
   const iconUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(ICON_SVG)));
 
@@ -111,54 +123,103 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // iOS falls back to the blank screen. We generate each splash as a canvas
   // data-URI (same Luma sky + centered sun mark used for the icon), so no
   // external files are needed — the splashes travel with the bundle.
-  const makeSplash = (w, h) => {
+  const makeSplash = (w, h, dark) => {
     const c = document.createElement("canvas");
     c.width = w; c.height = h;
     const g = c.getContext("2d");
-    // Sky gradient — same Luma sky used in the home header
-    const grd = g.createLinearGradient(0, 0, 0, h);
-    grd.addColorStop(0, "#EAF2FB");
-    grd.addColorStop(0.55, "#F6FAFD");
-    grd.addColorStop(1, "#FFFFFF");
-    g.fillStyle = grd; g.fillRect(0, 0, w, h);
-    // Sun core, centered
-    const cx = w/2, cy = h/2;
-    const sunR = Math.min(w, h) * 0.11;
-    // Soft halo
-    const halo = g.createRadialGradient(cx, cy, sunR*0.6, cx, cy, sunR*2.2);
-    halo.addColorStop(0, "rgba(255,200,94,0.32)");
-    halo.addColorStop(0.7, "rgba(255,200,94,0.08)");
-    halo.addColorStop(1, "rgba(255,200,94,0)");
-    g.fillStyle = halo;
-    g.beginPath(); g.arc(cx, cy, sunR*2.2, 0, Math.PI*2); g.fill();
-    // Rays
-    g.strokeStyle = "#F4B14A"; g.lineCap = "round";
-    for (let i=0;i<8;i++){
-      const a = (i/8)*Math.PI*2;
-      const long = i%2===0;
-      const r1 = sunR*1.35, r2 = long ? sunR*1.95 : sunR*1.75;
-      g.lineWidth = long ? Math.max(4, sunR*0.13) : Math.max(3, sunR*0.10);
+    // Background — Luma home palette. Dark mode uses the same deep night base
+    // as the live app; light mode uses the soft sky-blue → white wash.
+    if (dark) {
+      g.fillStyle = "#0A0810";
+      g.fillRect(0, 0, w, h);
+    } else {
+      const grd = g.createLinearGradient(0, 0, 0, h);
+      grd.addColorStop(0, "#EAF2FB");
+      grd.addColorStop(0.55, "#F6FAFD");
+      grd.addColorStop(1, "#FFFFFF");
+      g.fillStyle = grd; g.fillRect(0, 0, w, h);
+    }
+    // Sun — matches the in-app Luma mark exactly (same proportions, same
+    // colour family). Uses the home-screen blue accent (#86B6D4) for a calm,
+    // cool tone that reads as "Luma" rather than a generic weather sun.
+    const ACCENT = "#86B6D4";   // SCREENS.home.h
+    const ACCENT_DEEP = "#557E9E"; // SCREENS.home.deep
+    const cx = w/2, cy = h * 0.42; // slightly above center for a balanced composition
+    const R = Math.min(w, h) * 0.085;  // base radius unit — sun core
+    // (1) Outer soft glow — colored aura that fades to nothing
+    const glow = g.createRadialGradient(cx, cy, R*0.6, cx, cy, R*3.2);
+    if (dark) {
+      glow.addColorStop(0, "rgba(134,182,212,0.18)");
+      glow.addColorStop(0.6, "rgba(134,182,212,0.08)");
+      glow.addColorStop(1, "rgba(134,182,212,0)");
+    } else {
+      glow.addColorStop(0, "rgba(134,182,212,0.22)");
+      glow.addColorStop(0.6, "rgba(134,182,212,0.08)");
+      glow.addColorStop(1, "rgba(134,182,212,0)");
+    }
+    g.fillStyle = glow;
+    g.beginPath(); g.arc(cx, cy, R*3.2, 0, Math.PI*2); g.fill();
+    // (2) Thin halo ring — only visible in light mode for a refined finish
+    if (!dark) {
+      g.strokeStyle = ACCENT; g.globalAlpha = 0.22;
+      g.lineWidth = Math.max(1, R*0.06);
+      g.beginPath(); g.arc(cx, cy, R*1.45, 0, Math.PI*2); g.stroke();
+      g.globalAlpha = 1;
+    }
+    // (3) 8 rays — alternating long/short, slightly different stroke widths.
+    // This is the signature Luma sun rhythm.
+    g.strokeStyle = ACCENT;
+    g.lineCap = "round";
+    for (let i = 0; i < 8; i++) {
+      const ang = (i/8) * Math.PI * 2;
+      const isLong = i % 2 === 0;
+      const r1 = R * 1.31;
+      const r2 = R * (isLong ? 1.88 : 1.69);
+      g.lineWidth = R * (isLong ? 0.13 : 0.10);
+      g.globalAlpha = dark ? 0.85 : 1;
       g.beginPath();
-      g.moveTo(cx+Math.cos(a)*r1, cy+Math.sin(a)*r1);
-      g.lineTo(cx+Math.cos(a)*r2, cy+Math.sin(a)*r2);
+      g.moveTo(cx + Math.sin(ang)*r1, cy - Math.cos(ang)*r1);
+      g.lineTo(cx + Math.sin(ang)*r2, cy - Math.cos(ang)*r2);
       g.stroke();
     }
-    // Core
-    const core = g.createRadialGradient(cx-sunR*0.2, cy-sunR*0.25, sunR*0.1, cx, cy, sunR);
-    core.addColorStop(0, "#FFFFFF");
-    core.addColorStop(0.25, "#FFF6E2");
-    core.addColorStop(0.7, "#FFD27A");
-    core.addColorStop(1, "#F2A93B");
+    g.globalAlpha = 1;
+    // (4) Core orb — radial gradient from white at top-left, through cream,
+    // out to the accent and accent-deep. This is what gives the sun its
+    // "premium pearl" quality.
+    const core = g.createRadialGradient(
+      cx - R*0.35, cy - R*0.42, R*0.1,
+      cx, cy, R
+    );
+    core.addColorStop(0, dark ? "#F6F2FA" : "#FFFFFF");
+    core.addColorStop(0.16, dark ? "#ECE6F2" : "#FFFDF7");
+    core.addColorStop(0.46, ACCENT);
+    core.addColorStop(0.82, ACCENT);
+    core.addColorStop(1, ACCENT_DEEP);
     g.fillStyle = core;
-    g.beginPath(); g.arc(cx, cy, sunR, 0, Math.PI*2); g.fill();
-    // Glint
-    g.fillStyle = "rgba(255,255,255,0.55)";
-    g.beginPath(); g.ellipse(cx-sunR*0.3, cy-sunR*0.35, sunR*0.35, sunR*0.25, 0, 0, Math.PI*2); g.fill();
-    // Wordmark below the sun
-    g.fillStyle = "#1F1B2E";
+    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.fill();
+    // (5) Crisp inner rim (light mode only) — gives the orb a "set" edge
+    if (!dark) {
+      g.strokeStyle = ACCENT_DEEP;
+      g.globalAlpha = 0.35;
+      g.lineWidth = Math.max(0.5, R*0.03);
+      g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.stroke();
+      g.globalAlpha = 1;
+    }
+    // (6) Soft gloss — light catching the top-left of the orb
+    const gloss = g.createRadialGradient(
+      cx - R*0.28, cy - R*0.36, 0,
+      cx - R*0.28, cy - R*0.36, R*0.7
+    );
+    gloss.addColorStop(0, `rgba(255,255,255,${dark ? 0.5 : 0.7})`);
+    gloss.addColorStop(0.6, "rgba(255,255,255,0.12)");
+    gloss.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = gloss;
+    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.fill();
+    // (7) Wordmark below the sun — "Luma" in the serif weight used in-app
+    g.fillStyle = dark ? "#E9E5F2" : "#1F1B2E";
     g.textAlign = "center"; g.textBaseline = "middle";
-    g.font = `600 ${Math.round(sunR*0.85)}px -apple-system, "SF Pro Display", "Inter", sans-serif`;
-    g.fillText("Luma", cx, cy + sunR*3.2);
+    g.font = `600 ${Math.round(R*0.95)}px -apple-system, "SF Pro Display", "Inter", serif`;
+    g.fillText("Luma", cx, cy + R*3.6);
     return c.toDataURL("image/png");
   };
   // Device size table — portrait orientation (iOS expects portrait splashes
@@ -181,18 +242,23 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // Generate splashes lazily — only those whose media query could match the
   // current device. This avoids burning CPU on splashes that will never load
   // (e.g. don't generate a 430x932 splash on a 320-wide iPhone SE).
+  // For each device size, we generate BOTH a light and a dark splash with
+  // matching prefers-color-scheme media queries — iOS picks the right one
+  // automatically based on the system theme.
   const dw = window.screen.width, dh = window.screen.height;
   SPLASH_DEVICES.forEach(([cw, ch, dpr]) => {
     // Only generate if this device size could plausibly match (within a tier)
     const dev = Math.min(cw, dw)/Math.max(cw, dw);
     if (dev < 0.85 && !(cw === dw && ch === dh)) return; // skip wildly mismatched
     const px = cw * dpr, py = ch * dpr;
-    const dataUrl = makeSplash(px, py);
-    const link = document.createElement("link");
-    link.rel = "apple-touch-startup-image";
-    link.media = `(device-width: ${cw}px) and (device-height: ${ch}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait)`;
-    link.href = dataUrl;
-    document.head.appendChild(link);
+    [false, true].forEach((dark) => {
+      const dataUrl = makeSplash(px, py, dark);
+      const link = document.createElement("link");
+      link.rel = "apple-touch-startup-image";
+      link.media = `(device-width: ${cw}px) and (device-height: ${ch}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait) and (prefers-color-scheme: ${dark ? "dark" : "light"})`;
+      link.href = dataUrl;
+      document.head.appendChild(link);
+    });
   });
   manLink.setAttribute("href", manUrl);
 })();
@@ -1084,11 +1150,11 @@ function TCtrl({c,color,t}){
       <style>{`@keyframes tcResetIn{0%{opacity:0}100%{opacity:1}}`}</style>
       {/* Primary — compact pill */}
       <button onClick={()=>c.setRun(r=>!r)} className="lt-press" style={{
-        padding:"13px 38px",borderRadius:999,border:isDark()?"1px solid rgba(255,255,255,0.18)":btnBorder,
+        padding:"13px 38px",borderRadius:999,border:isDark()?`1px solid ${color}40`:btnBorder,
         fontFamily:G.font,fontWeight:600,fontSize:15,letterSpacing:.3,cursor:"pointer",
-        background:isDark()?"rgba(255,255,255,0.1)":color,color:isDark()?"#F4F1FA":btnText,
+        background:isDark()?`linear-gradient(180deg, ${color}1F, ${color}10)`:color,color:isDark()?"#F4F1FA":btnText,
         backdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",WebkitBackdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",
-        boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.22), 0 6px 16px -8px rgba(0,0,0,0.6)":`0 6px 18px ${shadeHex(color,_l>205?-0.3:0)}40`,
+        boxShadow:isDark()?`inset 0 1px 0 rgba(255,255,255,0.18), 0 8px 22px -10px ${color}55, 0 4px 10px -6px rgba(0,0,0,0.7)`:`0 6px 18px ${shadeHex(color,_l>205?-0.3:0)}40`,
         transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1)",
         display:"inline-flex",alignItems:"center",justifyContent:"center",gap:9
       }}>
@@ -1803,8 +1869,8 @@ function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
       `}</style>
       <div style={{position:"relative",width:W,height:H,borderRadius:30,overflow:"hidden",
         background:dk?`linear-gradient(180deg, rgba(255,255,255,0.04), ${color}10)`:`linear-gradient(180deg, ${color}05, ${color}12)`,
-        border:`1px solid ${dk?"rgba(255,255,255,0.1)":color+"30"}`,
-        boxShadow:dk?`inset 0 1px 0 rgba(255,255,255,0.1), 0 16px 40px -16px ${color}55, 0 8px 22px -14px rgba(0,0,0,0.7)`:`${sh.md}, inset 0 1px 0 rgba(255,255,255,0.6)`}}>
+        border:`1px solid ${dk?"rgba(255,255,255,0.06)":color+"30"}`,
+        boxShadow:dk?`inset 0 1px 0 rgba(255,255,255,0.08), 0 0 90px -10px ${color}45, 0 28px 60px -20px ${color}33, 0 10px 30px -15px rgba(0,0,0,0.8)`:`${sh.md}, inset 0 1px 0 rgba(255,255,255,0.6)`}}>
         <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{position:"absolute",inset:0}}>
           <defs>
             <clipPath id={`aqTank${uid}`}><rect x="0" y="0" width={W} height={H} rx="30"/></clipPath>
@@ -1856,7 +1922,7 @@ function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
           <rect x={W*0.13} y="6" width={W*0.06} height={H-12} rx={W*0.03} fill="rgba(255,255,255,0.26)" opacity="0.6" style={{filter:"blur(3px)"}}/>
         </svg>
         <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <span style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.14,color:c.pct>0.5?"#fff":shadeHex(color,dk?0.35:-0.15),textShadow:c.pct>0.5?"0 2px 14px rgba(0,0,0,.3)":"none",fontVariantNumeric:"tabular-nums",transition:"color .8s ease",willChange:"contents"}}>{c.label}</span>
+          <span style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.14,color:c.pctSmooth>0.45?"#fff":shadeHex(color,dk?0.35:-0.15),textShadow:c.pctSmooth>0.45?`0 2px ${Math.round(8+c.pctSmooth*10)}px rgba(0,0,0,${(0.2+c.pctSmooth*0.2).toFixed(2)})`:"none",fontVariantNumeric:"tabular-nums",transition:"color .6s cubic-bezier(0.32, 0.72, 0, 1), text-shadow .6s cubic-bezier(0.32, 0.72, 0, 1)",willChange:"contents"}}>{c.label}</span>
         </div>
       </div>
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
@@ -2071,7 +2137,22 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
         @keyframes sunSeaSparkle { 0%,100% { opacity: 0; transform: scale(0.6); } 50% { opacity: 0.9; transform: scale(1); } }
       `}</style>
 
-      <svg width={W} height={H} style={{borderRadius:24,overflow:"hidden",boxShadow:isDark()?"0 16px 50px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3)":"0 12px 40px rgba(31,27,46,0.08), 0 2px 8px rgba(31,27,46,0.04)",border:isDark()?"1px solid rgba(255,255,255,0.06)":`1px solid ${G.border}`,display:"block"}}>
+      <div style={{
+        position:"relative",
+      }}>
+      <svg width={W} height={H} style={{
+        borderRadius:24,
+        overflow:"hidden",
+        // Same premium dark-mode shadow structure as WaveTimer — keeps the
+        // two timer types feeling like part of the same family. Warm sky
+        // tones radiate outward as ambient atmosphere; deep landing shadow
+        // anchors the timer to the page.
+        boxShadow:isDark()
+          ?`inset 0 1px 0 rgba(255,255,255,0.08), 0 0 90px -10px ${skyMid}55, 0 28px 60px -20px ${skyTop}40, 0 10px 30px -15px rgba(0,0,0,0.8)`
+          :"0 12px 40px rgba(31,27,46,0.08), 0 2px 8px rgba(31,27,46,0.04)",
+        border:isDark()?"1px solid rgba(255,255,255,0.06)":`1px solid ${G.border}`,
+        display:"block"
+      }}>
         <defs>
           {/* Sky gradient — soft pastel transition, three stops for depth */}
           <linearGradient id={`sky${uid}`} x1="0" y1="0" x2="0" y2="1">
@@ -2423,21 +2504,27 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
 
         <rect x={0} y={0} width={W} height={H} fill={`url(#vig${uid})`} pointerEvents="none" style={{opacity:0.5+progress*0.4,transition:"opacity 1s linear"}}/>
 
-        {/* Time label */}
+        {/* Time label — large, centered, matches the position of all other
+            timer types so switching between them doesn't make the focal
+            point jump. The fill adapts to the current sky phase so the time
+            stays readable from pale day through indigo night. */}
         <text
-          x={W/2} y={H-12}
+          x={W/2} y={H/2}
           textAnchor="middle"
+          dominantBaseline="central"
           style={{
-            fontSize:Math.round(size*0.065),
-            fontWeight:500,
-            fill:progress<0.7?"rgba(31,27,46,0.55)":"rgba(255,255,255,0.85)",
+            fontSize:Math.round(size*0.14),
+            fontWeight:600,
+            fill:progress<0.55?"rgba(31,27,46,0.78)":"rgba(255,255,255,0.94)",
             fontFamily:G.serif,
             fontVariantNumeric:"tabular-nums",
             letterSpacing:0.5,
             transition:"fill 1s linear",
+            filter:progress>=0.55?"drop-shadow(0 2px 10px rgba(0,0,0,0.35))":"none",
           }}
         >{c.label}</text>
       </svg>
+      </div>
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
@@ -2790,10 +2877,25 @@ function MonsterTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   );
 }
 
-function TimerComp({type,totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMode="pearl",mode,setMode}){
+function TimerComp({type,totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMode="pearl",mode,setMode,preview=false}){
   const M={sector:SectorTimer,ring:RingTimer,dots:DotsTimer,wave:WaveTimer,sun:SunTimer,lava:LavaTimer,monster:MonsterTimer};
   const Comp=M[type]||SectorTimer;
-  return <Comp totalSec={totalSec} color={color} t={t} autoRun={autoRun} size={size} showCtrl={showCtrl} dotMode={dotMode} mode={mode} setMode={setMode}/>;
+  // Preview mode — pick a duration that demonstrates the timer's character in
+  // a few seconds, and key it so the timer remounts (and restarts) each cycle.
+  // This makes the difference between wave/sun/lava/monster obvious at a
+  // glance instead of all of them showing an identical full-state.
+  // We restart at 7s (BEFORE the 8s timer would hit 0 + show DoneBadge), so
+  // the preview is a smooth continuous demonstration.
+  const[cycleKey,setCycleKey]=useState(0);
+  useEffect(()=>{
+    if(!preview) return;
+    const id=setInterval(()=>setCycleKey(k=>k+1),7000);
+    return()=>clearInterval(id);
+  },[preview]);
+  const previewSec=8;
+  const effSec=preview?previewSec:totalSec;
+  const effAutoRun=preview?true:autoRun;
+  return <Comp key={preview?`prev-${cycleKey}`:undefined} totalSec={effSec} color={color} t={t} autoRun={effAutoRun} size={size} showCtrl={showCtrl} dotMode={dotMode} mode={mode} setMode={setMode}/>;
 }
 
 function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
@@ -2832,7 +2934,7 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
     };
   },[headerSpace]);
   return(
-    <div style={{position:"fixed",inset:0,zIndex:9700,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${color}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${SCREENS.timer.hb} 0%,#FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:`calc(env(safe-area-inset-top, 0px) + ${activity?72:32}px) 20px calc(env(safe-area-inset-bottom, 0px) + 20px)`,gap:22,animation:"ftIn .25s ease",overflow:"hidden"}}>
+    <div style={{position:"fixed",inset:0,zIndex:9700,background:isDark()?"#0A0810":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(60% 45% at 50% 55%, ${color}22 0%, ${color}10 35%, transparent 70%), radial-gradient(90% 40% at 50% 0%, ${color}1C 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0A0810 100%)`:`linear-gradient(165deg,${SCREENS.timer.hb} 0%,#FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:`calc(env(safe-area-inset-top, 0px) + ${activity?72:32}px) 20px calc(env(safe-area-inset-bottom, 0px) + 20px)`,gap:22,animation:"ftIn .25s ease",overflow:"hidden"}}>
       <style>{`
         @keyframes ftIn{from{opacity:0}to{opacity:1}}
         @keyframes ftActIn{0%{opacity:0;transform:translateY(-8px) scale(0.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
@@ -2858,7 +2960,7 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
       );})()}
       {/* Activity context — emoji + name shown above the timer so the user always knows what they're timing */}
       {activity&&(
-        <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 18px 12px 14px",background:isDark()?"rgba(255,255,255,0.06)":G.white,backdropFilter:isDark()?"blur(16px)":"none",WebkitBackdropFilter:isDark()?"blur(16px)":"none",borderRadius:22,boxShadow:isDark()?`inset 0 1px 0 rgba(255,255,255,0.1), 0 12px 30px -16px rgba(0,0,0,0.7)`:`0 8px 22px ${activity.color}1F, 0 2px 6px rgba(31,27,46,0.06)`,border:`1px solid ${isDark()?activity.color+"3D":activity.color+"30"}`,maxWidth:"calc(100% - 40px)",animation:"ftActIn 0.5s 0.15s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 18px 12px 14px",background:isDark()?"rgba(255,255,255,0.06)":G.white,backdropFilter:isDark()?"blur(16px)":"none",WebkitBackdropFilter:isDark()?"blur(16px)":"none",borderRadius:22,boxShadow:isDark()?`inset 0 1px 0 rgba(255,255,255,0.1), 0 12px 30px -16px rgba(0,0,0,0.7), 0 0 30px -8px ${activity.color}38`:`0 8px 22px ${activity.color}1F, 0 2px 6px rgba(31,27,46,0.06)`,border:`1px solid ${isDark()?activity.color+"3D":activity.color+"30"}`,maxWidth:"calc(100% - 40px)",animation:"ftActIn 0.5s 0.15s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
           <div style={{
             width:42,height:42,borderRadius:13,
             background:activity.photo?"transparent":`linear-gradient(140deg,${activity.color}25,${activity.color}45)`,
@@ -2866,6 +2968,7 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
             overflow:"hidden",
             display:"flex",alignItems:"center",justifyContent:"center",
             fontSize:24,flexShrink:0,
+            boxShadow:isDark()?`inset 0 1px 0 rgba(255,255,255,0.10), 0 4px 14px -4px ${activity.color}55`:"none",
           }}>
             {activity.photo?<img src={activity.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:activity.emoji}
           </div>
@@ -7342,7 +7445,7 @@ function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer}){
         <style>{`@keyframes tmSectionIn{0%{opacity:0;transform:translateY(10px) scale(0.98)}100%{opacity:1;transform:translateY(0) scale(1)}}`}</style>
         {/* Preview + start — compact, at the top */}
         <div style={{background:isDark()?"linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.035) 100%)":tk().white,backdropFilter:isDark()?"blur(20px) saturate(1.3)":"none",WebkitBackdropFilter:isDark()?"blur(20px) saturate(1.3)":"none",borderRadius:26,padding:"24px 22px 22px",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.1), 0 16px 36px -18px rgba(0,0,0,0.7)":"0 12px 32px rgba(31,27,46,0.06), 0 2px 6px rgba(31,27,46,0.04)",display:"flex",flexDirection:"column",alignItems:"center",gap:16,border:`1px solid ${isDark()?"rgba(255,255,255,0.1)":"rgba(31,27,46,0.04)"}`,animation:"tmSectionIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) 0s both"}}>
-          <div style={{pointerEvents:"none"}}><TimerComp type={type} color={color} t={t} totalSec={min*60} autoRun={false} size={150} showCtrl={false}/></div>
+          <div style={{pointerEvents:"none"}}><TimerComp type={type} color={color} t={t} totalSec={min*60} autoRun={false} size={150} showCtrl={false} preview={true}/></div>
           <div style={{fontFamily:G.font,fontWeight:500,fontSize:13,color:tk().ink2,letterSpacing:.2}}>{min} {t.min} · {tlbl(type,t)}</div>
           <button onClick={start} className="lt-press" style={{width:"100%",maxWidth:300,padding:"16px 0",borderRadius:18,border:isDark()?"1px solid rgba(255,255,255,0.18)":"none",background:isDark()?"rgba(255,255,255,0.1)":`linear-gradient(135deg,${color},${color}D8)`,backdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",WebkitBackdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",color:isDark()?"#F4F1FA":"#fff",fontFamily:G.font,fontWeight:600,fontSize:15,letterSpacing:.3,cursor:"pointer",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.22), 0 6px 16px -8px rgba(0,0,0,0.6)":`0 14px 30px ${color}45, 0 3px 8px ${color}28`,display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2 L11 7 L3 12 Z"/></svg>
@@ -13989,11 +14092,9 @@ export default function App(){
              tone (effS.hb) so header and screen are one uniform background. */
           null
         ))}
-        {isDark()&&(<>
-          {/* crisp specular highlight gliding along the top glass edge */}
-          <div style={{position:"absolute",top:0,left:0,right:0,height:1.5,background:"linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 35%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.4) 65%, transparent 100%)",pointerEvents:"none",opacity:0.5,animation:"headerShine 9s ease-in-out infinite"}}/>
-        </>)}
-        {/* A fine specular shine along the very top edge — premium glass feel. */}
+        {/* Specular highlight on the top edge — light mode only. In dark
+            mode it created a visible bright line under the status bar that
+            read as part of a frame around the app. */}
         {!isDark()&&<div style={{
           position:"absolute",
           top:0,left:0,right:0,height:40,
