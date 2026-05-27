@@ -46,7 +46,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   setMeta("apple-mobile-web-app-status-bar-style", storedThemeForStatus === "dark" ? "black-translucent" : "default");
   // Theme colour — paints the iOS PWA status-bar region. Must match the app
   // body to avoid a visible band where they meet.
-  setMeta("theme-color", storedThemeForStatus === "dark" ? "#000000" : "#FBFDFE");
+  setMeta("theme-color", storedThemeForStatus === "dark" ? "#0E0E10" : "#FBFDFE");
 
   // The Luma sun icon — peach/bronze 3D orb matching SceneIntro EXACTLY.
   // Same palette as the welcome slide so when iOS shows the apple-touch-icon
@@ -105,7 +105,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       if (parsed && parsed.theme === "dark") storedTheme = "dark";
     }
   } catch (_) {}
-  const manifestBg = storedTheme === "dark" ? "#000000" : "#FBFDFE";
+  const manifestBg = storedTheme === "dark" ? "#0E0E10" : "#FBFDFE";
   const manifest = {
     name: "Luma", short_name: "Luma",
     description: "A schedule. A rhythm. A safety.",
@@ -135,7 +135,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     // Background — Luma home palette. Dark mode uses the same deep night base
     // as the live app; light mode uses the soft sky-blue → white wash.
     if (dark) {
-      g.fillStyle = "#000000";
+      g.fillStyle = "#0E0E10";
       g.fillRect(0, 0, w, h);
     } else {
       const grd = g.createLinearGradient(0, 0, 0, h);
@@ -13325,7 +13325,7 @@ export default function App(){
     // Without both, a visible bright band appears at the top of dark mode.
     let m=document.head.querySelector('meta[name="theme-color"]');
     if(!m){m=document.createElement("meta");m.setAttribute("name","theme-color");document.head.appendChild(m);}
-    m.setAttribute("content",APP_THEME==="dark"?"#000000":"#FBFDFE");
+    m.setAttribute("content",APP_THEME==="dark"?"#0E0E10":"#FBFDFE");
     let sb=document.head.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     if(!sb){sb=document.createElement("meta");sb.setAttribute("name","apple-mobile-web-app-status-bar-style");document.head.appendChild(sb);}
     sb.setAttribute("content",APP_THEME==="dark"?"black-translucent":"default");
@@ -13767,7 +13767,7 @@ export default function App(){
   })();
   return(
     <div style={{position:"relative",minHeight:"100dvh",background:isDark()
-      ? "#000000" /* pure black = matches html/body — no edge band possible */
+      ? "#0E0E10" /* near-black matching body — borders on inner elements blend in */
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
@@ -13799,9 +13799,9 @@ export default function App(){
           padding: 0;
         }
         @media (prefers-color-scheme: dark) {
-          html, body { background: #000000; }
+          html, body { background: #0E0E10; }
         }
-        html.lt-theme-dark, html.lt-theme-dark body { background: #000000; }
+        html.lt-theme-dark, html.lt-theme-dark body { background: #0E0E10; }
         html.lt-theme-light, html.lt-theme-light body { background: #FFFFFF; }
         .lt-app-root {
           height: var(--app-vh);
@@ -14497,19 +14497,19 @@ export default function App(){
         // Bottom nav blends seamlessly with the dark base — no gradient that
         // would visibly lift the bottom zone. The only chrome is a faint
         // hairline at the top to separate nav from content.
-        background:isDark()?"#000000":`linear-gradient(180deg, #FFFFFF 0%, #FDFCFB 60%, ${effS.hl}33 100%)`,
+        background:isDark()?"#0E0E10":`linear-gradient(180deg, #FFFFFF 0%, #FDFCFB 60%, ${effS.hl}33 100%)`,
         backdropFilter:isDark()?"none":"none",
         WebkitBackdropFilter:isDark()?"none":"none",
         borderTop:isDark()?"1px solid rgba(255,255,255,0.05)":"none",
         boxShadow:isDark()?"none":"none",
         display:"flex",
         padding:"12px 0 calc(10px + env(safe-area-inset-bottom, 0px))",
-        flexShrink:0,zIndex:20,overflowX:"auto",position:"relative",
+        flexShrink:0,zIndex:20,overflowX:"hidden",position:"relative",
         maxHeight:navHidden?0:300,
         opacity:navHidden?0:1,
         paddingTop:navHidden?0:12,
         paddingBottom:navHidden?0:"calc(10px + env(safe-area-inset-bottom, 0px))",
-        overflow:navHidden?"hidden":"auto",
+        overflow:"hidden",
         pointerEvents:navHidden?"none":"auto",
         transition:"max-height .35s cubic-bezier(0.32, 0.72, 0, 1), opacity .25s ease, padding .35s cubic-bezier(0.32, 0.72, 0, 1), background .5s ease",
         // Hide the scrollbar that would otherwise appear on Chrome/Firefox
@@ -14552,7 +14552,7 @@ export default function App(){
         {/* Top hairline — colored, fades from sides, matches header bottom hairline vocabulary */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:`linear-gradient(90deg, transparent 0%, ${effS.h}25 50%, transparent 100%)`,pointerEvents:"none",transition:"background .5s ease"}}/>
         {navItems.map(({key,icon,label,S})=>{const on=screen===key;return(
-          <button key={key} onClick={()=>{setScreen(key);}} className="lt-press" style={{flex:navItems.length<=6?1:"0 0 auto",minWidth:navItems.length<=6?0:64,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"10px 4px 4px",position:"relative",zIndex:1}}>
+          <button key={key} onClick={()=>{setScreen(key);}} className="lt-press" style={{flex:1,minWidth:0,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"10px 2px 4px",position:"relative",zIndex:1}}>
             {/* Aurora glow behind active tab — breathes gently. Same vocabulary
                 as the header's aurora, scaled down for the nav. */}
             {on&&(
@@ -14592,7 +14592,7 @@ export default function App(){
             <div style={{position:"relative",zIndex:1,height:24,display:"flex",alignItems:"center",justifyContent:"center",transform:on?"scale(1.12) translateY(-1px)":"scale(1)",transition:"transform .45s cubic-bezier(0.34, 1.56, 0.64, 1)"}}>
               <NavIcon type={icon} active={on} color={S.deep} size={22}/>
             </div>
-            <span style={{fontFamily:G.font,fontWeight:on?600:400,fontSize:10.5,color:on?(isDark()?S.h:S.deep):(isDark()?"#8E889E":"#7C7691"),transition:"color .35s ease, font-weight .35s ease",whiteSpace:"nowrap",position:"relative",zIndex:1,letterSpacing:.2}}>{label}</span>
+            <span style={{fontFamily:G.font,fontWeight:on?600:400,fontSize:navItems.length>=7?9.5:10.5,color:on?(isDark()?S.h:S.deep):(isDark()?"#8E889E":"#7C7691"),transition:"color .35s ease, font-weight .35s ease",whiteSpace:"nowrap",position:"relative",zIndex:1,letterSpacing:.2,maxWidth:"100%",overflow:"hidden",textOverflow:"clip"}}>{label}</span>
             {/* Glowing dot indicator — pulses gently in the screen's color */}
             {on&&(
               <div style={{
