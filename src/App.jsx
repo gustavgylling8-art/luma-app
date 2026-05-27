@@ -12106,8 +12106,7 @@ function SceneIntro(){
         @keyframes dIDot{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
       `}</style>
       <div style={{width:140,height:140,position:"relative",animation:"dILogoIn 1.2s cubic-bezier(0.22,1,0.36,1) both"}}>
-        {/* Glow + core layer (NOT rotating) */}
-        <svg width={140} height={140} viewBox="0 0 26 26" style={{position:"absolute",inset:0,overflow:"visible"}}>
+        <svg width={140} height={140} viewBox="0 0 26 26" style={{overflow:"visible"}}>
           <defs>
             <radialGradient id="dILumaCore" cx="35%" cy="30%" r="70%">
               <stop offset="0%" stopColor="#FFFFFF"/>
@@ -12123,17 +12122,8 @@ function SceneIntro(){
           </defs>
           {/* Outer soft glow */}
           <circle cx="13" cy="13" r="13" fill="url(#dILumaOuterGlow)"/>
-          {/* Core orb with breath + highlight */}
-          <g style={{transformBox:"fill-box",transformOrigin:"center",animation:"dILumaCoreBreath 3.4s ease-in-out infinite"}}>
-            <circle cx="13" cy="13" r="6.5" fill="url(#dILumaCore)"/>
-            <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
-          </g>
-        </svg>
-        {/* Rays layer — rotation lives on this WRAPPER DIV (not inside SVG)
-            because iOS Safari can't reliably rotate <g> elements smoothly.
-            Wrapping it in a div with CSS transform gives silky 60fps. */}
-        <div style={{position:"absolute",inset:0,animation:"dILumaRotate 22s linear infinite",willChange:"transform"}}>
-          <svg width={140} height={140} viewBox="0 0 26 26" style={{overflow:"visible"}}>
+          {/* Rotating ray group — 8 rays, alternating long/short */}
+          <g style={{transformOrigin:"13px 13px",animation:"dILumaRotate 22s linear infinite"}}>
             {Array.from({length:8}).map((_,i)=>{
               const ang=(i/8)*2*Math.PI;
               const isLong=i%2===0;
@@ -12142,8 +12132,13 @@ function SceneIntro(){
               const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
               return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#E8A878" strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"dIRayFadeA":"dIRayFadeB"} ${3+i*0.18}s ease-in-out infinite`}}/>;
             })}
-          </svg>
-        </div>
+          </g>
+          {/* Core orb with breath + highlight */}
+          <g style={{transformOrigin:"13px 13px",animation:"dILumaCoreBreath 3.4s ease-in-out infinite"}}>
+            <circle cx="13" cy="13" r="6.5" fill="url(#dILumaCore)"/>
+            <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
+          </g>
+        </svg>
       </div>
       <div style={{fontFamily:G.serif,fontSize:52,fontWeight:600,color:"#1F1B2E",letterSpacing:0.5,animation:"dIWordmark 1.4s 0.4s cubic-bezier(0.22,1,0.36,1) both"}}>Luma</div>
       <div style={{width:5,height:5,borderRadius:"50%",background:"#E8A878",animation:"dIDot 2.5s 1.2s ease-in-out infinite"}}/>
@@ -13771,7 +13766,7 @@ export default function App(){
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
-      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative"}}>
+      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent"}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
         /* === UNIVERSAL DEVICE ADAPTATION ===
@@ -14509,7 +14504,7 @@ export default function App(){
         opacity:navHidden?0:1,
         paddingTop:navHidden?0:12,
         paddingBottom:navHidden?0:"calc(10px + env(safe-area-inset-bottom, 0px))",
-        overflow:"hidden",
+        overflow:navHidden?"hidden":"hidden",
         pointerEvents:navHidden?"none":"auto",
         transition:"max-height .35s cubic-bezier(0.32, 0.72, 0, 1), opacity .25s ease, padding .35s cubic-bezier(0.32, 0.72, 0, 1), background .5s ease",
         // Hide the scrollbar that would otherwise appear on Chrome/Firefox
