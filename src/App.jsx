@@ -22,7 +22,15 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     m.setAttribute("content", content);
   };
   // Viewport: cover the notch/safe areas so fullscreen standalone fills the screen.
-  setMeta("viewport", "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no");
+  // CRITICAL: Do NOT include `maximum-scale=1` or `user-scalable=no` here.
+  // In iOS PWA standalone mode (apple-mobile-web-app-capable=yes), locking
+  // zoom causes a well-documented WebKit bug where touch coordinates get
+  // mapped to slightly the wrong screen position — taps register a few px
+  // above where the finger actually lands, so users have to tap *below* a
+  // button's visible bounds to trigger it. Allowing scale fixes the
+  // misalignment without making the app actually zoomable (standalone PWAs
+  // don't expose pinch-zoom by default).
+  setMeta("viewport", "width=device-width, initial-scale=1, viewport-fit=cover");
   // iOS standalone: launch without Safari UI.
   setMeta("apple-mobile-web-app-capable", "yes");
   setMeta("mobile-web-app-capable", "yes");
@@ -106,6 +114,20 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     }
   } catch (_) {}
   const manifestBg = storedTheme === "dark" ? "#0E0E10" : "#FBFDFE";
+
+  // PAINT THE EDGES IMMEDIATELY — before React mounts.
+  // Why: the safe-area zones (notch, home-indicator, and the slim 1–2px strip
+  // iOS reserves on the left/right edges of devices with rounded corners) are
+  // painted from `html`/`body` background, NOT from the React tree. If we wait
+  // for React's first commit, those edges flash the browser default (white)
+  // for a few frames in dark mode → reads as "bright frame on the sides of
+  // the screen". Setting html.style.background here ensures the very first
+  // pixel iOS paints already matches the theme.
+  try {
+    document.documentElement.style.background = manifestBg;
+    document.documentElement.classList.add(storedTheme === "dark" ? "lt-theme-dark" : "lt-theme-light");
+    if (document.body) document.body.style.background = manifestBg;
+  } catch (_) {}
   const manifest = {
     name: "Luma", short_name: "Luma",
     description: "A schedule. A rhythm. A safety.",
@@ -13761,7 +13783,17 @@ export default function App(){
     return "rgba(60, 70, 120, 0.22)";                            // night
   })();
   return(
-    <div style={{position:"relative",minHeight:"100dvh",background:isDark()
+    <div style={{position:"relative",minHeight:"100dvh",
+      // Full-bleed background — extends edge-to-edge so iOS rounded-corner
+      // safe-area zones (the ~3px strip on the left/right of devices with
+      // rounded screens, plus the home-indicator zone) get painted in the
+      // theme colour. Previously the safe-area-left/right padding was on
+      // `.lt-app-root` which is the *visible content surface* — that meant
+      // those edge pixels were transparent, letting the html/body colour
+      // show through, which read as bright bars on the sides in dark mode.
+      paddingLeft:"env(safe-area-inset-left, 0px)",
+      paddingRight:"env(safe-area-inset-right, 0px)",
+      background:isDark()
       ? "#0E0E10" /* near-black matching body — borders on inner elements blend in */
       : (screen==="home"
         ? "#FFFFFF"
@@ -13789,7 +13821,10 @@ export default function App(){
           -webkit-tap-highlight-color: transparent;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
-          background: #FFFFFF;
+          /* Match the PWA manifest's theme/background_color EXACTLY so the
+             safe-area zones (which iOS paints from <html>) don't show a
+             different shade of white than the in-app surfaces. */
+          background: #FBFDFE;
           margin: 0;
           padding: 0;
         }
@@ -13797,12 +13832,16 @@ export default function App(){
           html, body { background: #0E0E10; }
         }
         html.lt-theme-dark, html.lt-theme-dark body { background: #0E0E10; }
-        html.lt-theme-light, html.lt-theme-light body { background: #FFFFFF; }
+        html.lt-theme-light, html.lt-theme-light body { background: #FBFDFE; }
         .lt-app-root {
           height: var(--app-vh);
           max-width: 480px;
-          padding-left: var(--safe-left);
-          padding-right: var(--safe-right);
+          /* Safe-area-left/right padding is applied on the OUTER wrapper now
+             so the theme background colour extends edge-to-edge. Adding it
+             here too would double-pad and re-expose the parent's colour,
+             which in light mode could create a thin bright stripe in dark
+             rooms. Top/bottom safe-area is handled per-screen because the
+             header and bottom nav need to flow under those zones. */
           /* No overflow:hidden here — would clip position:fixed overlays. Body has its own clipping. */
           isolation: isolate; /* Creates stacking context without clipping */
         }
