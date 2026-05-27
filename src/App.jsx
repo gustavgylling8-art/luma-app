@@ -13783,31 +13783,21 @@ export default function App(){
     return "rgba(60, 70, 120, 0.22)";                            // night
   })();
   return(
+    /* Outer shell — fixed exactly to 100dvh (not minHeight). With minHeight,
+       any inner overflow pushes the bottom-nav below the visible viewport.
+       Safe-area padding on left/right is here on the outer wrapper so the
+       theme background colour reaches the rounded-corner edges and no
+       bright stripe shows in dark mode. */
     <div style={{position:"relative",
-      // EXACT height — not minHeight. With minHeight, if any inner element
-      // overflows even a few pixels (which happens easily when bottom-nav
-      // adds safe-area padding on devices with a home indicator), the whole
-      // shell grows and pushes the nav below the visible viewport. The user
-      // then has to scroll to reach it, and rubber-banding flashes the html
-      // background. A fixed dvh height locks the shell exactly to what iOS
-      // gives us, and inner scroll regions handle their own overflow.
       height:"100dvh",
-      maxHeight:"100dvh",
-      // Full-bleed background — extends edge-to-edge so iOS rounded-corner
-      // safe-area zones (the ~3px strip on the left/right of devices with
-      // rounded screens, plus the home-indicator zone) get painted in the
-      // theme colour. Previously the safe-area-left/right padding was on
-      // `.lt-app-root` which is the *visible content surface* — that meant
-      // those edge pixels were transparent, letting the html/body colour
-      // show through, which read as bright bars on the sides in dark mode.
       paddingLeft:"env(safe-area-inset-left, 0px)",
       paddingRight:"env(safe-area-inset-right, 0px)",
       background:isDark()
-      ? "#0E0E10" /* near-black matching body — borders on inner elements blend in */
+      ? "#0E0E10"
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
-      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent",height:"100%",maxHeight:"100%"}}>
+      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent",height:"100%"}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
         /* === UNIVERSAL DEVICE ADAPTATION ===
@@ -13824,6 +13814,16 @@ export default function App(){
           --safe-left: env(safe-area-inset-left, 0px);
           --safe-right: env(safe-area-inset-right, 0px);
         }
+        /* iOS PWA standalone REQUIRES that html/body stay in their natural
+           layout. Setting height:100% + position:fixed on body — even when
+           it sounds reasonable — breaks viewport-fit=cover together with
+           black-translucent status bar, causing two specific bugs:
+           (1) a bright strip appears along the screen edges where the html
+           background bleeds through, and (2) touch coordinates get mapped
+           to the wrong spot, so buttons register taps a few px above where
+           the finger lands. Only body overflow:hidden is needed to prevent
+           page scroll. The app-root itself takes 100dvh and any inner
+           regions handle their own overflow. */
         html, body {
           overscroll-behavior: none;
           -webkit-text-size-adjust: 100%;
@@ -13836,28 +13836,12 @@ export default function App(){
           background: #FBFDFE;
           margin: 0;
           padding: 0;
-          /* CRITICAL — lock the page itself against scrolling. The app is
-             a single fixed-height shell; only inner regions (the schedule
-             list, settings panel, etc.) scroll. If we let html/body scroll
-             on iOS PWA the bottom-nav drifts off-screen as the user pulls,
-             and rubber-banding reveals the html background as a flash. */
-          height: 100%;
-          width: 100%;
-          overflow: hidden;
-          /* Prevent iOS from offering pull-to-refresh / bounce on the doc. */
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
         }
-        #root {
-          /* The React mount point inherits the locked-shell behaviour so the
-             whole tree gets a precise, fixed canvas to render into. */
-          height: 100%;
-          width: 100%;
+        body {
+          /* Lock the page itself against scrolling — but ONLY on body, not
+             html, and WITHOUT position:fixed which is the part that broke
+             viewport-fit=cover in standalone. */
           overflow: hidden;
-          position: relative;
         }
         @media (prefers-color-scheme: dark) {
           html, body { background: #0E0E10; }
