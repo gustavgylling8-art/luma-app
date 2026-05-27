@@ -14247,6 +14247,35 @@ export default function App(){
             textShadow:isDark()?`0 1px 1px rgba(0,0,0,0.35), 0 0 16px ${effS.h}26`:`0 1px 0 rgba(255,255,255,0.9), 0 2px 10px ${effS.h}26`,
             transition:"color .5s ease, text-shadow .5s ease",
           }}>Luma</span>
+          {/* VERSION STAMP — hidden by default, revealed by double-tapping
+              the Luma title. Diagnostic only: if the stamp doesn't match the
+              latest deploy, the device is running cached old code. */}
+          <span
+            onClick={(e)=>{
+              const el=e.currentTarget;
+              const now=Date.now();
+              const last=parseInt(el.getAttribute("data-last-tap")||"0",10);
+              if(now-last<400){
+                el.style.opacity=el.style.opacity==="1"?"0":"1";
+              }
+              el.setAttribute("data-last-tap",String(now));
+            }}
+            style={{
+              marginLeft:8,
+              fontFamily:G.font,
+              fontSize:10,
+              fontWeight:600,
+              color:isDark()?"#FFD166":"#C97548",
+              background:isDark()?"rgba(255,209,102,0.15)":"rgba(201,117,72,0.12)",
+              padding:"2px 6px",
+              borderRadius:6,
+              letterSpacing:0.5,
+              verticalAlign:"middle",
+              opacity:0,
+              transition:"opacity .2s ease",
+              cursor:"pointer",
+            }}
+          >v2026-05-28-D</span>
         </div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:0,position:"relative",gap:12,minHeight:36}}>
           <div style={{flex:1,minWidth:0}}>
