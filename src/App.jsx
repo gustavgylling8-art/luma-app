@@ -13783,7 +13783,16 @@ export default function App(){
     return "rgba(60, 70, 120, 0.22)";                            // night
   })();
   return(
-    <div style={{position:"relative",minHeight:"100dvh",
+    <div style={{position:"relative",
+      // EXACT height — not minHeight. With minHeight, if any inner element
+      // overflows even a few pixels (which happens easily when bottom-nav
+      // adds safe-area padding on devices with a home indicator), the whole
+      // shell grows and pushes the nav below the visible viewport. The user
+      // then has to scroll to reach it, and rubber-banding flashes the html
+      // background. A fixed dvh height locks the shell exactly to what iOS
+      // gives us, and inner scroll regions handle their own overflow.
+      height:"100dvh",
+      maxHeight:"100dvh",
       // Full-bleed background — extends edge-to-edge so iOS rounded-corner
       // safe-area zones (the ~3px strip on the left/right of devices with
       // rounded screens, plus the home-indicator zone) get painted in the
@@ -13798,7 +13807,7 @@ export default function App(){
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
-      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent"}}>
+      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent",height:"100%",maxHeight:"100%"}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
         /* === UNIVERSAL DEVICE ADAPTATION ===
@@ -13816,7 +13825,7 @@ export default function App(){
           --safe-right: env(safe-area-inset-right, 0px);
         }
         html, body {
-          overscroll-behavior-y: contain;
+          overscroll-behavior: none;
           -webkit-text-size-adjust: 100%;
           -webkit-tap-highlight-color: transparent;
           -webkit-font-smoothing: antialiased;
@@ -13827,6 +13836,28 @@ export default function App(){
           background: #FBFDFE;
           margin: 0;
           padding: 0;
+          /* CRITICAL — lock the page itself against scrolling. The app is
+             a single fixed-height shell; only inner regions (the schedule
+             list, settings panel, etc.) scroll. If we let html/body scroll
+             on iOS PWA the bottom-nav drifts off-screen as the user pulls,
+             and rubber-banding reveals the html background as a flash. */
+          height: 100%;
+          width: 100%;
+          overflow: hidden;
+          /* Prevent iOS from offering pull-to-refresh / bounce on the doc. */
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+        }
+        #root {
+          /* The React mount point inherits the locked-shell behaviour so the
+             whole tree gets a precise, fixed canvas to render into. */
+          height: 100%;
+          width: 100%;
+          overflow: hidden;
+          position: relative;
         }
         @media (prefers-color-scheme: dark) {
           html, body { background: #0E0E10; }
