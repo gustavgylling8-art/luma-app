@@ -31,50 +31,55 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // Status bar: "default" gives BLACK text on a LIGHT bar — needed because the
   // app's primary surface (home/header) is near-white. Previously this was
   // "black-translucent", which forces WHITE text — invisible against the white
-  // Luma sky. With "default" iOS draws its own light status bar above the
-  // safe-area-inset-top, and our header (which already adds env(safe-area-
-  // inset-top) padding) sits cleanly beneath it. Dark mode users still get a
-  // legible bar because iOS auto-inverts default-style bar contents.
-  setMeta("apple-mobile-web-app-status-bar-style", "default");
-  // Theme colour — soft Luma sky.
-  setMeta("theme-color", "#FBFDFE");
+  // Status bar style — MUST match the app theme. With "default" iOS draws a
+  // LIGHT status bar above the app, which creates a visible bright zone over
+  // a dark app body (the "frame" effect). With "black-translucent" the status
+  // bar is transparent and the app's own dark background shows through to the
+  // very top, eliminating any seam.
+  const storedThemeForStatus = (() => {
+    try {
+      const raw = localStorage.getItem("luma_v1_cfg");
+      if (raw) { const parsed = JSON.parse(raw); if (parsed && parsed.theme) return parsed.theme; }
+    } catch(e) {}
+    return "light";
+  })();
+  setMeta("apple-mobile-web-app-status-bar-style", storedThemeForStatus === "dark" ? "black-translucent" : "default");
+  // Theme colour — paints the iOS PWA status-bar region. Must match the app
+  // body to avoid a visible band where they meet.
+  setMeta("theme-color", storedThemeForStatus === "dark" ? "#0A0810" : "#FBFDFE");
 
-  // The Luma sun icon — matches the in-app wordmark sun EXACTLY: cool blue
-  // accent rays, pearl-white core with the Luma palette gradient. The previous
-  // version was generic orange/yellow which didn't reflect Luma's calm blue
-  // identity. Maskable-safe (art well inside edges).
+  // The Luma sun icon — peach/bronze 3D orb matching SceneIntro EXACTLY.
+  // Same palette as the welcome slide so when iOS shows the apple-touch-icon
+  // and splash, it flows seamlessly into the first app screen.
   const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
     <defs>
       <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#EAF2FB"/><stop offset="55%" stop-color="#F6FAFD"/><stop offset="100%" stop-color="#FFFFFF"/>
+        <stop offset="0%" stop-color="#FBF6F0"/><stop offset="55%" stop-color="#FDFAF5"/><stop offset="100%" stop-color="#FFFFFF"/>
       </linearGradient>
-      <radialGradient id="core" cx="34%" cy="28%" r="74%">
+      <radialGradient id="core" cx="35%" cy="30%" r="70%">
         <stop offset="0%" stop-color="#FFFFFF"/>
-        <stop offset="16%" stop-color="#FFFDF7" stop-opacity="0.98"/>
-        <stop offset="46%" stop-color="#86B6D4"/>
-        <stop offset="82%" stop-color="#86B6D4"/>
-        <stop offset="100%" stop-color="#557E9E"/>
+        <stop offset="20%" stop-color="#FFFAF0" stop-opacity="0.95"/>
+        <stop offset="55%" stop-color="#E8A878"/>
+        <stop offset="100%" stop-color="#C97548"/>
       </radialGradient>
       <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-        <stop offset="40%" stop-color="#86B6D4" stop-opacity="0"/>
-        <stop offset="78%" stop-color="#86B6D4" stop-opacity="0.22"/>
-        <stop offset="100%" stop-color="#86B6D4" stop-opacity="0"/>
+        <stop offset="40%" stop-color="#E8A878" stop-opacity="0"/>
+        <stop offset="70%" stop-color="#E8A878" stop-opacity="0.20"/>
+        <stop offset="100%" stop-color="#E8A878" stop-opacity="0"/>
       </radialGradient>
-      <radialGradient id="gloss" cx="32%" cy="26%" r="46%">
-        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.7"/>
-        <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0.12"/>
+      <radialGradient id="gloss" cx="35%" cy="30%" r="42%">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.78"/>
+        <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.16"/>
         <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
       </radialGradient>
     </defs>
     <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-    <circle cx="256" cy="256" r="160" fill="url(#halo)"/>
-    <circle cx="256" cy="256" r="118" fill="none" stroke="#86B6D4" stroke-width="3" stroke-opacity="0.22"/>
-    <g stroke="#86B6D4" stroke-linecap="round">
-      ${Array.from({length:8}).map((_,i)=>{const a=(i/8)*2*Math.PI;const long=i%2===0;const r1=132,r2=long?188:166;const x1=256+r1*Math.sin(a),y1=256-r1*Math.cos(a),x2=256+r2*Math.sin(a),y2=256-r2*Math.cos(a);return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${long?17:13}"/>`;}).join("")}
+    <circle cx="256" cy="256" r="170" fill="url(#halo)"/>
+    <g stroke="#E8A878" stroke-linecap="round">
+      ${Array.from({length:8}).map((_,i)=>{const a=(i/8)*2*Math.PI;const long=i%2===0;const r1=130,r2=long?190:168;const x1=256+r1*Math.sin(a),y1=256-r1*Math.cos(a),x2=256+r2*Math.sin(a),y2=256-r2*Math.cos(a);return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${long?16:11}"/>`;}).join("")}
     </g>
     <circle cx="256" cy="256" r="100" fill="url(#core)"/>
-    <circle cx="256" cy="256" r="100" fill="none" stroke="#557E9E" stroke-width="2" stroke-opacity="0.35"/>
-    <circle cx="221" cy="220" r="36" fill="url(#gloss)"/>
+    <circle cx="218" cy="218" r="36" fill="url(#gloss)"/>
   </svg>`;
   const iconUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(ICON_SVG)));
 
@@ -139,23 +144,24 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       grd.addColorStop(1, "#FFFFFF");
       g.fillStyle = grd; g.fillRect(0, 0, w, h);
     }
-    // Sun — matches the in-app Luma mark exactly (same proportions, same
-    // colour family). Uses the home-screen blue accent (#86B6D4) for a calm,
-    // cool tone that reads as "Luma" rather than a generic weather sun.
-    const ACCENT = "#86B6D4";   // SCREENS.home.h
-    const ACCENT_DEEP = "#557E9E"; // SCREENS.home.deep
-    const cx = w/2, cy = h * 0.42; // slightly above center for a balanced composition
-    const R = Math.min(w, h) * 0.085;  // base radius unit — sun core
-    // (1) Outer soft glow — colored aura that fades to nothing
+    // Sun — warm peach/bronze 3D pearl matching SceneIntro EXACTLY so the
+    // splash flows seamlessly into the welcome slide. Same colour values:
+    // #E8A878 (peach) for the rays and core mid-tone, #C97548 for the deeper
+    // bronze at the base of the orb. Premium and consistent.
+    const ACCENT = "#E8A878";
+    const ACCENT_DEEP = "#C97548";
+    const cx = w/2, cy = h * 0.42;
+    const R = Math.min(w, h) * 0.085;
+    // (1) Outer soft glow — warm peach aura, matching SceneIntro's outer glow
     const glow = g.createRadialGradient(cx, cy, R*0.6, cx, cy, R*3.2);
     if (dark) {
-      glow.addColorStop(0, "rgba(134,182,212,0.18)");
-      glow.addColorStop(0.6, "rgba(134,182,212,0.08)");
-      glow.addColorStop(1, "rgba(134,182,212,0)");
+      glow.addColorStop(0, "rgba(232,168,120,0.20)");
+      glow.addColorStop(0.6, "rgba(232,168,120,0.08)");
+      glow.addColorStop(1, "rgba(232,168,120,0)");
     } else {
-      glow.addColorStop(0, "rgba(134,182,212,0.22)");
-      glow.addColorStop(0.6, "rgba(134,182,212,0.08)");
-      glow.addColorStop(1, "rgba(134,182,212,0)");
+      glow.addColorStop(0, "rgba(232,168,120,0.28)");
+      glow.addColorStop(0.6, "rgba(232,168,120,0.10)");
+      glow.addColorStop(1, "rgba(232,168,120,0)");
     }
     g.fillStyle = glow;
     g.beginPath(); g.arc(cx, cy, R*3.2, 0, Math.PI*2); g.fill();
@@ -190,10 +196,9 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       cx - R*0.35, cy - R*0.42, R*0.1,
       cx, cy, R
     );
-    core.addColorStop(0, dark ? "#F6F2FA" : "#FFFFFF");
-    core.addColorStop(0.16, dark ? "#ECE6F2" : "#FFFDF7");
-    core.addColorStop(0.46, ACCENT);
-    core.addColorStop(0.82, ACCENT);
+    core.addColorStop(0, "#FFFFFF");
+    core.addColorStop(0.20, "#FFFAF0");
+    core.addColorStop(0.55, ACCENT);
     core.addColorStop(1, ACCENT_DEEP);
     g.fillStyle = core;
     g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.fill();
@@ -12101,7 +12106,8 @@ function SceneIntro(){
         @keyframes dIDot{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
       `}</style>
       <div style={{width:140,height:140,position:"relative",animation:"dILogoIn 1.2s cubic-bezier(0.22,1,0.36,1) both"}}>
-        <svg width={140} height={140} viewBox="0 0 26 26" style={{overflow:"visible"}}>
+        {/* Glow + core layer (NOT rotating) */}
+        <svg width={140} height={140} viewBox="0 0 26 26" style={{position:"absolute",inset:0,overflow:"visible"}}>
           <defs>
             <radialGradient id="dILumaCore" cx="35%" cy="30%" r="70%">
               <stop offset="0%" stopColor="#FFFFFF"/>
@@ -12117,8 +12123,17 @@ function SceneIntro(){
           </defs>
           {/* Outer soft glow */}
           <circle cx="13" cy="13" r="13" fill="url(#dILumaOuterGlow)"/>
-          {/* Rotating ray group — 8 rays, alternating long/short, same as header */}
-          <g style={{transformOrigin:"13px 13px",animation:"dILumaRotate 22s linear infinite"}}>
+          {/* Core orb with breath + highlight */}
+          <g style={{transformBox:"fill-box",transformOrigin:"center",animation:"dILumaCoreBreath 3.4s ease-in-out infinite"}}>
+            <circle cx="13" cy="13" r="6.5" fill="url(#dILumaCore)"/>
+            <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
+          </g>
+        </svg>
+        {/* Rays layer — rotation lives on this WRAPPER DIV (not inside SVG)
+            because iOS Safari can't reliably rotate <g> elements smoothly.
+            Wrapping it in a div with CSS transform gives silky 60fps. */}
+        <div style={{position:"absolute",inset:0,animation:"dILumaRotate 22s linear infinite",willChange:"transform"}}>
+          <svg width={140} height={140} viewBox="0 0 26 26" style={{overflow:"visible"}}>
             {Array.from({length:8}).map((_,i)=>{
               const ang=(i/8)*2*Math.PI;
               const isLong=i%2===0;
@@ -12127,13 +12142,8 @@ function SceneIntro(){
               const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
               return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#E8A878" strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"dIRayFadeA":"dIRayFadeB"} ${3+i*0.18}s ease-in-out infinite`}}/>;
             })}
-          </g>
-          {/* Core orb with breath + highlight */}
-          <g style={{transformOrigin:"13px 13px",animation:"dILumaCoreBreath 3.4s ease-in-out infinite"}}>
-            <circle cx="13" cy="13" r="6.5" fill="url(#dILumaCore)"/>
-            <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
-          </g>
-        </svg>
+          </svg>
+        </div>
       </div>
       <div style={{fontFamily:G.serif,fontSize:52,fontWeight:600,color:"#1F1B2E",letterSpacing:0.5,animation:"dIWordmark 1.4s 0.4s cubic-bezier(0.22,1,0.36,1) both"}}>Luma</div>
       <div style={{width:5,height:5,borderRadius:"50%",background:"#E8A878",animation:"dIDot 2.5s 1.2s ease-in-out infinite"}}/>
@@ -13310,12 +13320,15 @@ export default function App(){
     el.classList.toggle("lt-theme-dark",APP_THEME==="dark");
     el.classList.toggle("lt-theme-light",APP_THEME!=="dark");
     // Also keep the PWA theme-color meta in sync so iOS paints the status-bar
-    // area in the matching tone. (Status bar text colour is controlled by the
-    // black-translucent/default meta set on first paint — this just covers the
-    // background tone behind it.)
+    // area in the matching tone, AND swap the status-bar-style so iOS draws
+    // the right kind of bar (translucent over dark app, default over light).
+    // Without both, a visible bright band appears at the top of dark mode.
     let m=document.head.querySelector('meta[name="theme-color"]');
     if(!m){m=document.createElement("meta");m.setAttribute("name","theme-color");document.head.appendChild(m);}
     m.setAttribute("content",APP_THEME==="dark"?"#0A0810":"#FBFDFE");
+    let sb=document.head.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    if(!sb){sb=document.createElement("meta");sb.setAttribute("name","apple-mobile-web-app-status-bar-style");document.head.appendChild(sb);}
+    sb.setAttribute("content",APP_THEME==="dark"?"black-translucent":"default");
   },[APP_THEME]);
   const[resetKey,setResetKey]=useState(0);
   // Track the previously-rendered screen so the entrance fade only plays on a
