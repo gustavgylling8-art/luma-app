@@ -75,11 +75,25 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   fav.setAttribute("type", "image/svg+xml"); fav.setAttribute("href", iconUrl);
 
   // Web app manifest (Android/Chrome + general PWA) as a data-URI.
+  // Read the user's stored theme preference so the manifest's background_color
+  // matches it. iOS PWA standalone uses this colour to fill the safe-area
+  // regions (notch, home-indicator) until the React app paints over them.
+  // A wrong colour here is what creates the ugly "white frame" some users
+  // were seeing along the screen edges in dark mode.
+  let storedTheme = "light";
+  try {
+    const raw = typeof localStorage !== "undefined" ? localStorage.getItem("luma_v1_cfg") : null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.theme === "dark") storedTheme = "dark";
+    }
+  } catch (_) {}
+  const manifestBg = storedTheme === "dark" ? "#0A0810" : "#FBFDFE";
   const manifest = {
     name: "Luma", short_name: "Luma",
     description: "A schedule. A rhythm. A safety.",
     start_url: ".", scope: ".", display: "standalone", orientation: "any",
-    background_color: "#FBFDFE", theme_color: "#FBFDFE",
+    background_color: manifestBg, theme_color: manifestBg,
     icons: [
       { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "any" },
       { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "maskable" },
@@ -2057,7 +2071,7 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
         @keyframes sunSeaSparkle { 0%,100% { opacity: 0; transform: scale(0.6); } 50% { opacity: 0.9; transform: scale(1); } }
       `}</style>
 
-      <svg width={W} height={H} style={{borderRadius:24,overflow:"hidden",boxShadow:"0 12px 40px rgba(31,27,46,0.08), 0 2px 8px rgba(31,27,46,0.04)",border:`1px solid ${G.border}`,display:"block"}}>
+      <svg width={W} height={H} style={{borderRadius:24,overflow:"hidden",boxShadow:isDark()?"0 16px 50px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3)":"0 12px 40px rgba(31,27,46,0.08), 0 2px 8px rgba(31,27,46,0.04)",border:isDark()?"1px solid rgba(255,255,255,0.06)":`1px solid ${G.border}`,display:"block"}}>
         <defs>
           {/* Sky gradient — soft pastel transition, three stops for depth */}
           <linearGradient id={`sky${uid}`} x1="0" y1="0" x2="0" y2="1">
@@ -2861,7 +2875,13 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
           </div>
         </div>
       )}
-      <TimerComp type={type} totalSec={totalSec} color={color} t={t} autoRun={autoRun} size={size} mode={type==="dots"?dotsMode:undefined} setMode={type==="dots"?setDotsMode:undefined}/>
+      <TimerComp type={type} totalSec={totalSec} color={color} t={t} autoRun={autoRun} size={
+        // Wave and sun timers are naturally wider (rectangle, ~0.65 ratio) so
+        // give them a tighter max bound — they should never feel oversized.
+        // Other timer types (sector/ring/dots/lava/monster) are square so the
+        // standard size calc works as-is.
+        (type==="wave"||type==="sun")?Math.min(size, Math.round((typeof window!=="undefined"?Math.min(window.innerWidth,480):360)*0.75)):size
+      } mode={type==="dots"?dotsMode:undefined} setMode={type==="dots"?setDotsMode:undefined}/>
     </div>
   );
 }
@@ -13627,18 +13647,7 @@ export default function App(){
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
-      {/* Dark-mode atmospheric glow — lives as an overlay inside the solid
-          base, so there's NO lighter band peeking through safe-area
-          paddings at the screen edges. Pointer-events:none so it never
-          intercepts taps. */}
-      {isDark()&&(
-        <div aria-hidden="true" style={{
-          position:"absolute",inset:0,pointerEvents:"none",zIndex:0,
-          background:`radial-gradient(90% 26% at 50% 0%, ${effS.h}3A 0%, transparent 46%), radial-gradient(70% 22% at 86% 3%, ${effS.h}24 0%, transparent 48%), linear-gradient(180deg, rgba(28,26,51,0.55) 0%, rgba(21,19,31,0.35) 24%, rgba(16,14,24,0.1) 52%, transparent 100%)`,
-          transition:"background .5s ease",
-        }}/>
-      )}
-      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",zIndex:1}}>
+      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative"}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
         /* === UNIVERSAL DEVICE ADAPTATION ===
@@ -13659,22 +13668,11 @@ export default function App(){
           overscroll-behavior-y: contain; /* prevents pull-to-refresh on Android Chrome */
           -webkit-text-size-adjust: 100%;
           -webkit-tap-highlight-color: transparent;
-          /* Crisp text on iOS PWA — without these the type looks slightly
-             muddy compared to native apps. -webkit-font-smoothing makes
-             stroke widths look intentional rather than soft. */
+          /* Crisp text on iOS PWA */
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
-          text-rendering: optimizeLegibility;
-          /* Block iOS double-tap-to-zoom across the whole app — buttons already
-             have this, but accidental double-taps on prose used to trigger a
-             zoom-in that breaks the standalone illusion. */
-          touch-action: manipulation;
-          /* PWA standalone fix: in iOS standalone the system fills the safe-
-             area regions (above the notch / below the home-indicator) with
-             whatever colour the underlying html/body has. If that's a default
-             white, the dark-mode app shows a bright "frame" along the edges.
-             Match the deepest tone of the dark gradient so the screen extends
-             cleanly to the device edges. Light mode keeps white. */
+          /* PWA standalone: match safe-area regions to the active theme so
+             the screen extends cleanly to device edges. */
           background: #FFFFFF;
           margin: 0;
           padding: 0;
@@ -13682,31 +13680,8 @@ export default function App(){
         @media (prefers-color-scheme: dark) {
           html, body { background: #0A0810; }
         }
-        /* App-set theme overrides device preference — keep them in sync when
-           Luma's theme picker forces a mode. The .lt-theme-dark class is set
-           on document.documentElement when isDark() is true. */
         html.lt-theme-dark, html.lt-theme-dark body { background: #0A0810; }
         html.lt-theme-light, html.lt-theme-light body { background: #FFFFFF; }
-        /* Prevent accidental text selection during scroll/long-press on iOS.
-           Text fields override this with their own selection rule. Real text
-           content (modal body copy, descriptions) opts back in via .lt-selectable. */
-        .lt-app-root {
-          -webkit-user-select: none;
-          user-select: none;
-          -webkit-touch-callout: none; /* no iOS long-press image/text bubble */
-        }
-        input, textarea, [contenteditable="true"], .lt-selectable {
-          -webkit-user-select: text;
-          user-select: text;
-          -webkit-touch-callout: default;
-        }
-        /* Smooth momentum scrolling on every inner scroller in the app.
-           Tagging data-modal-scroll and adding .lt-scroll covers our sheets
-           and timeline; the wildcard below catches any element that opts into
-           overflow:auto/scroll. */
-        [data-modal-scroll], .lt-scroll, .lt-app-root *[style*="overflow"] {
-          -webkit-overflow-scrolling: touch;
-        }
         .lt-app-root {
           height: var(--app-vh);
           max-width: 480px;
@@ -13720,27 +13695,41 @@ export default function App(){
            UI feels right-sized — not cramped on small phones, not stretched
            on tablets, not lost on desktop. */
 
-        /* Small phones (iPhone SE 1st gen ~320px wide) — tighter padding
-           so cards still fit with content visible. */
+        /* === SMALL PHONES (iPhone SE 1st gen, ~320px wide) ===
+           Width-constrained: shrink base font, tighten horizontal padding so
+           cards/buttons still breathe instead of feeling cramped against the
+           edge. */
         @media (max-width: 360px) {
           .lt-app-root {
-            font-size: 14.5px; /* slight base text reduction */
+            font-size: 14.5px;
+          }
+          .lt-app-header {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
           }
         }
 
-        /* Default (phones 360px+) — already covered by .lt-app-root base */
+        /* === SHORT PHONES (iPhone SE 2nd/3rd gen, 667px tall) ===
+           Height-constrained portrait: tighten the header padding so the
+           schedule gets the vertical room it needs. Without this, the header
+           ate ~30% of the screen on these older but still-supported devices. */
+        @media (max-height: 700px) and (orientation: portrait) {
+          .lt-app-header {
+            padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+            padding-bottom: 4px !important;
+          }
+        }
 
-        /* Phone landscape — short height, give content more vertical room
-           by trimming the decorative header padding. Targets phones in
-           landscape specifically (short height, wider than tall). */
+        /* === Default (phones 360px+ portrait) — base .lt-app-root applies === */
+
+        /* === PHONE LANDSCAPE ===
+           Short height + wide width: use full width, trim header significantly. */
         @media (max-height: 500px) and (orientation: landscape) {
           .lt-app-root {
-            max-width: 100%; /* use full width in landscape */
+            max-width: 100%;
           }
-          /* Trim the tall header so the schedule/board/grid gets the vertical
-             room it needs on a short landscape screen. */
           .lt-app-header {
-            padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+            padding-top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
             padding-bottom: 4px !important;
           }
         }
@@ -13893,11 +13882,9 @@ export default function App(){
         .saveBtn:hover .saveTick, .saveBtn:active .saveTick { transform: scale(1.2); }
         @keyframes saveTickDraw { from { stroke-dashoffset: 22; } to { stroke-dashoffset: 0; } }
       `}</style>
-      {/* Ambient time-of-day overlay — only in dark mode. In light mode it
-          tinted just the top ~60% of the screen (e.g. a blue-grey night tint),
-          making the header zone a different shade from the lower screen. Light
-          mode now stays one uniform tone across the whole surface. */}
-      {isDark()&&<div style={{position:"absolute",inset:0,background:`linear-gradient(180deg, ${ambientTint} 0%, transparent 60%)`,pointerEvents:"none",zIndex:0,transition:"background 2s ease"}}/>}
+      {/* Ambient time-of-day tint disabled — it created a visible horizontal
+          band where the gradient faded out at ~60% screen height, which read
+          as a frame. A uniform deep base reads as more premium. */}
       {/* Non-home light: fläckvis pastel that lifts the view. These sit at the
           PAGE level (behind both header and body) so they're never clipped at a
           seam. Distinct accent pools play against lighter/white blooms for real
@@ -14388,13 +14375,14 @@ export default function App(){
           exercise is running — chrome would break the calm moment. Both reasons
           unmount the nav with the same animation; it comes back on blur/exit. */}
       <div style={{
-        // Soft warm-white base with a hint of the active screen's color from below
-        // — mirrors the header's atmosphere and binds the entire app frame.
-        background:isDark()?`linear-gradient(180deg, rgba(28,26,51,0.72) 0%, rgba(18,15,27,0.85) 55%, rgba(13,11,20,0.92) 100%)`:`linear-gradient(180deg, #FFFFFF 0%, #FDFCFB 60%, ${effS.hl}33 100%)`,
-        backdropFilter:isDark()?"blur(28px) saturate(1.4)":"none",
-        WebkitBackdropFilter:isDark()?"blur(28px) saturate(1.4)":"none",
-        borderTop:isDark()?"1px solid rgba(255,255,255,0.07)":"none",
-        boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.06), 0 -10px 30px -12px rgba(0,0,0,0.6)":"none",
+        // Bottom nav blends seamlessly with the dark base — no gradient that
+        // would visibly lift the bottom zone. The only chrome is a faint
+        // hairline at the top to separate nav from content.
+        background:isDark()?"#0A0810":`linear-gradient(180deg, #FFFFFF 0%, #FDFCFB 60%, ${effS.hl}33 100%)`,
+        backdropFilter:isDark()?"none":"none",
+        WebkitBackdropFilter:isDark()?"none":"none",
+        borderTop:isDark()?"1px solid rgba(255,255,255,0.05)":"none",
+        boxShadow:isDark()?"none":"none",
         display:"flex",
         padding:"10px 0 calc(6px + env(safe-area-inset-bottom, 0px))",
         flexShrink:0,zIndex:20,overflowX:"auto",position:"relative",
@@ -14415,21 +14403,6 @@ export default function App(){
       className="lt-bottom-nav">
         <style>{`
           .lt-bottom-nav::-webkit-scrollbar { display: none; }
-          /* Fade-edge on the right side of the bottom nav — appears only when
-             there's more content scrollable to the right, hinting at it
-             without adding chrome. Same vocabulary as iOS native segmented
-             controls that overflow. */
-          .lt-bottom-nav::after {
-            content: "";
-            position: absolute;
-            top: 0; bottom: 0; right: 0;
-            width: 32px;
-            pointer-events: none;
-            background: linear-gradient(90deg, transparent, ${isDark()?"rgba(13,11,20,0.85)":"rgba(255,255,255,0.92)"});
-            opacity: ${navItems.length>6?1:0};
-            transition: opacity .35s ease;
-            z-index: 5;
-          }
           @keyframes navHaloIn{0%{opacity:0;transform:translateX(-50%) scale(0.85)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
           @keyframes navUnderSoft{0%{transform:scaleX(0);opacity:0}100%{transform:scaleX(1);opacity:1}}
           @keyframes navAuroraBreath{0%,100%{transform:translateX(-50%) scale(1);opacity:1}50%{transform:translateX(-50%) scale(1.06);opacity:0.85}}
@@ -14439,24 +14412,24 @@ export default function App(){
         {/* Specular highlight along the top edge — sun-catching-glass effect
             mirroring the header. Subtle horizontal sheen that gives the nav
             a feeling of being lifted above the content. */}
-        <div style={{
+        {!isDark()&&<div style={{
           position:"absolute",top:0,left:0,right:0,height:36,
-          background:isDark()?"linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.18) 40%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.18) 60%, transparent 100%)":"linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.55) 35%, rgba(255,255,255,0.75) 50%, rgba(255,255,255,0.55) 65%, transparent 100%)",
+          background:"linear-gradient(110deg, transparent 0%, rgba(255,255,255,0.55) 35%, rgba(255,255,255,0.75) 50%, rgba(255,255,255,0.55) 65%, transparent 100%)",
           pointerEvents:"none",
           opacity:0.5,
           mixBlendMode:"overlay",
           maskImage:"linear-gradient(180deg, #000 0%, #000 40%, transparent 100%)",
           WebkitMaskImage:"linear-gradient(180deg, #000 0%, #000 40%, transparent 100%)",
-        }}/>
-        {/* Soft colored bloom from the bottom — picks up the active screen's
-            color and lifts it gently into the nav background. Pure ambient,
-            no hard form. */}
-        <div style={{
+        }}/>}
+        {/* Soft colored bloom from the bottom — light mode only. In dark mode
+            it created a visible lighter zone at the bottom of the screen that
+            read as a frame. */}
+        {!isDark()&&<div style={{
           position:"absolute",bottom:0,left:0,right:0,height:60,
           background:`radial-gradient(ellipse at 50% 100%, ${effS.h}1F 0%, transparent 70%)`,
           pointerEvents:"none",
           transition:"background .5s ease",
-        }}/>
+        }}/>}
         {/* Top hairline — colored, fades from sides, matches header bottom hairline vocabulary */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:`linear-gradient(90deg, transparent 0%, ${effS.h}25 50%, transparent 100%)`,pointerEvents:"none",transition:"background .5s ease"}}/>
         {navItems.map(({key,icon,label,S})=>{const on=screen===key;return(
