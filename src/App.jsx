@@ -28,8 +28,14 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   setMeta("mobile-web-app-capable", "yes");
   setMeta("apple-mobile-web-app-title", "Luma");
   setMeta("application-name", "Luma");
-  // Translucent status bar so the app's own background flows under it.
-  setMeta("apple-mobile-web-app-status-bar-style", "black-translucent");
+  // Status bar: "default" gives BLACK text on a LIGHT bar — needed because the
+  // app's primary surface (home/header) is near-white. Previously this was
+  // "black-translucent", which forces WHITE text — invisible against the white
+  // Luma sky. With "default" iOS draws its own light status bar above the
+  // safe-area-inset-top, and our header (which already adds env(safe-area-
+  // inset-top) padding) sits cleanly beneath it. Dark mode users still get a
+  // legible bar because iOS auto-inverts default-style bar contents.
+  setMeta("apple-mobile-web-app-status-bar-style", "default");
   // Theme colour — soft Luma sky.
   setMeta("theme-color", "#FBFDFE");
 
@@ -82,6 +88,98 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   const manUrl = "data:application/manifest+json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(manifest))));
   let manLink = document.head.querySelector('link[rel="manifest"]');
   if (!manLink) { manLink = document.createElement("link"); manLink.rel = "manifest"; document.head.appendChild(manLink); }
+
+  // ── iOS launch splash screens ─────────────────────────────────────────────
+  // Without these, an iOS PWA shows a blank white flash before the React app
+  // hydrates — feels broken, not like a native launch. iOS requires SEPARATE
+  // images per device pixel-size and is strict about media-query matching:
+  // the (device-width)/(device-height) MUST exactly match a real iPhone, or
+  // iOS falls back to the blank screen. We generate each splash as a canvas
+  // data-URI (same Luma sky + centered sun mark used for the icon), so no
+  // external files are needed — the splashes travel with the bundle.
+  const makeSplash = (w, h) => {
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const g = c.getContext("2d");
+    // Sky gradient — same Luma sky used in the home header
+    const grd = g.createLinearGradient(0, 0, 0, h);
+    grd.addColorStop(0, "#EAF2FB");
+    grd.addColorStop(0.55, "#F6FAFD");
+    grd.addColorStop(1, "#FFFFFF");
+    g.fillStyle = grd; g.fillRect(0, 0, w, h);
+    // Sun core, centered
+    const cx = w/2, cy = h/2;
+    const sunR = Math.min(w, h) * 0.11;
+    // Soft halo
+    const halo = g.createRadialGradient(cx, cy, sunR*0.6, cx, cy, sunR*2.2);
+    halo.addColorStop(0, "rgba(255,200,94,0.32)");
+    halo.addColorStop(0.7, "rgba(255,200,94,0.08)");
+    halo.addColorStop(1, "rgba(255,200,94,0)");
+    g.fillStyle = halo;
+    g.beginPath(); g.arc(cx, cy, sunR*2.2, 0, Math.PI*2); g.fill();
+    // Rays
+    g.strokeStyle = "#F4B14A"; g.lineCap = "round";
+    for (let i=0;i<8;i++){
+      const a = (i/8)*Math.PI*2;
+      const long = i%2===0;
+      const r1 = sunR*1.35, r2 = long ? sunR*1.95 : sunR*1.75;
+      g.lineWidth = long ? Math.max(4, sunR*0.13) : Math.max(3, sunR*0.10);
+      g.beginPath();
+      g.moveTo(cx+Math.cos(a)*r1, cy+Math.sin(a)*r1);
+      g.lineTo(cx+Math.cos(a)*r2, cy+Math.sin(a)*r2);
+      g.stroke();
+    }
+    // Core
+    const core = g.createRadialGradient(cx-sunR*0.2, cy-sunR*0.25, sunR*0.1, cx, cy, sunR);
+    core.addColorStop(0, "#FFFFFF");
+    core.addColorStop(0.25, "#FFF6E2");
+    core.addColorStop(0.7, "#FFD27A");
+    core.addColorStop(1, "#F2A93B");
+    g.fillStyle = core;
+    g.beginPath(); g.arc(cx, cy, sunR, 0, Math.PI*2); g.fill();
+    // Glint
+    g.fillStyle = "rgba(255,255,255,0.55)";
+    g.beginPath(); g.ellipse(cx-sunR*0.3, cy-sunR*0.35, sunR*0.35, sunR*0.25, 0, 0, Math.PI*2); g.fill();
+    // Wordmark below the sun
+    g.fillStyle = "#1F1B2E";
+    g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = `600 ${Math.round(sunR*0.85)}px -apple-system, "SF Pro Display", "Inter", sans-serif`;
+    g.fillText("Luma", cx, cy + sunR*3.2);
+    return c.toDataURL("image/png");
+  };
+  // Device size table — portrait orientation (iOS expects portrait splashes
+  // for portrait launches). Devices are listed by logical CSS pixels with the
+  // matching media-query device-width and -height. iOS picks the splash whose
+  // media query matches the launching device.
+  // Format: [cssWidth, cssHeight, devicePixelRatio]
+  const SPLASH_DEVICES = [
+    [430, 932, 3],   // iPhone 15 Pro Max, 14 Pro Max
+    [428, 926, 3],   // iPhone 14 Plus, 13 Pro Max, 12 Pro Max
+    [414, 896, 3],   // iPhone 11 Pro Max, XS Max
+    [414, 896, 2],   // iPhone 11, XR
+    [393, 852, 3],   // iPhone 15, 15 Pro, 14 Pro
+    [390, 844, 3],   // iPhone 14, 13, 13 Pro, 12, 12 Pro
+    [375, 812, 3],   // iPhone 13 mini, 12 mini, 11 Pro, X, XS
+    [414, 736, 3],   // iPhone 8 Plus, 7 Plus, 6S Plus
+    [375, 667, 2],   // iPhone SE 2/3, 8, 7, 6S, 6
+    [320, 568, 2],   // iPhone SE 1
+  ];
+  // Generate splashes lazily — only those whose media query could match the
+  // current device. This avoids burning CPU on splashes that will never load
+  // (e.g. don't generate a 430x932 splash on a 320-wide iPhone SE).
+  const dw = window.screen.width, dh = window.screen.height;
+  SPLASH_DEVICES.forEach(([cw, ch, dpr]) => {
+    // Only generate if this device size could plausibly match (within a tier)
+    const dev = Math.min(cw, dw)/Math.max(cw, dw);
+    if (dev < 0.85 && !(cw === dw && ch === dh)) return; // skip wildly mismatched
+    const px = cw * dpr, py = ch * dpr;
+    const dataUrl = makeSplash(px, py);
+    const link = document.createElement("link");
+    link.rel = "apple-touch-startup-image";
+    link.media = `(device-width: ${cw}px) and (device-height: ${ch}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait)`;
+    link.href = dataUrl;
+    document.head.appendChild(link);
+  });
   manLink.setAttribute("href", manUrl);
 })();
 
@@ -473,14 +571,13 @@ const STORIES0=[
 ];
 
 
-const ACTS0=[
-  {id:1,time:"08:00",endTime:"08:30",name:"Frukost",emoji:"🍳",color:ACT_C[0],done:false,stepsDone:{},steps:[{id:101,emoji:"🧴",text:"Tvätta händerna"},{id:102,emoji:"🍳",text:"Ät frukost"},{id:103,emoji:"💧",text:"Drick vatten"}],timer:{on:true,type:"sector",min:15,color:"#E89B89"}},
-  {id:2,time:"09:00",endTime:"11:30",name:"Skolan",emoji:"🚌",color:ACT_C[3],done:false,stepsDone:{},steps:[{id:201,emoji:"🎒",text:"Ta ryggsäcken"},{id:202,emoji:"👟",text:"Ta på skorna"}],timer:{on:false,type:"ring",min:5,color:"#9683C2"}},
-  {id:3,time:"11:30",endTime:"12:00",name:"Lunch",emoji:"🥪",color:ACT_C[2],done:false,stepsDone:{},steps:[],timer:{on:true,type:"dots",min:20,color:"#8FBFA1"}},
-  {id:4,time:"15:00",endTime:"15:45",name:"Gymma",emoji:"🏃",color:ACT_C[1],done:false,stepsDone:{},steps:[{id:401,emoji:"👟",text:"Gympaskor"},{id:402,emoji:"👕",text:"T-shirt"},{id:403,emoji:"👖",text:"Byxor"},{id:404,emoji:"💧",text:"Vattenflaska"}],timer:{on:true,type:"wave",min:45,color:"#8AAFD2"}},
-  {id:5,time:"18:00",endTime:"18:30",name:"Middag",emoji:"🍽️",color:ACT_C[0],done:false,stepsDone:{},steps:[],timer:{on:false,type:"sector",min:20,color:"#E89B89"}},
-  {id:6,time:"21:00",endTime:"21:30",name:"Läggdags",emoji:"🌙",color:"#8E92D2",done:false,stepsDone:{},steps:[{id:601,emoji:"🪥",text:"Borsta tänderna"},{id:602,emoji:"🛁",text:"Duscha"},{id:603,emoji:"🛏️",text:"Sängen"}],timer:{on:false,type:"lava",min:10,color:"#9683C2"}},
-];
+// New users start with an EMPTY day, not a pre-filled schedule.
+// Rationale: an unfamiliar schedule that's "already there" feels like
+// someone else's day, not yours. The empty state has its own gentle copy
+// ("Din dag är öppen / Inga aktiviteter — tryck Redigera"), and the editor
+// offers ready-made routine templates (ROUTINE_TEMPLATES) that the caregiver
+// can add with a single tap. That path is the new gentle on-ramp.
+const ACTS0=[];
 
 /* Ready-made routine templates — offered once to new users as a gentle
    starting point. Each adds a small set of activities. Times are sensible
@@ -691,7 +788,7 @@ const SIGVARD_LAMP_PALETTE=[
   "#FFFFFF", // white — soft & minimal
 ];
 
-const CFG0={cardStyle:"normal",theme:"light",schedView:"both",showSigvard:false,sigvardColor:"#FF4848",showBanner:true,showNowLine:true,nowLineColor:"auto",weekColors:SIGVARD0,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","lava","monster"],defaultType:"wave",defaultMin:5,defaultColor:"#8AAFD2",dotMode:"pearl"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]}};
+const CFG0={cardStyle:"normal",theme:"light",schedView:"both",showSigvard:false,sigvardColor:"#FF4848",showBanner:false,showNowLine:true,nowLineColor:"auto",weekColors:SIGVARD0,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","lava","monster"],defaultType:"wave",defaultMin:5,defaultColor:"#8AAFD2",dotMode:"pearl"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]}};
 
 const TR={
   sv:{other:"EN",myDay:"Min dag",editorOpen:"Redigera",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Inga aktiviteter – tryck Redigera",addAct:"Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Solnedgång",lava:"Lava",monster:"Monster",monsterFull:"Mätt!",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",themeLabel:"Utseende",themeLight:"Ljust",themeDark:"Mörkt",themeHint:"Mörkt läge ger hela appen ett lugnt, mörkt utseende.",modeChoiceTitle:"Välj utseende",modeChoiceDesc:"Hur vill du att Luma ska se ut? Du kan alltid ändra detta i inställningarna.",modeChoiceContinue:"Fortsätt",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redigering & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Hem",comm:"Tala",sigvardOn:"Sigvard-lampor",sigvardColor:"Färg på lampor",sigvardColorHint:"Tidslinjen följer samma färg",schedVisuals:"Visa i schemat",schedVisualsHint:"Slå av om det blir för mycket – båda kan användas, en av dem, eller inget alls.",bannerLabel:"\"Pågår nu\"-rad",bannerHint:"Liten rad högst upp som visar pågående eller nästa aktivitet.",nowLineLabel:"Tidsstreck",nowLineHint:"Linjen som följer aktuell tid genom dagen.",nowLineColor:"Färg på strecket",nowLineSameAsSig:"Samma som lamporna",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",barometerStyle:"Mätarens stil",barometerStyleHint:"Hur känslorna visas för användaren.",styleArc:"Bågformad",styleVertical:"Lodrät",addEmotion:"+ Lägg till känsla",editEmotion:"Redigera känsla",emotionName:"Namn",emotionNamePH:"t.ex. Stressad",customLabel:"Egen",changePhoto:"Byt foto",resetEmotions:"Återställ förvalda",resetEmotionsHint:"Sätter tillbaka standardkänslorna till sina ursprungliga namn, emojis och färger.",confirmDeleteEmotion:"Ta bort?",reasonField:"Anteckningsfält",reasonFieldHint:"Användaren får skriva några ord om sin känsla. Stäng av om det är för mycket.",reasonLabelPH:"t.ex. Varför? eller Vad hände?",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – tryck Redigera för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",helloMyNameIs:"Hej, jag heter",yearsOld:"år",emptyCardTitle:"Kortet är inte ifyllt än",emptyCardDesc:"Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Tryck Redigera för att fylla i det.",createCardTitle:"Skapa mitt-mig-kortet",createCardDesc:"Sammanfattar viktig information — namn, kontaktpersoner, och vad som hjälper i pressade situationer. Visas vid behov.",showLarge:"Visa stort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng",week:"Vecka",myWeek:"Min vecka",weekEmpty:"Inga aktiviteter den här veckan",weekAdd:"Lägg till aktivitet",dayColors:"Veckodagsfärger",dayColorsHint:"Tryck på en dag för att välja färg",resetColors:"Återställ till standard",monday:"Måndag",tuesday:"Tisdag",wednesday:"Onsdag",thursday:"Torsdag",friday:"Fredag",saturday:"Lördag",sunday:"Söndag",skylight:"Himmel",skyHint:"Låt blicken vila",notTodayHint:"Du tittar på en annan dag. Stegen kan inte bockas av nu.",editStory:"Redigera berättelse",storyType:"Typ",typeSeq:"Steg-för-steg",typeSeqDesc:"Flera sidor",typeFT:"Först-Sedan",typeFTDesc:"Två aktiviteter",coverImage:"Huvudbild",camera:"Kamera",gallery:"Galleri",emoji:"Emoji",removePhoto:"Ta bort foto",storyPlacehSeq:"t.ex. Städa rummet",storyPlacehFT:"t.ex. Först läxor, sedan TV",ftLabels:"Etiketter (visas över korten)",ftSection:"Först och Sedan",pageImage:"Bild på sidan",pageTextPH:"Skriv vad som händer på sidan…",pageTimer:"Timer på sidan",off:"Av",sunset:"Solnedgång",editingLabel:"Redigerar",duEditing:"Du redigerar",cover:"Huvudbild",schedule:"Schema",doneTitle:"Klart",doneSub:"Du kan vila en stund.",dayOpen:"Din dag är öppen",allActsDoneTitle:"Alla aktiviteter är klara",allActsDoneSub:"Du kan vila resten av dagen.",lampOne:"1 lampa = 1 minut",lampMany:"1 lampa = {n} minuter",lampSec:"1 lampa = {n} sek",dotToCandle:"Ljus",dotToPearl:"Pärlor",unitLamp:"lampa",unitFlame:"låga",unitSecShort:"sek",unitMinOne:"minut",unitMinMany:"minuter",stepCountOne:"1 steg",stepCountMany:"{n} steg",noName:"(Utan namn)",unsavedTitle:"Osparade ändringar",unsavedDesc:"Vill du spara innan du stänger?",discardChanges:"Släng",keepEditing:"Fortsätt redigera",overlapTitle:"Tidskrock",overlapDesc:"Den nya aktiviteten {t} överlappar:",goBack:"Gå tillbaka",saveAnyway:"Spara ändå",editAct:"Redigera aktivitet",newAct:"Ny aktivitet",actNamePH:"t.ex. Frukost",timeStart:"Start",timeEnd:"Slut (frivilligt)",repeat:"Upprepa",repNone:"Endast idag",repDaily:"Varje dag",repWeekdays:"Vardagar",repWeekend:"Helger",repPickDays:"Välj veckodagar",repDailyShort:"Dagligen",repDaysSuffix:"dagar",daysShort:["sön","mån","tis","ons","tor","fre","lör"],resetSection:"Återställ",resetDataDesc:"Rensar alla aktiviteter, berättelser, känslohistorik och inställningar. Kan inte ångras.",resetDataBtn:"Rensa all data",resetDataConfirm:"Är du säker? Allt data raderas och kan inte återskapas.",backupSection:"Säkerhetskopiering",backupDesc:"Spara allt – scheman, kort, berättelser och inställningar – till en fil. Använd den för att återställa eller flytta till en annan enhet.",exportBtn:"Exportera till fil",importBtn:"Importera från fil",importConfirm:"Detta ersätter all nuvarande data med innehållet i filen. Fortsätt?",importBad:"Filen kunde inte läsas som en Luma-säkerhetskopia.",importOk:"Importerat ✓",exportOk:"Exporterat ✓",tmplTitle:"Vill du komma igång snabbt?",tmplDesc:"Lägg till en färdig rutin – du kan ändra allt efteråt.",tmplAdd:"Lägg till",tmplDismiss:"Nej tack",tmplAdded:"Tillagd ✓",tmplPickTitle:"Förslag på rutiner",tmplPickDesc:"Plussa in de aktiviteter du vill. Du kan ändra allt efteråt.",tmplPickDone:"Klar",tmplAddAll:"Lägg till alla",tmplAdded2:"Tillagd"},
@@ -2700,8 +2797,8 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
     // Some scenes render up to ~1.34× tall, so divide the height budget by that.
     const chrome=landscape?(180+headerSpace):(330+headerSpace);
     const maxByHeight=Math.max(150,(vh-chrome)/1.34);
-    const maxByWidth=Math.max(150,vw-(landscape?80:28));
-    return Math.round(Math.min(landscape?560:440, Math.min(maxByHeight,maxByWidth)));
+    const maxByWidth=Math.max(150,vw-(landscape?80:80));
+    return Math.round(Math.min(landscape?500:340, Math.min(maxByHeight,maxByWidth)));
   });
   useEffect(()=>{
     const onResize=()=>{
@@ -2710,8 +2807,8 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
       const vh=window.innerHeight;
       const chrome=landscape?(180+headerSpace):(330+headerSpace);
       const maxByHeight=Math.max(150,(vh-chrome)/1.34);
-      const maxByWidth=Math.max(150,vw-(landscape?80:28));
-      setSize(Math.round(Math.min(landscape?560:440, Math.min(maxByHeight,maxByWidth))));
+      const maxByWidth=Math.max(150,vw-(landscape?80:80));
+      setSize(Math.round(Math.min(landscape?500:340, Math.min(maxByHeight,maxByWidth))));
     };
     window.addEventListener("resize",onResize);
     window.addEventListener("orientationchange",onResize);
@@ -2721,12 +2818,12 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
     };
   },[headerSpace]);
   return(
-    <div style={{position:"fixed",inset:0,zIndex:9700,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${color}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${SCREENS.timer.hb} 0%,#FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"calc(env(safe-area-inset-top, 0px) + 84px) 20px 40px",gap:22,animation:"ftIn .25s ease",overflow:"hidden"}}>
+    <div style={{position:"fixed",inset:0,zIndex:9700,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${color}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${SCREENS.timer.hb} 0%,#FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:`calc(env(safe-area-inset-top, 0px) + ${activity?72:32}px) 20px calc(env(safe-area-inset-bottom, 0px) + 20px)`,gap:22,animation:"ftIn .25s ease",overflow:"hidden"}}>
       <style>{`
         @keyframes ftIn{from{opacity:0}to{opacity:1}}
         @keyframes ftActIn{0%{opacity:0;transform:translateY(-8px) scale(0.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
       `}</style>
-      <button onClick={onClose} style={{position:"absolute",top:20,right:20,width:42,height:42,borderRadius:21,border:`1px solid ${isDark()?"rgba(255,255,255,0.14)":G.border}`,background:isDark()?"rgba(255,255,255,0.08)":G.white,backdropFilter:isDark()?"blur(12px)":"none",WebkitBackdropFilter:isDark()?"blur(12px)":"none",color:isDark()?"#F4F1FA":G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.16)":sh.sm,zIndex:2}}><IconX size={14}/></button>
+      <button onClick={onClose} style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 14px)",right:20,width:42,height:42,borderRadius:21,border:`1px solid ${isDark()?"rgba(255,255,255,0.14)":G.border}`,background:isDark()?"rgba(255,255,255,0.08)":G.white,backdropFilter:isDark()?"blur(12px)":"none",WebkitBackdropFilter:isDark()?"blur(12px)":"none",color:isDark()?"#F4F1FA":G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.16)":sh.sm,zIndex:2}}><IconX size={14}/></button>
       {/* Dot-timer look toggle — sits at the same height as the close button,
           top-left, so it never collides with the lamps. */}
       {type==="dots"&&(()=>{const oc2=readable(color);return(
@@ -7346,13 +7443,13 @@ function ActRow({item,cardStyle,isEditor,onEdit,onTap,onMarkDone,idx,lifeState="
         {big&&<div style={{padding:"16px 0 4px",display:"flex",alignItems:"center",justifyContent:"center"}}>
           <div style={{width:64,height:64,borderRadius:18,background:item.photo?"#000":(isDark()?`linear-gradient(135deg,${item.color}3A,${item.color}1A)`:`linear-gradient(135deg,${item.color}1F,${item.color}38)`),display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,overflow:"hidden",border:item.photo?"none":(isDark()?`0.5px solid ${item.color}3D`:`0.5px solid rgba(255,255,255,0.8)`),boxShadow:item.photo?`0 6px 16px ${item.color}33`:(isDark()?`inset 0 1px 0 rgba(255,255,255,0.08)`:`inset 0 1px 0 rgba(255,255,255,0.9), 0 4px 10px -3px ${item.color}30`),flexShrink:0}}>{item.photo?<img src={item.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:item.emoji}</div>
         </div>}
-        <div style={{display:"flex",alignItems:"center",gap:compact?10:13,padding:compact?"12px 14px":"16px 18px",position:"relative"}}>
-          <div style={{position:"absolute",left:0,top:0,bottom:0,width:4,background:`linear-gradient(180deg,${item.color},${item.color}80)`,borderRadius:"18px 0 0 18px"}}/>
-          <div style={{marginLeft:4}}/>
+        <div style={{display:"flex",alignItems:"center",gap:compact?10:13,padding:big?"4px 18px 18px":(compact?"12px 14px":"16px 18px"),position:"relative",justifyContent:big?"center":"flex-start"}}>
+          {!big&&<div style={{position:"absolute",left:0,top:0,bottom:0,width:4,background:`linear-gradient(180deg,${item.color},${item.color}80)`,borderRadius:"18px 0 0 18px"}}/>}
+          {!big&&<div style={{marginLeft:4}}/>}
           {!big&&<div style={{fontSize:compact?30:38,lineHeight:1,width:compact?44:54,minWidth:compact?44:54,maxWidth:compact?44:54,height:compact?44:54,maxHeight:compact?44:54,borderRadius:compact?13:15,background:item.photo?"#000":(isDark()?`linear-gradient(150deg, ${item.color}3A 0%, ${item.color}1A 100%)`:`linear-gradient(150deg, rgba(255,255,255,0.9) 0%, ${item.color}16 52%, ${item.color}2A 100%)`),display:"flex",alignItems:"center",justifyContent:"center",border:item.photo?"none":(isDark()?`0.5px solid ${item.color}3D`:`0.5px solid rgba(255,255,255,0.8)`),boxShadow:item.photo?"none":(isDark()?`inset 0 1px 0 rgba(255,255,255,0.08)`:`inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -6px 12px ${item.color}1C, 0 4px 10px -3px ${item.color}30`),flexShrink:0,overflow:"hidden"}}>{item.photo?<img src={item.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>:item.emoji}</div>}
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:compact?16:19,color:tk().ink,lineHeight:1.2,letterSpacing:-.3}}>{item.name}</div>
-            <div style={{display:"flex",alignItems:"center",gap:7,marginTop:6,flexWrap:"wrap"}}>
+          <div style={{flex:big?"0 1 auto":1,minWidth:0,textAlign:big?"center":"left"}}>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:compact?16:big?22:19,color:tk().ink,lineHeight:1.2,letterSpacing:-.3}}>{item.name}</div>
+            <div style={{display:"flex",alignItems:"center",gap:7,marginTop:big?8:6,flexWrap:"wrap",justifyContent:big?"center":"flex-start"}}>
               <span style={{fontFamily:G.font,fontWeight:500,fontSize:11.5,color:onCardColor(item.color),letterSpacing:.5}}>{fmtT(item.time,t)}{item.endTime?` – ${fmtT(item.endTime,t)}`:""}</span>
               {item.repeat&&item.repeat.type&&item.repeat.type!=="none"&&(
                 <Tag col={item.color}>{item.repeat.type==="daily"?(t?.repDailyShort||"Dagligen"):item.repeat.type==="weekdays"?(t?.repWeekdays||"Vardagar"):item.repeat.type==="weekend"?(t?.repWeekend||"Helger"):(item.repeat.days||[]).length+" "+(t?.repDaysSuffix||"dagar")}</Tag>
@@ -8504,7 +8601,7 @@ function StoryViewer({story,lang,t,onClose}){
       <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${story.color}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${story.color}12 0%,#FFFFFF 70%)`,display:"flex",flexDirection:"column",userSelect:"none",animation:"ftIn .25s ease"}}>
         {showTimer&&hasTimer&&<FullTimer type={pt.type} totalSec={pt.min*60} color={pt.color} t={t} autoRun={true} onClose={()=>setShowTimer(false)}/>}
         <style>{`@keyframes ftArrow{0%{transform:translateX(0)}50%{transform:translateX(8px)}100%{transform:translateX(0)}}`}</style>
-        <div style={{padding:"22px 22px 0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+        <div style={{padding:"calc(env(safe-area-inset-top, 0px) + 14px) 22px 0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
           <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
             {story.photo?(
               <div style={{width:32,height:32,borderRadius:10,overflow:"hidden",flexShrink:0}}>
@@ -8595,7 +8692,7 @@ function StoryViewer({story,lang,t,onClose}){
       `}</style>
       <div style={{position:"absolute",top:"15%",left:-80,width:240,height:240,borderRadius:"50%",background:`radial-gradient(circle, ${story.color}22 0%, ${story.color}08 50%, transparent 75%)`,pointerEvents:"none",animation:"svGlowA 16s ease-in-out infinite",willChange:"transform, opacity"}}/>
       <div style={{position:"absolute",bottom:"20%",right:-60,width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle, ${story.color}1F 0%, ${story.color}08 50%, transparent 75%)`,pointerEvents:"none",animation:"svGlowB 18s ease-in-out infinite",willChange:"transform, opacity"}}/>
-      <div style={{padding:"22px 22px 0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+      <div style={{padding:"calc(env(safe-area-inset-top, 0px) + 14px) 22px 0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
         <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
           {story.photo?(
             <div style={{width:32,height:32,borderRadius:10,overflow:"hidden",flexShrink:0}}>
@@ -8626,15 +8723,15 @@ function StoryViewer({story,lang,t,onClose}){
         }}>
         {/* Page image — shrinks when timer is active so both fit */}
         <div style={{
-          width:showTimer?140:220,
-          height:showTimer?140:220,
-          borderRadius:showTimer?28:36,
+          width:showTimer?140:180,
+          height:showTimer?140:180,
+          borderRadius:showTimer?28:32,
           background:page.photo?"transparent":`linear-gradient(140deg,${story.color}1A,${story.color}38)`,
           border:`1px solid ${story.color}30`,
           overflow:"hidden",
           display:"flex",alignItems:"center",justifyContent:"center",
-          fontSize:showTimer?76:120,
-          boxShadow:`0 ${showTimer?12:20}px ${showTimer?30:50}px ${story.color}26`,
+          fontSize:showTimer?76:100,
+          boxShadow:`0 ${showTimer?12:18}px ${showTimer?30:44}px ${story.color}26`,
           flexShrink:0,
           transition:"width .45s cubic-bezier(0.32, 0.72, 0, 1), height .45s cubic-bezier(0.32, 0.72, 0, 1), border-radius .45s, font-size .45s, box-shadow .45s",
         }}>
@@ -8643,7 +8740,7 @@ function StoryViewer({story,lang,t,onClose}){
         <div style={{
           fontFamily:G.serif,
           fontWeight:600,
-          fontSize:showTimer?16:22,
+          fontSize:showTimer?16:20,
           color:tk().ink,
           textAlign:"center",
           lineHeight:1.35,
@@ -9343,7 +9440,7 @@ function BreathingExercise({onClose,t,lang}){
   },[elapsed,started]);
   if(round>=4){
     return(
-      <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${BLUE}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${BLUE}14,#FFFFFF)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:30,animation:"ftIn .4s ease"}}>
+      <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${BLUE}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${BLUE}14,#FFFFFF)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"calc(env(safe-area-inset-top, 0px) + 30px) 30px calc(env(safe-area-inset-bottom, 0px) + 30px)",animation:"ftIn .4s ease"}}>
         <LumaDoneMark t={t} accentColor={BLUE}/>
         <button onClick={onClose} className="lt-press" style={{marginTop:48,padding:"14px 36px",borderRadius:20,border:"none",background:`linear-gradient(135deg,${BLUE},${DEEP})`,color:"#fff",fontFamily:G.font,fontWeight:600,fontSize:15,letterSpacing:.3,cursor:"pointer",boxShadow:sh.c(BLUE),opacity:0,animation:"lumaDoneTextIn 0.8s 2.3s cubic-bezier(0.32, 0.72, 0, 1) forwards"}}>{t.close}</button>
       </div>
@@ -9373,7 +9470,7 @@ function BreathingExercise({onClose,t,lang}){
         );
       })}
 
-      <button onClick={onClose} style={{position:"absolute",top:24,right:24,width:44,height:44,borderRadius:22,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:5}}><IconX size={16}/></button>
+      <button onClick={onClose} style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 18px)",right:18,width:44,height:44,borderRadius:22,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:5}}><IconX size={16}/></button>
       {!started?(
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:22,padding:30,textAlign:"center",zIndex:2}}>
           <style>{`
@@ -9786,7 +9883,7 @@ function GroundingExercise({onClose,t,lang}){
   const cur=steps[idx];
   if(idx>=steps.length){
     return(
-      <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${S.h}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${S.hb},#FFFFFF)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:30,gap:18,animation:"ftIn .4s ease"}}>
+      <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${S.h}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${S.hb},#FFFFFF)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"calc(env(safe-area-inset-top, 0px) + 30px) 30px calc(env(safe-area-inset-bottom, 0px) + 30px)",gap:18,animation:"ftIn .4s ease"}}>
         <style>{`@keyframes gdAffirmIn{0%,40%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}`}</style>
         <LumaDoneMark t={t} accentColor={S.h}/>
         {/* Grounding's central affirmation — central to the practice, sits below the mark */}
@@ -9797,14 +9894,14 @@ function GroundingExercise({onClose,t,lang}){
   }
   if(idx<0){
     return(
-      <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${S.h}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${S.hb} 0%,#FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:30,gap:24,animation:"ftIn .25s ease"}}>
+      <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${S.h}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${S.hb} 0%,#FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"calc(env(safe-area-inset-top, 0px) + 30px) 30px calc(env(safe-area-inset-bottom, 0px) + 30px)",gap:24,animation:"ftIn .25s ease"}}>
         <style>{`
           @keyframes gIntroIn{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}
           @keyframes gIntroRipple{0%{transform:scale(0.4);opacity:0.7}100%{transform:scale(2.2);opacity:0}}
           @keyframes gIntroBreathe{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.07);filter:brightness(1.1)}}
           @keyframes gIntroTextIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         `}</style>
-        <button onClick={onClose} style={{position:"absolute",top:24,right:24,width:44,height:44,borderRadius:22,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm}}><IconX size={16}/></button>
+        <button onClick={onClose} style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 18px)",right:18,width:44,height:44,borderRadius:22,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm}}><IconX size={16}/></button>
         {/* Breathing mandala — slimmer than completion screen, sets the calm tone */}
         <div style={{width:100,height:100,display:"flex",alignItems:"center",justifyContent:"center",animation:"gIntroIn 1s cubic-bezier(0.22,1,0.36,1) both"}}>
           <svg width={100} height={100} viewBox="0 0 100 100" style={{overflow:"visible"}}>
@@ -10085,7 +10182,7 @@ function SkylightExercise({onClose,t,lang}){
       startRef.current=Date.now();
     };
     return(
-      <div style={{position:"fixed",inset:0,zIndex:9000,background:`linear-gradient(180deg, ${skyTop} 0%, ${skyMid} 55%, ${skyBot} 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:30,animation:"ftIn .4s ease"}}>
+      <div style={{position:"fixed",inset:0,zIndex:9000,background:`linear-gradient(180deg, ${skyTop} 0%, ${skyMid} 55%, ${skyBot} 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"calc(env(safe-area-inset-top, 0px) + 30px) 30px calc(env(safe-area-inset-bottom, 0px) + 30px)",animation:"ftIn .4s ease"}}>
         <style>{`
           @keyframes skyDoneTwinkle{0%,100%{opacity:0.3}50%{opacity:0.95}}
         `}</style>
@@ -10407,7 +10504,7 @@ function SkylightExercise({onClose,t,lang}){
       </div>
 
       {/* Subtle close button — top-right, glassmorphic */}
-      <button onClick={onClose} className="lt-press" style={{position:"absolute",top:22,right:22,width:38,height:38,borderRadius:19,border:`1px solid ${isDark?"rgba(255,255,255,0.25)":"rgba(31,27,46,0.12)"}`,background:isDark?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.45)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",color:isDark?"#FFFFFF":tk().ink,cursor:"pointer",zIndex:10,fontWeight:500,transition:"background .8s ease, color .8s ease, border-color .8s ease",display:"flex",alignItems:"center",justifyContent:"center"}}><IconX size={14}/></button>
+      <button onClick={onClose} className="lt-press" style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 18px)",right:22,width:38,height:38,borderRadius:19,border:`1px solid ${isDark?"rgba(255,255,255,0.25)":"rgba(31,27,46,0.12)"}`,background:isDark?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.45)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",color:isDark?"#FFFFFF":tk().ink,cursor:"pointer",zIndex:10,fontWeight:500,transition:"background .8s ease, color .8s ease, border-color .8s ease",display:"flex",alignItems:"center",justifyContent:"center"}}><IconX size={14}/></button>
 
       {/* Minimal guidance text — bottom center, fades in and out */}
       <div style={{position:"absolute",bottom:48,left:0,right:0,textAlign:"center",pointerEvents:"none",zIndex:5}}>
@@ -11467,8 +11564,8 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
   // Show mode — fullscreen, no chrome, optimised for handing phone to a stranger
   if(showMode){
     return(
-      <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${S.h}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${S.hb} 0%,#FFFFFF 55%, ${S.hll} 100%)`,display:"flex",flexDirection:"column",padding:"20px 16px",animation:"ftIn .25s ease",overflowY:"auto"}}>
-        <button onClick={()=>setShowMode(false)} style={{position:"absolute",top:18,right:18,width:42,height:42,borderRadius:21,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:2}}><IconX size={14}/></button>
+      <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${S.h}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${S.hb} 0%,#FFFFFF 55%, ${S.hll} 100%)`,display:"flex",flexDirection:"column",padding:"calc(env(safe-area-inset-top, 0px) + 18px) 16px calc(env(safe-area-inset-bottom, 0px) + 18px)",animation:"ftIn .25s ease",overflowY:"auto"}}>
+        <button onClick={()=>setShowMode(false)} style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 14px)",right:18,width:42,height:42,borderRadius:21,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:2}}><IconX size={14}/></button>
         <div style={{maxWidth:440,margin:"32px auto 24px",width:"100%",position:"relative"}}>
           <div style={{position:"absolute",inset:-20,borderRadius:44,background:`radial-gradient(circle at 50% 30%, ${S.h}22 0%, transparent 70%)`,filter:"blur(22px)",pointerEvents:"none"}}/>
           <div style={{position:"relative"}}><Card big/></div>
@@ -12701,7 +12798,7 @@ function DemoTour({onClose,lang}){
   const effSceneDeep=SCENE_DEEPS[idx]||SCREENS.home.deep;
 
   return(
-    <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{position:"fixed",inset:0,zIndex:99999,background:scene.bg,display:"flex",flexDirection:"column",transition:"background 0.7s ease",userSelect:"none",overflow:"hidden"}}>
+    <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{position:"fixed",inset:0,zIndex:99999,background:scene.bg,display:"flex",flexDirection:"column",transition:"background 0.7s ease",userSelect:"none",overflow:"hidden",paddingTop:"env(safe-area-inset-top, 0px)",paddingBottom:"env(safe-area-inset-bottom, 0px)"}}>
       <style>{`@keyframes dSceneIn{from{opacity:0;transform:translateY(10px) scale(0.985)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes dTextIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
       {/* Progress dots */}
@@ -12746,9 +12843,12 @@ function DemoTour({onClose,lang}){
         )}
       </div>
 
-      {/* Controls — fixed footprint */}
+      {/* Controls — sit closer to the caption above (not glued to the bottom
+          of the screen, where they read as a footer disconnected from the
+          content). Extra bottom margin lifts the arrows away from the iPhone
+          home-indicator, which otherwise sat very near the next/prev buttons. */}
       {!isOutro&&(
-        <div style={{flexShrink:0,padding:"12px 24px 24px",display:"flex",justifyContent:"center",alignItems:"center",gap:12}}>
+        <div style={{flexShrink:0,padding:"8px 24px 56px",display:"flex",justifyContent:"center",alignItems:"center",gap:12}}>
           <button onClick={prev} disabled={idx===0} aria-label="Föregående" className="lt-press-soft" style={{width:44,height:44,borderRadius:22,border:`1px solid ${G.border}`,background:idx===0?G.cream:"rgba(255,255,255,0.95)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",color:idx===0?G.ink3:G.ink2,cursor:idx===0?"default":"pointer",opacity:idx===0?0.5:1,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 4px 12px rgba(31,27,46,0.06)"}}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
@@ -13069,6 +13169,23 @@ export default function App(){
     idCard:{...CFG0.idCard,...(cfgRaw.idCard||{})},
   }),[cfgRaw]);
   APP_THEME=cfg.theme||"light"; // expose active theme module-wide so any component can read it during this render pass
+  // Sync theme to <html> so our html/body background CSS (which paints the
+  // safe-area edges in iOS PWA) matches the in-app theme. Without this, the
+  // status-bar and home-indicator regions showed white in dark mode, reading
+  // as a visible frame around the app.
+  useLayoutEffect(()=>{
+    if(typeof document==="undefined") return;
+    const el=document.documentElement;
+    el.classList.toggle("lt-theme-dark",APP_THEME==="dark");
+    el.classList.toggle("lt-theme-light",APP_THEME!=="dark");
+    // Also keep the PWA theme-color meta in sync so iOS paints the status-bar
+    // area in the matching tone. (Status bar text colour is controlled by the
+    // black-translucent/default meta set on first paint — this just covers the
+    // background tone behind it.)
+    let m=document.head.querySelector('meta[name="theme-color"]');
+    if(!m){m=document.createElement("meta");m.setAttribute("name","theme-color");document.head.appendChild(m);}
+    m.setAttribute("content",APP_THEME==="dark"?"#0A0810":"#FBFDFE");
+  },[APP_THEME]);
   const[resetKey,setResetKey]=useState(0);
   // Track the previously-rendered screen so the entrance fade only plays on a
   // real screen change. Without this, unrelated re-renders (toggling edit mode,
@@ -13508,6 +13625,53 @@ export default function App(){
           overscroll-behavior-y: contain; /* prevents pull-to-refresh on Android Chrome */
           -webkit-text-size-adjust: 100%;
           -webkit-tap-highlight-color: transparent;
+          /* Crisp text on iOS PWA — without these the type looks slightly
+             muddy compared to native apps. -webkit-font-smoothing makes
+             stroke widths look intentional rather than soft. */
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
+          /* Block iOS double-tap-to-zoom across the whole app — buttons already
+             have this, but accidental double-taps on prose used to trigger a
+             zoom-in that breaks the standalone illusion. */
+          touch-action: manipulation;
+          /* PWA standalone fix: in iOS standalone the system fills the safe-
+             area regions (above the notch / below the home-indicator) with
+             whatever colour the underlying html/body has. If that's a default
+             white, the dark-mode app shows a bright "frame" along the edges.
+             Match the deepest tone of the dark gradient so the screen extends
+             cleanly to the device edges. Light mode keeps white. */
+          background: #FFFFFF;
+          margin: 0;
+          padding: 0;
+        }
+        @media (prefers-color-scheme: dark) {
+          html, body { background: #0A0810; }
+        }
+        /* App-set theme overrides device preference — keep them in sync when
+           Luma's theme picker forces a mode. The .lt-theme-dark class is set
+           on document.documentElement when isDark() is true. */
+        html.lt-theme-dark, html.lt-theme-dark body { background: #0A0810; }
+        html.lt-theme-light, html.lt-theme-light body { background: #FFFFFF; }
+        /* Prevent accidental text selection during scroll/long-press on iOS.
+           Text fields override this with their own selection rule. Real text
+           content (modal body copy, descriptions) opts back in via .lt-selectable. */
+        .lt-app-root {
+          -webkit-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none; /* no iOS long-press image/text bubble */
+        }
+        input, textarea, [contenteditable="true"], .lt-selectable {
+          -webkit-user-select: text;
+          user-select: text;
+          -webkit-touch-callout: default;
+        }
+        /* Smooth momentum scrolling on every inner scroller in the app.
+           Tagging data-modal-scroll and adding .lt-scroll covers our sheets
+           and timeline; the wildcard below catches any element that opts into
+           overflow:auto/scroll. */
+        [data-modal-scroll], .lt-scroll, .lt-app-root *[style*="overflow"] {
+          -webkit-overflow-scrolling: touch;
         }
         .lt-app-root {
           height: var(--app-vh);
@@ -14198,17 +14362,40 @@ export default function App(){
         borderTop:isDark()?"1px solid rgba(255,255,255,0.07)":"none",
         boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.06), 0 -10px 30px -12px rgba(0,0,0,0.6)":"none",
         display:"flex",
-        padding:"10px 0 calc(24px + env(safe-area-inset-bottom, 0px))",
+        padding:"10px 0 calc(6px + env(safe-area-inset-bottom, 0px))",
         flexShrink:0,zIndex:20,overflowX:"auto",position:"relative",
         maxHeight:navHidden?0:300,
         opacity:navHidden?0:1,
         paddingTop:navHidden?0:10,
-        paddingBottom:navHidden?0:"calc(24px + env(safe-area-inset-bottom, 0px))",
+        paddingBottom:navHidden?0:"calc(6px + env(safe-area-inset-bottom, 0px))",
         overflow:navHidden?"hidden":"auto",
         pointerEvents:navHidden?"none":"auto",
         transition:"max-height .35s cubic-bezier(0.32, 0.72, 0, 1), opacity .25s ease, padding .35s cubic-bezier(0.32, 0.72, 0, 1), background .5s ease",
-      }}>
+        // Hide the scrollbar that would otherwise appear on Chrome/Firefox
+        // when the nav overflows — looks unfinished and adds visual noise.
+        // Native iOS Safari already hides it via -webkit-overflow-scrolling.
+        scrollbarWidth:"none",
+      }}
+      // iOS: hide WebKit scrollbar; CSS-in-JS doesn't expose ::-webkit, so
+      // we emit a class-scoped rule from below.
+      className="lt-bottom-nav">
         <style>{`
+          .lt-bottom-nav::-webkit-scrollbar { display: none; }
+          /* Fade-edge on the right side of the bottom nav — appears only when
+             there's more content scrollable to the right, hinting at it
+             without adding chrome. Same vocabulary as iOS native segmented
+             controls that overflow. */
+          .lt-bottom-nav::after {
+            content: "";
+            position: absolute;
+            top: 0; bottom: 0; right: 0;
+            width: 32px;
+            pointer-events: none;
+            background: linear-gradient(90deg, transparent, ${isDark()?"rgba(13,11,20,0.85)":"rgba(255,255,255,0.92)"});
+            opacity: ${navItems.length>5?1:0};
+            transition: opacity .35s ease;
+            z-index: 5;
+          }
           @keyframes navHaloIn{0%{opacity:0;transform:translateX(-50%) scale(0.85)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
           @keyframes navUnderSoft{0%{transform:scaleX(0);opacity:0}100%{transform:scaleX(1);opacity:1}}
           @keyframes navAuroraBreath{0%,100%{transform:translateX(-50%) scale(1);opacity:1}50%{transform:translateX(-50%) scale(1.06);opacity:0.85}}
