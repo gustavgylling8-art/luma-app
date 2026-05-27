@@ -46,7 +46,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   setMeta("apple-mobile-web-app-status-bar-style", storedThemeForStatus === "dark" ? "black-translucent" : "default");
   // Theme colour — paints the iOS PWA status-bar region. Must match the app
   // body to avoid a visible band where they meet.
-  setMeta("theme-color", storedThemeForStatus === "dark" ? "#0A0810" : "#FBFDFE");
+  setMeta("theme-color", storedThemeForStatus === "dark" ? "#000000" : "#FBFDFE");
 
   // The Luma sun icon — peach/bronze 3D orb matching SceneIntro EXACTLY.
   // Same palette as the welcome slide so when iOS shows the apple-touch-icon
@@ -105,7 +105,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       if (parsed && parsed.theme === "dark") storedTheme = "dark";
     }
   } catch (_) {}
-  const manifestBg = storedTheme === "dark" ? "#0A0810" : "#FBFDFE";
+  const manifestBg = storedTheme === "dark" ? "#000000" : "#FBFDFE";
   const manifest = {
     name: "Luma", short_name: "Luma",
     description: "A schedule. A rhythm. A safety.",
@@ -135,7 +135,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     // Background — Luma home palette. Dark mode uses the same deep night base
     // as the live app; light mode uses the soft sky-blue → white wash.
     if (dark) {
-      g.fillStyle = "#0A0810";
+      g.fillStyle = "#000000";
       g.fillRect(0, 0, w, h);
     } else {
       const grd = g.createLinearGradient(0, 0, 0, h);
@@ -13325,7 +13325,7 @@ export default function App(){
     // Without both, a visible bright band appears at the top of dark mode.
     let m=document.head.querySelector('meta[name="theme-color"]');
     if(!m){m=document.createElement("meta");m.setAttribute("name","theme-color");document.head.appendChild(m);}
-    m.setAttribute("content",APP_THEME==="dark"?"#0A0810":"#FBFDFE");
+    m.setAttribute("content",APP_THEME==="dark"?"#000000":"#FBFDFE");
     let sb=document.head.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     if(!sb){sb=document.createElement("meta");sb.setAttribute("name","apple-mobile-web-app-status-bar-style");document.head.appendChild(sb);}
     sb.setAttribute("content",APP_THEME==="dark"?"black-translucent":"default");
@@ -13767,7 +13767,7 @@ export default function App(){
   })();
   return(
     <div style={{position:"relative",minHeight:"100dvh",background:isDark()
-      ? "#0A0810" /* solid base = matches html/body — no edge band possible */
+      ? "#000000" /* pure black = matches html/body — no edge band possible */
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
@@ -13789,22 +13789,19 @@ export default function App(){
           --safe-right: env(safe-area-inset-right, 0px);
         }
         html, body {
-          overscroll-behavior-y: contain; /* prevents pull-to-refresh on Android Chrome */
+          overscroll-behavior-y: contain;
           -webkit-text-size-adjust: 100%;
           -webkit-tap-highlight-color: transparent;
-          /* Crisp text on iOS PWA */
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
-          /* PWA standalone: match safe-area regions to the active theme so
-             the screen extends cleanly to device edges. */
           background: #FFFFFF;
           margin: 0;
           padding: 0;
         }
         @media (prefers-color-scheme: dark) {
-          html, body { background: #0A0810; }
+          html, body { background: #000000; }
         }
-        html.lt-theme-dark, html.lt-theme-dark body { background: #0A0810; }
+        html.lt-theme-dark, html.lt-theme-dark body { background: #000000; }
         html.lt-theme-light, html.lt-theme-light body { background: #FFFFFF; }
         .lt-app-root {
           height: var(--app-vh);
@@ -14500,18 +14497,18 @@ export default function App(){
         // Bottom nav blends seamlessly with the dark base — no gradient that
         // would visibly lift the bottom zone. The only chrome is a faint
         // hairline at the top to separate nav from content.
-        background:isDark()?"#0A0810":`linear-gradient(180deg, #FFFFFF 0%, #FDFCFB 60%, ${effS.hl}33 100%)`,
+        background:isDark()?"#000000":`linear-gradient(180deg, #FFFFFF 0%, #FDFCFB 60%, ${effS.hl}33 100%)`,
         backdropFilter:isDark()?"none":"none",
         WebkitBackdropFilter:isDark()?"none":"none",
         borderTop:isDark()?"1px solid rgba(255,255,255,0.05)":"none",
         boxShadow:isDark()?"none":"none",
         display:"flex",
-        padding:"10px 0 calc(6px + env(safe-area-inset-bottom, 0px))",
+        padding:"12px 0 calc(10px + env(safe-area-inset-bottom, 0px))",
         flexShrink:0,zIndex:20,overflowX:"auto",position:"relative",
         maxHeight:navHidden?0:300,
         opacity:navHidden?0:1,
-        paddingTop:navHidden?0:10,
-        paddingBottom:navHidden?0:"calc(6px + env(safe-area-inset-bottom, 0px))",
+        paddingTop:navHidden?0:12,
+        paddingBottom:navHidden?0:"calc(10px + env(safe-area-inset-bottom, 0px))",
         overflow:navHidden?"hidden":"auto",
         pointerEvents:navHidden?"none":"auto",
         transition:"max-height .35s cubic-bezier(0.32, 0.72, 0, 1), opacity .25s ease, padding .35s cubic-bezier(0.32, 0.72, 0, 1), background .5s ease",
