@@ -14100,35 +14100,18 @@ export default function App(){
     return "rgba(60, 70, 120, 0.22)";                            // night
   })();
   return(
-    /* Outer shell — fixed exactly to 100dvh, full-bleed to every edge. */
+    /* Outer shell — fills the viewport. Edge-bleed is handled at the html/body
+       level (see the theme CSS below), not with an extra layer here. */
     <div style={{position:"relative",
       height:"100dvh",
       width:"100%",
-      boxSizing:"border-box",
+      overflow:"hidden",
       background:isDark()
       ? "#0E0E10"
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
-      {/* DEFINITIVE EDGE-BLEED FIX — a full-cover backdrop locked to every
-          edge of the outer shell, painted in the exact theme colour. Sits
-          behind everything (zIndex 0; app content is zIndex 1) so no
-          html-background stripe can show at the screen edges.
-          IMPORTANT: this uses position:ABSOLUTE + inset:0 (NOT fixed + dvh).
-          position:fixed combined with 100dvh triggers a WebKit bug in iOS
-          standalone PWAs that mis-maps touch coordinates — taps register
-          above where the finger lands. Since the outer shell is already
-          position:relative at 100dvh, an absolutely-positioned inset:0 child
-          covers the identical area without the touch bug. */}
-      <div aria-hidden="true" style={{
-        position:"absolute",
-        inset:0,
-        background:isDark()?"#0E0E10":(screen==="home"?"#FFFFFF":effS.hb),
-        zIndex:0,
-        pointerEvents:"none",
-        transition:"background .5s ease",
-      }}/>
-      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",zIndex:1,background:isDark()?"#0E0E10":"transparent",height:"100%",width:"100%"}}>
+      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent",height:"100%",width:"100%"}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
         /* === UNIVERSAL DEVICE ADAPTATION ===
@@ -14183,16 +14166,11 @@ export default function App(){
         html.lt-theme-dark, html.lt-theme-dark body { background: #0E0E10; margin: 0; padding: 0; }
         html.lt-theme-light, html.lt-theme-light body { background: #FBFDFE; margin: 0; padding: 0; }
         .lt-app-root {
-          height: var(--app-vh);
           max-width: 480px;
-          /* Safe-area-left/right padding is applied on the OUTER wrapper now
-             so the theme background colour extends edge-to-edge. Adding it
-             here too would double-pad and re-expose the parent's colour,
-             which in light mode could create a thin bright stripe in dark
-             rooms. Top/bottom safe-area is handled per-screen because the
-             header and bottom nav need to flow under those zones. */
-          /* No overflow:hidden here — would clip position:fixed overlays. Body has its own clipping. */
-          isolation: isolate; /* Creates stacking context without clipping */
+          /* Height comes from the inline height:100% (parent is 100dvh).
+             No isolation/transform here — those can shift the touch
+             hit-test coordinate space in iOS standalone PWAs, which is
+             one cause of the "taps land above the button" bug. */
         }
         /* === DEVICE-ADAPTIVE LAYOUT ===
            Each tier adjusts the app width to match the form factor, so the
