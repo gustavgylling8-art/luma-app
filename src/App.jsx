@@ -271,7 +271,14 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     g.fillStyle = dark ? "#E9E5F2" : "#1F1B2E";
     g.textAlign = "center"; g.textBaseline = "middle";
     g.font = `700 ${Math.round(R*0.95)}px "Nunito", -apple-system, system-ui, sans-serif`;
-    g.fillText("Luma", cx, cy + R*3.6);
+    const wordY = cy + R*3.6;
+    g.fillText("Luma", cx, wordY);
+    // (8) Accent dot — a single crisp peach/bronze dot centered below the
+    // wordmark, echoing the "TORSDAG ·" accent in-app. Small, clean, no glow.
+    g.fillStyle = ACCENT;
+    g.beginPath();
+    g.arc(cx, wordY + R*0.95, Math.max(2, R*0.085), 0, Math.PI*2);
+    g.fill();
     return c.toDataURL("image/png");
   };
   // Device size table — portrait orientation (iOS expects portrait splashes
@@ -14141,27 +14148,22 @@ export default function App(){
     return "rgba(60, 70, 120, 0.22)";                            // night
   })();
   return(
-    /* Outer shell — fills the viewport. Edge-bleed is handled at the html/body
-       level (see the theme CSS below), not with an extra layer here. */
-    <div style={{position:"relative",
-      height:appVH?appVH+"px":"100dvh",
-      width:"100%",
+    /* Outer shell — pinned to the FULL visual viewport with position:fixed +
+       inset:0. This is the device-independent edge-bleed fix: a fixed element
+       at inset:0 always spans the entire screen incl. the left/right safe-area
+       strips on every rounded-corner iPhone, so the app's own background fills
+       those strips — no bright line. (A centered max-width child still can't
+       reach the strips, which is why painting THIS layer edge-to-edge is what
+       matters.) Height tracks the measured viewport. */
+    <div style={{position:"fixed",
+      top:0,left:0,right:0,bottom:0,
+      width:"auto",
       overflow:"hidden",
       background:isDark()
       ? "#0E0E10"
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
-      {/* FIXED FULL-VIEWPORT BACKDROP — pinned to the real viewport edges
-          (position:fixed, inset:0) so it covers the left/right safe-area
-          strips on rounded-corner iPhones in standalone PWA. The centered
-          app (max-width) can never reach those strips, so without this layer
-          the strip shows the browser default → a bright line in dark mode.
-          zIndex:-1 keeps it behind all content; pointerEvents:none so it
-          never interferes with taps. */}
-      <div aria-hidden="true" style={{position:"fixed",top:0,left:0,right:0,bottom:0,
-        background:isDark()?"#0E0E10":(screen==="home"?"#FFFFFF":effS.hb),
-        zIndex:-1,pointerEvents:"none",transition:"background .5s ease"}}/>
       <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent",height:"100%",width:"100%"}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
@@ -14538,7 +14540,7 @@ export default function App(){
             @keyframes rayFade1{0%,100%{opacity:.85}50%{opacity:.58}}
             @keyframes rayFade2{0%,100%{opacity:.58}50%{opacity:.85}}
           `}</style>
-          <svg width={26} height={26} viewBox="0 0 26 26" style={{flexShrink:0,overflow:"visible",opacity:1,filter:isDark()?`drop-shadow(0 0 7px ${effS.h}55)`:"none"}}>
+          <svg width={26} height={26} viewBox="0 0 26 26" style={{flexShrink:0,overflow:"visible",opacity:1,filter:isDark()?`drop-shadow(0 0 3px ${effS.h}2E)`:"none"}}>
             {(()=>{
               // In dark mode the sun is a calmer, dimmed tint of the screen accent —
               // mature and harmonised with the wordmark. In light mode it's softened
@@ -14557,7 +14559,7 @@ export default function App(){
               </radialGradient>
               <radialGradient id="lumaOuterGlow" cx="50%" cy="50%" r="50%">
                 <stop offset="40%" stopColor={effS.h} stopOpacity="0"/>
-                <stop offset="70%" stopColor={effS.h} stopOpacity={isDark()?"0.12":"0.18"}/>
+                <stop offset="70%" stopColor={effS.h} stopOpacity={isDark()?"0.07":"0.18"}/>
                 <stop offset="100%" stopColor={effS.h} stopOpacity="0"/>
               </radialGradient>
               {/* Soft top-left gloss — reads like real light catching the orb */}
@@ -14971,12 +14973,16 @@ export default function App(){
         boxShadow:isDark()?"none":"none",
         display:"flex",
         padding:"12px 0 calc(10px + env(safe-area-inset-bottom, 0px))",
-        flexShrink:0,zIndex:20,overflowX:"hidden",position:"relative",
+        flexShrink:0,zIndex:20,position:"relative",
         maxHeight:navHidden?0:300,
         opacity:navHidden?0:1,
         paddingTop:navHidden?0:12,
         paddingBottom:navHidden?0:"calc(10px + env(safe-area-inset-bottom, 0px))",
-        overflow:navHidden?"hidden":"hidden",
+        // Horizontal scroll when many tools overflow the width; vertical stays
+        // clipped. When hidden (input focus / calm mode) everything is clipped.
+        overflowX:navHidden?"hidden":"auto",
+        overflowY:"hidden",
+        WebkitOverflowScrolling:"touch",
         pointerEvents:navHidden?"none":"auto",
         transition:"max-height .35s cubic-bezier(0.32, 0.72, 0, 1), opacity .25s ease, padding .35s cubic-bezier(0.32, 0.72, 0, 1), background .5s ease",
         // Hide the scrollbar that would otherwise appear on Chrome/Firefox
@@ -15019,7 +15025,7 @@ export default function App(){
         {/* Top hairline — colored, fades from sides, matches header bottom hairline vocabulary */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:`linear-gradient(90deg, transparent 0%, ${effS.h}25 50%, transparent 100%)`,pointerEvents:"none",transition:"background .5s ease"}}/>
         {navItems.map(({key,icon,label,S})=>{const on=screen===key;return(
-          <button key={key} onClick={()=>{setScreen(key);}} className="lt-press" style={{flex:1,minWidth:0,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"10px 2px 4px",position:"relative",zIndex:1}}>
+          <button key={key} onClick={()=>{setScreen(key);}} className="lt-press" style={{flex:navItems.length>7?"0 0 auto":"1",minWidth:navItems.length>7?64:0,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"10px 2px 4px",position:"relative",zIndex:1}}>
             {/* Aurora glow behind active tab — breathes gently. Same vocabulary
                 as the header's aurora, scaled down for the nav. */}
             {on&&(
@@ -15231,6 +15237,9 @@ export default function App(){
                 </g>
               </svg>
               <span style={{fontFamily:G.serif,fontWeight:600,fontSize:36,color:G.ink,letterSpacing:0.4,lineHeight:1}}>Luma</span>
+              {/* Accent dot below the wordmark — crisp, clean, matches the
+                  launch splash. Uses the warm Luma sun accent. */}
+              <div style={{width:6,height:6,borderRadius:"50%",background:"#E8A878",marginTop:-6}}/>
             </div>
             {/* Soul of the app — one calm sentence. The interactive demo (next)
                 takes care of teaching the user "where to tap". */}
