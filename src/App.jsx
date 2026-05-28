@@ -677,35 +677,48 @@ const COMM0=[
 ];
 
 const STORIES0=[
-  {id:"s1",type:"sequence",sv:"Städa rummet",en:"Clean the room",emoji:"🧹",color:"#C9A875",pages:[
-    {id:"p1",emoji:"🛏️",photo:null,sv:"Först bäddar jag sängen.",en:"First, I make the bed."},
-    {id:"p2",emoji:"🧸",photo:null,sv:"Sedan ställer jag leksakerna på plats.",en:"Then I put my toys away."},
-    {id:"p3",emoji:"👕",photo:null,sv:"Jag lägger smutsiga kläder i tvättkorgen.",en:"I put dirty clothes in the laundry basket."},
-    {id:"p4",emoji:"📚",photo:null,sv:"Jag sätter böckerna i hyllan.",en:"I put my books on the shelf."},
-    {id:"p5",emoji:"🌟",photo:null,sv:"Mitt rum är städat. Bra jobbat!",en:"My room is clean. Good job!"},
+  // ── Example "showcase" stories. Each carries example:true so the UI can mark
+  //    it with a distinct "EXEMPEL/EXAMPLE" badge (clearer than a title prefix).
+  //    They show the full range Stories can hold — a classic bedtime fairytale,
+  //    a brave-feelings walk-through, a gentle forest tale, an ocean lullaby, a
+  //    cooking flow, a morning wind-up, and a First-Then — with VARIED timer
+  //    styles (sun/sunset, wave, ring, sector/Time Timer, monster, lava) used
+  //    only where a pause or wait is part of the moment.
+  {id:"s_fairytale",example:true,type:"sequence",sv:"Pärlan och drömskeppet",en:"Pearl and the dream ship",emoji:"🌙",color:"#9683C2",pages:[
+    {id:"p1",emoji:"🌙",photo:null,sv:"Det var en gång en liten flicka som hette Pärla. Varje kväll, just när hon blundat, kom ett litet skepp seglande genom fönstret — byggt av månsken och tunt som en dröm.",en:"Once upon a time there was a little girl named Pearl. Every evening, just as she closed her eyes, a little ship came sailing through her window — built of moonlight and thin as a dream."},
+    {id:"p2",emoji:"⛵",photo:null,sv:"\"Stig ombord\", sa den gamle kaptenen, som hade skägg av silver och en hatt full av stjärnor. Och Pärla klev ner i den mjuka båten.",en:"\"Climb aboard,\" said the old captain, who had a beard of silver and a hat full of stars. And Pearl stepped down into the soft little boat.",timer:{on:true,type:"wave",min:4,color:"#8AAFD2"}},
+    {id:"p3",emoji:"🌊",photo:null,sv:"De seglade ut över Sömnhavet, där vågorna gick långsamt som andetag och vinden luktade nybakt bröd och blåbär.",en:"They sailed out across the Sea of Sleep, where the waves moved as slowly as breathing and the wind smelled of fresh bread and blueberries."},
+    {id:"p4",emoji:"🐳",photo:null,sv:"En snäll val lyfte skeppet på sin rygg och vaggade det fram och tillbaka, fram och tillbaka, mjukt och stilla.",en:"A gentle whale lifted the ship onto its back and rocked it to and fro, to and fro, soft and still."},
+    {id:"p5",emoji:"🏝️",photo:null,sv:"Vid Drömlandets strand låg en bädd av varm sand och tusen blinkande stjärnor. Där fick Pärla lägga sig att vila.",en:"On the shore of Dreamland lay a bed of warm sand and a thousand twinkling stars. There Pearl lay down to rest.",timer:{on:true,type:"sun",min:8,color:"#D9B868"}},
+    {id:"p6",emoji:"🌌",photo:null,sv:"\"Sov nu\", viskade kaptenen och drog stjärntäcket över henne. \"Imorgon seglar vi hem igen.\" Och Pärla sov. Godnatt, lilla vän.",en:"\"Sleep now,\" whispered the captain, drawing the starry blanket over her. \"Tomorrow we sail home again.\" And Pearl slept. Goodnight, little one."},
   ]},
-  {id:"s2",type:"sequence",sv:"Borsta tänderna",en:"Brush my teeth",emoji:"🪥",color:"#8AAFD2",pages:[
-    {id:"p1",emoji:"🪥",photo:null,sv:"Jag tar fram min tandborste.",en:"I get my toothbrush."},
-    {id:"p2",emoji:"🧴",photo:null,sv:"Jag trycker ut lite tandkräm.",en:"I squeeze on a little toothpaste."},
-    {id:"p3",emoji:"😁",photo:null,sv:"Jag borstar uppe, nere, framifrån och bakifrån. I 2 minuter.",en:"I brush top, bottom, front and back. For 2 minutes."},
-    {id:"p4",emoji:"💧",photo:null,sv:"Jag spottar ut och sköljer munnen.",en:"I spit out and rinse my mouth."},
-    {id:"p5",emoji:"✨",photo:null,sv:"Tänderna är rena!",en:"My teeth are clean!"},
+  {id:"s_forest",example:true,type:"sequence",sv:"Lina och skogstomten",en:"Lina and the forest gnome",emoji:"🌲",color:"#8FBFA1",pages:[
+    {id:"p1",emoji:"🏡",photo:null,sv:"Det var en gång en liten flicka som hette Lina. Hon bodde i ett rött hus alldeles vid skogen.",en:"Once upon a time there was a little girl named Lina. She lived in a little red house right by the forest."},
+    {id:"p2",emoji:"🌲",photo:null,sv:"En kväll, när solen målade träden gyllene, gick hon in bland granarna för att se vart stigen ledde.",en:"One evening, when the sun painted the trees golden, she walked in among the spruces to see where the path led."},
+    {id:"p3",emoji:"🍂",photo:null,sv:"På en stubbe satt en pytteliten gubbe med grått skägg och röd luva. Det var skogstomten — och han frös.",en:"On a tree stump sat a teeny old man with a grey beard and a red cap. It was the forest gnome — and he was cold."},
+    {id:"p4",emoji:"🧣",photo:null,sv:"\"Här\", sa Lina och la sin varma halsduk om honom. Tomten log så att hela ansiktet skrynklades.",en:"\"Here,\" said Lina, tucking her warm scarf around him. The gnome smiled so much his whole face crinkled."},
+    {id:"p5",emoji:"🍬",photo:null,sv:"Tomten plockade fram en påse skogsgodis och bjöd Lina. De satt och mumsade tillsammans, glada i hela kroppen.",en:"The gnome pulled out a bag of forest candy and shared it with Lina. They sat and munched together, happy all over.",timer:{on:true,type:"monster",min:5,color:"#8FBFA1"}},
+    {id:"p6",emoji:"⭐",photo:null,sv:"\"Kom tillbaka i morgon\", viskade tomten. Och det gjorde Lina. Snipp, snapp, snut — så var sagan slut.",en:"\"Come back tomorrow,\" whispered the gnome. And Lina did. And that's the end of the tale."},
   ]},
-  {id:"s3",type:"sequence",sv:"Gå till skolan",en:"Go to school",emoji:"🎒",color:"#8FBFA1",pages:[
-    {id:"p1",emoji:"👕",photo:null,sv:"Jag klär på mig.",en:"I get dressed."},
-    {id:"p2",emoji:"🥐",photo:null,sv:"Jag äter frukost.",en:"I eat breakfast."},
-    {id:"p3",emoji:"🎒",photo:null,sv:"Jag tar min ryggsäck.",en:"I get my backpack."},
-    {id:"p4",emoji:"👟",photo:null,sv:"Jag tar på mig skorna.",en:"I put on my shoes."},
-    {id:"p5",emoji:"🚌",photo:null,sv:"Jag går till skolan.",en:"I go to school."},
+  {id:"s_pancake",example:true,type:"sequence",sv:"Vi bakar pannkakor",en:"We make pancakes",emoji:"🥞",color:"#D9B868",pages:[
+    {id:"p1",emoji:"🥣",photo:null,sv:"Vispa ihop 2½ dl vetemjöl och ½ tsk salt i en bunke.",en:"Whisk together 2½ dl (1 cup) flour and ½ tsp salt in a bowl."},
+    {id:"p2",emoji:"🥛",photo:null,sv:"Häll i hälften av mjölken (av 6 dl totalt) och vispa till en slät smet.",en:"Pour in half the milk (6 dl / 2½ cups total) and whisk to a smooth batter."},
+    {id:"p3",emoji:"🥚",photo:null,sv:"Vispa ner resten av mjölken och 3 ägg.",en:"Whisk in the rest of the milk and 3 eggs."},
+    {id:"p4",emoji:"🧈",photo:null,sv:"Tillsätt 2 msk smält smör (eller neutral olja) och rör om.",en:"Add 2 tbsp melted butter (or neutral oil) and stir."},
+    {id:"p5",emoji:"⏲️",photo:null,sv:"Låt smeten vila 10–15 minuter.",en:"Let the batter rest for 10–15 minutes.",timer:{on:true,type:"sector",min:12,color:"#E89B89"}},
+    {id:"p6",emoji:"🍳",photo:null,sv:"Stek tunna pannkakor i lite smör på medelhög värme tills de får fin färg på båda sidor.",en:"Fry thin pancakes in a little butter over medium-high heat until golden on both sides."},
+    {id:"p7",emoji:"🍓",photo:null,sv:"Klart! Det blir ca 8–10 pannkakor. Lägg på bär och sylt och smaka.",en:"Done! Makes about 8–10 pancakes. Add berries and jam, and dig in."},
   ]},
-  // First-Then contracts as type:"firstthen"
-  {id:"ft1",type:"firstthen",sv:"Först läxor, sedan TV",en:"First homework, then TV",emoji:"📋",color:"#D9886B",pages:[
-    {id:"first",emoji:"📚",photo:null,sv:"Läxor",en:"Homework"},
-    {id:"then",emoji:"📺",photo:null,sv:"TV",en:"TV"},
+  {id:"s_brave",example:true,type:"sequence",sv:"När jag känner mig nervös",en:"When I feel nervous",emoji:"🦁",color:"#E89B89",pages:[
+    {id:"p1",emoji:"😟",photo:null,sv:"Jag känner mig nervös.",en:"I feel nervous."},
+    {id:"p2",emoji:"🌬️",photo:null,sv:"Jag andas in långsamt … och ut. Pirret får finnas kvar — jag behöver inte jaga bort det.",en:"I breathe in slowly … and out. The flutter can stay — I don't need to chase it away.",timer:{on:true,type:"ring",min:1,color:"#8FBFA1"}},
+    {id:"p3",emoji:"💪",photo:null,sv:"Jag säger till mig själv: \"Jag är nervös. Och jag gör det ändå.\"",en:"I tell myself: \"I'm nervous. And I'm doing it anyway.\""},
+    {id:"p4",emoji:"👣",photo:null,sv:"Med pirret i magen tar jag ett steg framåt. Modig betyder inte att vara orädd — det betyder att gå ändå.",en:"With the flutter still there, I take a step forward. Brave doesn't mean fearless — it means going anyway."},
+    {id:"p5",emoji:"⭐",photo:null,sv:"Jag gjorde det! Jag var rädd OCH modig på samma gång. Det är jag stolt över.",en:"I did it! I was scared AND brave at the same time. I'm proud of that."},
   ]},
-  {id:"ft2",type:"firstthen",sv:"Först tandborstning, sedan saga",en:"First brushing, then story",emoji:"📋",color:"#D9886B",pages:[
-    {id:"first",emoji:"🪥",photo:null,sv:"Borsta tänder",en:"Brush teeth"},
-    {id:"then",emoji:"📖",photo:null,sv:"Saga",en:"Story"},
+  {id:"ft_calm",example:true,type:"firstthen",sv:"Först lugn, sedan lek",en:"First calm, then play",emoji:"📋",color:"#9683C2",pages:[
+    {id:"first",emoji:"🌬️",photo:null,sv:"Andas lugnt",en:"Breathe calmly",timer:{on:true,type:"ring",min:2,color:"#8FBFA1"}},
+    {id:"then",emoji:"🪀",photo:null,sv:"Lek",en:"Play",timer:{on:true,type:"monster",min:15,color:"#E89B89"}},
   ]},
 ];
 
@@ -9696,6 +9709,24 @@ function StoryScreen({lang,t,isEditor,stories,setStories,onOpenStory,onOpenEdito
               const timerCount=(s.pages||[]).filter(p=>p.timer?.on).length;
               return(
               <div key={s.id} style={{position:"relative",animation:`storyCardIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) ${i*0.05}s both`}}>
+                {/* EXAMPLE badge — a small distinct stamp marking the built-in
+                    showcase stories so testers know they're samples to explore,
+                    edit or delete. Pinned top-left (the editor pencil sits
+                    top-right). Uses the story's own colour for harmony. */}
+                {s.example&&(
+                  <div style={{
+                    position:"absolute",top:-6,left:10,zIndex:3,
+                    display:"inline-flex",alignItems:"center",gap:4,
+                    padding:"3px 8px",borderRadius:8,
+                    background:isDark()?`linear-gradient(135deg, ${s.color}, ${shadeHex(s.color,-0.2)})`:`linear-gradient(135deg, ${s.color}, ${shadeHex(s.color,-0.15)})`,
+                    boxShadow:`0 4px 12px -3px ${s.color}99, inset 0 1px 0 rgba(255,255,255,0.35)`,
+                    fontFamily:G.font,fontWeight:800,fontSize:8.5,letterSpacing:1,
+                    color:"#fff",textTransform:"uppercase",
+                  }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4L12 17l-6.3 4.4L8 14 2 9.4h7.6z"/></svg>
+                    {lang==="sv"?"Exempel":"Example"}
+                  </div>
+                )}
                 <div onClick={()=>isEditor?onOpenEditor(s):onOpenStory(s)} className="lt-press-soft" style={{
                   background:isDark()?`linear-gradient(180deg, rgba(255,255,255,0.06) 0%, ${s.color}14 100%)`:`linear-gradient(180deg, #FFFFFF 0%, ${s.color}07 100%)`,
                   borderRadius:22,
@@ -9721,38 +9752,41 @@ function StoryScreen({lang,t,isEditor,stories,setStories,onOpenStory,onOpenEdito
                     </>):s.emoji}
                   </div>
                   <div style={{fontFamily:G.serif,fontWeight:500,fontSize:16,color:tk().ink,textAlign:"center",lineHeight:1.2,letterSpacing:-.3,marginBottom:4}}>{lsText(s,lang)}</div>
-                  {/* Page count / First-Then preview — small pill */}
+                  {/* Meta row — page count / First-Then preview, with the
+                      timer count inline on the SAME row (separated by a dot)
+                      instead of stacked below. One tidy centered line. */}
                   <div style={{
                     display:"inline-flex",
-                    alignItems:"center",justifyContent:"center",
+                    alignItems:"center",justifyContent:"center",gap:7,
                     width:"fit-content",
-                    margin:"6px auto 0",
-                    padding:"4px 10px",
+                    margin:"7px auto 0",
+                    padding:"4px 11px",
                     borderRadius:10,
                     background:`${s.color}0F`,
                     border:`1px solid ${s.color}1F`,
                     fontFamily:G.font,fontWeight:600,fontSize:10,
                     color:s.color,letterSpacing:.4,
-                    textTransform:s.type==="firstthen"?"none":"uppercase",
                   }}>
-                    {s.type==="firstthen"
-                      ? (()=>{
-                          const fL=s.firstLabel?.trim()||(lang==="sv"?"Först":"First");
-                          const tL=s.thenLabel?.trim()||(lang==="sv"?"Sedan":"Then");
-                          return `${fL} → ${tL}`;
-                        })()
-                      : `${s.pages.length} ${t.pages.toLowerCase()}`}
+                    <span style={{textTransform:s.type==="firstthen"?"none":"uppercase"}}>
+                      {s.type==="firstthen"
+                        ? (()=>{
+                            const fL=s.firstLabel?.trim()||(lang==="sv"?"Först":"First");
+                            const tL=s.thenLabel?.trim()||(lang==="sv"?"Sedan":"Then");
+                            return `${fL} → ${tL}`;
+                          })()
+                        : `${s.pages.length} ${t.pages.toLowerCase()}`}
+                    </span>
+                    {timerCount>0&&(<>
+                      <span style={{opacity:.4}}>·</span>
+                      <span style={{display:"inline-flex",alignItems:"center",gap:3.5}}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={s.color} strokeWidth="2.2" strokeLinecap="round">
+                          <circle cx="12" cy="13" r="8"/>
+                          <path d="M12 13 L12 8" strokeLinejoin="round"/>
+                        </svg>
+                        {timerCount}
+                      </span>
+                    </>)}
                   </div>
-                  {/* Timer badge — same place as before, just refined */}
-                  {timerCount>0&&(
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:5,marginTop:6,padding:"4px 10px",borderRadius:10,background:`${s.color}14`,border:`1px solid ${s.color}28`,width:"fit-content",marginLeft:"auto",marginRight:"auto"}}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={s.color} strokeWidth="2" strokeLinecap="round">
-                        <circle cx="12" cy="13" r="8"/>
-                        <path d="M12 13 L12 8" strokeLinejoin="round"/>
-                      </svg>
-                      <span style={{fontFamily:G.font,fontWeight:600,fontSize:10.5,color:s.color,letterSpacing:.2}}>{timerCount===1?(lang==="sv"?"1 timer":"1 timer"):`${timerCount} ${lang==="sv"?"timers":"timers"}`}</span>
-                    </div>
-                  )}
                 </div>
                 {isEditor&&(
                   <div style={{
@@ -13386,7 +13420,7 @@ function NavIcon({type,active,color,size=22}){
 /* ═══ Routine template picker — a calm, browsable sheet of suggested routines.
    Each category expands to its activities; tap + to add one (or "Add all").
    Added items show a check. Nothing is forced — pick only what you want. ═══ */
-function TemplatePicker({onClose,onAddActs,t,lang}){
+function TemplatePicker({onClose,onAddActs,onEditAct,t,lang}){
   const[expanded,setExpanded]=useState(ROUTINE_TEMPLATES[0]?.id||null);
   const[added,setAdded]=useState({});
   const dark=isDark();
@@ -13424,7 +13458,7 @@ function TemplatePicker({onClose,onAddActs,t,lang}){
         <div style={{padding:"14px 22px 14px",display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12}}>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontFamily:G.serif,fontWeight:700,fontSize:21,color:tk().inkSoft,letterSpacing:-.4}}>{t.tmplPickTitle}</div>
-            <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:tk().ink2,marginTop:3,lineHeight:1.45}}>{t.tmplPickDesc}</div>
+            <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:tk().ink2,marginTop:3,lineHeight:1.45}}>{lang==="sv"?"Tryck på ett förslag för att redigera allt innan du lägger till — eller tryck + för att lägga till direkt.":"Tap a suggestion to edit everything before adding — or tap + to add it as-is."}</div>
           </div>
           <button onClick={onClose} aria-label={t.tmplPickDone} className="lt-press" style={{flexShrink:0,padding:"9px 16px",borderRadius:12,border:"none",background:dark?"rgba(255,255,255,0.1)":"#1F1B2E",color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:13,cursor:"pointer"}}>{t.tmplPickDone}</button>
         </div>
@@ -13463,12 +13497,18 @@ function TemplatePicker({onClose,onAddActs,t,lang}){
                             background:dark?"rgba(255,255,255,0.04)":`${a.color}0A`,
                             border:`1px solid ${dark?"rgba(255,255,255,0.06)":a.color+"1F"}`,
                             animation:`tpRowIn .35s ${i*0.03}s cubic-bezier(0.32,0.72,0,1) both`}}>
-                            <span style={{fontSize:19,flexShrink:0,width:38,height:38,borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",
-                              background:dark?`${a.color}24`:`${a.color}1A`,border:`1px solid ${a.color}2E`}}>{a.emoji}</span>
-                            <div style={{flex:1,minWidth:0}}>
-                              <div style={{fontFamily:G.font,fontWeight:600,fontSize:13.5,color:tk().ink,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{label(a)}</div>
-                              <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:tk().ink3,marginTop:1,fontVariantNumeric:"tabular-nums"}}>{a.time}{a.endTime?`–${a.endTime}`:""}{a.steps&&a.steps.length>0?` · ${a.steps.length} ${lang==="sv"?"steg":"steps"}`:""}</div>
-                            </div>
+                            {/* Tapping the row body opens the FULL editor pre-filled
+                                so everything (name, time, emoji, colour, steps, timer)
+                                can be changed before it's added on Save. */}
+                            <button onClick={()=>onEditAct&&onEditAct(a)} className="lt-press-soft" style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:11,border:"none",background:"transparent",font:"inherit",textAlign:"left",cursor:"pointer",padding:0}}>
+                              <span style={{fontSize:19,flexShrink:0,width:38,height:38,borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",
+                                background:dark?`${a.color}24`:`${a.color}1A`,border:`1px solid ${a.color}2E`}}>{a.emoji}</span>
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{fontFamily:G.font,fontWeight:600,fontSize:13.5,color:tk().ink,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{label(a)}</div>
+                                <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:tk().ink3,marginTop:1,fontVariantNumeric:"tabular-nums"}}>{a.time}{a.endTime?`–${a.endTime}`:""}{a.steps&&a.steps.length>0?` · ${a.steps.length} ${lang==="sv"?"steg":"steps"}`:""}</div>
+                              </div>
+                            </button>
+                            {/* Quick-add (+) — adds as-is without opening the editor. */}
                             <button onClick={()=>addOne(tpl.id,i,a)} disabled={isAdded} aria-label={isAdded?t.tmplAdded2:t.tmplAdd} className={isAdded?"":"lt-press"} style={{flexShrink:0,width:34,height:34,borderRadius:11,border:"none",cursor:isAdded?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",
                               background:isAdded?(dark?`${a.color}26`:`${a.color}1F`):`linear-gradient(135deg,${a.color},${shadeHex(a.color,-0.15)})`,
                               color:isAdded?(dark?shadeHex(a.color,0.4):shadeHex(a.color,-0.45)):"#fff",
@@ -13747,7 +13787,26 @@ export default function App(){
     }
     setMigrSeedDone(true);
   },[migrSeedDone,acts,setActs,setDailyState,setMigrSeedDone]);
-  // One-time migration: make the new Monster timer available to existing users.
+  // One-time migration (v2): refresh the built-in EXAMPLE stories to the latest
+  // STORIES0. Existing testers have older example stories cached in localStorage
+  // (STORIES0 only seeds brand-new installs), so without this they'd keep seeing
+  // the old "Städa rummet / Äventyr i skogen / Godnattresan" set forever. We
+  // detect any story whose id is a known built-in example id, drop those, and
+  // splice in the fresh STORIES0 — while keeping every story the user created
+  // themselves (unknown ids). Bumping the version key reruns it once.
+  const[migrStoriesV2,setMigrStoriesV2]=usePersistentState("migr_stories_v10",false);
+  useEffect(()=>{
+    if(migrStoriesV2) return;
+    // All ids ever used by built-in examples (old + intermediate + current).
+    const BUILTIN_IDS=new Set(["s1","s2","s3","ft1","ft2","s_night","s_brave","s_forest","s_pancake","s_morning","ft_calm","s_whale","s_fairytale"]);
+    setStories(prev=>{
+      const userMade=(prev||[]).filter(s=>!BUILTIN_IDS.has(s.id)&&!s.example);
+      const fresh=STORIES0.map(s=>({...s,pages:s.pages.map(p=>({...p}))}));
+      // Fresh examples first, then anything the user created.
+      return [...fresh,...userMade];
+    });
+    setMigrStoriesV2(true);
+  },[migrStoriesV2,setStories,setMigrStoriesV2]);
   // Their persisted allowedTypes (without "monster") would otherwise override
   // the new CFG0 default and hide it from the standalone Timer tool.
   const[migrMonsterDone,setMigrMonsterDone]=usePersistentState("migr_monster_timer",false);
@@ -13795,6 +13854,10 @@ export default function App(){
   // One-time routine-template suggestion for new users (shown in the editor
   // until they add one or dismiss it). Never nags again afterwards.
   const[tmplDone,setTmplDone]=usePersistentState("templatesPromptDone",false);
+  // Session-only hide for the empty-schedule suggestion prompt. Unlike tmplDone
+  // (persisted "no thanks"), this resets on reload so suggestions reappear for
+  // an empty schedule — the prompt is meant to stay available while empty.
+  const[tmplHiddenThisSession,setTmplHiddenThisSession]=useState(false);
   const[showTmplPicker,setShowTmplPicker]=useState(false);
   // Add a specific subset of activities (from the picker). Each entry is a
   // template activity object; they're converted to real activities and merged.
@@ -13811,6 +13874,27 @@ export default function App(){
       timer:{on:false,type:"sector",min:10,color:a.color},
     }));
     setActs(prev=>[...prev,...newActs].sort((x,y)=>hm(x.time)-hm(y.time)));
+  };
+  // Open the FULL editor pre-filled from a suggestion, instead of adding it
+  // straight away. The user can change name/time/emoji/colour/steps/timer and
+  // then Save — which adds it as a brand-new activity (fresh uid means
+  // handleSave appends rather than overwrites). This is the "tap a suggestion →
+  // edit everything → save adds it" flow for the empty-schedule prompt.
+  const editTemplateAct=(a)=>{
+    const dark=isDark();
+    const pick=(o)=>{ if(dark){ const dk=lang==="sv"?o.svDark:o.enDark; if(dk) return dk; } return lang==="sv"?o.sv:o.en; };
+    const draft={
+      time:a.time, endTime:a.endTime,
+      name:pick(a),
+      emoji:a.emoji, color:a.color,
+      done:false, stepsDone:{},
+      steps:(a.steps||[]).map((s)=>({id:uid(),emoji:s.emoji,text:pick(s)})),
+      timer:{on:false,type:"sector",min:10,color:a.color},
+      repeat:{type:"none"},
+    };
+    setShowTmplPicker(false);
+    setEditAct(draft);
+    setShowEd(true);
   };
   const[showOnboarding,setShowOnboarding]=useState(false);
   const[showSupervisor,setShowSupervisor]=useState(false);
@@ -14876,9 +14960,12 @@ export default function App(){
           </div>
         </div>
       </div>
-      {/* FIRST-TIME ROUTINE SUGGESTION — shown once to new users in the editor.
-          Lets them add a ready-made routine, or dismiss forever. */}
-      {(screen==="home"||screen==="week")&&isEd&&!tmplDone&&(
+      {/* SUGGESTION PROMPT — shown in the editor whenever the schedule is still
+          EMPTY (acts.length===0). Tapping a suggestion opens the full editor
+          pre-filled; Save adds it. Once the user has any activity it disappears.
+          The one-time `tmplDone` dismiss still hides it for users who actively
+          said "no thanks" on a fresh empty day. */}
+      {(screen==="home"||screen==="week")&&isEd&&acts.length===0&&!tmplHiddenThisSession&&(
         <div style={{position:"absolute",bottom:"calc(168px + env(safe-area-inset-bottom, 0px))",left:"50%",transform:"translateX(-50%)",width:"calc(100% - 28px)",maxWidth:452,zIndex:11}}>
         <div style={{
           background:isDark()?"linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.04) 100%)":"#FFFFFF",
@@ -14891,7 +14978,7 @@ export default function App(){
               <div style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:tk().inkSoft,letterSpacing:-.2,lineHeight:1.15}}>{t.tmplTitle}</div>
               <div style={{fontFamily:G.font,fontWeight:500,fontSize:12,color:tk().ink2,marginTop:3,lineHeight:1.4}}>{t.tmplDesc}</div>
             </div>
-            <button onClick={()=>setTmplDone(true)} aria-label={t.tmplDismiss} className="lt-press" style={{flexShrink:0,width:30,height:30,borderRadius:9,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink3,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><IconX size={13}/></button>
+            <button onClick={()=>setTmplHiddenThisSession(true)} aria-label={t.tmplDismiss} className="lt-press" style={{flexShrink:0,width:30,height:30,borderRadius:9,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink3,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><IconX size={13}/></button>
           </div>
           {/* Category preview chips → open the full picker */}
           <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}>
@@ -15105,7 +15192,7 @@ export default function App(){
       {commModal&&<CommModals modal={commModal} onClose={()=>setCommModal(null)} cats={commCats} setCats={setCommCats} lang={lang} t={t} setSel={setCommSel}/>}
       {showSet&&<SettingsModal cfg={cfg} setCfg={setCfg} shareCode={shareCode} onClose={()=>setShowSet(false)} t={t} lang={lang} setLang={setLang} onOpenSupervisor={openSupervisor} onOpenDemo={openDemo} onOpenWelcomeTour={openWelcomeTour} onResetAll={resetAllData}/>}
       {showDemo&&<DemoTour onClose={closeDemo} lang={lang}/>}
-      {showTmplPicker&&<TemplatePicker t={t} lang={lang} onAddActs={addTemplateActs} onClose={()=>{setShowTmplPicker(false);setTmplDone(true);}}/>}
+      {showTmplPicker&&<TemplatePicker t={t} lang={lang} onAddActs={addTemplateActs} onEditAct={editTemplateAct} onClose={()=>setShowTmplPicker(false)}/>}
       {showModeChoice&&(
         <div style={{position:"fixed",inset:0,zIndex:9600,display:"flex",alignItems:"center",justifyContent:"center",padding:24,
           background:pickedMode==="dark"?"rgba(10,8,16,0.6)":"rgba(180,200,225,0.45)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",transition:"background .55s ease",animation:"ftIn .35s ease"}}>
