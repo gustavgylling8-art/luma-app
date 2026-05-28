@@ -57,23 +57,28 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   setMeta("theme-color", storedThemeForStatus === "dark" ? "#0E0E10" : "#FBFDFE");
 
   // The Luma sun icon (home-screen app icon) — the warm peach/bronze pearl
-  // the user chose. Premium finish with halo, gloss and crisp inner rim.
+  // the user chose. Scaled to sit within iOS's safe zone (motif ~75% of the
+  // canvas) so it never crops against the rounded icon mask. Soft pearl
+  // background with a gentle warm bloom rather than flat white.
   const SUN_BLUE = "#E8A878";
   const SUN_DEEP = "#C97548";
   const cx=256, cy=256;
   const rays=Array.from({length:8}).map((_,i)=>{
     const a=(i/8)*2*Math.PI;
     const long=i%2===0;
-    const r1=167, r2=long?240:217;
+    // Scaled down ~25% from before (core 96 vs 128) for icon safe-zone air.
+    const r1=125, r2=long?180:163;
     const x1=cx+r1*Math.sin(a), y1=cy-r1*Math.cos(a);
     const x2=cx+r2*Math.sin(a), y2=cy-r2*Math.cos(a);
-    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${long?34:25}"/>`;
+    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${long?26:19}"/>`;
   }).join("");
   const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
     <defs>
-      <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#FBF6F0"/><stop offset="55%" stop-color="#FDFAF5"/><stop offset="100%" stop-color="#FFFFFF"/>
-      </linearGradient>
+      <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+        <stop offset="0%" stop-color="#FFFFFF"/>
+        <stop offset="55%" stop-color="#FDF8F2"/>
+        <stop offset="100%" stop-color="#F6EBE0"/>
+      </radialGradient>
       <radialGradient id="core" cx="34%" cy="28%" r="74%">
         <stop offset="0%" stop-color="#FFFFFF"/>
         <stop offset="16%" stop-color="#FFFAF0" stop-opacity="0.98"/>
@@ -93,13 +98,13 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       </radialGradient>
     </defs>
     <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-    <circle cx="${cx}" cy="${cy}" r="200" fill="url(#halo)"/>
+    <circle cx="${cx}" cy="${cy}" r="155" fill="url(#halo)"/>
     <g stroke="${SUN_BLUE}" stroke-linecap="round">
       ${rays}
     </g>
-    <circle cx="${cx}" cy="${cy}" r="128" fill="url(#core)"/>
-    <circle cx="${cx}" cy="${cy}" r="128" fill="none" stroke="${SUN_DEEP}" stroke-width="1.5" opacity="0.30"/>
-    <circle cx="${cx}" cy="${cy}" r="128" fill="url(#gloss)"/>
+    <circle cx="${cx}" cy="${cy}" r="96" fill="url(#core)"/>
+    <circle cx="${cx}" cy="${cy}" r="96" fill="none" stroke="${SUN_DEEP}" stroke-width="1.5" opacity="0.30"/>
+    <circle cx="${cx}" cy="${cy}" r="96" fill="url(#gloss)"/>
   </svg>`;
   const iconUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(ICON_SVG)));
 
@@ -14105,18 +14110,19 @@ export default function App(){
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
-      {/* DEFINITIVE EDGE-BLEED FIX — a fixed, full-viewport backdrop locked to
-          every edge (top/right/bottom/left:0, 100vw × 100dvh) painted in the
-          exact theme colour. It sits behind everything (zIndex 0, the app
-          content is zIndex 1). No matter what html/body/wrappers do, this
-          layer guarantees the entire screen — corner to corner — is the theme
-          colour, so no html-background stripe can ever show at the edges.
-          Uses 100vw (not %) so it ignores any parent padding/width quirk. */}
+      {/* DEFINITIVE EDGE-BLEED FIX — a full-cover backdrop locked to every
+          edge of the outer shell, painted in the exact theme colour. Sits
+          behind everything (zIndex 0; app content is zIndex 1) so no
+          html-background stripe can show at the screen edges.
+          IMPORTANT: this uses position:ABSOLUTE + inset:0 (NOT fixed + dvh).
+          position:fixed combined with 100dvh triggers a WebKit bug in iOS
+          standalone PWAs that mis-maps touch coordinates — taps register
+          above where the finger lands. Since the outer shell is already
+          position:relative at 100dvh, an absolutely-positioned inset:0 child
+          covers the identical area without the touch bug. */}
       <div aria-hidden="true" style={{
-        position:"fixed",
-        top:0,left:0,
-        width:"100vw",
-        height:"100dvh",
+        position:"absolute",
+        inset:0,
         background:isDark()?"#0E0E10":(screen==="home"?"#FFFFFF":effS.hb),
         zIndex:0,
         pointerEvents:"none",
