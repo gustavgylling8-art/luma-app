@@ -13478,6 +13478,35 @@ function TemplatePicker({onClose,onAddActs,t,lang}){
 }
 
 export default function App(){
+  // ── REAL VIEWPORT HEIGHT (fixes "taps land below the button" in iOS PWA) ──
+  // In standalone PWAs, CSS 100dvh is not always in sync with where WebKit
+  // runs touch hit-testing after a layout change (e.g. the bottom nav's
+  // max-height transition). The visual element and its tap rectangle drift
+  // apart, so the user has to press *below* a button. Pinning the shell to a
+  // JS-measured pixel height (window.innerHeight / visualViewport) keeps the
+  // painted layout and the hit-test grid on the exact same number, which
+  // removes the offset. We write it to --app-vh (already referenced by the
+  // desktop/tablet rules) and also read it inline for the outer shell.
+  const[appVH,setAppVH]=useState(()=>typeof window!=="undefined"?(window.visualViewport?.height||window.innerHeight):0);
+  useLayoutEffect(()=>{
+    const apply=()=>{
+      const h=(window.visualViewport?.height)||window.innerHeight;
+      if(!h) return;
+      setAppVH(h);
+      try{ document.documentElement.style.setProperty("--app-vh", h+"px"); }catch(_){}
+    };
+    apply();
+    window.addEventListener("resize",apply);
+    window.addEventListener("orientationchange",apply);
+    if(window.visualViewport){
+      window.visualViewport.addEventListener("resize",apply);
+    }
+    return()=>{
+      window.removeEventListener("resize",apply);
+      window.removeEventListener("orientationchange",apply);
+      if(window.visualViewport) window.visualViewport.removeEventListener("resize",apply);
+    };
+  },[]);
   const[lang,setLang]=usePersistentState("lang","sv");
   const emojiReq=useGlobalEmoji(); // global emoji picker request (rendered at root)
   const[headerTapCount,setHeaderTapCount]=useState(0); // increments on header tap — used by WeekScreen to reset focus
@@ -14103,8 +14132,8 @@ export default function App(){
     /* Outer shell — fills the viewport. Edge-bleed is handled at the html/body
        level (see the theme CSS below), not with an extra layer here. */
     <div style={{position:"relative",
-      height:"100dvh",
-      width:"100%",
+      height:appVH?appVH+"px":"100dvh",
+      width:"100vw",
       overflow:"hidden",
       background:isDark()
       ? "#0E0E10"
@@ -14138,6 +14167,9 @@ export default function App(){
            the finger lands. Only body overflow:hidden is needed to prevent
            page scroll. The app-root itself takes 100dvh and any inner
            regions handle their own overflow. */
+        /* Global box-sizing so width:100% + padding never overflow and create
+           a 1px edge gap. Inherited everywhere. */
+        *, *::before, *::after { box-sizing: border-box; }
         html, body {
           overscroll-behavior: none;
           -webkit-text-size-adjust: 100%;
@@ -14153,6 +14185,16 @@ export default function App(){
           background: #0E0E10;
           margin: 0;
           padding: 0;
+          /* THE EDGE-SLIVER FIX. With viewport-fit=cover iOS reserves a thin
+             strip in the left/right safe-area inset on rounded-corner phones.
+             The app is centered and max-width:480px, so anything narrower than
+             the viewport leaves that strip showing whatever paints *under* the
+             app. Painting html/body across the FULL viewport width with the
+             theme colour means the strip always shows the app's own dark base
+             — no bright line. 100vw spans edge to edge incl. the insets. */
+          width: 100vw;
+          min-height: 100dvh;
+          overflow-x: hidden;
         }
         body {
           /* Lock the page itself against scrolling — but ONLY on body, not
