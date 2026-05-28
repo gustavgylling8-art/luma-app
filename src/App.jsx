@@ -111,7 +111,6 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       ${rays}
     </g>
     <circle cx="${cx}" cy="${cy}" r="96" fill="url(#core)"/>
-    <circle cx="${cx}" cy="${cy}" r="96" fill="none" stroke="${SUN_DEEP}" stroke-width="1.5" opacity="0.30"/>
     <circle cx="${cx}" cy="${cy}" r="96" fill="url(#gloss)"/>
   </svg>`;
   const iconUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(ICON_SVG)));
@@ -210,15 +209,10 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     }
     g.fillStyle = glow;
     g.beginPath(); g.arc(cx, cy, R*3.2, 0, Math.PI*2); g.fill();
-    // (2) Thin halo ring — only visible in light mode for a refined finish
-    if (!dark) {
-      g.strokeStyle = ACCENT; g.globalAlpha = 0.22;
-      g.lineWidth = Math.max(1, R*0.06);
-      g.beginPath(); g.arc(cx, cy, R*1.45, 0, Math.PI*2); g.stroke();
-      g.globalAlpha = 1;
-    }
-    // (3) 8 rays — alternating long/short, slightly different stroke widths.
-    // This is the signature Luma sun rhythm.
+    // (NOTE) No thin halo ring here — the welcome-guide sun (SceneIntro) has
+    // none, and the ring was exactly what made the launch icon look different
+    // (flatter, with a circle around it). Removed so the two match.
+    // (3) 8 rays — alternating long/short, matching SceneIntro's rhythm exactly.
     g.strokeStyle = ACCENT;
     g.lineCap = "round";
     for (let i = 0; i < 8; i++) {
@@ -234,9 +228,10 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       g.stroke();
     }
     g.globalAlpha = 1;
-    // (4) Core orb — radial gradient from white at top-left, through cream,
-    // out to the accent and accent-deep. This is what gives the sun its
-    // "premium pearl" quality.
+    // (4) Core orb — radial gradient matching SceneIntro: white highlight in
+    // the upper-left, through warm cream, out to peach and deep bronze. The
+    // off-centre highlight (cx-0.35R, cy-0.42R) is what gives it the rounded
+    // "pearl" depth instead of a flat disc.
     const core = g.createRadialGradient(
       cx - R*0.35, cy - R*0.42, R*0.1,
       cx, cy, R
@@ -247,14 +242,8 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     core.addColorStop(1, ACCENT_DEEP);
     g.fillStyle = core;
     g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.fill();
-    // (5) Crisp inner rim (light mode only) — gives the orb a "set" edge
-    if (!dark) {
-      g.strokeStyle = ACCENT_DEEP;
-      g.globalAlpha = 0.35;
-      g.lineWidth = Math.max(0.5, R*0.03);
-      g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.stroke();
-      g.globalAlpha = 1;
-    }
+    // (No crisp inner rim — SceneIntro doesn't have one; it added a hard edge
+    // that read as a second ring. The gloss below gives the orb its finish.)
     // (6) Soft gloss — light catching the top-left of the orb
     const gloss = g.createRadialGradient(
       cx - R*0.28, cy - R*0.36, 0,
@@ -5203,7 +5192,7 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
 }
 
 /* ═══ Settings ═══ */
-function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSupervisor,onOpenDemo,onOpenWelcomeTour,onResetAll}){
+function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSupervisor,onOpenDemo,onOpenWelcomeTour,onResetAll,notifsEnabled,setNotifsEnabled,requestNotifPermission,notifSupported}){
   const[cs,setCs]=useState(cfg.cardStyle);
   const[sv,setSv]=useState(cfg.schedView);
   const[sig,setSig]=useState(cfg.showSigvard);
@@ -5373,6 +5362,38 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
             })}
           </div>
         </div>
+
+        {/* ── Notifications ── A simple opt-in. Tapping "on" requests system
+            permission (must come from this tap). Reminds when an activity
+            starts. On iOS this works only when Luma is installed to the home
+            screen (standalone PWA). */}
+        {notifSupported&&(
+        <div style={{background:tk().white,borderRadius:16,padding:"14px 18px",marginBottom:18,border:`1px solid ${tk().border}`,boxShadow:"0 2px 6px rgba(31,27,46,0.04)",animation:"setSectionIn 0.5s 0.095s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+            <div style={{display:"flex",alignItems:"center",gap:11,minWidth:0}}>
+              <div style={{width:32,height:32,borderRadius:10,flexShrink:0,background:`linear-gradient(140deg, #8AAFD21F, #8AAFD238)`,border:`1px solid #8AAFD240`,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.55), 0 2px 6px #8AAFD222`,display:"flex",alignItems:"center",justifyContent:"center",color:"#8AAFD2"}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+              </div>
+              <div style={{minWidth:0}}>
+                <div style={{fontFamily:G.serif,fontWeight:500,fontSize:15,color:tk().inkSoft,letterSpacing:-.1,lineHeight:1.1}}>{lang==="sv"?"Påminnelser":"Reminders"}</div>
+                <div style={{fontFamily:G.font,fontWeight:400,fontSize:11.5,color:tk().ink3,marginTop:2,lineHeight:1.35}}>{lang==="sv"?"En notis när en aktivitet börjar.":"A notification when an activity starts."}</div>
+              </div>
+            </div>
+            <button onClick={async()=>{
+              if(notifsEnabled){ setNotifsEnabled(false); return; }
+              const ok=await requestNotifPermission();
+              setNotifsEnabled(ok);
+              if(!ok){ alert(lang==="sv"?"Tillåt notiser i enhetens inställningar för att slå på det här. På iPhone måste Luma vara tillagd på hemskärmen.":"Allow notifications in your device settings to turn this on. On iPhone, Luma must be added to the home screen."); }
+            }} className="lt-press-soft" aria-label={lang==="sv"?"Påminnelser":"Reminders"} style={{
+              position:"relative",width:48,height:28,borderRadius:14,border:"none",flexShrink:0,cursor:"pointer",
+              background:notifsEnabled?"#8AAFD2":(isDark()?"rgba(255,255,255,0.14)":"#E2E1E8"),
+              transition:"background .25s ease",
+            }}>
+              <span style={{position:"absolute",top:3,left:notifsEnabled?23:3,width:22,height:22,borderRadius:"50%",background:"#fff",boxShadow:"0 2px 5px rgba(0,0,0,0.2)",transition:"left .25s cubic-bezier(0.34,1.4,0.64,1)"}}/>
+            </button>
+          </div>
+        </div>
+        )}
 
         {/* ── Card style + view ── */}
         <Section
@@ -13543,6 +13564,15 @@ export default function App(){
   // removes the offset. We write it to --app-vh (already referenced by the
   // desktop/tablet rules) and also read it inline for the outer shell.
   const[appVH,setAppVH]=useState(()=>typeof window!=="undefined"?(window.visualViewport?.height||window.innerHeight):0);
+  // Brief in-app BOOT overlay — bridges the static iOS launch splash (which
+  // can't animate) to the live app with the same Luma sun, now gently
+  // ROTATING, then fades out. Gives the "loading sun that spins harmoniously"
+  // feel right as the app opens. Shows ~1.1s, then fades.
+  const[booting,setBooting]=useState(true);
+  useEffect(()=>{
+    const tHide=setTimeout(()=>setBooting(false),1100);
+    return()=>clearTimeout(tHide);
+  },[]);
   useLayoutEffect(()=>{
     const apply=()=>{
       const h=(window.visualViewport?.height)||window.innerHeight;
@@ -13966,6 +13996,46 @@ export default function App(){
     return()=>window.removeEventListener("hashchange",onHashChange);
   },[]);
   // Detect activity start times — show notification when an activity begins
+  // ── SYSTEM NOTIFICATIONS ───────────────────────────────────────────────
+  // Persisted opt-in. On iOS, Notification only works when Luma is installed
+  // to the home screen (standalone PWA, iOS 16.4+); in Safari it's unavailable.
+  // We store the user's intent and re-check the live permission at fire time.
+  const[notifsEnabled,setNotifsEnabled]=usePersistentState("notifsEnabled",false);
+  const notifSupported=typeof window!=="undefined"&&"Notification"in window;
+  // Request permission (must be called from a user gesture, e.g. the Settings
+  // toggle). Resolves to true only if granted.
+  const requestNotifPermission=async()=>{
+    if(!notifSupported) return false;
+    try{
+      let perm=Notification.permission;
+      if(perm==="default") perm=await Notification.requestPermission();
+      return perm==="granted";
+    }catch(_){ return false; }
+  };
+  // Fire a single system notification for an activity that just started. Silent
+  // no-op unless the user enabled notifications AND the browser granted them.
+  // IMPORTANT: only fires when the app is NOT currently visible. When the app
+  // is open and on-screen, the in-app ActivityStartAlert already shows — firing
+  // a system notification too would double up. So: visible → in-app alert only;
+  // backgrounded/hidden → system notification only.
+  const fireActivityNotification=(act)=>{
+    if(!notifsEnabled||!notifSupported) return;
+    // App is open and on-screen → the in-app alert handles it; skip the OS one.
+    if(typeof document!=="undefined"&&document.visibilityState==="visible") return;
+    try{
+      if(Notification.permission!=="granted") return;
+      const title=lang==="sv"?"Dags nu":"Time now";
+      const body=`${act.emoji?act.emoji+" ":""}${act.name||""}`.trim()||(lang==="sv"?"Nästa aktivitet":"Next activity");
+      const n=new Notification(title,{
+        body,
+        tag:`luma-act-${act.id}`,      // dedupe: replaces any prior for same act
+        renotify:false,
+        silent:false,
+      });
+      // Tapping the notification focuses the app.
+      n.onclick=()=>{ try{ window.focus(); }catch(_){} n.close(); };
+    }catch(_){}
+  };
   useEffect(()=>{
     if(isEd||showOnboarding||showSupervisor||showDemo) return;
     const check=()=>{
@@ -13999,6 +14069,11 @@ export default function App(){
         if(nowMin>=actMin && nowMin<actMin+3 && !notifShown[key]){
           setStartAlert(act);
           setNotifShown(prev=>({...prev,[key]:true}));
+          // Also fire a SYSTEM notification (appears even when the app is in
+          // the background, on supported devices). Only if the user enabled it
+          // in Settings and the browser granted permission. Falls back silently
+          // to just the in-app alert if not available/allowed.
+          fireActivityNotification(act);
           break;
         }
       }
@@ -14248,6 +14323,58 @@ export default function App(){
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
+      {/* BOOT OVERLAY — the Luma sun (matching the welcome guide), gently
+          rotating, shown for a moment as the app opens then fading away. Sits
+          above everything (zIndex high) and ignores taps once fading. */}
+      {booting&&(
+        <div aria-hidden="true" style={{
+          position:"fixed",inset:0,zIndex:99999,
+          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:24,
+          background:isDark()?"#0E0E10":"#FBFDFE",
+          animation:"lumaBootFade .5s ease .6s forwards",
+          pointerEvents:"none",
+        }}>
+          <style>{`
+            @keyframes lumaBootFade{to{opacity:0;visibility:hidden}}
+            @keyframes lumaBootRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+            @keyframes lumaBootBreath{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.05);filter:brightness(1.08)}}
+            @keyframes lumaBootRayA{0%,100%{opacity:.75}50%{opacity:.45}}
+            @keyframes lumaBootRayB{0%,100%{opacity:.45}50%{opacity:.8}}
+            @keyframes lumaBootWord{0%{opacity:0;letter-spacing:5px}100%{opacity:1;letter-spacing:.5px}}
+          `}</style>
+          <svg width={132} height={132} viewBox="0 0 26 26" style={{overflow:"visible"}}>
+            <defs>
+              <radialGradient id="bootCore" cx="35%" cy="30%" r="70%">
+                <stop offset="0%" stopColor="#FFFFFF"/>
+                <stop offset="20%" stopColor="#FFFAF0" stopOpacity="0.95"/>
+                <stop offset="55%" stopColor="#E8A878"/>
+                <stop offset="100%" stopColor="#C97548"/>
+              </radialGradient>
+              <radialGradient id="bootGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="40%" stopColor="#E8A878" stopOpacity="0"/>
+                <stop offset="70%" stopColor="#E8A878" stopOpacity="0.20"/>
+                <stop offset="100%" stopColor="#E8A878" stopOpacity="0"/>
+              </radialGradient>
+            </defs>
+            <circle cx="13" cy="13" r="13" fill="url(#bootGlow)"/>
+            <g style={{transformOrigin:"13px 13px",animation:"lumaBootRotate 22s linear infinite"}}>
+              {Array.from({length:8}).map((_,i)=>{
+                const ang=(i/8)*2*Math.PI;
+                const isLong=i%2===0;
+                const r1=8.5, r2=isLong?12.2:11;
+                const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
+                const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
+                return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#E8A878" strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"lumaBootRayA":"lumaBootRayB"} ${3+i*0.18}s ease-in-out infinite`}}/>;
+              })}
+            </g>
+            <g style={{transformOrigin:"13px 13px",animation:"lumaBootBreath 3.4s ease-in-out infinite"}}>
+              <circle cx="13" cy="13" r="6.5" fill="url(#bootCore)"/>
+              <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
+            </g>
+          </svg>
+          <div style={{fontFamily:G.serif,fontSize:38,fontWeight:600,color:isDark()?"#F4F1FA":"#1F1B2E",letterSpacing:.5,animation:"lumaBootWord 1s .15s cubic-bezier(0.22,1,0.36,1) both"}}>Luma</div>
+        </div>
+      )}
       <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent",height:"100%",width:"100%"}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
@@ -15190,7 +15317,7 @@ export default function App(){
       })()}
       {showEd&&<EditModal item={editAct} onSave={handleSave} onDel={handleDel} onClose={()=>setShowEd(false)} t={t} lang={lang} existingActs={acts} theme={cfg.theme||"light"}/>}
       {commModal&&<CommModals modal={commModal} onClose={()=>setCommModal(null)} cats={commCats} setCats={setCommCats} lang={lang} t={t} setSel={setCommSel}/>}
-      {showSet&&<SettingsModal cfg={cfg} setCfg={setCfg} shareCode={shareCode} onClose={()=>setShowSet(false)} t={t} lang={lang} setLang={setLang} onOpenSupervisor={openSupervisor} onOpenDemo={openDemo} onOpenWelcomeTour={openWelcomeTour} onResetAll={resetAllData}/>}
+      {showSet&&<SettingsModal cfg={cfg} setCfg={setCfg} shareCode={shareCode} onClose={()=>setShowSet(false)} t={t} lang={lang} setLang={setLang} onOpenSupervisor={openSupervisor} onOpenDemo={openDemo} onOpenWelcomeTour={openWelcomeTour} onResetAll={resetAllData} notifsEnabled={notifsEnabled} setNotifsEnabled={setNotifsEnabled} requestNotifPermission={requestNotifPermission} notifSupported={notifSupported}/>}
       {showDemo&&<DemoTour onClose={closeDemo} lang={lang}/>}
       {showTmplPicker&&<TemplatePicker t={t} lang={lang} onAddActs={addTemplateActs} onEditAct={editTemplateAct} onClose={()=>setShowTmplPicker(false)}/>}
       {showModeChoice&&(
