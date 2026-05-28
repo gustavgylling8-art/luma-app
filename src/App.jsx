@@ -39,11 +39,19 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // Status bar: "default" gives BLACK text on a LIGHT bar — needed because the
   // app's primary surface (home/header) is near-white. Previously this was
   // "black-translucent", which forces WHITE text — invisible against the white
-  // Status bar style — MUST match the app theme. With "default" iOS draws a
-  // LIGHT status bar above the app, which creates a visible bright zone over
-  // a dark app body (the "frame" effect). With "black-translucent" the status
-  // bar is transparent and the app's own dark background shows through to the
-  // very top, eliminating any seam.
+  // Status bar style — MUST match the app theme, but NEVER use
+  // "black-translucent". In standalone PWA, black-translucent makes the web
+  // view extend full-screen *under* the status bar, which causes TWO bugs on
+  // iPhone:
+  //   (1) Touch hit-testing gets offset by the status-bar height, so taps
+  //       land a few px ABOVE the visual target — the user has to press
+  //       *below* a button to trigger it.
+  //   (2) The translucent overlay lets the underlying view bleed through at
+  //       the rounded-corner edges → a bright line on the side in dark mode.
+  // "black" (dark) gives a solid black bar with white text that matches the
+  // #0E0E10 app base with no seam, and keeps the web view in its normal
+  // bounds so coordinates and edges are correct. "default" (light) gives a
+  // black-on-light bar matching the near-white light theme.
   const storedThemeForStatus = (() => {
     try {
       const raw = localStorage.getItem("luma_v1_cfg");
@@ -51,7 +59,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     } catch(e) {}
     return "light";
   })();
-  setMeta("apple-mobile-web-app-status-bar-style", storedThemeForStatus === "dark" ? "black-translucent" : "default");
+  setMeta("apple-mobile-web-app-status-bar-style", storedThemeForStatus === "dark" ? "black" : "default");
   // Theme colour — paints the iOS PWA status-bar region. Must match the app
   // body to avoid a visible band where they meet.
   setMeta("theme-color", storedThemeForStatus === "dark" ? "#0E0E10" : "#FBFDFE");
@@ -13641,14 +13649,18 @@ export default function App(){
     el.classList.toggle("lt-theme-light",APP_THEME!=="dark");
     // Also keep the PWA theme-color meta in sync so iOS paints the status-bar
     // area in the matching tone, AND swap the status-bar-style so iOS draws
-    // the right kind of bar (translucent over dark app, default over light).
-    // Without both, a visible bright band appears at the top of dark mode.
+    // the right kind of bar. NEVER use "black-translucent": in standalone PWA
+    // it extends the web view under the status bar, which (1) offsets touch
+    // hit-testing so taps land above the target, and (2) bleeds the underlying
+    // view through at the rounded edges (bright side line in dark mode). Use
+    // solid "black" for dark (matches #0E0E10, white text) and "default" for
+    // light. Both keep the web view in its normal bounds.
     let m=document.head.querySelector('meta[name="theme-color"]');
     if(!m){m=document.createElement("meta");m.setAttribute("name","theme-color");document.head.appendChild(m);}
     m.setAttribute("content",APP_THEME==="dark"?"#0E0E10":"#FBFDFE");
     let sb=document.head.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     if(!sb){sb=document.createElement("meta");sb.setAttribute("name","apple-mobile-web-app-status-bar-style");document.head.appendChild(sb);}
-    sb.setAttribute("content",APP_THEME==="dark"?"black-translucent":"default");
+    sb.setAttribute("content",APP_THEME==="dark"?"black":"default");
   },[APP_THEME]);
   const[resetKey,setResetKey]=useState(0);
   // Track the previously-rendered screen so the entrance fade only plays on a
@@ -14133,13 +14145,23 @@ export default function App(){
        level (see the theme CSS below), not with an extra layer here. */
     <div style={{position:"relative",
       height:appVH?appVH+"px":"100dvh",
-      width:"100vw",
+      width:"100%",
       overflow:"hidden",
       background:isDark()
       ? "#0E0E10"
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
+      {/* FIXED FULL-VIEWPORT BACKDROP — pinned to the real viewport edges
+          (position:fixed, inset:0) so it covers the left/right safe-area
+          strips on rounded-corner iPhones in standalone PWA. The centered
+          app (max-width) can never reach those strips, so without this layer
+          the strip shows the browser default → a bright line in dark mode.
+          zIndex:-1 keeps it behind all content; pointerEvents:none so it
+          never interferes with taps. */}
+      <div aria-hidden="true" style={{position:"fixed",top:0,left:0,right:0,bottom:0,
+        background:isDark()?"#0E0E10":(screen==="home"?"#FFFFFF":effS.hb),
+        zIndex:-1,pointerEvents:"none",transition:"background .5s ease"}}/>
       <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent",height:"100%",width:"100%"}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
@@ -14176,23 +14198,10 @@ export default function App(){
           -webkit-tap-highlight-color: transparent;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
-          /* Default background is the DARK base. The app paints its own
-             fixed full-viewport backdrop on top anyway, but a dark default
-             here means that during the very first paint (before the theme
-             class or the React backdrop mount) any edge sliver is dark —
-             invisible against the dark app — rather than a bright white
-             stripe. Theme classes below override per actual theme. */
           background: #0E0E10;
           margin: 0;
           padding: 0;
-          /* THE EDGE-SLIVER FIX. With viewport-fit=cover iOS reserves a thin
-             strip in the left/right safe-area inset on rounded-corner phones.
-             The app is centered and max-width:480px, so anything narrower than
-             the viewport leaves that strip showing whatever paints *under* the
-             app. Painting html/body across the FULL viewport width with the
-             theme colour means the strip always shows the app's own dark base
-             — no bright line. 100vw spans edge to edge incl. the insets. */
-          width: 100vw;
+          width: 100%;
           min-height: 100dvh;
           overflow-x: hidden;
         }
