@@ -56,20 +56,14 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // body to avoid a visible band where they meet.
   setMeta("theme-color", storedThemeForStatus === "dark" ? "#0E0E10" : "#FBFDFE");
 
-  // The Luma sun icon — matches the in-app header sun EXACTLY: a blue/silver
-  // core orb with eight alternating rays, a top-left gloss, a soft halo and a
-  // crisp inner rim. (The previous icon was peach/bronze, which didn't match
-  // the actual app mark at all.) Drawn at 512 with the same proportions as the
-  // 26px header version, scaled ×~19.7. Blue tokens mirror the light-mode
-  // palette: core #86B6D4, deep #4A7BA0, white highlight, soft blue halo.
-  const SUN_BLUE = "#86B6D4";
-  const SUN_DEEP = "#4A7BA0";
+  // The Luma sun icon (home-screen app icon) — the warm peach/bronze pearl
+  // the user chose. Premium finish with halo, gloss and crisp inner rim.
+  const SUN_BLUE = "#E8A878";
+  const SUN_DEEP = "#C97548";
   const cx=256, cy=256;
   const rays=Array.from({length:8}).map((_,i)=>{
     const a=(i/8)*2*Math.PI;
     const long=i%2===0;
-    // Header uses r1=8.5, r2(long)=12.2 / r2(short)=11 on a 26px box (centre 13).
-    // Scale factor 512/26 ≈ 19.69. Core radius 6.5 → 128.
     const r1=167, r2=long?240:217;
     const x1=cx+r1*Math.sin(a), y1=cy-r1*Math.cos(a);
     const x2=cx+r2*Math.sin(a), y2=cy-r2*Math.cos(a);
@@ -78,34 +72,33 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
     <defs>
       <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#F4F8FC"/><stop offset="55%" stop-color="#FAFCFE"/><stop offset="100%" stop-color="#FFFFFF"/>
+        <stop offset="0%" stop-color="#FBF6F0"/><stop offset="55%" stop-color="#FDFAF5"/><stop offset="100%" stop-color="#FFFFFF"/>
       </linearGradient>
       <radialGradient id="core" cx="34%" cy="28%" r="74%">
         <stop offset="0%" stop-color="#FFFFFF"/>
-        <stop offset="16%" stop-color="#FBFDFF" stop-opacity="0.98"/>
+        <stop offset="16%" stop-color="#FFFAF0" stop-opacity="0.98"/>
         <stop offset="46%" stop-color="${SUN_BLUE}"/>
         <stop offset="82%" stop-color="${SUN_BLUE}"/>
         <stop offset="100%" stop-color="${SUN_DEEP}"/>
       </radialGradient>
       <radialGradient id="halo" cx="50%" cy="50%" r="50%">
         <stop offset="40%" stop-color="${SUN_BLUE}" stop-opacity="0"/>
-        <stop offset="70%" stop-color="${SUN_BLUE}" stop-opacity="0.18"/>
+        <stop offset="70%" stop-color="${SUN_BLUE}" stop-opacity="0.20"/>
         <stop offset="100%" stop-color="${SUN_BLUE}" stop-opacity="0"/>
       </radialGradient>
       <radialGradient id="gloss" cx="32%" cy="26%" r="46%">
-        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.75"/>
-        <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0.14"/>
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.78"/>
+        <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.16"/>
         <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
       </radialGradient>
     </defs>
     <rect width="512" height="512" rx="112" fill="url(#bg)"/>
     <circle cx="${cx}" cy="${cy}" r="200" fill="url(#halo)"/>
-    <circle cx="${cx}" cy="${cy}" r="185" fill="none" stroke="${SUN_BLUE}" stroke-width="1.5" opacity="0.22"/>
     <g stroke="${SUN_BLUE}" stroke-linecap="round">
       ${rays}
     </g>
     <circle cx="${cx}" cy="${cy}" r="128" fill="url(#core)"/>
-    <circle cx="${cx}" cy="${cy}" r="128" fill="none" stroke="${SUN_DEEP}" stroke-width="1.5" opacity="0.35"/>
+    <circle cx="${cx}" cy="${cy}" r="128" fill="none" stroke="${SUN_DEEP}" stroke-width="1.5" opacity="0.30"/>
     <circle cx="${cx}" cy="${cy}" r="128" fill="url(#gloss)"/>
   </svg>`;
   const iconUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(ICON_SVG)));
@@ -185,24 +178,22 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       grd.addColorStop(1, "#FFFFFF");
       g.fillStyle = grd; g.fillRect(0, 0, w, h);
     }
-    // Sun — blue/silver pearl matching the in-app header sun EXACTLY so the
-    // splash flows seamlessly into the live app. Core #86B6D4 (sky blue),
-    // #4A7BA0 (deeper blue at the base of the orb). Premium and consistent
-    // with the wordmark sun the user sees once the app loads.
-    const ACCENT = "#86B6D4";
-    const ACCENT_DEEP = "#4A7BA0";
+    // Sun — warm peach/bronze pearl, the premium Luma sun from the welcome
+    // slide. Core #E8A878 (peach), #C97548 (deeper bronze at base).
+    const ACCENT = "#E8A878";
+    const ACCENT_DEEP = "#C97548";
     const cx = w/2, cy = h * 0.42;
     const R = Math.min(w, h) * 0.085;
-    // (1) Outer soft glow — cool blue aura, matching the header's outer glow
+    // (1) Outer soft glow — warm peach aura
     const glow = g.createRadialGradient(cx, cy, R*0.6, cx, cy, R*3.2);
     if (dark) {
-      glow.addColorStop(0, "rgba(134,182,212,0.20)");
-      glow.addColorStop(0.6, "rgba(134,182,212,0.08)");
-      glow.addColorStop(1, "rgba(134,182,212,0)");
+      glow.addColorStop(0, "rgba(232,168,120,0.20)");
+      glow.addColorStop(0.6, "rgba(232,168,120,0.08)");
+      glow.addColorStop(1, "rgba(232,168,120,0)");
     } else {
-      glow.addColorStop(0, "rgba(134,182,212,0.28)");
-      glow.addColorStop(0.6, "rgba(134,182,212,0.10)");
-      glow.addColorStop(1, "rgba(134,182,212,0)");
+      glow.addColorStop(0, "rgba(232,168,120,0.28)");
+      glow.addColorStop(0.6, "rgba(232,168,120,0.10)");
+      glow.addColorStop(1, "rgba(232,168,120,0)");
     }
     g.fillStyle = glow;
     g.beginPath(); g.arc(cx, cy, R*3.2, 0, Math.PI*2); g.fill();
@@ -238,7 +229,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       cx, cy, R
     );
     core.addColorStop(0, "#FFFFFF");
-    core.addColorStop(0.20, "#FBFDFF");
+    core.addColorStop(0.20, "#FFFAF0");
     core.addColorStop(0.55, ACCENT);
     core.addColorStop(1, ACCENT_DEEP);
     g.fillStyle = core;
@@ -14104,14 +14095,7 @@ export default function App(){
     return "rgba(60, 70, 120, 0.22)";                            // night
   })();
   return(
-    /* Outer shell — fixed exactly to 100dvh, full-bleed to every edge. We
-       deliberately do NOT apply safe-area-inset-left/right padding here:
-       on iPhones with rounded corners iOS reports small positive L/R insets
-       even in portrait, and padding by those values opened thin strips at
-       the screen edges where this wrapper's background showed but the app
-       content didn't — read as a faint "frame". The theme background fills
-       the whole viewport; the header's top padding and nav's bottom padding
-       handle the notch / home-indicator zones where content must inset. */
+    /* Outer shell — fixed exactly to 100dvh, full-bleed to every edge. */
     <div style={{position:"relative",
       height:"100dvh",
       width:"100%",
@@ -14121,7 +14105,24 @@ export default function App(){
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
-      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent",height:"100%",width:"100%"}}>
+      {/* DEFINITIVE EDGE-BLEED FIX — a fixed, full-viewport backdrop locked to
+          every edge (top/right/bottom/left:0, 100vw × 100dvh) painted in the
+          exact theme colour. It sits behind everything (zIndex 0, the app
+          content is zIndex 1). No matter what html/body/wrappers do, this
+          layer guarantees the entire screen — corner to corner — is the theme
+          colour, so no html-background stripe can ever show at the edges.
+          Uses 100vw (not %) so it ignores any parent padding/width quirk. */}
+      <div aria-hidden="true" style={{
+        position:"fixed",
+        top:0,left:0,
+        width:"100vw",
+        height:"100dvh",
+        background:isDark()?"#0E0E10":(screen==="home"?"#FFFFFF":effS.hb),
+        zIndex:0,
+        pointerEvents:"none",
+        transition:"background .5s ease",
+      }}/>
+      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",zIndex:1,background:isDark()?"#0E0E10":"transparent",height:"100%",width:"100%"}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
         /* === UNIVERSAL DEVICE ADAPTATION ===
@@ -14154,10 +14155,13 @@ export default function App(){
           -webkit-tap-highlight-color: transparent;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
-          /* Match the PWA manifest's theme/background_color EXACTLY so the
-             safe-area zones (which iOS paints from <html>) don't show a
-             different shade of white than the in-app surfaces. */
-          background: #FBFDFE;
+          /* Default background is the DARK base. The app paints its own
+             fixed full-viewport backdrop on top anyway, but a dark default
+             here means that during the very first paint (before the theme
+             class or the React backdrop mount) any edge sliver is dark —
+             invisible against the dark app — rather than a bright white
+             stripe. Theme classes below override per actual theme. */
+          background: #0E0E10;
           margin: 0;
           padding: 0;
         }
