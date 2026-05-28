@@ -56,38 +56,57 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // body to avoid a visible band where they meet.
   setMeta("theme-color", storedThemeForStatus === "dark" ? "#0E0E10" : "#FBFDFE");
 
-  // The Luma sun icon — peach/bronze 3D orb matching SceneIntro EXACTLY.
-  // Same palette as the welcome slide so when iOS shows the apple-touch-icon
-  // and splash, it flows seamlessly into the first app screen.
+  // The Luma sun icon — matches the in-app header sun EXACTLY: a blue/silver
+  // core orb with eight alternating rays, a top-left gloss, a soft halo and a
+  // crisp inner rim. (The previous icon was peach/bronze, which didn't match
+  // the actual app mark at all.) Drawn at 512 with the same proportions as the
+  // 26px header version, scaled ×~19.7. Blue tokens mirror the light-mode
+  // palette: core #86B6D4, deep #4A7BA0, white highlight, soft blue halo.
+  const SUN_BLUE = "#86B6D4";
+  const SUN_DEEP = "#4A7BA0";
+  const cx=256, cy=256;
+  const rays=Array.from({length:8}).map((_,i)=>{
+    const a=(i/8)*2*Math.PI;
+    const long=i%2===0;
+    // Header uses r1=8.5, r2(long)=12.2 / r2(short)=11 on a 26px box (centre 13).
+    // Scale factor 512/26 ≈ 19.69. Core radius 6.5 → 128.
+    const r1=167, r2=long?240:217;
+    const x1=cx+r1*Math.sin(a), y1=cy-r1*Math.cos(a);
+    const x2=cx+r2*Math.sin(a), y2=cy-r2*Math.cos(a);
+    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${long?34:25}"/>`;
+  }).join("");
   const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
     <defs>
       <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#FBF6F0"/><stop offset="55%" stop-color="#FDFAF5"/><stop offset="100%" stop-color="#FFFFFF"/>
+        <stop offset="0%" stop-color="#F4F8FC"/><stop offset="55%" stop-color="#FAFCFE"/><stop offset="100%" stop-color="#FFFFFF"/>
       </linearGradient>
-      <radialGradient id="core" cx="35%" cy="30%" r="70%">
+      <radialGradient id="core" cx="34%" cy="28%" r="74%">
         <stop offset="0%" stop-color="#FFFFFF"/>
-        <stop offset="20%" stop-color="#FFFAF0" stop-opacity="0.95"/>
-        <stop offset="55%" stop-color="#E8A878"/>
-        <stop offset="100%" stop-color="#C97548"/>
+        <stop offset="16%" stop-color="#FBFDFF" stop-opacity="0.98"/>
+        <stop offset="46%" stop-color="${SUN_BLUE}"/>
+        <stop offset="82%" stop-color="${SUN_BLUE}"/>
+        <stop offset="100%" stop-color="${SUN_DEEP}"/>
       </radialGradient>
       <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-        <stop offset="40%" stop-color="#E8A878" stop-opacity="0"/>
-        <stop offset="70%" stop-color="#E8A878" stop-opacity="0.20"/>
-        <stop offset="100%" stop-color="#E8A878" stop-opacity="0"/>
+        <stop offset="40%" stop-color="${SUN_BLUE}" stop-opacity="0"/>
+        <stop offset="70%" stop-color="${SUN_BLUE}" stop-opacity="0.18"/>
+        <stop offset="100%" stop-color="${SUN_BLUE}" stop-opacity="0"/>
       </radialGradient>
-      <radialGradient id="gloss" cx="35%" cy="30%" r="42%">
-        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.78"/>
-        <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.16"/>
+      <radialGradient id="gloss" cx="32%" cy="26%" r="46%">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.75"/>
+        <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0.14"/>
         <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
       </radialGradient>
     </defs>
     <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-    <circle cx="256" cy="256" r="170" fill="url(#halo)"/>
-    <g stroke="#E8A878" stroke-linecap="round">
-      ${Array.from({length:8}).map((_,i)=>{const a=(i/8)*2*Math.PI;const long=i%2===0;const r1=130,r2=long?190:168;const x1=256+r1*Math.sin(a),y1=256-r1*Math.cos(a),x2=256+r2*Math.sin(a),y2=256-r2*Math.cos(a);return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${long?16:11}"/>`;}).join("")}
+    <circle cx="${cx}" cy="${cy}" r="200" fill="url(#halo)"/>
+    <circle cx="${cx}" cy="${cy}" r="185" fill="none" stroke="${SUN_BLUE}" stroke-width="1.5" opacity="0.22"/>
+    <g stroke="${SUN_BLUE}" stroke-linecap="round">
+      ${rays}
     </g>
-    <circle cx="256" cy="256" r="100" fill="url(#core)"/>
-    <circle cx="218" cy="218" r="36" fill="url(#gloss)"/>
+    <circle cx="${cx}" cy="${cy}" r="128" fill="url(#core)"/>
+    <circle cx="${cx}" cy="${cy}" r="128" fill="none" stroke="${SUN_DEEP}" stroke-width="1.5" opacity="0.35"/>
+    <circle cx="${cx}" cy="${cy}" r="128" fill="url(#gloss)"/>
   </svg>`;
   const iconUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(ICON_SVG)));
 
@@ -166,24 +185,24 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       grd.addColorStop(1, "#FFFFFF");
       g.fillStyle = grd; g.fillRect(0, 0, w, h);
     }
-    // Sun — warm peach/bronze 3D pearl matching SceneIntro EXACTLY so the
-    // splash flows seamlessly into the welcome slide. Same colour values:
-    // #E8A878 (peach) for the rays and core mid-tone, #C97548 for the deeper
-    // bronze at the base of the orb. Premium and consistent.
-    const ACCENT = "#E8A878";
-    const ACCENT_DEEP = "#C97548";
+    // Sun — blue/silver pearl matching the in-app header sun EXACTLY so the
+    // splash flows seamlessly into the live app. Core #86B6D4 (sky blue),
+    // #4A7BA0 (deeper blue at the base of the orb). Premium and consistent
+    // with the wordmark sun the user sees once the app loads.
+    const ACCENT = "#86B6D4";
+    const ACCENT_DEEP = "#4A7BA0";
     const cx = w/2, cy = h * 0.42;
     const R = Math.min(w, h) * 0.085;
-    // (1) Outer soft glow — warm peach aura, matching SceneIntro's outer glow
+    // (1) Outer soft glow — cool blue aura, matching the header's outer glow
     const glow = g.createRadialGradient(cx, cy, R*0.6, cx, cy, R*3.2);
     if (dark) {
-      glow.addColorStop(0, "rgba(232,168,120,0.20)");
-      glow.addColorStop(0.6, "rgba(232,168,120,0.08)");
-      glow.addColorStop(1, "rgba(232,168,120,0)");
+      glow.addColorStop(0, "rgba(134,182,212,0.20)");
+      glow.addColorStop(0.6, "rgba(134,182,212,0.08)");
+      glow.addColorStop(1, "rgba(134,182,212,0)");
     } else {
-      glow.addColorStop(0, "rgba(232,168,120,0.28)");
-      glow.addColorStop(0.6, "rgba(232,168,120,0.10)");
-      glow.addColorStop(1, "rgba(232,168,120,0)");
+      glow.addColorStop(0, "rgba(134,182,212,0.28)");
+      glow.addColorStop(0.6, "rgba(134,182,212,0.10)");
+      glow.addColorStop(1, "rgba(134,182,212,0)");
     }
     g.fillStyle = glow;
     g.beginPath(); g.arc(cx, cy, R*3.2, 0, Math.PI*2); g.fill();
@@ -219,7 +238,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       cx, cy, R
     );
     core.addColorStop(0, "#FFFFFF");
-    core.addColorStop(0.20, "#FFFAF0");
+    core.addColorStop(0.20, "#FBFDFF");
     core.addColorStop(0.55, ACCENT);
     core.addColorStop(1, ACCENT_DEEP);
     g.fillStyle = core;
@@ -1861,14 +1880,83 @@ function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMod
 }
 
 /* ═══ WAVE ═══ */
-function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
+function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,aesthetic="C"}){
   const c=useTimer(totalSec,autoRun);
   const W=size, H=Math.round(size*0.65);
-  // Water surface level — full at start, sinks gently as time passes.
-  const surfaceY=(c.done?0.92:(1-c.pctSmooth)*0.82+0.08)*H;
+  // Water surface level. The wave path is drawn with its TOP CREST at
+  // local y=18 inside the group, so we offset surfaceY by -18 to put the
+  // crest at the very top of the tank when full. Linear interpolation:
+  //   pctSmooth=1 → surfaceY=-18 → crest at y=0 (tank top, FULL)
+  //   pctSmooth=0 → surfaceY=H-18 → crest at y=H (tank bottom, EMPTY)
+  // Earlier formula placed the crest BELOW the tank's clip at the end,
+  // making the water disappear with ~10% still showing on the timer.
+  const surfaceY=-18+(1-c.pctSmooth)*H;
   const dk=isDark();
-  const lite=shadeHex(color,0.42), deep=shadeHex(color,-0.20);
-  const uid=size;
+
+  // ─── Three world-class water aesthetics ────────────────────────────────
+  // A "Tidewater"  — Japanese watercolour. Soft, luminous, never dark.
+  //                  3 stops, the colour stands on its own, surface kissed
+  //                  with a hint of white. Meditative.
+  // B "Iridescent" — Polished glass in the sun. Sharp specular crest,
+  //                  saturated body, a subtle hue-shift toward the
+  //                  complement deep in the pool. Premium-tech.
+  // C "Linnea"     — Scandinavian gouache. Pastel, slightly milky, warm
+  //                  with a hint of pearl. A gentle aura glows up from
+  //                  the floor. Storybook-soft.
+  //
+  // Every recipe is calibrated to AVOID going so dark it reads as black —
+  // even on already-saturated input colours. The previous gradient went
+  // to -40% which crushed deep blues into near-black; nothing here drops
+  // below -22% so the picked hue is always recognisable.
+  const palette=(()=>{
+    if(aesthetic==="B"){
+      // Iridescent — three stops, sharp crest, subtle hue-shift via shadeHex
+      // toward a slightly cooler tone in the pool (achieved by lifting the
+      // blue channel in `floor` for warm hues, warming it for cool ones —
+      // here approximated with a uniform shift since we don't have HSL).
+      return {
+        crest: dk?shadeHex(color,0.55):shadeHex(color,0.42),
+        upper: dk?shadeHex(color,0.20):shadeHex(color,0.08),
+        mid:   dk?color:                shadeHex(color,-0.06),
+        lower: dk?shadeHex(color,-0.10):shadeHex(color,-0.18),
+        floor: dk?shadeHex(color,-0.22):shadeHex(color,-0.22),
+        meniscusOp: dk?0.30:0.55,
+        auroraStrength: 0,
+        complementHint: true,
+      };
+    }
+    if(aesthetic==="C"){
+      // Linnea — pastel, milky. Highest crest brightness, smallest range,
+      // body stays close to the chosen hue. The aura under the surface
+      // does the heavy lifting for "depth" without darkening anything.
+      return {
+        crest: dk?shadeHex(color,0.52):shadeHex(color,0.46),
+        upper: dk?shadeHex(color,0.32):shadeHex(color,0.22),
+        mid:   dk?shadeHex(color,0.10):shadeHex(color,0.04),
+        lower: dk?shadeHex(color,-0.04):shadeHex(color,-0.08),
+        floor: dk?shadeHex(color,-0.14):shadeHex(color,-0.14),
+        meniscusOp: dk?0.22:0.40,
+        auroraStrength: 1,
+        complementHint: false,
+      };
+    }
+    // A — Tidewater (default). The colour itself sings; tonal range is
+    // gentle and the surface gets just enough brightness to feel like
+    // the sun is on it. No aura, no hue-shift; only what watercolour
+    // pigment naturally does on paper.
+    return {
+      crest: dk?shadeHex(color,0.48):shadeHex(color,0.30),
+      upper: dk?shadeHex(color,0.18):shadeHex(color,0.06),
+      mid:   dk?color:                color,
+      lower: dk?shadeHex(color,-0.08):shadeHex(color,-0.10),
+      floor: dk?shadeHex(color,-0.18):shadeHex(color,-0.18),
+      meniscusOp: dk?0.24:0.42,
+      auroraStrength: 0.35,
+      complementHint: false,
+    };
+  })();
+  const {crest,upper,mid,lower,floor,meniscusOp,auroraStrength,complementHint}=palette;
+  const uid=size+"-"+aesthetic;
 
   // Unique bubbles — each has its own size, speed, horizontal lane, start
   // delay, and a gentle sway amplitude/period so no two rise alike.
@@ -1903,12 +1991,39 @@ function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
         <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{position:"absolute",inset:0}}>
           <defs>
             <clipPath id={`aqTank${uid}`}><rect x="0" y="0" width={W} height={H} rx="30"/></clipPath>
+            {/* Painterly water — five-stop gradient with carefully placed
+                tonal landmarks. The non-uniform offsets (0/8/35/72/100)
+                give the body a sense of depth like a watercolour wash:
+                the top half breathes with light, the bottom half settles
+                into a richer pool. Crest is dabbed with brightness for
+                the meniscus highlight. */}
             <linearGradient id={`aqWater${uid}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={lite} stopOpacity="0.92"/>
-              <stop offset="100%" stopColor={deep} stopOpacity="0.98"/>
+              <stop offset="0%"   stopColor={crest} stopOpacity={dk?"0.94":"1"}/>
+              <stop offset="8%"   stopColor={upper} stopOpacity={dk?"0.96":"1"}/>
+              <stop offset="35%"  stopColor={mid}   stopOpacity={dk?"0.97":"1"}/>
+              <stop offset="72%"  stopColor={lower} stopOpacity={dk?"0.98":"1"}/>
+              <stop offset="100%" stopColor={floor} stopOpacity={dk?"0.99":"1"}/>
             </linearGradient>
+            {/* Surface meniscus — a thin band of brightness right at the
+                water line, suggesting that the surface catches light. We
+                paint this just below the crest so the wave's crest line
+                still reads as the sharp edge. */}
+            <linearGradient id={`aqMeniscus${uid}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"  stopColor="#FFFFFF" stopOpacity={dk?"0.22":"0.45"}/>
+              <stop offset="55%" stopColor="#FFFFFF" stopOpacity={dk?"0.05":"0.10"}/>
+              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0"/>
+            </linearGradient>
+            {/* Sub-surface aurora — a faint inner glow rising from the
+                floor, like sunlight bending up through deep water. Tinted
+                slightly cooler than the body for a believable "depth"
+                feeling regardless of which hue the user picked. */}
+            <radialGradient id={`aqAurora${uid}`} cx="50%" cy="100%" r="80%">
+              <stop offset="0%"  stopColor={shadeHex(color, dk?0.10:0.30)} stopOpacity={dk?"0.30":"0.45"}/>
+              <stop offset="55%" stopColor={shadeHex(color, dk?0.05:0.20)} stopOpacity={dk?"0.12":"0.18"}/>
+              <stop offset="100%" stopColor={color} stopOpacity="0"/>
+            </radialGradient>
             <radialGradient id={`aqGlass${uid}`} cx="30%" cy="16%" r="80%">
-              <stop offset="0%" stopColor="#fff" stopOpacity={dk?"0.16":"0.28"}/>
+              <stop offset="0%" stopColor="#fff" stopOpacity={dk?"0.16":"0.34"}/>
               <stop offset="42%" stopColor="#fff" stopOpacity="0"/>
             </radialGradient>
           </defs>
@@ -1916,7 +2031,7 @@ function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
             {/* Water body sits at the current surface level; one big soft swell
                 rolls slowly across (concept A). The wave path is 2W wide and
                 drifts by exactly W so the loop is seamless. */}
-            <g style={{transform:`translateY(${surfaceY.toFixed(1)}px)`,transition:c.run?"transform 1s linear":"transform .4s ease",willChange:"transform"}}>
+            <g style={{transform:`translate3d(0, ${surfaceY.toFixed(1)}px, 0)`,willChange:"transform",backfaceVisibility:"hidden",WebkitBackfaceVisibility:"hidden"}}>
               <g style={{animation:c.run?`aqDrift${uid} 9s linear infinite`:"none",willChange:"transform"}}>
                 <path fill={`url(#aqWater${uid})`}>
                   <animate attributeName="d" dur="5s" repeatCount="indefinite"
@@ -1924,6 +2039,25 @@ function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
                              M0,18 C${W*0.33},40 ${W*0.66},-6 ${W},18 C${W*1.33},40 ${W*1.66},-6 ${W*2},18 L${W*2},${H*1.6} L0,${H*1.6} Z;
                              M0,18 C${W*0.33},-6 ${W*0.66},40 ${W},18 C${W*1.33},-6 ${W*1.66},40 ${W*2},18 L${W*2},${H*1.6} L0,${H*1.6} Z`}/>
                 </path>
+                {/* Meniscus light — the band of brightness right under the
+                    surface where light skims through the water. Painted as
+                    a soft white-to-transparent gradient overlay clipped to
+                    the wave body, so it never spills above the crest.
+                    Opacity is driven by the aesthetic palette so each
+                    style (A/B/C) gets a different surface character. */}
+                <path fill={`url(#aqMeniscus${uid})`} opacity={meniscusOp}>
+                  <animate attributeName="d" dur="5s" repeatCount="indefinite"
+                    values={`M0,18 C${W*0.33},-6 ${W*0.66},40 ${W},18 C${W*1.33},-6 ${W*1.66},40 ${W*2},18 L${W*2},${(H*0.32).toFixed(0)} L0,${(H*0.32).toFixed(0)} Z;
+                             M0,18 C${W*0.33},40 ${W*0.66},-6 ${W},18 C${W*1.33},40 ${W*1.66},-6 ${W*2},18 L${W*2},${(H*0.32).toFixed(0)} L0,${(H*0.32).toFixed(0)} Z;
+                             M0,18 C${W*0.33},-6 ${W*0.66},40 ${W},18 C${W*1.33},-6 ${W*1.66},40 ${W*2},18 L${W*2},${(H*0.32).toFixed(0)} L0,${(H*0.32).toFixed(0)} Z`}/>
+                </path>
+                {/* Sub-surface aurora — anchored to the tank floor by being
+                    placed at a large y inside the moving group. Glows up
+                    from below and feels like sunlight scattered through
+                    deep water. Sits BEHIND bubbles in z-order. Strength is
+                    palette-controlled: A has a touch, B has none (the
+                    gradient does its own work), C leans on it heavily. */}
+                {auroraStrength>0&&<rect x={-W*0.1} y={H*0.4} width={W*1.2} height={H*1.4} fill={`url(#aqAurora${uid})`} opacity={auroraStrength}/>}
                 {/* bright crest line riding the swell */}
                 <path fill="none" stroke="#EAF8FC" strokeWidth="2" strokeLinecap="round" opacity="0.55">
                   <animate attributeName="d" dur="5s" repeatCount="indefinite"
@@ -1966,27 +2100,75 @@ function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
 ═══ */
 function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const c=useTimer(totalSec,autoRun);
-
-  if(c.done) return <DoneBadge color={color} t={t}/>;
+  // CRITICAL — ALL hooks MUST come before any conditional return.
+  // Earlier the early return `if(c.done) return <DoneBadge/>` sat BETWEEN
+  // these refs and the raf useEffect further down. When c.done flipped to
+  // true the render bailed early, executing fewer hooks than the previous
+  // render, which triggers React error #300 ("Rendered fewer hooks than
+  // expected"). Keeping every hook above the early return fixes that.
+  const sunGroupRef=useRef(null);
+  const dolphinGroupRef=useRef(null);
 
   const W=size, H=Math.round(size*1.34);
   const horizonY=Math.round(H*0.55);
+  const sunR=Math.round(size*0.13);
+  const skyTopMargin=Math.round(size*0.12);
 
-  // Progress: 0 → 1 across full duration. Curve choice matters:
-  // - Smoothstep (cubic) is too flat at the start — sun appears frozen the
-  //   first 15-20s of any timer, which reads as "not working".
-  // - Linear feels mechanical, like a thermometer.
-  // - Gentle ease-out (1-(1-e)^1.6) gives immediate visible movement plus a
-  //   natural slowing-toward-horizon feel — like a real sunset.
-  const elapsed = 1 - c.pctSmooth;
-  let progress;
-  if(elapsed<0.94){
-    const e=elapsed/0.94;
-    progress=(1-Math.pow(1-e,1.6))*0.88;
-  } else {
-    const e=(elapsed-0.94)/0.06;
-    progress=0.88+Math.pow(e,1.4)*0.12;
-  }
+  // 60fps DIRECT-DOM update loop for sun + dolphin transforms.
+  // React re-renders SunTimer ~once per second (when whole-second `secs`
+  // changes). On iOS Safari that React render is heavy because the SVG
+  // scene has many elements (clouds, shimmer bands, halos, birds, etc).
+  // Solution: bypass React for the sun/dolphin transforms. We write the
+  // current position straight to the DOM each animation frame.
+  useEffect(()=>{
+    if(!c.run||c.done) return;
+    const startMs=Date.now();
+    const initialPct=c.pctSmooth;
+    const totalMs=totalSec*1000;
+    const endMs=startMs+initialPct*totalMs;
+    let raf=0;
+    const tick=()=>{
+      const now=Date.now();
+      const leftMs=Math.max(0,endMs-now);
+      const pct=totalMs>0?leftMs/totalMs:0;
+      const prog=1-pct;
+      const sunCY=skyTopMargin+prog*(horizonY+sunR-skyTopMargin);
+      const sunSq=1-Math.max(0,Math.min(1,(prog-0.70)/0.24))*0.16;
+      if(sunGroupRef.current){
+        sunGroupRef.current.style.transform=`translate3d(${W/2}px, ${sunCY}px, 0)`;
+        const squashTarget=sunGroupRef.current.querySelector("[data-sun-squash]");
+        if(squashTarget) squashTarget.style.transform=`scale(1, ${sunSq})`;
+      }
+      if(dolphinGroupRef.current){
+        const dolActive=prog>0.90;
+        if(dolActive){
+          const dolT=Math.max(0,Math.min(1,(prog-0.90)/0.085));
+          const dxC=W*0.62, span=W*0.22;
+          const dx=dxC-span/2+span*dolT;
+          const peak=H*0.20;
+          const arc=Math.sin(dolT*Math.PI);
+          const dy=horizonY+8-arc*peak;
+          const rot=(dolT-0.5)*150;
+          const sc=size*0.0013;
+          dolphinGroupRef.current.style.display="";
+          dolphinGroupRef.current.style.transform=`translate3d(${dx}px, ${dy}px, 0) rotate(${rot}deg) scale(${sc})`;
+        } else {
+          dolphinGroupRef.current.style.display="none";
+        }
+      }
+      raf=requestAnimationFrame(tick);
+    };
+    raf=requestAnimationFrame(tick);
+    return()=>cancelAnimationFrame(raf);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[c.run,c.done,totalSec,size]);
+
+  if(c.done) return <DoneBadge color={color} t={t}/>;
+
+  // Progress: 0 → 1 across full duration. LINEAR — so that at 50% of the
+  // timer's time, the sun is exactly 50% of the way to the horizon, and at
+  // t=0 the sun crosses the horizon precisely as the timer hits 00:00.
+  const progress = 1 - c.pctSmooth;
 
   const lerp=(a,b,t)=>a+(b-a)*t;
   const phaseT=(start,end)=>Math.max(0,Math.min(1,(progress-start)/(end-start)));
@@ -2061,10 +2243,12 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
   const waterTop=`hsl(${waterH},${waterS}%,${waterL}%)`;
   const waterBot=`hsl(${waterH+4},${Math.max(20,waterS-8)}%,${Math.max(14,waterL-16)}%)`;
 
-  // Sun — soft and pastel, never harsh yellow
-  const sunR=Math.round(size*0.13);
-  const skyTopMargin=Math.round(size*0.12);
-  const sunCenterY=skyTopMargin+progress*(horizonY+sunR*1.4-skyTopMargin);
+  // Sun trajectory: at progress=0 the sun sits high; at progress=1 the sun
+  // has JUST set (its lower edge crosses the horizon at the timer's final
+  // tick). sunCenterY ends at horizonY+sunR — i.e. fully under the line.
+  // sunR/skyTopMargin are declared at the top of the function (before the
+  // early return) so the raf loop can read them too.
+  const sunCenterY=skyTopMargin+progress*(horizonY+sunR-skyTopMargin);
   const sunVisible=sunCenterY<horizonY+sunR;
 
   // Soft pastel sun: pale cream → peach → rose
@@ -2388,14 +2572,24 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
         )}
 
         {/* Sun system — rays + halo + disc all positioned via transform on wrapper.
-            Solving position changes by translating wrapper group means SVG attributes
-            (cx, cy, x1, y1, etc.) stay static — they never need CSS transitions, which
-            iOS Safari does not reliably support on SVG geometry attributes. */}
+            sunCenterY is recomputed every animation frame from pctSmooth (raf loop
+            in useTimer), so the wrapper translate changes smoothly per frame. We
+            deliberately DO NOT use `transition: transform 1s linear` here — that
+            confuses iOS Safari: each frame restarts a new 1s transition toward
+            the new target value, so the sun visibly freezes (every transition is
+            superseded before it can resolve). With no transition, the per-frame
+            translate gives an inherently smooth glide. */}
         <g clipPath={`url(#sc${uid})`}>
-          <g style={{
-            transform:`translate(${W/2}px, ${sunCenterY}px)`,
-            transition:"transform 1s linear",
+          <g ref={sunGroupRef} style={{
+            /* translate3d (not translate) forces the layer onto the GPU on
+               iOS Safari — without 3d, transform updates can fall back to
+               CPU-painted rasterization which janks on a busy SVG scene.
+               The raf loop above writes new transforms directly to this
+               node, so the sun moves smoothly between React re-renders. */
+            transform:`translate3d(${W/2}px, ${sunCenterY}px, 0)`,
             willChange:"transform",
+            backfaceVisibility:"hidden",
+            WebkitBackfaceVisibility:"hidden",
           }}>
             {/* Soft crepuscular god-rays — gentle beams radiating from the sun */}
             {godRayOpacity>0.01&&sunVisible&&(
@@ -2416,7 +2610,7 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
 
             {/* Sun disc — quiet breathing, flattens toward the horizon */}
             {sunVisible&&(
-              <g style={{transform:`scale(1, ${sunSquash})`,transition:"transform 1s linear"}}>
+              <g data-sun-squash="true" style={{transform:`scale(1, ${sunSquash})`}}>
                 <g style={{animation:"sunPastelBreath 8s ease-in-out infinite",transformOrigin:"0 0",willChange:"transform"}}>
                   <circle cx={0} cy={0} r={sunR} fill={`url(#sun${uid})`}/>
                   <circle cx={-sunR*0.14} cy={-sunR*0.18} r={sunR*0.4} fill="#FFFFFF" opacity={0.4}/>
@@ -2501,60 +2695,63 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
         {/* Soft horizon hairline — barely visible separator */}
         <line x1={0} y1={horizonY} x2={W} y2={horizonY} stroke="rgba(31,27,46,0.06)" strokeWidth={0.5}/>
 
-        {/* Dolphin breach — a quiet little reward just before the timer ends */}
+        {/* Dolphin breach — a quiet little reward just before the timer ends.
+            The silhouette is ALWAYS rendered (hidden initially) so the raf
+            loop above can flip display + transform directly via ref, giving
+            a perfectly smooth arc on iOS. The splash flashes are still
+            React-driven because they tween slowly enough for 1Hz updates. */}
+        <g
+          ref={dolphinGroupRef}
+          style={{
+            display:dolphinActive?"":"none",
+            transform:`translate3d(${W*0.62}px, ${horizonY+8}px, 0) scale(${size*0.0013})`,
+            transformOrigin:"0 0",
+            willChange:"transform",
+            backfaceVisibility:"hidden",
+            WebkitBackfaceVisibility:"hidden",
+          }}
+        >
+          <path d="M48,-30 C30,-44 -4,-42 -26,-24 C-34,-30 -44,-30 -54,-26 C-46,-22 -42,-16 -42,-10 C-52,6 -54,22 -50,36 C-44,24 -36,14 -26,8 C-6,18 26,16 46,-2 C40,-8 34,-12 28,-14 C36,-18 44,-23 48,-30 Z" fill={`hsl(${skyBotH},22%,32%)`} style={{transition:"fill 1s linear"}}/>
+          {/* soft warm rim light along the back */}
+          <path d="M-26,-24 C-4,-42 30,-44 48,-30" fill="none" stroke={bloomCol} strokeWidth="4.5" strokeLinecap="round" opacity={0.45+sunsetBloom*0.4} style={{transition:"stroke 1s linear"}}/>
+          {/* eye */}
+          <circle cx="34" cy="-26" r="2.2" fill="#FFFFFF" opacity="0.85"/>
+        </g>
+        {/* Dolphin splash — React-driven, only renders during breach */}
         {dolphinActive&&(()=>{
-          const dxC=W*0.62;                       // horizontal centre of the arc
-          const span=W*0.22;                      // how far it travels across
-          const dx=dxC-span/2+span*dolphinT;       // moves left→right across the arc
-          const peak=H*0.20;                       // arc height above the water
-          const arc=Math.sin(dolphinT*Math.PI);    // 0→1→0 vertical arc factor
-          const dy=horizonY+8-arc*peak;            // y position (above water at peak)
-          const rot=(dolphinT-0.5)*150;            // tilt: nose-up rising, nose-down diving
-          const sc=size*0.0013;                    // scale dolphin to timer size
+          const dxC=W*0.62;
+          const span=W*0.22;
+          const arc=Math.sin(dolphinT*Math.PI);
           const splash=Math.max(arc<0.25?1:0, dolphinT<0.5?(1-dolphinT*4):((dolphinT-0.75)*4));
-          const dolCol=`hsl(${skyBotH},22%,32%)`;
+          if(splash<=0.05) return null;
           return(
-            <g>
-              {/* splash at the water line */}
-              {splash>0.05&&(
-                <g opacity={Math.min(1,splash)*0.7} clipPath={`url(#wc${uid})`}>
-                  {[-1,0,1].map((s,i)=>(
-                    <ellipse key={i} cx={dxC-span/2+span*0.5+s*7} cy={horizonY+6} rx={2-Math.abs(s)*0.4} ry={4+Math.abs(s)} fill="#FFFFFF" opacity="0.6"/>
-                  ))}
-                  <ellipse cx={dxC-span/2+span*0.5} cy={horizonY+7} rx="11" ry="3" fill="#FFFFFF" opacity="0.35"/>
-                </g>
-              )}
-              {/* dolphin silhouette */}
-              <g style={{transform:`translate(${dx}px, ${dy}px) rotate(${rot}deg) scale(${sc})`,transformOrigin:`${dx}px ${dy}px`}}>
-                <path d="M48,-30 C30,-44 -4,-42 -26,-24 C-34,-30 -44,-30 -54,-26 C-46,-22 -42,-16 -42,-10 C-52,6 -54,22 -50,36 C-44,24 -36,14 -26,8 C-6,18 26,16 46,-2 C40,-8 34,-12 28,-14 C36,-18 44,-23 48,-30 Z" fill={dolCol} style={{transition:"fill 1s linear"}}/>
-                {/* soft warm rim light along the back */}
-                <path d="M-26,-24 C-4,-42 30,-44 48,-30" fill="none" stroke={bloomCol} strokeWidth="4.5" strokeLinecap="round" opacity={0.45+sunsetBloom*0.4} style={{transition:"stroke 1s linear"}}/>
-                {/* eye */}
-                <circle cx="34" cy="-26" r="2.2" fill="#FFFFFF" opacity="0.85"/>
-              </g>
+            <g opacity={Math.min(1,splash)*0.7} clipPath={`url(#wc${uid})`}>
+              {[-1,0,1].map((s,i)=>(
+                <ellipse key={i} cx={dxC-span/2+span*0.5+s*7} cy={horizonY+6} rx={2-Math.abs(s)*0.4} ry={4+Math.abs(s)} fill="#FFFFFF" opacity="0.6"/>
+              ))}
+              <ellipse cx={dxC-span/2+span*0.5} cy={horizonY+7} rx="11" ry="3" fill="#FFFFFF" opacity="0.35"/>
             </g>
           );
         })()}
 
         <rect x={0} y={0} width={W} height={H} fill={`url(#vig${uid})`} pointerEvents="none" style={{opacity:0.5+progress*0.4,transition:"opacity 1s linear"}}/>
 
-        {/* Time label — large, centered, matches the position of all other
-            timer types so switching between them doesn't make the focal
-            point jump. The fill adapts to the current sky phase so the time
-            stays readable from pale day through indigo night. */}
+        {/* Time label — placed in the lower portion of the water area so it
+            doesn't sit on top of the sun. Horizon is at H*0.55, so 80% of H
+            puts the time clearly below the horizon in the calm sea region. */}
         <text
-          x={W/2} y={H/2}
+          x={W/2} y={H*0.80}
           textAnchor="middle"
           dominantBaseline="central"
           style={{
             fontSize:Math.round(size*0.14),
             fontWeight:600,
-            fill:progress<0.55?"rgba(31,27,46,0.78)":"rgba(255,255,255,0.94)",
+            fill:"rgba(255,255,255,0.96)",
             fontFamily:G.serif,
             fontVariantNumeric:"tabular-nums",
             letterSpacing:0.5,
             transition:"fill 1s linear",
-            filter:progress>=0.55?"drop-shadow(0 2px 10px rgba(0,0,0,0.35))":"none",
+            filter:"drop-shadow(0 2px 10px rgba(0,0,0,0.45))",
           }}
         >{c.label}</text>
       </svg>
@@ -5855,7 +6052,16 @@ function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
         contrast against cards is preserved. */}
     <div style={{
       flex:1,display:"flex",flexDirection:"column",overflow:"hidden",
-      background:`radial-gradient(ellipse 140% 70% at 50% 0%, ${cat.color}26 0%, ${cat.color}10 35%, ${S.hb} 75%)`,
+      // Fully transparent — no local gradient overlay. ANY gradient
+      // anchored to this div's top edge creates a visible seam where
+      // the colour intensifies precisely at the meeting line between
+      // header and body. Even a gentle "${cat.color}1A → transparent"
+      // halo here introduces +10% saturation that the header doesn't
+      // have, which the eye reads as a coloured band. The entire
+      // screen surface comes from the App root's effS.hb (raised to
+      // make the category tint visible). No exceptions, no overlays.
+      background:"transparent",
+      position:"relative",
       transition:"background 0.5s ease",
     }}>
       {/* Tab bar — pills + "+" button all live inside the same scroll
@@ -5920,7 +6126,15 @@ function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
                     :active
                       ? (isDark()
                           ? `inset 0 1px 0 rgba(255,255,255,0.10), inset 0 0 0 1px ${c.color}33, 0 4px 14px -6px ${c.color}40`
-                          : `0 6px 18px ${c.color}55, inset 0 1px 0 rgba(255,255,255,0.3)`)
+                          // Light mode active: a TIGHT, neutral lift shadow + a
+                          // gentle inner highlight. Earlier had a 18px-blur
+                          // colour-saturated halo (`0 6px 18px ${c}55`) which
+                          // dropped a visible coloured glow several pixels
+                          // beneath the pill — read as a horizontal band below
+                          // the whole category strip. Pulled the blur down,
+                          // dropped the alpha hard, and shifted the colour
+                          // contribution into the inner highlight instead.
+                          : `0 2px 6px rgba(31,27,46,0.10), 0 1px 2px ${c.color}1A, inset 0 1px 0 rgba(255,255,255,0.35)`)
                       : (isDark()?"none":`0 1px 3px rgba(31,27,46,0.04)`),
                   display:"inline-flex",alignItems:"center",gap:active&&isEditor?6:0,
                   userSelect:"none",WebkitUserSelect:"none",
@@ -6859,7 +7073,12 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
     <div data-emotion-scroll data-modal-scroll style={{
       flex:1,display:"flex",flexDirection:"column",overflowY:"auto",position:"relative",
       overflowAnchor:"none",overscrollBehavior:"contain",
-      background:`radial-gradient(ellipse 130% 60% at 50% 0%, ${sel?sel.color:S.h}1F 0%, ${sel?sel.color:S.h}0A 32%, ${S.hb} 68%)`,
+      // Transparent — any gradient anchored to this div's top edge
+      // creates a visible seam where it meets the header (same issue
+      // we fixed on the Talk screen). The unified pastel comes from
+      // the App root's effS.hb. When a feeling is selected, its tint
+      // is reflected in the meter and tiles below, not the page.
+      background:"transparent",
       transition:"background .6s cubic-bezier(0.32, 0.72, 0, 1)",
     }}>
       {/* Historik-knappen — diskret floating-knapp uppe till höger. Var
@@ -7368,13 +7587,25 @@ function CustomEmotionEditor({existing,onSave,onDelete,onClose,t,lang}){
 }
 
 /* ═══ Timer screen ═══ */
-function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer}){
+function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange}){
   const S=scrPal("timer");
   const tc=cfg.timerCfg;
   const allowed=tc.allowedTypes.length>0?tc.allowedTypes:["sector"];
   const[type,setType]=useState(allowed.includes(tc.defaultType)?tc.defaultType:allowed[0]);
   const[min,setMin]=useState(tc.defaultMin);
-  const[color,setColor]=useState(tc.defaultColor);
+  const[color,setColorLocal]=useState(tc.defaultColor);
+  // Wrapped setter so every colour change also propagates up to the App
+  // root, which retints the header + page background via `liveTimerColor`.
+  const setColor=(c)=>{
+    setColorLocal(c);
+    if(typeof onColorChange==="function") onColorChange(c);
+  };
+  // Push initial colour up on mount, and whenever defaultColor changes
+  // externally (e.g. supervisor edited the default), keep them in sync.
+  useEffect(()=>{
+    if(typeof onColorChange==="function") onColorChange(color);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[color]);
   const start=()=>{onLaunchTimer({type,totalSec:min*60,color});};
 
   // Editor view — configure which timer types are allowed + defaults
@@ -11041,9 +11272,10 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
     return Math.ceil(((t-yearStart)/86400000+1)/7);
   };
   const weekNum=getWeekNumber(monday);
-  const weekRange=sameMonth
-    ? `${lang==="sv"?"Vecka":"Week"} ${weekNum} · ${monday.getDate()} – ${weekDays[6].day} ${monthLabel}`
-    : `${lang==="sv"?"Vecka":"Week"} ${weekNum} · ${monday.getDate()} ${monthLabel} – ${weekDays[6].day} ${sundayMonth}`;
+  // Just the week number — earlier we also showed the date range
+  // ("Vecka 22 · 25 – 31 Maj") but the dates already appear in the day
+  // pills below, which made the range feel redundant and visually noisy.
+  const weekRange=`${lang==="sv"?"Vecka":"Week"} ${weekNum}`;
 
   const nowMin=now.getHours()*60+now.getMinutes();
   const nowY=((nowMin/60)-HOUR_START)*HOUR_H;
@@ -11180,7 +11412,7 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
           rewrites padding/maxHeight imperatively without triggering React
           re-renders. The "Idag" pill lives separately to avoid clipping. */}
       <div ref={titleAreaRef} style={{padding:"24px 22px 14px",flexShrink:0,maxHeight:60,overflow:"hidden"}}>
-        <div ref={weekRangeRef} style={{fontFamily:G.font,fontWeight:400,fontSize:11,color:isDark()?tk().ink2:"#7C7691",letterSpacing:.6,textTransform:"capitalize"}}>{weekRange}</div>
+        <div ref={weekRangeRef} style={{fontFamily:G.serif,fontWeight:600,fontSize:14,color:isDark()?tk().ink2:"#7C7691",letterSpacing:.3,textTransform:"capitalize"}}>{weekRange}</div>
       </div>
 
       {/* "Idag" pill — lifted out into its own absolute overlay so it can stay
@@ -11222,7 +11454,16 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
           const showMedium=isPeeked;
           // Today stays identifiable even when peeking another day — softer than strong, stronger than quiet
           const todaySofter=d.isToday&&focusedDay!==null;
-          const isLight=dCol==="#FFFFFF"||dCol==="#F5F2EE";
+          // Light-colour detection — proper luminance check, not just a few
+          // hard-coded hex values. Catches white, yellow, light pink, pale
+          // mint, etc. — any colour where white text would vanish. Uses
+          // the standard rec.709 luminance formula on the chosen colour.
+          const isLight=(()=>{
+            const rgb=hexToRgb(dCol);
+            if(!rgb) return false;
+            const lum=0.299*rgb[0]+0.587*rgb[1]+0.114*rgb[2];
+            return lum>200;
+          })();
           // Match column flex widths EXACTLY so the disc centers over the colored strip.
           // These must mirror the colFlex logic in the day-column rendering below.
           const headerFlex = showStrong ? 1.85 : todaySofter ? 1.50 : showMedium ? 1.00 : d.isPast ? 0.5 : 0.7;
@@ -11260,7 +11501,10 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
                 {/* Soft breathing halo behind today's disc — only when strong */}
                 {showStrong&&(
                   <>
-                    <style>{`@keyframes wkTodayHalo{0%,100%{opacity:0.35;transform:scale(0.95)}50%{opacity:0.7;transform:scale(1.18)}}`}</style>
+                    <style>{`
+                      @keyframes wkTodayHalo{0%,100%{opacity:0.35;transform:scale(0.95)}50%{opacity:0.7;transform:scale(1.18)}}
+                      @keyframes wkTodayBreath{0%,100%{transform:scale(1) scale(calc(1 - 0.30 * var(--collapse, 0)));filter:brightness(1)}50%{transform:scale(1.03) scale(calc(1 - 0.30 * var(--collapse, 0)));filter:brightness(1.05)}}
+                    `}</style>
                     <div style={{position:"absolute",inset:-8,borderRadius:"50%",background:`radial-gradient(circle, ${dCol}66 0%, ${dCol}22 50%, transparent 75%)`,filter:"blur(6px)",animation:"wkTodayHalo 3.6s ease-in-out infinite",pointerEvents:"none"}}/>
                   </>
                 )}
@@ -11268,20 +11512,54 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
                   width:discBase,height:discBase,borderRadius:"50%",
                   display:"flex",alignItems:"center",justifyContent:"center",
                   position:"relative",
-                  background:showStrong||showMedium||todaySofter?`linear-gradient(140deg, ${dCol}, ${dCol}DC)`:`${dCol}33`,
-                  border:`1px solid ${isLight?"rgba(31,27,46,0.18)":"rgba(31,27,46,0.04)"}`,
+                  // Concept C — "Färgcirklar": every day (today, peeked,
+                  // today-softer, AND future days) gets its full hue. Past
+                  // days stay quiet (handled via opacity in the outer div).
+                  // The day-pill is now a chromatic "pearl row".
+                  background:`linear-gradient(140deg, ${dCol}, ${dCol}DC)`,
+                  // Border: light colours (white, yellow, pale) get a
+                  // visible dark hairline so the disc reads as a shape on
+                  // a light page; saturated colours just need a whisper.
+                  border:`1px solid ${isLight?"rgba(31,27,46,0.22)":"rgba(31,27,46,0.04)"}`,
                   boxShadow:showStrong
                     ?`0 6px 16px ${dCol}77, 0 2px 4px ${dCol}55, inset 0 1px 0 rgba(255,255,255,0.5)`
                     :showMedium
                     ?`0 3px 8px ${dCol}44, inset 0 1px 0 rgba(255,255,255,0.4)`
                     :todaySofter
                     ?`0 3px 8px ${dCol}44, inset 0 1px 0 rgba(255,255,255,0.45)`
-                    :"inset 0 1px 0 rgba(255,255,255,0.35)",
+                    // Future days get a quiet lift shadow in their colour;
+                    // past days get just an inner highlight (no drop shadow).
+                    :d.isPast
+                    ?`inset 0 1px 0 rgba(255,255,255,0.35)`
+                    :`0 2px 6px ${dCol}33, inset 0 1px 0 rgba(255,255,255,0.45)`,
                   transition:"background .4s ease, box-shadow .4s ease",
                   transform:`scale(${showMedium?1.04:1}) scale(calc(1 - 0.30 * var(--collapse, 0)))`,
+                  // Gentle "alive" breath on today only — separate from halo.
+                  animation:showStrong?"wkTodayBreath 3.2s ease-in-out infinite":"none",
                   willChange:"transform",
                 }}>
-                  <span style={{fontFamily:G.serif,fontWeight:showStrong||showMedium||todaySofter?600:500,fontSize:numBase,color:showStrong||showMedium||todaySofter?"#FFFFFF":tk().ink,textShadow:(showStrong||showMedium||todaySofter)&&(isLight||dCol==="#F5E26B")?"0 1px 2px rgba(31,27,46,0.45), 0 0 1px rgba(31,27,46,0.35)":"none",lineHeight:1,letterSpacing:-.3,transition:"color .35s ease"}}>{d.day}</span>
+                  {d.isPast?(
+                    /* Past days — show a small ✓ inside instead of the date
+                       number, signalling the day has been completed. Text
+                       colour adapts to disc luminance for legibility. */
+                    <svg width={discBase*0.46} height={discBase*0.46} viewBox="0 0 16 16" style={{color:isLight?G.ink:"#FFFFFF",opacity:0.88}}>
+                      <path d="M3 8.5 L6.5 12 L13 4.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ):(
+                    /* Date number. On LIGHT discs (white, yellow, etc) we
+                       use the app's dark ink for legibility — white text
+                       would vanish. On saturated discs, white text with a
+                       soft drop shadow keeps it crisp. */
+                    <span style={{
+                      fontFamily:G.serif,
+                      fontWeight:600,
+                      fontSize:numBase,
+                      color:isLight?G.ink:"#FFFFFF",
+                      textShadow:isLight?"none":"0 1px 2px rgba(31,27,46,0.30)",
+                      lineHeight:1,letterSpacing:-.3,
+                      transition:"color .35s ease",
+                    }}>{d.day}</span>
+                  )}
                 </div>
               </div>
               {/* "Today" indicator — always visible under today's disc, regardless of focus */}
@@ -12197,9 +12475,9 @@ function SceneSchedule(){
         <div style={{flex:1,display:"flex",flexDirection:"column",gap:10}}>
           {[
             {emoji:"🥣",name:"Frukost",time:"07:30",color:"#E89B89",done:true,delay:0.2},
-            {emoji:"📚",name:"Läxor",time:"NU",color:"#E89B89",now:true,delay:0.4},
+            {emoji:"🎮",name:"Spela",time:"NU",color:"#E89B89",now:true,delay:0.4},
             {emoji:"🚶",name:"Promenad",time:"14:00",color:"#8FBFA1",delay:0.6},
-            {emoji:"📖",name:"Läsa",time:"17:00",color:"#8AAFD2",delay:0.8},
+            {emoji:"📺",name:"TV",time:"17:00",color:"#8AAFD2",delay:0.8},
           ].map((c,i)=>(
             <div key={i} style={{
               background:"#FFFFFF",
@@ -13359,6 +13637,16 @@ export default function App(){
   // inside that screen's content area and clip it under the header).
   const[fullTimer,setFullTimer]=useState(null); // {type,totalSec,color,activity?} or null
   const launchTimer=(opts)=>setFullTimer(opts);
+  // Currently-selected timer colour from the Timer screen — held here at
+  // App root (rather than only inside TimerScreen's local state) so that
+  // `effS` below can read it and theme the header + page background in
+  // sync with what the user just picked. Initial value follows the saved
+  // default; TimerScreen pushes updates here whenever the user changes
+  // the colour. Reset to default whenever the timer config changes.
+  const[liveTimerColor,setLiveTimerColor]=useState(cfg.timerCfg?.defaultColor||"#8AAFD2");
+  useEffect(()=>{
+    setLiveTimerColor(cfg.timerCfg?.defaultColor||"#8AAFD2");
+  },[cfg.timerCfg?.defaultColor]);
   // Full data reset — empties every persistent state in memory AND clears
   // localStorage. No page reload needed (reload fails in some in-app webviews).
   const resetAllData=()=>{
@@ -13683,7 +13971,14 @@ export default function App(){
     const cutoff=a.endTime?hm(a.endTime):hm(a.time);
     return cutoff>nowMin;
   });
-  const dateStr=now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{weekday:"long",day:"numeric",month:"long"});
+  // Date string used in the header for non-home screens. Matches the
+  // home-header's "Torsdag · 28 maj" format — weekday, middle dot, then
+  // day + month, all in title case via the locale.
+  const dateStr=(()=>{
+    const wd=now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{weekday:"long"});
+    const dm=now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{day:"numeric",month:"long"});
+    return `${wd} · ${dm}`;
+  })();
   const effView=cfg.schedView==="card"?"card":cfg.schedView==="list"?"list":view;
   const handleSave=item=>setActs(a=>a.find(x=>x.id===item.id)?a.map(x=>x.id===item.id?item:x):[...a,item]);
   const handleDel=id=>setActs(a=>a.filter(x=>x.id!==id));
@@ -13733,7 +14028,33 @@ export default function App(){
         hl:withAlpha(c,0.14),   // soft tinted header gradient start
         soft:withAlpha(c,0.34), // ambient halo
         deep:shade(c,-0.35),    // Luma logo gradient bottom — darker variant
+        // Page background picks up a soft pastel of the category colour.
+        // Set high enough (13%) to be clearly visible across the whole
+        // screen as a unified surface — no local halos/overlays on top.
+        // Going any higher risks fighting the white cards' contrast;
+        // going lower makes the colour feel washed out.
+        hb:withAlpha(c,0.13),
+        hll:withAlpha(c,0.18),
       };
+    }
+    // Timer screen — header + page background follow the user's chosen
+    // timer colour. Reads `liveTimerColor` (App-level state pushed up from
+    // TimerScreen) so picking a new colour on the screen instantly retints
+    // the whole tool. Only applied in LIGHT mode — dark mode keeps its
+    // calm near-black palette.
+    if(screen==="timer"&&!isDark()){
+      const c=liveTimerColor;
+      if(c){
+        return{
+          ...curS,
+          h:c,
+          hl:withAlpha(c,0.14),
+          soft:withAlpha(c,0.32),
+          deep:shade(c,-0.35),
+          hb:withAlpha(c,0.06),
+          hll:withAlpha(c,0.10),
+        };
+      }
     }
     // Home in card view → the header reflects the active card's hue (logo,
     // wordmark, auroras). We deliberately do NOT tint the page background `hb`
@@ -13783,21 +14104,24 @@ export default function App(){
     return "rgba(60, 70, 120, 0.22)";                            // night
   })();
   return(
-    /* Outer shell — fixed exactly to 100dvh (not minHeight). With minHeight,
-       any inner overflow pushes the bottom-nav below the visible viewport.
-       Safe-area padding on left/right is here on the outer wrapper so the
-       theme background colour reaches the rounded-corner edges and no
-       bright stripe shows in dark mode. */
+    /* Outer shell — fixed exactly to 100dvh, full-bleed to every edge. We
+       deliberately do NOT apply safe-area-inset-left/right padding here:
+       on iPhones with rounded corners iOS reports small positive L/R insets
+       even in portrait, and padding by those values opened thin strips at
+       the screen edges where this wrapper's background showed but the app
+       content didn't — read as a faint "frame". The theme background fills
+       the whole viewport; the header's top padding and nav's bottom padding
+       handle the notch / home-indicator zones where content must inset. */
     <div style={{position:"relative",
       height:"100dvh",
-      paddingLeft:"env(safe-area-inset-left, 0px)",
-      paddingRight:"env(safe-area-inset-right, 0px)",
+      width:"100%",
+      boxSizing:"border-box",
       background:isDark()
       ? "#0E0E10"
       : (screen==="home"
         ? "#FFFFFF"
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
-      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent",height:"100%"}}>
+      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent",height:"100%",width:"100%"}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
         /* === UNIVERSAL DEVICE ADAPTATION ===
@@ -13844,10 +14168,10 @@ export default function App(){
           overflow: hidden;
         }
         @media (prefers-color-scheme: dark) {
-          html, body { background: #0E0E10; }
+          html, body { background: #0E0E10; margin: 0; padding: 0; min-height: 100dvh; }
         }
-        html.lt-theme-dark, html.lt-theme-dark body { background: #0E0E10; }
-        html.lt-theme-light, html.lt-theme-light body { background: #FBFDFE; }
+        html.lt-theme-dark, html.lt-theme-dark body { background: #0E0E10; margin: 0; padding: 0; }
+        html.lt-theme-light, html.lt-theme-light body { background: #FBFDFE; margin: 0; padding: 0; }
         .lt-app-root {
           height: var(--app-vh);
           max-width: 480px;
@@ -14055,23 +14379,14 @@ export default function App(){
       {/* Ambient time-of-day tint disabled — it created a visible horizontal
           band where the gradient faded out at ~60% screen height, which read
           as a frame. A uniform deep base reads as more premium. */}
-      {/* Non-home light: fläckvis pastel that lifts the view. These sit at the
-          PAGE level (behind both header and body) so they're never clipped at a
-          seam. Distinct accent pools play against lighter/white blooms for real
-          pastel-vs-white contrast, while the base stays the uniform screen tone. */}
-      {!isDark()&&screen!=="home"&&screen!=="week"&&(
-        <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
-          {/* Two very large, very soft pastel pools — gentle organic variation
-              that spans the WHOLE screen (no discrete lower edge to read as a
-              line). Clean and iOS-calm: lifts the view without banding. */}
-          <div style={{position:"absolute",top:"-12%",left:"22%",transform:"translateX(-50%)",width:"95%",height:"70%",borderRadius:"50%",
-            background:`radial-gradient(circle, ${effS.h}24 0%, ${effS.h}10 40%, transparent 72%)`,
-            filter:"blur(60px)",animation:"headerGlow 22s ease-in-out infinite",willChange:"transform, opacity"}}/>
-          <div style={{position:"absolute",top:"18%",left:"92%",transform:"translateX(-50%)",width:"90%",height:"75%",borderRadius:"50%",
-            background:`radial-gradient(circle, ${effS.h}1A 0%, ${effS.h}0A 42%, transparent 74%)`,
-            filter:"blur(64px)",animation:"auroraDrift2 26s ease-in-out infinite",willChange:"transform, opacity"}}/>
-        </div>
-      )}
+      {/* Previously: two large pastel pools sat at page-level for non-home /
+          non-week screens. They created visible horizontal BANDS because
+          their radial fades met at different y-positions, producing zones
+          where neither blob reached strongly. The uniform `effS.hb` tint set
+          on the app root already gives every screen its category-tinted
+          pastel surface — no overlay needed to "lift" it. Anything added
+          here will re-introduce banding unless it's truly full-screen and
+          edge-fading nowhere. Kept empty deliberately. */}
       {/* Vecka light: cool tech-blue at the top toning down to WHITE so the
           schedule sits on a clean white field (in focus). Built as light
           overlays only — a blue wash near the top, then a white veil that
@@ -14159,10 +14474,12 @@ export default function App(){
              tone (effS.hb) so header and screen are one uniform background. */
           null
         ))}
-        {/* Specular highlight on the top edge — light mode only. In dark
-            mode it created a visible bright line under the status bar that
-            read as part of a frame around the app. */}
-        {!isDark()&&<div style={{
+        {/* Specular highlight on the top edge — light mode, HOME only.
+            On other screens the body background is now a saturated pastel
+            (effS.hb at 11%); a white overlay on top creates a visible
+            bright band where the header meets the body. The specular only
+            looks right against the near-white home background. */}
+        {!isDark()&&screen==="home"&&<div style={{
           position:"absolute",
           top:0,left:0,right:0,height:40,
           background:`linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.4) 40%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0.4) 60%, transparent 100%)`,
@@ -14239,7 +14556,7 @@ export default function App(){
           </svg>
           <span style={{
             fontFamily:G.serif,
-            fontWeight:900,
+            fontWeight:700,
             fontSize:18,
             lineHeight:1,
             color:isDark()?shadeHex(effS.h,0.28):effS.deep,
@@ -14280,7 +14597,13 @@ export default function App(){
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:0,position:"relative",gap:12,minHeight:36}}>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontFamily:G.font,fontWeight:isEd?400:500,fontSize:10.5,color:isEd?(isDark()?tk().ink3:"#7C7691"):(isDark()?effS.h:effS.deep),textTransform:"capitalize",letterSpacing:.8,marginBottom:5,textAlign:"left",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",transition:"color .4s ease"}}>
-              {isEd ? (screen==="home" ? t.schedule : navItems.find(n=>n.key===screen)?.label || "") : (screen==="home" ? "" : dateStr)}
+              {/* Subtitle line under Luma. In edit mode we show the screen
+                  label ("Schema", "Tala", etc.); otherwise empty on every
+                  screen — the date used to appear on non-home screens but
+                  it was redundant (Vecka shows the dates in the pill row,
+                  every other tool doesn't need a date at all). The home
+                  header has its own dedicated date display below. */}
+              {isEd ? (screen==="home" ? t.schedule : navItems.find(n=>n.key===screen)?.label || "") : ""}
             </div>
             <div style={{fontFamily:G.serif,fontWeight:isDark()?600:500,fontSize:isDark()?23:26,color:tk().inkSoft,lineHeight:1.05,letterSpacing:-.5,display:"flex",alignItems:"baseline",gap:10,textTransform:"capitalize"}}>
               {isEd ? (
@@ -14298,9 +14621,36 @@ export default function App(){
                 </>
               ) : (
                 screen==="home" ? (
-                  <div style={{fontFamily:G.font,fontWeight:isDark()?600:600,fontSize:isDark()?12:15.5,letterSpacing:isDark()?.8:.1,textTransform:isDark()?"uppercase":"none",display:"flex",alignItems:"center",gap:0}}>
-                    <span style={{textTransform:isDark()?"uppercase":"capitalize",color:isDark()?tk().ink2:effS.deep}}>{now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{weekday:"long"})}</span>
-                    <span style={{color:isDark()?tk().ink3:`${effS.deep}A6`,fontWeight:500}}>&nbsp;·&nbsp;{now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{day:"numeric",month:"long"})}</span>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start"}}>
+                    <div style={{fontFamily:G.font,fontWeight:isDark()?600:600,fontSize:isDark()?12:15.5,letterSpacing:isDark()?.8:.1,textTransform:isDark()?"uppercase":"none",display:"flex",alignItems:"center",gap:0}}>
+                      <span style={{textTransform:isDark()?"uppercase":"capitalize",color:isDark()?tk().ink2:effS.deep}}>{now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{weekday:"long"})}</span>
+                      <span style={{color:isDark()?tk().ink3:`${effS.deep}A6`,fontWeight:500}}>&nbsp;·&nbsp;{now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{day:"numeric",month:"long"})}</span>
+                    </div>
+                    {/* iOS-style underline — Apple's active tab indicator
+                        pattern. A short capsule-shaped bar that glides in
+                        with a gentle spring overshoot. Used across iOS in
+                        Notes, Music, Settings to mark "this section". */}
+                    <div style={{
+                      marginTop:8,
+                      height:3.5,
+                      width:32,
+                      borderRadius:999,
+                      background:isDark()
+                        ? `linear-gradient(90deg, ${effS.h}, ${shadeHex(effS.h,0.3)})`
+                        : `linear-gradient(90deg, ${effS.h}, ${shadeHex(effS.h,-0.12)})`,
+                      boxShadow:isDark()
+                        ? `0 0 10px ${effS.h}55, 0 0 2px ${effS.h}88`
+                        : `0 1px 4px ${effS.h}40`,
+                      animation:"hmDateUnder 0.7s 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+                      transformOrigin:"left center",
+                    }}/>
+                    <style>{`
+                      @keyframes hmDateUnder{
+                        0%   { transform: scaleX(0); opacity: 0; }
+                        70%  { transform: scaleX(1.12); opacity: 0.95; }
+                        100% { transform: scaleX(1); opacity: 1; }
+                      }
+                    `}</style>
                   </div>
                 ) : ""
               )}
@@ -14350,7 +14700,7 @@ export default function App(){
             flexShrink:0,padding:"6px 22px 12px",
           }}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{display:"flex",gap:4,flex:1,background:collapsible?(isDark()?"rgba(22,19,34,0.92)":"rgba(255,255,255,0.92)"):(isDark()?"rgba(255,255,255,0.05)":`${effS.h}12`),borderRadius:13,padding:4,border:collapsible?(isDark()?"1px solid rgba(255,255,255,0.07)":`1px solid ${effS.h}33`):(isDark()?"1px solid rgba(255,255,255,0.08)":`1px solid ${effS.h}1F`),backdropFilter:isDark()?"blur(14px) saturate(1.2)":(collapsible?"blur(12px)":"none"),WebkitBackdropFilter:isDark()?"blur(14px) saturate(1.2)":(collapsible?"blur(12px)":"none"),boxShadow:collapsible?(isDark()?"0 6px 18px -8px rgba(0,0,0,0.6)":"0 6px 18px -10px rgba(31,27,46,0.25)"):(isDark()?"inset 0 1px 2px rgba(0,0,0,0.3)":`inset 0 1px 3px ${effS.deep}14`),transition:"background .4s ease"}}>
+          <div style={{display:"flex",gap:4,flex:1,background:collapsible?(isDark()?"rgba(22,19,34,0.92)":"rgba(255,255,255,0.92)"):(isDark()?"rgba(255,255,255,0.05)":`linear-gradient(180deg, rgba(255,255,255,0.50), ${effS.h}1A)`),borderRadius:13,padding:4,border:collapsible?(isDark()?"1px solid rgba(255,255,255,0.07)":`1px solid ${effS.h}33`):(isDark()?"1px solid rgba(255,255,255,0.08)":`1px solid ${effS.h}33`),backdropFilter:isDark()?"blur(14px) saturate(1.2)":"blur(10px) saturate(1.1)",WebkitBackdropFilter:isDark()?"blur(14px) saturate(1.2)":"blur(10px) saturate(1.1)",boxShadow:collapsible?(isDark()?"0 6px 18px -8px rgba(0,0,0,0.6)":"0 6px 18px -10px rgba(31,27,46,0.25)"):(isDark()?"inset 0 1px 2px rgba(0,0,0,0.3)":`0 1px 2px ${effS.h}14, inset 0 1px 0 rgba(255,255,255,0.55)`),transition:"background .4s ease"}}>
             {screen==="home"&&!isEd&&cfg.schedView!=="card"&&<TabB active={effView==="list"} onClick={()=>setView("list")} color={effS.h} deep={effS.deep}>{t.list}</TabB>}
             {screen==="home"&&!isEd&&cfg.schedView!=="list"&&<TabB active={effView==="card"} onClick={()=>setView("card")} color={effS.h} deep={effS.deep}>{t.card}</TabB>}
             {/* Screen label on non-home screens — shows current tool when NOT editing */}
@@ -14476,7 +14826,7 @@ export default function App(){
           </div>
         )}
         {screen==="week"&&<WeekScreen acts={acts} dailyState={dailyState} isEd={isEd} t={t} lang={lang} now={now} cfg={cfg} onTap={openDetail} onEdit={item=>{setEditAct(item);setShowEd(true);}} onAdd={()=>{setEditAct(null);setShowEd(true);}} headerTapCount={headerTapCount}/>}
-        {screen==="timer"&&<TimerScreen t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} lang={lang} onLaunchTimer={launchTimer}/>}
+        {screen==="timer"&&<TimerScreen t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} lang={lang} onLaunchTimer={launchTimer} onColorChange={setLiveTimerColor}/>}
         {screen==="stories"&&<StoryScreen lang={lang} t={t} isEditor={isEd} stories={stories} setStories={setStories} onOpenStory={setStoryViewer} onOpenEditor={setStoryEditor}/>}
         {screen==="emotion"&&<EmotionScreen lang={lang} t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} onInputFocusChange={setInputFocused} onOpenEmoEditor={setEmoEditor}/>}
         {screen==="calm"&&<CalmScreen t={t} lang={lang} cfg={cfg} isEditor={isEd} setCfg={setCfg} onImmersiveChange={setImmersiveMode} active={calmActive} setActive={setCalmActive}/>}
