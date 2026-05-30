@@ -253,8 +253,18 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     // Soft aura — IDENTICAL to the pre-boot overlay's .lpaura (a 340px CSS
     // circle centred at 50%/43%), so the static launch image and the live
     // overlay are pixel-aligned: no second, differently-sized splash.
-    var auraR = 170 * dpr;                 // 340px CSS diameter -> radius in device px
-    var aCx = w/2, aCy = h * 0.43;
+    // Match the OVERLAY's vertical placement. The overlay lives in the web
+    // view, which (with a solid, non-translucent status bar) sits BELOW the
+    // status bar — so its centre is LOWER than the full-screen launch image's
+    // centre. Shift the launch image's icon + aura down by the status-bar
+    // height so the static launch image and the live overlay line up exactly.
+    var _vh = window.innerHeight || (h / dpr);
+    var _sh = window.screen.height || _vh;
+    var _sbTop = Math.max(0, _sh - _vh);          // top chrome / status bar (CSS px)
+    var iconCY = h * ((_sbTop + _vh * 0.50) / _sh);
+    var auraCY = h * ((_sbTop + _vh * 0.43) / _sh);
+    var auraR = 170 * dpr;                          // 340px CSS diameter
+    var aCx = w/2, aCy = auraCY;
     var ag = g.createRadialGradient(aCx, aCy, 0, aCx, aCy, auraR);
     ag.addColorStop(0, "rgba(232,168,120,0.14)");
     ag.addColorStop(0.46, "rgba(232,168,120,0.05)");
@@ -266,7 +276,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     // hand-off from launch image to overlay is invisible — it reads as ONE splash.
     var markStroke = dark ? "#F4F1FA" : "#1F1B2E";
     var IS = 104 * dpr;                    // overlay icon is 104px CSS
-    var cx = w/2, cy = h/2;                // overlay icon is vertically centred
+    var cx = w/2, cy = iconCY;             // matched to the overlay's web-view centre
     var icoX = cx - IS/2, icoY = cy - IS/2;
     var pxv = function(vx){ return icoX + vx/100*IS; };
     var pyv = function(vy){ return icoY + vy/100*IS; };
@@ -7371,7 +7381,7 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
   // Safety net: if user navigates away mid-focus (without onBlur firing) make
   // sure the nav comes back. Cleans up on unmount.
   useEffect(()=>{
-    return()=>onInputFocusChange?.(false);
+    return()=>{ onInputFocusChange?.(false); vvCleanup.current?.(); vvCleanup.current=null; };
   // eslint-disable-next-line
   },[]);
 
@@ -7398,6 +7408,7 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
   const inlinePanelRef=useRef(null);
   const selectedTileRef=useRef(null);
   const reasonInputRef=useRef(null);
+  const vvCleanup=useRef(null);
   // Scroll the emotion CONTAINER directly to bring the selected tile near the
   // top. We compute the offset within the scroller and set scrollTop ONCE —
   // we deliberately avoid element.scrollIntoView(), which bubbles up and scrolls
@@ -7761,12 +7772,22 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
               onChange={e=>setReason(e.target.value)}
               onFocus={()=>{
                 onInputFocusChange?.(true);
-                // Scroll to a satisfying fill-in view above the keyboard. A couple
-                // of passes catch the keyboard rising in stages on iOS.
-                setTimeout(scrollForInput,180);
-                setTimeout(scrollForInput,450);
+                // Reposition so the Save button lands just above the keyboard's
+                // form bar. iOS raises the keyboard in stages, so fixed timeouts
+                // alone often fire before the viewport has settled (leaving the
+                // button stranded high with a gap). Re-running on every
+                // visualViewport change catches the true final height.
+                const run=()=>scrollForInput();
+                requestAnimationFrame(run);
+                setTimeout(run,120); setTimeout(run,320); setTimeout(run,560);
+                const vv=window.visualViewport;
+                if(vv){
+                  vv.addEventListener("resize",run);
+                  vv.addEventListener("scroll",run);
+                  vvCleanup.current=()=>{ vv.removeEventListener("resize",run); vv.removeEventListener("scroll",run); };
+                }
               }}
-              onBlur={()=>onInputFocusChange?.(false)}
+              onBlur={()=>{ onInputFocusChange?.(false); vvCleanup.current?.(); vvCleanup.current=null; }}
               className="lt-input"
               style={{...INPT(),borderColor:`${sel.color}44`,background:isDark()?`${sel.color}1A`:`${sel.color}08`}}
               placeholder=""
