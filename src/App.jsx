@@ -12854,22 +12854,86 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
 }
 
 /* ═══ Identity card screen ═══ */
-function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
+/* Identity card — large "show" view. Rendered at App ROOT (not inside
+   IdCardScreen) so its position:fixed escapes the screen container's
+   animation/transform context and truly covers the whole viewport. Rendering
+   it inside the screen made the "fixed" overlay get trapped by the ancestor
+   animation, so it only covered the card area and the card ended up clipped
+   under the header. Same pattern the app already uses for StoryViewer etc. */
+function IdCardLargeView({cfg,t,onClose}){
   const S=scrPal("idcard");
-  const[showMode,setShowMode]=useState(false);
+  const c=cfg.idCard||{};
+  const list=(c.contacts||[]).filter(k=>k.name&&k.phone);
+  const lblStyle={fontFamily:G.font,fontSize:11,fontWeight:600,color:tk().ink3,letterSpacing:0.8,textTransform:"uppercase",marginBottom:3};
+  const bodyStyle={fontFamily:G.font,fontSize:15.5,color:tk().ink,lineHeight:1.45};
+  const divider=`1px solid ${isDark()?"rgba(255,255,255,0.08)":"rgba(31,27,46,0.06)"}`;
+  const hasBody=!!(c.condition||c.helpful||c.triggers||list.length>0);
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${S.h}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${S.hb} 0%,#FFFFFF 55%, ${S.hll} 100%)`,display:"flex",flexDirection:"column",padding:"calc(env(safe-area-inset-top, 0px) + 18px) 16px calc(env(safe-area-inset-bottom, 0px) + 18px)",animation:"ftIn .25s ease",overflowY:"auto"}}>
+      <button onClick={onClose} aria-label={t.close} style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 14px)",right:18,width:42,height:42,borderRadius:21,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:2}}><IconX size={14}/></button>
+      <div style={{maxWidth:440,margin:"32px auto 24px",width:"100%",position:"relative"}}>
+        <div style={{position:"absolute",inset:-20,borderRadius:44,background:`radial-gradient(circle at 50% 30%, ${S.h}22 0%, transparent 70%)`,filter:"blur(22px)",pointerEvents:"none"}}/>
+        <div style={{position:"relative"}}>
+          <div style={{background:isDark()?"linear-gradient(180deg,#211E33 0%,#1A1726 100%)":"#FFFFFF",borderRadius:24,padding:"26px 24px 24px",boxShadow:isDark()?"0 18px 44px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)":"0 16px 40px rgba(31,27,46,0.10), 0 2px 8px rgba(31,27,46,0.04)",border:divider}}>
+            <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:hasBody?16:0,paddingBottom:hasBody?16:0,borderBottom:hasBody?divider:"none"}}>
+              <div style={{width:64,height:64,borderRadius:"50%",background:c.photo?"#000":`linear-gradient(140deg,${S.h}3A,${S.h}5C)`,overflow:"hidden",position:"relative",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,boxShadow:`0 4px 12px ${S.h}33`,flexShrink:0,border:`1px solid ${S.h}45`}}>
+                {c.photo?<img src={c.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:"🙂"}
+              </div>
+              <div style={{minWidth:0,flex:1}}>
+                <div style={{fontFamily:G.serif,fontWeight:600,fontSize:22,color:tk().ink,letterSpacing:-0.2,lineHeight:1.15,wordBreak:"break-word"}}>{c.name||"—"}</div>
+                {c.age&&<div style={{fontFamily:G.font,fontSize:13,color:tk().ink2,marginTop:2,letterSpacing:0.2}}>{c.age} {t.yearsOld}</div>}
+              </div>
+            </div>
+            {c.condition&&<div style={{marginBottom:13}}><div style={lblStyle}>{t.aboutMe}</div><div style={bodyStyle}>{c.condition}</div></div>}
+            {c.helpful&&<div style={{marginBottom:13}}><div style={lblStyle}>{t.whatHelps}</div><div style={bodyStyle}>{c.helpful}</div></div>}
+            {c.triggers&&<div style={{marginBottom:13}}><div style={lblStyle}>{t.myTriggers}</div><div style={bodyStyle}>{c.triggers}</div></div>}
+            {list.length>0&&(
+              <div style={{paddingTop:15,borderTop:divider}}>
+                <div style={{...lblStyle,marginBottom:9}}>{t.emergencyContacts}</div>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {list.map((k,i)=>(
+                    <a key={k.id} href={`tel:${k.phone.replace(/\s/g,"")}`} style={{textDecoration:"none",display:"flex",alignItems:"center",gap:12,padding:"11px 13px",borderRadius:15,background:i===0?`${S.h}1F`:(isDark()?"rgba(255,255,255,0.04)":"rgba(31,27,46,0.03)"),border:`1px solid ${i===0?`${S.h}4D`:(isDark()?"rgba(255,255,255,0.06)":"rgba(31,27,46,0.05)")}`}}>
+                      <div style={{width:34,height:34,borderRadius:"50%",background:isDark()?"#2A2740":"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:G.serif,fontWeight:600,fontSize:15,color:tk().ink,flexShrink:0,border:`1px solid ${isDark()?"rgba(255,255,255,0.08)":"rgba(31,27,46,0.06)"}`}}>{(k.name.trim()[0]||"·").toUpperCase()}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontFamily:G.font,fontSize:14,fontWeight:600,color:tk().ink,letterSpacing:0.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{k.name}{k.relation?` \u00b7 ${k.relation}`:""}</div>
+                        <div style={{fontFamily:G.font,fontSize:12.5,color:tk().ink2,fontVariantNumeric:"tabular-nums",marginTop:1}}>{k.phone}</div>
+                      </div>
+                      <div style={{width:34,height:34,borderRadius:"50%",background:i===0?S.h:(isDark()?"rgba(255,255,255,0.10)":"rgba(31,27,46,0.06)"),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:i===0?`0 4px 12px ${S.h}55`:"none"}}>
+                        <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke={i===0?"#FFFFFF":(isDark()?"#C9C4DA":"#7C7691")} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor,onShowLarge}){
+  const S=scrPal("idcard");
   const c=cfg.idCard||{};
   const contacts=c.contacts||[];
   const isEmpty=!c.name&&!c.condition&&!c.triggers&&!c.helpful&&contacts.filter(k=>k.name&&k.phone).length===0;
   // Keep the card view pinned to the top so the avatar/name never slip
   // up behind the floating "Mitt kort" bar when the content is scrollable.
   const scrollRef=useRef(null);
-  useEffect(()=>{
+  // Pin the card view to the very top whenever the screen is shown OR the
+  // card content changes (e.g. right after saving in the editor). Without the
+  // content deps, the underlying scroll position could be left non-zero after
+  // the editor modal closed, leaving the avatar/name clipped under the
+  // "Mitt kort" bar. useLayoutEffect pins it before paint so there's no flash.
+  useLayoutEffect(()=>{
     const reset=()=>{if(scrollRef.current)scrollRef.current.scrollTop=0;};
     reset();
     const r=requestAnimationFrame(reset);
     const t1=setTimeout(reset,80);
-    return()=>{cancelAnimationFrame(r);clearTimeout(t1);};
-  },[isEditor,showMode]);
+    const t2=setTimeout(reset,260);
+    return()=>{cancelAnimationFrame(r);clearTimeout(t1);clearTimeout(t2);};
+  },[isEditor,isEmpty,c.name,c.photo,c.condition,c.triggers,c.helpful,contacts.length]);
 
   // Card render (reused in normal + show mode)
   const Card=({big})=>{
@@ -12926,23 +12990,14 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
   };
 
 
-  // Show mode — fullscreen, no chrome, optimised for handing phone to a stranger
-  if(showMode){
-    return(
-      <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${S.h}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${S.hb} 0%,#FFFFFF 55%, ${S.hll} 100%)`,display:"flex",flexDirection:"column",padding:"calc(env(safe-area-inset-top, 0px) + 18px) 16px calc(env(safe-area-inset-bottom, 0px) + 18px)",animation:"ftIn .25s ease",overflowY:"auto"}}>
-        <button onClick={()=>setShowMode(false)} style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 14px)",right:18,width:42,height:42,borderRadius:21,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:2}}><IconX size={14}/></button>
-        <div style={{maxWidth:440,margin:"32px auto 24px",width:"100%",position:"relative"}}>
-          <div style={{position:"absolute",inset:-20,borderRadius:44,background:`radial-gradient(circle at 50% 30%, ${S.h}22 0%, transparent 70%)`,filter:"blur(22px)",pointerEvents:"none"}}/>
-          <div style={{position:"relative"}}><Card big/></div>
-        </div>
-      </div>
-    );
-  }
-
   return(
-    <div ref={scrollRef} style={{flex:1,overflowY:"auto",overscrollBehavior:"contain",background:"transparent"}}>
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",background:"transparent"}}>
       <style>{`@keyframes idCardIn{0%{opacity:0;transform:translateY(12px) scale(0.985)}100%{opacity:1;transform:translateY(0) scale(1)}}@keyframes idCardBtnIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}`}</style>
-      <div style={{padding:"72px 18px 40px"}}>
+      {/* Fixed (non-scrolling) spacer that clears the "Mitt kort" bar. The card
+          content scrolls in the region BELOW it, so the card can never slide up
+          under the bar no matter the scroll position. */}
+      <div aria-hidden="true" style={{height:80,flexShrink:0}}/>
+      <div ref={scrollRef} style={{flex:1,minHeight:0,overflowY:"auto",overscrollBehavior:"contain",padding:"0 18px 40px"}}>
         {isEmpty?(
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 30px 60px",gap:16}}>
             <style>{`@keyframes idcEmptyHalo{0%,100%{transform:scale(0.92);opacity:.5}50%{transform:scale(1.08);opacity:.9}}@keyframes idcEmptyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}`}</style>
@@ -12961,7 +13016,7 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
             <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:tk().ink2,letterSpacing:.1,textAlign:"center",lineHeight:1.5,maxWidth:280}}>{isEditor?t.createCardDesc:(lang==="sv"?"Be den som hjälper dig att fylla i kortet.":"Ask someone who helps you to fill in the card.")}</div>
             {isEditor&&(
               <button onClick={()=>onOpenEditor()} className="lt-press" style={{marginTop:6,padding:"13px 28px",borderRadius:14,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:`0 10px 24px ${S.h}55, inset 0 1px 0 rgba(255,255,255,0.3)`,display:"inline-flex",alignItems:"center",gap:8}}>
-                <IconPencil size={15}/><span>{t.editCard}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>{lang==="sv"?"Skapa kort":"Create card"}</span>
               </button>
             )}
           </div>
@@ -12973,9 +13028,15 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
             <div style={{position:"relative",zIndex:1}}><Card/></div>
           </div>
           {!isEditor&&(
-            <button onClick={()=>setShowMode(true)} className="lt-press" style={{width:"100%",padding:"15px 0",borderRadius:16,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:`0 12px 28px ${S.h}55, 0 3px 8px ${S.h}33, inset 0 1px 0 rgba(255,255,255,0.3)`,marginTop:18,letterSpacing:.3,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:9,animation:"idCardBtnIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) 0.18s both"}}>
+            <button onClick={()=>onShowLarge&&onShowLarge()} className="lt-press" style={{width:"100%",padding:"15px 0",borderRadius:16,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:`0 12px 28px ${S.h}55, 0 3px 8px ${S.h}33, inset 0 1px 0 rgba(255,255,255,0.3)`,marginTop:18,letterSpacing:.3,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:9,animation:"idCardBtnIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) 0.18s both"}}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
               {t.showLarge}
+            </button>
+          )}
+          {isEditor&&(
+            <button onClick={()=>onOpenEditor()} className="lt-press" style={{width:"100%",padding:"15px 0",borderRadius:16,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:`0 12px 28px ${S.h}55, 0 3px 8px ${S.h}33, inset 0 1px 0 rgba(255,255,255,0.3)`,marginTop:18,letterSpacing:.3,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:9,animation:"idCardBtnIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) 0.18s both"}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              {lang==="sv"?"Redigera kort":"Edit card"}
             </button>
           )}
         </>)}
@@ -15035,6 +15096,7 @@ export default function App(){
   const[storyViewer,setStoryViewer]=useState(null);
   const[storyEditor,setStoryEditor]=useState(null); // {story|null} — rendered at root so its fixed overlay isn't clipped by the screen container
   const[idCardEditorOpen,setIdCardEditorOpen]=useState(false); // rendered at root (same reason)
+  const[idCardLargeOpen,setIdCardLargeOpen]=useState(false); // "Visa stort" — rendered at root so position:fixed covers the whole viewport
   const[emoEditor,setEmoEditor]=useState(null); // {existing|"new"} — rendered at root so its fixed overlay isn't clipped
   // When an input is focused on certain screens (e.g. the emotion reason field),
   // the bottom nav slides away to give the user room to see both the form and
@@ -16119,7 +16181,7 @@ export default function App(){
               transition:"opacity .2s ease",
               cursor:"pointer",
             }}
-          >v2026-05-28-D</span>
+          >v2026-05-30-A</span>
         </div>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:0,position:"relative",gap:12,minHeight:(isEd||screen==="home")?36:0}}>
           <div style={{flex:1,minWidth:0}}>
@@ -16374,7 +16436,7 @@ export default function App(){
         {screen==="stories"&&<StoryScreen lang={lang} t={t} isEditor={isEd} stories={stories} setStories={setStories} onOpenStory={setStoryViewer} onOpenEditor={setStoryEditor}/>}
         {screen==="emotion"&&<EmotionScreen lang={lang} t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} onInputFocusChange={setInputFocused} onOpenEmoEditor={setEmoEditor}/>}
         {screen==="calm"&&<CalmScreen t={t} lang={lang} cfg={cfg} isEditor={isEd} setCfg={setCfg} onImmersiveChange={setImmersiveMode} active={calmActive} setActive={setCalmActive}/>}
-        {screen==="idcard"&&<IdCardScreen t={t} lang={lang} cfg={cfg} setCfg={setCfg} isEditor={isEd} onOpenEditor={()=>setIdCardEditorOpen(true)}/>}
+        {screen==="idcard"&&<IdCardScreen t={t} lang={lang} cfg={cfg} setCfg={setCfg} isEditor={isEd} onOpenEditor={()=>setIdCardEditorOpen(true)} onShowLarge={()=>setIdCardLargeOpen(true)}/>}
         {screen==="comm"&&<CommBoard lang={lang} t={t} isEditor={isEd} cats={commCats} setCats={setCommCats} sel={commSel} setSel={setCommSel} openModal={setCommModal}/>}
           </div>
         </div>
@@ -16699,6 +16761,11 @@ export default function App(){
       {screen==="calm"&&calmActive==="skylight"&&<SkylightExercise onClose={()=>setCalmActive(null)} t={t} lang={lang}/>}
       {storyEditor&&<StoryEditor story={storyEditor.id?storyEditor:null} t={t} lang={lang} onSave={s=>setStories(ss=>storyEditor.id?ss.map(x=>x.id===s.id?s:x):[...ss,s])} onDel={id=>setStories(ss=>ss.filter(x=>x.id!==id))} onClose={()=>setStoryEditor(null)}/>}
       {idCardEditorOpen&&<IdCardEditor cfg={cfg} setCfg={setCfg} onClose={()=>setIdCardEditorOpen(false)} t={t}/>}
+      {/* "Visa stort" card — rendered HERE at App root (like StoryViewer/FullTimer)
+          so its position:fixed escapes the screen container's animation context
+          and truly covers the whole viewport instead of being trapped and
+          clipped under the header. */}
+      {idCardLargeOpen&&<IdCardLargeView cfg={cfg} t={t} onClose={()=>setIdCardLargeOpen(false)}/>}
       {emoEditor&&<CustomEmotionEditor existing={emoEditor==="new"?null:emoEditor} t={t} lang={lang}
         onClose={()=>setEmoEditor(null)}
         onSave={emo=>{
