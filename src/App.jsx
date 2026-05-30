@@ -52,17 +52,14 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // #0E0E10 app base with no seam, and keeps the web view in its normal
   // bounds so coordinates and edges are correct. "default" (light) gives a
   // black-on-light bar matching the near-white light theme.
-  const storedThemeForStatus = (() => {
-    try {
-      const raw = localStorage.getItem("luma_v1_cfg");
-      if (raw) { const parsed = JSON.parse(raw); if (parsed && parsed.theme) return parsed.theme; }
-    } catch(e) {}
-    return "light";
-  })();
-  setMeta("apple-mobile-web-app-status-bar-style", storedThemeForStatus === "dark" ? "black" : "default");
+  // Splash is always light (see below), so the boot status bar must be light
+  // too — "default" gives dark text that stays readable on the cream splash.
+  // The React app re-syncs this to the real theme once it mounts (so a dark
+  // app still gets a dark bar after load).
+  setMeta("apple-mobile-web-app-status-bar-style", "default");
   // Theme colour — paints the iOS PWA status-bar region. Must match the app
   // body to avoid a visible band where they meet.
-  setMeta("theme-color", storedThemeForStatus === "dark" ? "#0E0E10" : "#FBFDFE");
+  setMeta("theme-color", "#FBFDFE");
 
   // The Luma sun icon (home-screen app icon) — the warm peach/bronze pearl
   // the user chose. Scaled to sit within iOS's safe zone (motif ~75% of the
@@ -142,15 +139,19 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   try {
     var injectPreBoot = function(){
       if (!document.body || document.getElementById("lumaPreBoot")) return;
-      var sunFill = storedTheme === "dark" ? "#F4F1FA" : "#1F1B2E";
-      var bg = manifestBg;
+      // SPLASH IS ALWAYS LIGHT — never theme-aware. iOS was showing a stale
+      // cached DARK launch image and then jumping to this overlay (the dark→
+      // light flash). Locking every splash layer to the light cream look means
+      // there is no dark splash variant in the code at all, for any theme.
+      var sunFill = "#1F1B2E";
+      var bg = "#FBFDFE";
       var pre = document.createElement("div");
       pre.id = "lumaPreBoot";
       pre.setAttribute("aria-hidden", "true");
       pre.style.cssText = "position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;background:"+bg+";opacity:1;pointer-events:none;overflow:hidden";
-      var markStroke = storedTheme === "dark" ? "#F4F1FA" : "#1F1B2E";
-      var icoBgA = storedTheme === "dark" ? "#241F30" : "#FFFCF7";
-      var icoBgB = storedTheme === "dark" ? "#17131F" : "#F3E6D7";
+      var markStroke = "#1F1B2E";
+      var icoBgA = "#FFFCF7";
+      var icoBgB = "#F3E6D7";
       var ICON = 104;
       pre.innerHTML =
         '<style>'
@@ -246,11 +247,10 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     const c = document.createElement("canvas");
     c.width = w; c.height = h;
     const g = c.getContext("2d");
-    // Flat fill = the EXACT manifest/page background (light #FBFDFE, dark
-    // #0E0E10). Matching the launch image to the pre-boot overlay AND the app
-    // base means there is zero tone shift in the hand-off: launch → pre-boot →
-    // app are one continuous colour, so nothing "pops" as React takes over.
-    g.fillStyle = manifestBg;
+    // ALWAYS LIGHT — flat cream fill (#FBFDFE), identical to the pre-boot
+    // overlay. The launch image is never dark, so the cached iOS launch image
+    // can only ever be the light one once the PWA is reinstalled.
+    g.fillStyle = "#FBFDFE";
     g.fillRect(0, 0, w, h);
     // App icon — rounded-square "lu" mark WITH the brand pearl, identical to
     // the home-screen icon and the pre-boot overlay, so the launch image is a
@@ -327,14 +327,11 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     const dev = Math.min(cw, dw)/Math.max(cw, dw);
     if (dev < 0.85 && !(cw === dw && ch === dh)) return; // skip wildly mismatched
     const px = cw * dpr, py = ch * dpr;
-    // Generate ONLY the splash matching the APP's stored theme — NOT the
-    // system colour scheme. iOS otherwise selects the launch image by the
-    // device's dark/light setting, so a LIGHT-themed Luma on a phone in dark
-    // mode would show a DARK launch image and then jump to the LIGHT pre-boot
-    // overlay — the dark-then-light flash the user reported. Locking it to the
-    // app theme (and dropping the prefers-color-scheme clause) keeps the
-    // hand-off seamless: light→light or dark→dark.
-    const splashDark = storedTheme === "dark";
+    // ALWAYS register the LIGHT launch image, regardless of app theme or the
+    // device's system colour scheme. A dark launch image on a dark-system phone
+    // (then jumping to the light app) was the dark→light flash. Light-only =
+    // one consistent splash for everyone.
+    const splashDark = false;
     const dataUrl = makeSplash(px, py, splashDark);
     const link = document.createElement("link");
     link.rel = "apple-touch-startup-image";
