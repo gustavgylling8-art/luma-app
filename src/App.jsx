@@ -253,18 +253,11 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     // Soft aura — IDENTICAL to the pre-boot overlay's .lpaura (a 340px CSS
     // circle centred at 50%/43%), so the static launch image and the live
     // overlay are pixel-aligned: no second, differently-sized splash.
-    // Match the OVERLAY's vertical placement. The overlay lives in the web
-    // view, which (with a solid, non-translucent status bar) sits BELOW the
-    // status bar — so its centre is LOWER than the full-screen launch image's
-    // centre. Shift the launch image's icon + aura down by the status-bar
-    // height so the static launch image and the live overlay line up exactly.
-    var _vh = window.innerHeight || (h / dpr);
-    var _sh = window.screen.height || _vh;
-    var _sbTop = Math.max(0, _sh - _vh);          // top chrome / status bar (CSS px)
-    var iconCY = h * ((_sbTop + _vh * 0.50) / _sh);
-    var auraCY = h * ((_sbTop + _vh * 0.43) / _sh);
+    // The overlay is a full-screen fixed layer centred at 50% of the screen
+    // (iOS standalone keeps the web view full-screen with the status bar drawn
+    // on top), so the launch image's icon sits at the SAME 50% — no offset.
     var auraR = 170 * dpr;                          // 340px CSS diameter
-    var aCx = w/2, aCy = auraCY;
+    var aCx = w/2, aCy = h * 0.43;
     var ag = g.createRadialGradient(aCx, aCy, 0, aCx, aCy, auraR);
     ag.addColorStop(0, "rgba(232,168,120,0.14)");
     ag.addColorStop(0.46, "rgba(232,168,120,0.05)");
@@ -276,7 +269,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     // hand-off from launch image to overlay is invisible — it reads as ONE splash.
     var markStroke = dark ? "#F4F1FA" : "#1F1B2E";
     var IS = 104 * dpr;                    // overlay icon is 104px CSS
-    var cx = w/2, cy = iconCY;             // matched to the overlay's web-view centre
+    var cx = w/2, cy = h/2;                // true screen centre, matching the overlay
     var icoX = cx - IS/2, icoY = cy - IS/2;
     var pxv = function(vx){ return icoX + vx/100*IS; };
     var pyv = function(vy){ return icoY + vy/100*IS; };
@@ -395,6 +388,23 @@ const SCREENS_DARK=Object.fromEntries(Object.entries(SCREENS).map(([k,v])=>[k,{
 }]));
 // Resolve a screen's palette for the active theme.
 const scrPal=(name)=>(APP_THEME==="dark"?SCREENS_DARK:SCREENS)[name]||(APP_THEME==="dark"?SCREENS_DARK:SCREENS).home;
+
+/* Bottom-nav active-bubble pastels — a curated, HARMONIOUS progression in the
+   nav order (home → idcard). Hues step gently from soft blue through violet,
+   orchid, rose and into peach, so neighbouring tabs stay close and the bar
+   reads as one soft pastel arc rather than clashing identity colours. These
+   are intentionally NOT the (dynamic) per-page accents. Used in LIGHT mode;
+   in DARK mode the active capsule is a colourless frosted "liquid glass". */
+const NAV_PASTEL={
+  home:   "#A8C8E8",
+  week:   "#AFBFE6",
+  timer:  "#BBB4E2",
+  stories:"#CBB2DF",
+  emotion:"#DAB4DB",
+  calm:   "#E3B6CC",
+  comm:   "#EBBBBA",
+  idcard: "#EEC6AC",
+};
 
 const G = {
   ink:"#1F1B2E", ink2:"#6E6882", ink3:"#7C7691",
@@ -11460,7 +11470,10 @@ function SkylightExercise({onClose,t,lang}){
       const e=(Date.now()-startRef.current)/1000;
       if(e>=DURATION){setDone(true);clearInterval(id);return;}
       setElapsed(e);
-    },600);
+    },1200);   // Slower tick = far fewer full re-renders, so the compositor-driven
+               // animations (drifting clouds, shooting stars) stay buttery smooth
+               // instead of stuttering. The sky colour still crossfades smoothly
+               // via the 2.5s CSS transition on the container background.
     return()=>clearInterval(id);
   },[]);
   // Clean up shooting stars after their animation completes
@@ -11515,6 +11528,7 @@ function SkylightExercise({onClose,t,lang}){
   // doesn't interpolate — changing it would visibly jump the cloud's
   // position along its drift path.
   const[cloudTilt,setCloudTilt]=useState({});
+  const[cloudBubbles,setCloudBubbles]=useState({});
   const handleCloudTap=(idx)=>{
     if(bouncedClouds[idx]) return;
     setBouncedClouds(prev=>({...prev,[idx]:Date.now()}));
@@ -11536,6 +11550,20 @@ function SkylightExercise({onClose,t,lang}){
       return{...prev,[idx]:next};
     });
     if(typeof navigator!=="undefined"&&navigator.vibrate) navigator.vibrate(6);
+    // Unique soft bubbles drift up out of the cloud — a fresh little cluster
+    // every tap (varied count, size, position, drift, timing) so each touch
+    // feels alive and never identical.
+    const n=4+Math.floor(Math.random()*3); // 4–6 bubbles
+    const bubbles=Array.from({length:n},(_,k)=>({
+      id:`${Date.now()}_${k}`,
+      x:16+Math.random()*68,          // % across the cloud
+      size:6+Math.random()*13,        // px
+      dx:(Math.random()-0.5)*46,      // horizontal drift, px
+      delay:Math.random()*0.28,       // s
+      dur:1.6+Math.random()*1.0,      // s
+    }));
+    setCloudBubbles(prev=>({...prev,[idx]:bubbles}));
+    setTimeout(()=>setCloudBubbles(prev=>{const next={...prev};delete next[idx];return next;}),2800);
   };
 
   // Color phases — soft pastel sky transitions
@@ -11649,6 +11677,7 @@ function SkylightExercise({onClose,t,lang}){
         @keyframes skyHorizonGlow{0%,100%{opacity:0.4}50%{opacity:0.7}}
         @keyframes skyStarBurst{0%{transform:scale(1);opacity:1}40%{transform:scale(2.6);opacity:0.85}100%{transform:scale(4);opacity:0}}
         @keyframes skyStarRipple{0%{transform:scale(0.5);opacity:0.8}100%{transform:scale(3.5);opacity:0}}
+        @keyframes skyStarBloom{0%{transform:scale(0.35);opacity:0}28%{opacity:0.85}100%{transform:scale(3.2);opacity:0}}
         @keyframes skyShootFly{
           0%{opacity:0;transform:translate3d(0,0,0)}
           8%{opacity:1;transform:translate3d(calc(var(--shoot-end-x)*0.06), calc(var(--shoot-end-y)*0.06), 0)}
@@ -11688,7 +11717,22 @@ function SkylightExercise({onClose,t,lang}){
           40%{opacity:0.8;transform:scale(1.4) translateY(-8px)}
           100%{opacity:0;transform:scale(2.2) translateY(-20px)}
         }
+        @keyframes skyBubbleRise{
+          0%{opacity:0;transform:translate(0,0) scale(0.35)}
+          18%{opacity:0.92;transform:translate(calc(var(--bx,0px)*0.18),-12px) scale(0.9)}
+          72%{opacity:0.85;transform:translate(calc(var(--bx,0px)*0.72),-52px) scale(1.04)}
+          100%{opacity:0;transform:translate(var(--bx,0px),-78px) scale(1.12)}
+        }
       `}</style>
+
+      {/* Soft vignette — gentle premium "soft-focus" framing. Subtle by day,
+          deeper at night. Sits above the sky wash but BEHIND the stars/clouds,
+          so it frames the edges without ever dimming the sparkle. */}
+      <div aria-hidden style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:0,
+        background:isDark
+          ?"radial-gradient(125% 78% at 50% 36%, transparent 48%, rgba(8,6,18,0.34) 100%)"
+          :"radial-gradient(135% 88% at 50% 40%, transparent 60%, rgba(70,60,100,0.10) 100%)",
+        transition:"background 2.5s ease"}}/>
 
       {/* Stars layer — always present at a faint level, ramp up dramatically
           during dusk and night so the sky always has subtle sparkle. Tappable
@@ -11736,17 +11780,27 @@ function SkylightExercise({onClose,t,lang}){
                 :`skyStarTwinkle ${2.6+i*0.18}s ease-in-out ${s.delay}s infinite`,
               pointerEvents:"none",
             }}/>
-            {/* Ripple when tapped */}
-            {isTapped&&(
+            {/* Tap feedback — a soft light bloom blooms outward (premium, gentle)
+                with a delicate thin ring as a quiet accent. */}
+            {isTapped&&(<>
+              <div style={{
+                position:"absolute",left:"50%",top:"50%",
+                marginLeft:`-${s.size*3.5}px`,marginTop:`-${s.size*3.5}px`,
+                width:s.size*7,height:s.size*7,borderRadius:"50%",
+                background:"radial-gradient(circle, rgba(255,255,250,0.55) 0%, rgba(255,250,235,0.22) 40%, rgba(255,245,220,0) 72%)",
+                filter:"blur(1px)",
+                animation:"skyStarBloom 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+                pointerEvents:"none",
+              }}/>
               <div style={{
                 position:"absolute",left:"50%",top:"50%",
                 marginLeft:`-${s.size*2.5}px`,marginTop:`-${s.size*2.5}px`,
                 width:s.size*5,height:s.size*5,borderRadius:"50%",
-                border:"1.5px solid rgba(255,255,255,0.8)",
-                animation:"skyStarRipple 1.4s cubic-bezier(0.32, 0.72, 0, 1) forwards",
+                border:"1px solid rgba(255,255,255,0.45)",
+                animation:"skyStarRipple 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards",
                 pointerEvents:"none",
               }}/>
-            )}
+            </>)}
           </div>
         );
       })}
@@ -11758,27 +11812,13 @@ function SkylightExercise({onClose,t,lang}){
         const endX=ss.dx*vw/100;
         const endY=ss.dy*vh/100;
         const angle=Math.atan2(ss.dy,ss.dx)*180/Math.PI;
-        const tailLen=ss.len*1.4;
-        // Sparkles along the tail — keep light, 3 particles for crisp performance
-        const sparkles=[
-          {pos:0.25,size:2,delay:0.10,dx:8,dy:-10},
-          {pos:0.50,size:2.2,delay:0.22,dx:-10,dy:8},
-          {pos:0.75,size:1.6,delay:0.36,dx:10,dy:-6},
-        ];
+        const tailLen=ss.len*1.5;
         return(
           <Fragment key={ss.id}>
-            {/* End-flash burst — soft glow at impact point */}
-            <div style={{
-              position:"fixed",
-              left:ss.sx+endX-28, top:ss.sy+endY-28,
-              width:56,height:56,borderRadius:"50%",
-              background:"radial-gradient(circle, rgba(255,255,250,0.9) 0%, rgba(255,240,200,0.4) 35%, rgba(255,220,160,0) 70%)",
-              pointerEvents:"none",
-              zIndex:5,
-              animation:"skyShootFlash 1s cubic-bezier(0.32, 0.72, 0, 1) 2.6s forwards",
-              opacity:0,
-            }}/>
-            {/* Comet body */}
+            {/* Soft comet — a gentle head trailing a tapering glow tail. No
+                hard inner line, no sparkles, no impact flash, so it reads as
+                soft drifting light rather than a hard object. A single GPU
+                transform drives the whole flight for buttery-smooth motion. */}
             <div style={{
               position:"fixed",
               left:ss.sx,top:ss.sy,
@@ -11787,52 +11827,29 @@ function SkylightExercise({onClose,t,lang}){
               zIndex:6,
               "--shoot-end-x":`${endX}px`,
               "--shoot-end-y":`${endY}px`,
-              animation:"skyShootFly 3.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards",
+              animation:"skyShootFly 4.6s cubic-bezier(0.22, 1, 0.36, 1) forwards",
               willChange:"transform, opacity",
             }}>
-            {/* Comet body: rotated container holding the tail behind the head */}
             <div style={{position:"absolute",left:0,top:0,width:0,height:0,transform:`rotate(${angle}deg)`}}>
-              {/* Outer glow halo — single soft gradient, no blur filter */}
+              {/* Soft glow halo around the head */}
               <div style={{
-                position:"absolute",left:-24,top:-24,width:48,height:48,borderRadius:"50%",
-                background:"radial-gradient(circle, rgba(255,250,220,0.8) 0%, rgba(255,240,190,0.3) 35%, rgba(255,220,160,0) 70%)",
+                position:"absolute",left:-22,top:-22,width:44,height:44,borderRadius:"50%",
+                background:"radial-gradient(circle, rgba(255,250,225,0.55) 0%, rgba(255,242,200,0.18) 45%, rgba(255,230,180,0) 72%)",
               }}/>
-              {/* Tail — single layer with gradient, no blur for GPU smoothness */}
-              <div style={{
-                position:"absolute",
-                left:-tailLen,top:-3,
-                width:tailLen,height:6,
-                background:"linear-gradient(90deg, rgba(255,250,220,0) 0%, rgba(255,250,220,0.25) 35%, rgba(255,250,225,0.7) 75%, #FFFFFF 100%)",
-                borderRadius:"50%",
-              }}/>
-              {/* Inner bright tail line — sharp core */}
+              {/* Soft tapering tail — pure gradient, gently fading, no hard core */}
               <div style={{
                 position:"absolute",
-                left:-tailLen*0.7,top:-0.75,
-                width:tailLen*0.7,height:1.5,
-                background:"linear-gradient(90deg, rgba(255,255,250,0) 0%, rgba(255,255,250,0.6) 60%, #FFFFFF 100%)",
+                left:-tailLen,top:-2.5,
+                width:tailLen,height:5,
+                background:"linear-gradient(90deg, rgba(255,250,225,0) 0%, rgba(255,250,225,0.16) 45%, rgba(255,252,235,0.48) 82%, rgba(255,255,250,0.82) 100%)",
                 borderRadius:"50%",
               }}/>
-              {/* Comet head — clean nucleus with single layered shadow */}
+              {/* Soft head — gentle nucleus with a low, soft glow (no harsh shadow) */}
               <div style={{
-                position:"absolute",left:-4,top:-4,width:8,height:8,borderRadius:"50%",
-                background:"radial-gradient(circle, #FFFFFF 0%, #FFFEF0 50%, rgba(255,240,180,0) 80%)",
-                boxShadow:"0 0 12px rgba(255,250,220,0.9), 0 0 32px rgba(255,240,180,0.5)",
+                position:"absolute",left:-3.5,top:-3.5,width:7,height:7,borderRadius:"50%",
+                background:"radial-gradient(circle, #FFFFFF 0%, #FFFBEC 55%, rgba(255,240,190,0) 82%)",
+                boxShadow:"0 0 10px rgba(255,250,225,0.7)",
               }}/>
-              {/* Tiny sparkle particles along the tail */}
-              {sparkles.map((sp,si)=>(
-                <div key={si} style={{
-                  position:"absolute",
-                  left:-tailLen*sp.pos,top:-sp.size/2,
-                  width:sp.size,height:sp.size,borderRadius:"50%",
-                  background:"#FFFFFF",
-                  boxShadow:`0 0 ${sp.size*4}px rgba(255,250,220,0.9)`,
-                  "--spark-dx":`${sp.dx}px`,
-                  "--spark-dy":`${sp.dy}px`,
-                  animation:`skySparkle 1.4s cubic-bezier(0.32, 0.72, 0, 1) ${sp.delay}s forwards`,
-                  opacity:0,
-                }}/>
-              ))}
             </div>
           </div>
           </Fragment>
@@ -11904,17 +11921,22 @@ function SkylightExercise({onClose,t,lang}){
                 <ellipse cx="78" cy="22" rx="24" ry="12" fill={`url(#cloudGrad${i})`}/>
                 <ellipse cx="95" cy="26" rx="16" ry="9" fill={`url(#cloudGrad${i})`}/>
               </svg>
-              {/* Puff particles when bounced — three soft puffs escape upward */}
-              {isBounced&&[0,1,2].map(pi=>(
-                <div key={pi} style={{
+              {/* Unique soft bubbles rise out of the cloud on tap — each a
+                  little soap-bubble with a highlight + thin rim, all subtly
+                  different, drifting up and gently fading. */}
+              {cloudBubbles[i]&&cloudBubbles[i].map(b=>(
+                <div key={b.id} style={{
                   position:"absolute",
-                  left:`${30+pi*25}%`,top:"40%",
-                  width:14,height:14,borderRadius:"50%",
-                  background:"radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0) 70%)",
+                  left:`${b.x}%`,top:"42%",
+                  width:b.size,height:b.size,borderRadius:"50%",
+                  background:"radial-gradient(circle at 34% 28%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.30) 40%, rgba(255,255,255,0.06) 70%, rgba(255,255,255,0) 82%)",
+                  border:"1px solid rgba(255,255,255,0.5)",
+                  boxShadow:"0 0 6px rgba(255,255,255,0.25), inset 0 0 4px rgba(255,255,255,0.35)",
                   pointerEvents:"none",
-                  animation:`skyCloudPuff 1.2s cubic-bezier(0.32, 0.72, 0, 1) ${pi*0.08}s forwards`,
+                  "--bx":`${b.dx}px`,
+                  animation:`skyBubbleRise ${b.dur}s cubic-bezier(0.22, 1, 0.36, 1) ${b.delay}s forwards`,
                   opacity:0,
-                  filter:"blur(1px)",
+                  willChange:"transform, opacity",
                 }}/>
               ))}
             </div>
@@ -12550,31 +12572,39 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
               // colour in dark mode (to a brighter, pastel echo) and deepens
               // it in light mode (for readable contrast against white).
               const wdc=weekColors[d.jsDay]||PEACH;
+              const isPeeked=focusedDay===d.jsDay&&!isToday;
+              // "hot" = the day currently in focus — today by default, or a day
+              // you tapped (peek). Its numeral + dot take the weekday colour so
+              // the date you're looking at always reads in its own colour.
+              const hot=isToday||isPeeked;
               const todayHue=dark?shadeHex(wdc,0.45):shadeHex(wdc,-0.18);
-              const numColor=isToday
+              const numColor=hot
                 ?todayHue
                 :(dark?"#E8E2F0":G.ink);
               return(
               <div key={d.jsDay} style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",gap:3}}>
                 <div style={{
                   fontFamily:G.serif,
-                  fontWeight:isToday?700:500,
-                  fontSize:isToday?17:15,
+                  fontWeight:hot?700:500,
+                  fontSize:hot?17:15,
                   lineHeight:1,
                   color:numColor,
-                  opacity:isPast?0.45:1,
+                  opacity:(isPast&&!hot)?0.45:1,
                   letterSpacing:-.2,
-                  transition:"opacity .3s ease, color .3s ease",
+                  transition:"opacity .3s ease, color .3s ease, font-size .25s ease",
                   fontVariantNumeric:"tabular-nums",
                 }}>{d.day}</div>
-                {/* Tiny dot under today — in the weekday's chosen colour */}
-                {isToday&&(
-                  <div aria-hidden style={{
-                    width:5,height:5,borderRadius:"50%",
-                    background:`linear-gradient(140deg, ${wdc}, ${shadeHex(wdc,-0.20)})`,
-                    boxShadow:dark?`0 0 6px ${wdc}80`:`0 1px 3px ${wdc}66`,
-                  }}/>
-                )}
+                {/* Dot in this weekday's chosen colour (Settings → Day colours)
+                    — EVERY day carries its own identity. The focused day (today,
+                    or one you tap) gets a larger glowing dot; the others stay
+                    small and quiet, and past days fade back. */}
+                <div aria-hidden style={{
+                  width:hot?5:4,height:hot?5:4,borderRadius:"50%",
+                  background:hot?`linear-gradient(140deg, ${wdc}, ${shadeHex(wdc,-0.20)})`:wdc,
+                  opacity:(isPast&&!hot)?0.4:(hot?1:0.7),
+                  boxShadow:hot?(dark?`0 0 6px ${wdc}80`:`0 1px 3px ${wdc}66`):"none",
+                  transition:"opacity .3s ease, background .3s ease, width .25s ease, height .25s ease",
+                }}/>
               </div>
               );
             })}
@@ -16568,7 +16598,7 @@ export default function App(){
         }}/>}
         {/* Top hairline — colored, fades from sides, matches header bottom hairline vocabulary */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:`linear-gradient(90deg, transparent 0%, ${effS.h}25 50%, transparent 100%)`,pointerEvents:"none",transition:"background .5s ease"}}/>
-        {navItems.map(({key,icon,label,S})=>{const on=screen===key;return(
+        {navItems.map(({key,icon,label,S})=>{const on=screen===key;const pastel=NAV_PASTEL[key]||S.h;const dkNav=isDark();return(
           <button key={key} onClick={()=>{setScreen(key);}} className="lt-press" style={{flex:navItems.length>7?"0 0 auto":"1",minWidth:navItems.length>7?64:0,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"10px 2px 4px",position:"relative",zIndex:1}}>
             {/* Aurora glow behind active tab — breathes gently. Same vocabulary
                 as the header's aurora, scaled down for the nav. */}
@@ -16579,7 +16609,9 @@ export default function App(){
                 left:"50%",
                 width:64,height:50,
                 borderRadius:"50%",
-                background:`radial-gradient(ellipse at center, ${S.h}3D 0%, ${S.h}12 42%, ${S.h}00 70%)`,
+                background:dkNav
+                  ?"radial-gradient(ellipse at center, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 45%, transparent 70%)"
+                  :`radial-gradient(ellipse at center, ${pastel}4D 0%, ${pastel}1A 42%, ${pastel}00 70%)`,
                 pointerEvents:"none",
                 animation:"navAuroraBreath 4.2s ease-in-out infinite",
                 willChange:"transform, opacity",
@@ -16595,9 +16627,15 @@ export default function App(){
                 top:6,left:"50%",
                 width:46,height:30,
                 borderRadius:15,
-                background:`linear-gradient(180deg, ${S.h}26 0%, ${S.h}14 100%)`,
-                border:`1px solid ${S.h}2E`,
-                boxShadow:`inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 8px ${S.h}1F`,
+                background:dkNav
+                  ?"linear-gradient(180deg, rgba(255,255,255,0.17) 0%, rgba(255,255,255,0.06) 100%)"
+                  :`linear-gradient(180deg, ${pastel}3D 0%, ${pastel}1F 100%)`,
+                border:dkNav?"1px solid rgba(255,255,255,0.22)":`1px solid ${pastel}4D`,
+                boxShadow:dkNav
+                  ?"inset 0 1px 0 rgba(255,255,255,0.30), 0 6px 16px -8px rgba(0,0,0,0.55)"
+                  :`inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 8px ${pastel}2E`,
+                backdropFilter:dkNav?"blur(16px) saturate(1.4)":"none",
+                WebkitBackdropFilter:dkNav?"blur(16px) saturate(1.4)":"none",
                 pointerEvents:"none",
                 transformOrigin:"center",
                 transform:"translateX(-50%)",
@@ -16607,9 +16645,9 @@ export default function App(){
             )}
             {/* Icon — sits slightly higher and tints to the screen's deep color when active */}
             <div style={{position:"relative",zIndex:1,height:24,display:"flex",alignItems:"center",justifyContent:"center",transform:on?"scale(1.12) translateY(-1px)":"scale(1)",transition:"transform .45s cubic-bezier(0.34, 1.56, 0.64, 1)"}}>
-              <NavIcon type={icon} active={on} color={S.deep} size={22}/>
+              <NavIcon type={icon} active={on} color={on?(dkNav?"#F4F1FA":effS.deep):S.deep} size={22}/>
             </div>
-            <span style={{fontFamily:G.font,fontWeight:on?600:400,fontSize:navItems.length>=7?9.5:10.5,color:on?(isDark()?S.h:S.deep):(isDark()?"#8E889E":"#7C7691"),transition:"color .35s ease, font-weight .35s ease",whiteSpace:"nowrap",position:"relative",zIndex:1,letterSpacing:.2,maxWidth:"100%",overflow:"hidden",textOverflow:"clip"}}>{label}</span>
+            <span style={{fontFamily:G.font,fontWeight:on?600:400,fontSize:navItems.length>=7?9.5:10.5,color:on?(dkNav?"#F4F1FA":effS.deep):(isDark()?"#8E889E":"#7C7691"),transition:"color .35s ease, font-weight .35s ease",whiteSpace:"nowrap",position:"relative",zIndex:1,letterSpacing:.2,maxWidth:"100%",overflow:"hidden",textOverflow:"clip"}}>{label}</span>
             {/* Glowing dot indicator — pulses gently in the screen's color */}
             {on&&(
               <div style={{
