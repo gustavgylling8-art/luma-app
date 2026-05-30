@@ -728,13 +728,13 @@ const STORIES0=[
     {id:"p5",emoji:"🏝️",photo:null,sv:"Vid Drömlandets strand låg en bädd av varm sand och tusen blinkande stjärnor. Där fick Pärla lägga sig att vila.",en:"On the shore of Dreamland lay a bed of warm sand and a thousand twinkling stars. There Pearl lay down to rest.",timer:{on:true,type:"sun",min:1,color:"#D9B868"}},
     {id:"p6",emoji:"🌌",photo:null,sv:"\"Sov nu\", viskade kaptenen och drog stjärntäcket över henne. \"Imorgon seglar vi hem igen.\" Och Pärla sov. Godnatt, lilla vän.",en:"\"Sleep now,\" whispered the captain, drawing the starry blanket over her. \"Tomorrow we sail home again.\" And Pearl slept. Goodnight, little one."},
   ]},
-  {id:"s_forest",example:true,type:"sequence",sv:"Lina och skogstomten",en:"Lina and the forest gnome",emoji:"🌲",color:"#8FBFA1",pages:[
-    {id:"p1",emoji:"🏡",photo:null,sv:"Det var en gång en flicka som hette Lina. Hon bodde i ett litet rött hus vid kanten av en gammal, susande skog.",en:"Once upon a time there was a girl named Lina. She lived in a little red house at the edge of an old, whispering forest."},
-    {id:"p2",emoji:"🌲",photo:null,sv:"En gyllene höstmorgon följde hon den välkända stigen in bland träden för att plocka lingon, som glittrade som rubiner i mossan.",en:"One golden autumn morning she followed the familiar path in among the trees to pick lingonberries, which glittered like rubies in the moss."},
-    {id:"p3",emoji:"🍂",photo:null,sv:"Vid en mossig stubbe satt en pytteliten gubbe med snövitt skägg och röd luva. Det var den gamla skogstomten — och han huttrade av köld.",en:"By a mossy stump sat a teeny old man with a snow-white beard and a red cap. It was the old forest tomte — and he was shivering with cold."},
-    {id:"p4",emoji:"🧣",photo:null,sv:"\"Här, lilla vän\", sa Lina och lindade sin varmaste halsduk om honom. Hela hans skrynkliga ansikte lyste upp i ett leende.",en:"\"Here, little friend,\" said Lina, wrapping her warmest scarf around him. His whole crinkled face lit up in a smile."},
-    {id:"p5",emoji:"🍬",photo:null,sv:"\"Så snäll du är\", sa tomten. Till tack öppnade han en liten näverask med glittrande skogsgodis, och de delade den tillsammans — glada ända in i hjärtat.",en:"\"How kind you are,\" said the tomte. To thank her, he opened a little birch-bark box of glittering forest candy, and they shared it together — happy right down to their hearts.",timer:{on:true,type:"monster",min:1,color:"#8FBFA1"}},
-    {id:"p6",emoji:"⭐",photo:null,sv:"När solen sjönk gav tomten henne ett blänkande litet ljus att lysa hem med. Lina sprang hem till sitt röda hus, varm i hela kroppen. Snipp, snapp, snut — så var sagan slut.",en:"As the sun sank, the tomte gave her a shining little light to guide her home. Lina ran home to her red house, warm all over. Snip, snap, snout — and that's the end of the tale."},
+  {id:"s_forest",example:true,type:"sequence",sv:"Godistrollen",en:"The candy trolls",emoji:"🍬",color:"#DCA6B2",pages:[
+    {id:"p1",emoji:"🌲",photo:null,sv:"I skogens djup, där mossan gror,\nvid granens rot ett trollfolk bor.\nVart litet troll, så mjukt och len,\nbär socker i sitt hår — var en.",en:"Deep in the forest, soft and green,\nbeneath a root where moss is seen,\nthere lives a folk both small and sweet,\nwith sugar hair from head to feet."},
+    {id:"p2",emoji:"❄️",photo:null,sv:"Och när den första snön föll ner,\nlåg skogen tyst, så långt man ser.\nTy denna natt, en gång om år,\nblir kola kokt i kitteln vår.",en:"And when the first snow drifted low\nand hushed the woods in white and slow,\nthe trolls all knew the night was here\nto cook the toffee, once a year."},
+    {id:"p3",emoji:"🥄",photo:null,sv:"I år fick lille trollet Nopp\natt röra om i grytans kropp,\noch rörde, rörde, tyst och säll,\nen egen, gyllen, ljuvlig kväll.",en:"This year wee Nopp, so small, so proud,\ncould stir the pot beneath the cloud,\nand stirred and stirred, so still, so slow,\nthrough all the evening's golden glow."},
+    {id:"p4",emoji:"🍬",photo:null,sv:"I kitteln stiger bubblor små,\noch fler och fler vill uppåt nå.\nOch doften växer, mer och mer,\ntills varje troll i längtan ler.",en:"The toffee climbs, both bright and warm,\na golden, rising, bubbling storm.\nThe sweetness grows and fills the night,\ntill every troll leans toward the light."},
+    {id:"p5",emoji:"🍭",photo:null,sv:"Till sist är kolan ljuvligt klar!\nDen delas, broder, syster, far.\nOch Nopp, som rört, får som han bör\nden första kulan — söt och mör.",en:"At last the toffee's ready — cheer!\nThey share it round to all who're near.\nAnd Nopp, who stirred, as is his right,\nreceives the first sweet, warm and bright.",timer:{on:true,type:"monster",min:1,color:"#DCA6B2"}},
+    {id:"p6",emoji:"🌙",photo:null,sv:"Sen kryper trollen, tätt och små,\noch somnar sött i mossans vrå.\nDär ute yr den vita snön,\nmen inne andas drömmen skön.\nSnipp, snapp, snut, så slutar den —\ngod natt, små troll. Vi ses igen.",en:"Then all the trolls curl up to sleep,\nin mossy beds so warm and deep.\nOutside the white snow softly flies,\nbut in their dreams a sweetness lies.\nSnip, snap, snout — the tale is spun;\ngoodnight, wee trolls, till morning sun."},
   ]},
   {id:"s_pancake",example:true,type:"sequence",sv:"Vi bakar pannkakor",en:"We make pancakes",emoji:"🥞",color:"#D9B868",pages:[
     {id:"p1",emoji:"🥣",photo:null,sv:"Vispa ihop 2½ dl vetemjöl och ½ tsk salt i en bunke.",en:"Whisk together 2½ dl (1 cup) flour and ½ tsp salt in a bowl."},
@@ -10112,6 +10112,7 @@ function StoryViewer({story,lang,t,onClose}){
           lineHeight:1.35,
           maxWidth:340,
           letterSpacing:-.3,
+          whiteSpace:"pre-line",
           transition:"font-size .45s",
         }}>{lsText(page,lang)}</div>
 
@@ -12965,7 +12966,7 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
           </button>
         )}
         {isEmpty&&!isEditor?(
-          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"72px 30px 60px",gap:16}}>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"center",padding:"72px 30px 60px",gap:16}}>
             <style>{`@keyframes idcEmptyHalo{0%,100%{transform:scale(0.92);opacity:.5}50%{transform:scale(1.08);opacity:.9}}@keyframes idcEmptyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}`}</style>
             <div style={{position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:2}}>
               <div style={{position:"absolute",width:130,height:130,borderRadius:"50%",background:`radial-gradient(circle, ${S.h}30 0%, transparent 70%)`,animation:"idcEmptyHalo 4.4s ease-in-out infinite"}}/>
@@ -12978,8 +12979,8 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
                 </svg>
               </div>
             </div>
-            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:tk().inkSoft,letterSpacing:-.4,lineHeight:1.1,textAlign:"center"}}>{t.emptyCardTitle}</div>
-            <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:tk().ink2,letterSpacing:.1,textAlign:"center",lineHeight:1.5,maxWidth:280}}>{lang==="sv"?"Fyll i kortet i redigeraren.":"Fill in the card in the editor."}</div>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:tk().inkSoft,letterSpacing:-.4,lineHeight:1.1,textAlign:"left"}}>{t.emptyCardTitle}</div>
+            <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:tk().ink2,letterSpacing:.1,textAlign:"left",lineHeight:1.5,maxWidth:280}}>{lang==="sv"?"Fyll i kortet i redigeraren.":"Fill in the card in the editor."}</div>
           </div>
         ):isEmpty&&isEditor?(
           <div style={{textAlign:"left",padding:"36px 26px",background:isDark()?`linear-gradient(180deg, rgba(255,255,255,0.05), ${S.h}14)`:`linear-gradient(180deg, #FFFFFF, ${S.hll})`,borderRadius:24,border:`1px dashed ${isDark()?S.h+"55":S.h+"66"}`,boxShadow:isDark()?"0 8px 28px rgba(0,0,0,0.4)":`0 8px 24px ${S.h}14`}}>
@@ -12989,7 +12990,7 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
             <button onClick={()=>onOpenEditor()} className="lt-press" style={{padding:"13px 28px",borderRadius:14,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:`0 10px 24px ${S.h}55, inset 0 1px 0 rgba(255,255,255,0.3)`}}>+ {t.editCard}</button>
           </div>
         ):(<>
-          <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:tk().ink3,letterSpacing:1,textTransform:"uppercase",textAlign:"center",marginBottom:10}}>{t.idHint}</div>
+          <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:tk().ink3,letterSpacing:1,textTransform:"uppercase",textAlign:"left",marginBottom:10}}>{t.idHint}</div>
           {/* Aurora halo behind the card for atmospheric depth */}
           <div style={{position:"relative"}}>
             <div style={{position:"absolute",inset:-12,borderRadius:36,background:`radial-gradient(circle at 50% 25%, ${S.h}1A 0%, transparent 70%)`,filter:"blur(16px)",pointerEvents:"none",zIndex:0}}/>
@@ -14227,7 +14228,7 @@ function DemoTour({onClose,lang}){
     {C:SceneChecklist, bg:"linear-gradient(165deg,#F4F9F4 0%,#FFFFFF 100%)",     heading:en?"Step by step":"Steg för steg",                                 sub:en?"One thing at a time.":"En sak i taget.",                                                                          dur:6500},
     {C:SceneEmotion,   bg:"linear-gradient(165deg,#FAF5F6 0%,#FFFFFF 100%)",     heading:en?"How does it feel today?":"Hur känns det idag?",                sub:en?"Put it into words.":"Sätt ord på det.",                                                                           dur:6500},
     {C:SceneCalm,      bg:"linear-gradient(165deg,#EAF3F7 0%,#FFFFFF 100%)",     heading:en?"When it gets to be too much":"När det blir mycket",            sub:en?"Tools that help you land.":"Verktyg som hjälper dig landa.",                                                       dur:8000},
-    {C:SceneIdCard,    bg:"linear-gradient(165deg,#FCF3F3 0%,#FFFFFF 100%)",     heading:en?"My card":"Mitt kort",                                          sub:en?"The important things about me.":"Det viktiga om mig.",                                                            dur:6500},
+    {C:SceneIdCard,    bg:"linear-gradient(165deg,#FCF3F3 0%,#FFFFFF 100%)",     heading:en?"My card":"Mitt kort",                                          sub:en?"The important things about me.":"Det viktiga om mig.",                                                            leftText:true, dur:6500},
     {C:SceneTalk,      bg:"linear-gradient(165deg,#F4F9FD 0%,#FFFFFF 100%)",     heading:en?"Pictures instead of words":"Bilder istället för ord",          sub:en?"Tap — the app speaks for you.":"Tryck — appen pratar för dig.",                                                   dur:6500},
     {C:SceneOutro,     bg:"linear-gradient(180deg,#FCFAFE 0%,#FFFFFF 100%)",     heading:"",                                                                sub:"",                                                                                                                   dur:99999},
   ];
@@ -14339,7 +14340,7 @@ function DemoTour({onClose,lang}){
 
         {/* Caption — directly beneath the art */}
         {!isOutro&&(
-          <div key={`txt${idx}`} style={{flexShrink:0,padding:"0 28px",textAlign:"center",maxWidth:540,margin:"0 auto",width:"100%",boxSizing:"border-box",display:"flex",flexDirection:"column",alignItems:"center"}}>
+          <div key={`txt${idx}`} style={{flexShrink:0,padding:"0 28px",textAlign:scene.leftText?"left":"center",maxWidth:540,margin:"0 auto",width:"100%",boxSizing:"border-box",display:"flex",flexDirection:"column",alignItems:scene.leftText?"flex-start":"center"}}>
             {/* Small decorative accent line */}
             <div style={{width:28,height:3,borderRadius:2,background:`linear-gradient(90deg, ${effSceneCol}, ${effSceneCol}66)`,marginBottom:14,animation:"dTextIn 0.9s 0.15s cubic-bezier(0.22,1,0.36,1) both"}}/>
             <h1 style={{fontFamily:G.serif,fontSize:27,fontWeight:600,color:G.inkSoft,marginBottom:scene.sub?9:0,marginTop:0,letterSpacing:-0.4,lineHeight:1.12,animation:"dTextIn 0.9s 0.25s cubic-bezier(0.22,1,0.36,1) both"}}>{scene.heading}</h1>
@@ -14840,7 +14841,7 @@ export default function App(){
   // detect any story whose id is a known built-in example id, drop those, and
   // splice in the fresh STORIES0 — while keeping every story the user created
   // themselves (unknown ids). Bumping the version key reruns it once.
-  const[migrStoriesV2,setMigrStoriesV2]=usePersistentState("migr_stories_v12",false);
+  const[migrStoriesV2,setMigrStoriesV2]=usePersistentState("migr_stories_v21",false);
   useEffect(()=>{
     if(migrStoriesV2) return;
     // All ids ever used by built-in examples (old + intermediate + current).
