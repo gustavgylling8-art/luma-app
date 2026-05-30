@@ -731,10 +731,10 @@ const STORIES0=[
   //    only where a pause or wait is part of the moment.
   {id:"s_fairytale",example:true,type:"sequence",sv:"Pärlan och drömskeppet",en:"Pearl and the dream ship",emoji:"🌙",color:"#9683C2",pages:[
     {id:"p1",emoji:"🌙",photo:null,sv:"Det var en gång en liten flicka som hette Pärla. Varje kväll, just när hon blundat, kom ett litet skepp seglande genom fönstret — byggt av månsken och tunt som en dröm.",en:"Once upon a time there was a little girl named Pearl. Every evening, just as she closed her eyes, a little ship came sailing through her window — built of moonlight and thin as a dream."},
-    {id:"p2",emoji:"⛵",photo:null,sv:"\"Stig ombord\", sa den gamle kaptenen, som hade skägg av silver och en hatt full av stjärnor. Och Pärla klev ner i den mjuka båten.",en:"\"Climb aboard,\" said the old captain, who had a beard of silver and a hat full of stars. And Pearl stepped down into the soft little boat.",timer:{on:true,type:"wave",min:4,color:"#8AAFD2"}},
+    {id:"p2",emoji:"⛵",photo:null,sv:"\"Stig ombord\", sa den gamle kaptenen, som hade skägg av silver och en hatt full av stjärnor. Och Pärla klev ner i den mjuka båten.",en:"\"Climb aboard,\" said the old captain, who had a beard of silver and a hat full of stars. And Pearl stepped down into the soft little boat.",timer:{on:true,type:"wave",min:1,color:"#8AAFD2"}},
     {id:"p3",emoji:"🌊",photo:null,sv:"De seglade ut över Sömnhavet, där vågorna gick långsamt som andetag och vinden luktade nybakt bröd och blåbär.",en:"They sailed out across the Sea of Sleep, where the waves moved as slowly as breathing and the wind smelled of fresh bread and blueberries."},
     {id:"p4",emoji:"🐳",photo:null,sv:"En snäll val lyfte skeppet på sin rygg och vaggade det fram och tillbaka, fram och tillbaka, mjukt och stilla.",en:"A gentle whale lifted the ship onto its back and rocked it to and fro, to and fro, soft and still."},
-    {id:"p5",emoji:"🏝️",photo:null,sv:"Vid Drömlandets strand låg en bädd av varm sand och tusen blinkande stjärnor. Där fick Pärla lägga sig att vila.",en:"On the shore of Dreamland lay a bed of warm sand and a thousand twinkling stars. There Pearl lay down to rest.",timer:{on:true,type:"sun",min:8,color:"#D9B868"}},
+    {id:"p5",emoji:"🏝️",photo:null,sv:"Vid Drömlandets strand låg en bädd av varm sand och tusen blinkande stjärnor. Där fick Pärla lägga sig att vila.",en:"On the shore of Dreamland lay a bed of warm sand and a thousand twinkling stars. There Pearl lay down to rest.",timer:{on:true,type:"sun",min:1,color:"#D9B868"}},
     {id:"p6",emoji:"🌌",photo:null,sv:"\"Sov nu\", viskade kaptenen och drog stjärntäcket över henne. \"Imorgon seglar vi hem igen.\" Och Pärla sov. Godnatt, lilla vän.",en:"\"Sleep now,\" whispered the captain, drawing the starry blanket over her. \"Tomorrow we sail home again.\" And Pearl slept. Goodnight, little one."},
   ]},
   {id:"s_forest",example:true,type:"sequence",sv:"Lina och skogstomten",en:"Lina and the forest gnome",emoji:"🌲",color:"#8FBFA1",pages:[
@@ -742,7 +742,7 @@ const STORIES0=[
     {id:"p2",emoji:"🌲",photo:null,sv:"En kväll, när solen målade träden gyllene, gick hon in bland granarna för att se vart stigen ledde.",en:"One evening, when the sun painted the trees golden, she walked in among the spruces to see where the path led."},
     {id:"p3",emoji:"🍂",photo:null,sv:"På en stubbe satt en pytteliten gubbe med grått skägg och röd luva. Det var skogstomten — och han frös.",en:"On a tree stump sat a teeny old man with a grey beard and a red cap. It was the forest gnome — and he was cold."},
     {id:"p4",emoji:"🧣",photo:null,sv:"\"Här\", sa Lina och la sin varma halsduk om honom. Tomten log så att hela ansiktet skrynklades.",en:"\"Here,\" said Lina, tucking her warm scarf around him. The gnome smiled so much his whole face crinkled."},
-    {id:"p5",emoji:"🍬",photo:null,sv:"Tomten plockade fram en påse skogsgodis och bjöd Lina. De satt och mumsade tillsammans, glada i hela kroppen.",en:"The gnome pulled out a bag of forest candy and shared it with Lina. They sat and munched together, happy all over.",timer:{on:true,type:"monster",min:5,color:"#8FBFA1"}},
+    {id:"p5",emoji:"🍬",photo:null,sv:"Tomten plockade fram en påse skogsgodis och bjöd Lina. De satt och mumsade tillsammans, glada i hela kroppen.",en:"The gnome pulled out a bag of forest candy and shared it with Lina. They sat and munched together, happy all over.",timer:{on:true,type:"monster",min:1,color:"#8FBFA1"}},
     {id:"p6",emoji:"⭐",photo:null,sv:"\"Kom tillbaka i morgon\", viskade tomten. Och det gjorde Lina. Snipp, snapp, snut — så var sagan slut.",en:"\"Come back tomorrow,\" whispered the gnome. And Lina did. And that's the end of the tale."},
   ]},
   {id:"s_pancake",example:true,type:"sequence",sv:"Vi bakar pannkakor",en:"We make pancakes",emoji:"🥞",color:"#D9B868",pages:[
@@ -759,7 +759,7 @@ const STORIES0=[
     {id:"p2",emoji:"🌬️",photo:null,sv:"Jag andas in långsamt … och ut. Pirret får finnas kvar — jag behöver inte jaga bort det.",en:"I breathe in slowly … and out. The flutter can stay — I don't need to chase it away.",timer:{on:true,type:"ring",min:1,color:"#8FBFA1"}},
     {id:"p3",emoji:"💪",photo:null,sv:"Jag säger till mig själv: \"Jag är nervös. Och jag gör det ändå.\"",en:"I tell myself: \"I'm nervous. And I'm doing it anyway.\""},
     {id:"p4",emoji:"👣",photo:null,sv:"Med pirret i magen tar jag ett steg framåt. Modig betyder inte att vara orädd — det betyder att gå ändå.",en:"With the flutter still there, I take a step forward. Brave doesn't mean fearless — it means going anyway."},
-    {id:"p5",emoji:"⭐",photo:null,sv:"Jag gjorde det! Jag var rädd OCH modig på samma gång. Det är jag stolt över.",en:"I did it! I was scared AND brave at the same time. I'm proud of that."},
+    {id:"p5",emoji:"⭐",photo:null,sv:"Jag gjorde det! Jag var rädd OCH modig på samma gång.",en:"I did it! I was scared AND brave at the same time."},
   ]},
   {id:"ft_calm",example:true,type:"firstthen",sv:"Först lugn, sedan lek",en:"First calm, then play",emoji:"📋",color:"#9683C2",pages:[
     {id:"first",emoji:"🌬️",photo:null,sv:"Andas lugnt",en:"Breathe calmly",timer:{on:true,type:"ring",min:2,color:"#8FBFA1"}},
@@ -13302,8 +13302,13 @@ function SceneIntro(){
     const seatR=v(7.9);
 
     // Bézier arc: start high-left, control upper-right, end at the seat.
-    const P0={x:cx-118, y:icy-150};
-    const P1={x:cx+86,  y:icy-140};    // control — gives the graceful crest
+    // Enter from the LEFT side of the card (not clipped in the top-left
+    // corner): start mid-height on the left, sweep up over a gentle crest,
+    // then settle into the bowl. The sun also FADES in over the first third
+    // of the path (see `appear`), so there's never a hard, boxed edge where
+    // it meets the canvas bounds — it simply arrives as light.
+    const P0={x:cx-120, y:icy-70};
+    const P1={x:cx+60,  y:icy-120};    // control — gentle on-canvas crest
     const P2=seat;
     const bez=(t)=>{ const u=1-t; return {
       x:u*u*P0.x+2*u*t*P1.x+t*t*P2.x,
@@ -13407,12 +13412,13 @@ function SceneIntro(){
         const pos=bez(e);
         const scale=1 - 0.86*easeIn(at);     // 1 -> ~0.14
         const sd=64*scale;
+        const appear=easeOut(Math.min(1, at/0.30));  // fade in over first 1/3 — no boxed edge
 
         // motion trail (sampled previous positions)
         trail.unshift({x:pos.x,y:pos.y,r:sd*0.5});
         if(trail.length>14) trail.pop();
         for(let i=trail.length-1;i>=1;i--){
-          const tr=trail[i]; const a=(1-i/trail.length)*0.22;
+          const tr=trail[i]; const a=(1-i/trail.length)*0.22*appear;
           ctx.save(); ctx.globalAlpha=a;
           ctx.fillStyle="rgba(244,168,97,1)";
           ctx.beginPath(); ctx.arc(tr.x,tr.y,tr.r*0.7,0,7); ctx.fill();
@@ -13421,6 +13427,7 @@ function SceneIntro(){
 
         // glow
         ctx.save();
+        ctx.globalAlpha=appear;
         const gl=ctx.createRadialGradient(pos.x,pos.y,sd*0.2, pos.x,pos.y,sd*1.8);
         gl.addColorStop(0,"rgba(255,228,190,0.55)");
         gl.addColorStop(1,"rgba(255,228,190,0)");
@@ -13428,7 +13435,7 @@ function SceneIntro(){
         ctx.restore();
 
         // rays — rotate + retract as it shrinks
-        const rayA=(1-at)*0.9;
+        const rayA=(1-at)*0.9*appear;
         if(rayA>0.02){
           ctx.save(); ctx.translate(pos.x,pos.y); ctx.rotate(at*Math.PI*0.9);
           ctx.strokeStyle=`rgba(240,164,90,${rayA})`; ctx.lineCap="round";
@@ -13441,8 +13448,10 @@ function SceneIntro(){
         }
 
         // core
+        ctx.save(); ctx.globalAlpha=appear;
         ctx.drawImage(sunSprite, pos.x-sd/2, pos.y-sd/2, sd, sd);
-        ctx.save(); ctx.globalAlpha=0.7; ctx.fillStyle="#fff";
+        ctx.restore();
+        ctx.save(); ctx.globalAlpha=0.7*appear; ctx.fillStyle="#fff";
         ctx.beginPath(); ctx.arc(pos.x-sd*0.16,pos.y-sd*0.16,sd*0.1,0,7); ctx.fill(); ctx.restore();
       }
 
@@ -14150,12 +14159,9 @@ function SceneOutro({onStart,lang}){
         @keyframes dOTextIn{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
         @keyframes dOBtnIn{0%{opacity:0;transform:translateY(14px) scale(0.94)}100%{opacity:1;transform:translateY(0) scale(1)}}
       `}</style>
-      <div style={{animation:"dOLogoIn 1.2s cubic-bezier(0.22,1,0.36,1) both"}}>
-        <LumaIcon size={100} color="#1F1B2E"/>
-      </div>
-      <div style={{textAlign:"center",maxWidth:320}}>
-        <div style={{marginBottom:14,animation:"dOTextIn 0.9s 0.3s cubic-bezier(0.22,1,0.36,1) both"}}>
-          <LumaWordmark size={36} color="#1F1B2E"/>
+      <div style={{textAlign:"center",maxWidth:340}}>
+        <div style={{marginBottom:16,animation:"dOLogoIn 1.2s cubic-bezier(0.22,1,0.36,1) both"}}>
+          <LumaWordmark size={60} color="#1F1B2E"/>
         </div>
         <div style={{fontFamily:"-apple-system, sans-serif",fontSize:14,color:"#7C7691",lineHeight:1.5,letterSpacing:0.2,animation:"dOTextIn 0.9s 0.55s cubic-bezier(0.22,1,0.36,1) both"}}>{en?<>A schedule. A rhythm.<br/>A safety.</>:<>Ett schema. En rytm.<br/>En trygghet.</>}</div>
       </div>
@@ -14799,7 +14805,7 @@ export default function App(){
   // detect any story whose id is a known built-in example id, drop those, and
   // splice in the fresh STORIES0 — while keeping every story the user created
   // themselves (unknown ids). Bumping the version key reruns it once.
-  const[migrStoriesV2,setMigrStoriesV2]=usePersistentState("migr_stories_v10",false);
+  const[migrStoriesV2,setMigrStoriesV2]=usePersistentState("migr_stories_v11",false);
   useEffect(()=>{
     if(migrStoriesV2) return;
     // All ids ever used by built-in examples (old + intermediate + current).
@@ -16061,7 +16067,7 @@ export default function App(){
             <LumaWordmark
               size={25}
               color={shadeHex(effS.h,-0.55)}
-              showSun={true}
+              showSun={screen==="home"||screen==="week"}
               style={{
                 transition:"color .5s ease",
               }}
