@@ -89,8 +89,8 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     </defs>
     <rect width="512" height="512" rx="114" fill="url(#bg)"/>
     <path d="M176.6 107.5 L176.6 325.1 A79.4 79.4 0 0 0 335.4 325.1 L335.4 221.7" fill="none" stroke="${MARK_NAVY}" stroke-width="65.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="256" cy="336.9" r="40.4" fill="url(#pearl)"/>
-    <circle cx="243.4" cy="323.4" r="12.1" fill="#FFFFFF" opacity="0.45"/>
+    <circle cx="256" cy="317.4" r="35.8" fill="url(#pearl)"/>
+    <circle cx="245.8" cy="307.2" r="11.3" fill="#FFFFFF" opacity="0.45"/>
   </svg>`;
   const iconUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(ICON_SVG)));
 
@@ -170,8 +170,8 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
         + '</defs>'
         + '<rect x="0" y="0" width="100" height="100" rx="22.37" fill="url(#lumaPreIcoBg)"/>'
         + '<path d="M34.5 21 L34.5 63.5 A15.5 15.5 0 0 0 65.5 63.5 L65.5 43.3" fill="none" stroke="' + markStroke + '" stroke-width="12.8" stroke-linecap="round"/>'
-        + '<circle cx="50" cy="65.8" r="7.9" fill="url(#lumaPrePearl)"/>'
-        + '<circle cx="47.6" cy="63.4" r="2.5" fill="#FFFFFF" opacity="0.5"/>'
+        + '<circle cx="50" cy="62" r="7" fill="url(#lumaPrePearl)"/>'
+        + '<circle cx="48" cy="60" r="2.2" fill="#FFFFFF" opacity="0.5"/>'
         + '</svg>'
         + '</div>'
         + '</div>';
@@ -246,21 +246,15 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     const c = document.createElement("canvas");
     c.width = w; c.height = h;
     const g = c.getContext("2d");
-    // Background — Luma home palette. Dark mode uses the same deep night base
-    // as the live app; light mode uses the soft sky-blue → white wash.
-    if (dark) {
-      g.fillStyle = "#0E0E10";
-      g.fillRect(0, 0, w, h);
-    } else {
-      const grd = g.createLinearGradient(0, 0, 0, h);
-      grd.addColorStop(0, "#EAF2FB");
-      grd.addColorStop(0.55, "#F6FAFD");
-      grd.addColorStop(1, "#FFFFFF");
-      g.fillStyle = grd; g.fillRect(0, 0, w, h);
-    }
-    // App icon — rounded-square "lu" mark (NO pearl). This is the launch
-    // animation's starting state; the pearl arrives via the boot animation,
-    // so the static iOS launch image flows seamlessly into it.
+    // Flat fill = the EXACT manifest/page background (light #FBFDFE, dark
+    // #0E0E10). Matching the launch image to the pre-boot overlay AND the app
+    // base means there is zero tone shift in the hand-off: launch → pre-boot →
+    // app are one continuous colour, so nothing "pops" as React takes over.
+    g.fillStyle = manifestBg;
+    g.fillRect(0, 0, w, h);
+    // App icon — rounded-square "lu" mark WITH the brand pearl, identical to
+    // the home-screen icon and the pre-boot overlay, so the launch image is a
+    // complete, on-brand logo rather than a pearl-less placeholder.
     var markStroke = dark ? "#F4F1FA" : "#1F1B2E";
     var IS = Math.min(w, h) * 0.34;
     var cx = w/2, cy = h * 0.44;
@@ -294,6 +288,14 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     g.strokeStyle = markStroke;
     g.lineCap = "round"; g.lineJoin = "round";
     g.stroke();
+    // Brand pearl resting in the bowl — matches the home-screen icon and the
+    // pre-boot overlay, so the launch image is the COMPLETE logo (no brief
+    // "pearl-less" frame before the pearl appears).
+    var pcx = pxv(50), pcy = pyv(62), pr = 7.0/100*IS;
+    var pg = g.createRadialGradient(pcx - pr*0.24, pcy - pr*0.32, pr*0.1, pcx, pcy, pr);
+    pg.addColorStop(0, "#FFFFFF"); pg.addColorStop(0.30, "#FFF2E6"); pg.addColorStop(0.70, "#F8D2B2"); pg.addColorStop(1, "#EDB78F");
+    g.beginPath(); g.arc(pcx, pcy, pr, 0, Math.PI*2); g.fillStyle = pg; g.fill();
+    g.beginPath(); g.arc(pxv(48), pyv(60), 2.2/100*IS, 0, Math.PI*2); g.fillStyle = "rgba(255,255,255,0.5)"; g.fill();
     return c.toDataURL("image/png");
   };
   // Device size table — portrait orientation (iOS expects portrait splashes
@@ -325,14 +327,20 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     const dev = Math.min(cw, dw)/Math.max(cw, dw);
     if (dev < 0.85 && !(cw === dw && ch === dh)) return; // skip wildly mismatched
     const px = cw * dpr, py = ch * dpr;
-    [false, true].forEach((dark) => {
-      const dataUrl = makeSplash(px, py, dark);
-      const link = document.createElement("link");
-      link.rel = "apple-touch-startup-image";
-      link.media = `(device-width: ${cw}px) and (device-height: ${ch}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait) and (prefers-color-scheme: ${dark ? "dark" : "light"})`;
-      link.href = dataUrl;
-      document.head.appendChild(link);
-    });
+    // Generate ONLY the splash matching the APP's stored theme — NOT the
+    // system colour scheme. iOS otherwise selects the launch image by the
+    // device's dark/light setting, so a LIGHT-themed Luma on a phone in dark
+    // mode would show a DARK launch image and then jump to the LIGHT pre-boot
+    // overlay — the dark-then-light flash the user reported. Locking it to the
+    // app theme (and dropping the prefers-color-scheme clause) keeps the
+    // hand-off seamless: light→light or dark→dark.
+    const splashDark = storedTheme === "dark";
+    const dataUrl = makeSplash(px, py, splashDark);
+    const link = document.createElement("link");
+    link.rel = "apple-touch-startup-image";
+    link.media = `(device-width: ${cw}px) and (device-height: ${ch}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait)`;
+    link.href = dataUrl;
+    document.head.appendChild(link);
   });
   manLink.setAttribute("href", manUrl);
 })();
@@ -1493,8 +1501,8 @@ function LumaIcon({size=32,color="#1E1B27",style={}}){
       </defs>
       <path d="M34.5 21 L34.5 63.5 A15.5 15.5 0 0 0 65.5 63.5 L65.5 43.3"
         fill="none" stroke={color} strokeWidth="12.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="50" cy="65.8" r="7.9" fill={`url(#${uid}-p)`}/>
-      <circle cx="47.4" cy="63.1" r="2.4" fill="#FFFFFF" opacity="0.45"/>
+      <circle cx="50" cy="62" r="7" fill={`url(#${uid}-p)`}/>
+      <circle cx="48" cy="60" r="2.2" fill="#FFFFFF" opacity="0.45"/>
     </svg>
   );
 }
@@ -14525,10 +14533,11 @@ export default function App(){
   // removes the offset. We write it to --app-vh (already referenced by the
   // desktop/tablet rules) and also read it inline for the outer shell.
   const[appVH,setAppVH]=useState(()=>typeof window!=="undefined"?(window.visualViewport?.height||window.innerHeight):0);
-  // Brief in-app BOOT overlay — bridges the static iOS launch splash (which
-  // can't animate) to the live app with the same Luma sun, now gently
-  // ROTATING, then fades out. Gives the "loading sun that spins harmoniously"
-  // feel right as the app opens. Shows ~1.1s, then fades.
+  // Boot hand-off — there is NO second in-app overlay. The single pre-boot
+  // splash (injected before React, see top of file) owns the entire launch
+  // visual. This effect just tells that splash we've mounted AND painted a
+  // real frame, so it fades out on genuine readiness rather than a blind
+  // timer — one clean hand-off, nothing left lingering on screen.
   useEffect(()=>{
     // Tell the pre-boot splash we're mounted AND have painted a real frame,
     // so it can fade out on actual readiness (smooth, single hand-off) rather
