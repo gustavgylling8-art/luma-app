@@ -156,13 +156,11 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       pre.innerHTML =
         '<style>'
         + '#lumaPreBoot *{backface-visibility:hidden;-webkit-backface-visibility:hidden}'
-        + '@keyframes lumaPreIcon{0%{opacity:0;transform:translateZ(0) scale(0.9)}100%{opacity:1;transform:translateZ(0) scale(1)}}'
-        + '@keyframes lumaPreAura{0%{opacity:0;transform:translate(-50%,-50%) scale(0.8)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}'
         + '@keyframes lumaPreBreath{0%,100%{transform:translateZ(0) scale(1)}50%{transform:translateZ(0) scale(1.018)}}'
-        + '.lpaura{position:absolute;left:50%;top:43%;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle, rgba(232,168,120,0.14) 0%, rgba(232,168,120,0.05) 46%, transparent 70%);transform:translate(-50%,-50%);animation:lumaPreAura 1.6s cubic-bezier(0.16,1,0.3,1) both;will-change:transform,opacity;pointer-events:none;z-index:0}'
+        + '.lpaura{position:absolute;left:50%;top:43%;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle, rgba(232,168,120,0.14) 0%, rgba(232,168,120,0.05) 46%, rgba(232,168,120,0) 70%);transform:translate(-50%,-50%);pointer-events:none;z-index:0}'
         + '</style>'
         + '<div class="lpaura"></div>'
-        + '<div style="position:relative;z-index:2;will-change:transform,opacity;animation:lumaPreIcon 1.0s cubic-bezier(0.16,1,0.3,1) both">'
+        + '<div style="position:relative;z-index:2">'
         + '<div style="will-change:transform;animation:lumaPreBreath 4.4s ease-in-out 1.0s infinite">'
         + '<svg width="' + ICON + '" height="' + ICON + '" viewBox="0 0 100 100" style="display:block;overflow:visible;filter:drop-shadow(0 16px 34px rgba(80,70,95,0.20))">'
         + '<defs>'
@@ -243,7 +241,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // iOS falls back to the blank screen. We generate each splash as a canvas
   // data-URI (same Luma sky + centered sun mark used for the icon), so no
   // external files are needed — the splashes travel with the bundle.
-  const makeSplash = (w, h, dark) => {
+  const makeSplash = (w, h, dark, dpr) => {
     const c = document.createElement("canvas");
     c.width = w; c.height = h;
     const g = c.getContext("2d");
@@ -252,20 +250,31 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     // can only ever be the light one once the PWA is reinstalled.
     g.fillStyle = "#FBFDFE";
     g.fillRect(0, 0, w, h);
-    // App icon — rounded-square "lu" mark WITH the brand pearl, identical to
-    // the home-screen icon and the pre-boot overlay, so the launch image is a
-    // complete, on-brand logo rather than a pearl-less placeholder.
+    // Soft aura — IDENTICAL to the pre-boot overlay's .lpaura (a 340px CSS
+    // circle centred at 50%/43%), so the static launch image and the live
+    // overlay are pixel-aligned: no second, differently-sized splash.
+    var auraR = 170 * dpr;                 // 340px CSS diameter -> radius in device px
+    var aCx = w/2, aCy = h * 0.43;
+    var ag = g.createRadialGradient(aCx, aCy, 0, aCx, aCy, auraR);
+    ag.addColorStop(0, "rgba(232,168,120,0.14)");
+    ag.addColorStop(0.46, "rgba(232,168,120,0.05)");
+    ag.addColorStop(0.70, "rgba(232,168,120,0)");
+    g.fillStyle = ag;
+    g.beginPath(); g.arc(aCx, aCy, auraR, 0, Math.PI*2); g.fill();
+    // App icon — rounded-square "lu" mark with the brand pearl. Sized & placed
+    // to EXACTLY match the overlay icon (104px CSS, vertically centred), so the
+    // hand-off from launch image to overlay is invisible — it reads as ONE splash.
     var markStroke = dark ? "#F4F1FA" : "#1F1B2E";
-    var IS = Math.min(w, h) * 0.34;
-    var cx = w/2, cy = h * 0.44;
+    var IS = 104 * dpr;                    // overlay icon is 104px CSS
+    var cx = w/2, cy = h/2;                // overlay icon is vertically centred
     var icoX = cx - IS/2, icoY = cy - IS/2;
     var pxv = function(vx){ return icoX + vx/100*IS; };
     var pyv = function(vy){ return icoY + vy/100*IS; };
     var rr = IS * 0.2237;
     // soft grounding shadow + rounded-square background
     g.save();
-    g.shadowColor = dark ? "rgba(0,0,0,0.5)" : "rgba(80,70,95,0.18)";
-    g.shadowBlur = IS*0.13; g.shadowOffsetY = IS*0.045;
+    g.shadowColor = dark ? "rgba(0,0,0,0.5)" : "rgba(80,70,95,0.20)";
+    g.shadowBlur = IS*0.327; g.shadowOffsetY = IS*0.154;   // == 34px blur / 16px offset at 104px CSS
     g.beginPath();
     g.moveTo(icoX+rr, icoY);
     g.arcTo(icoX+IS, icoY, icoX+IS, icoY+IS, rr);
@@ -332,7 +341,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     // (then jumping to the light app) was the dark→light flash. Light-only =
     // one consistent splash for everyone.
     const splashDark = false;
-    const dataUrl = makeSplash(px, py, splashDark);
+    const dataUrl = makeSplash(px, py, splashDark, dpr);
     const link = document.createElement("link");
     link.rel = "apple-touch-startup-image";
     link.media = `(device-width: ${cw}px) and (device-height: ${ch}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait)`;
