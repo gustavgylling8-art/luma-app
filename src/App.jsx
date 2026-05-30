@@ -4,7 +4,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // Inter from Google Fonts
   const l1 = document.createElement("link");
   l1.rel = "stylesheet";
-  l1.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap";
+  l1.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&family=Urbanist:wght@400;500;600;700;800&display=swap";
   document.head.appendChild(l1);
   // General Sans from Fontshare
   const l2 = document.createElement("link");
@@ -68,50 +68,29 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // the user chose. Scaled to sit within iOS's safe zone (motif ~75% of the
   // canvas) so it never crops against the rounded icon mask. Soft pearl
   // background with a gentle warm bloom rather than flat white.
-  const SUN_BLUE = "#E8A878";
-  const SUN_DEEP = "#C97548";
-  const cx=256, cy=256;
-  const rays=Array.from({length:8}).map((_,i)=>{
-    const a=(i/8)*2*Math.PI;
-    const long=i%2===0;
-    // Scaled down ~25% from before (core 96 vs 128) for icon safe-zone air.
-    const r1=125, r2=long?180:163;
-    const x1=cx+r1*Math.sin(a), y1=cy-r1*Math.cos(a);
-    const x2=cx+r2*Math.sin(a), y2=cy-r2*Math.cos(a);
-    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${long?26:19}"/>`;
-  }).join("");
+  // ── Luma app icon — the "lu" mark: a tall left stroke (the l) flowing into a
+  //    soft cup (the u), with the warm brand pearl resting in the bowl, on a
+  //    warm cream rounded square. Geometry measured to match the brand sheet.
+  //    Replaces the previous sun mark.
+  const MARK_NAVY = "#1E1B27";
   const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
     <defs>
-      <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <radialGradient id="bg" cx="50%" cy="38%" r="80%">
+        <stop offset="0%" stop-color="#FFFCF7"/>
+        <stop offset="55%" stop-color="#FBF1E6"/>
+        <stop offset="100%" stop-color="#F3E6D7"/>
+      </radialGradient>
+      <radialGradient id="pearl" cx="38%" cy="32%" r="72%">
         <stop offset="0%" stop-color="#FFFFFF"/>
-        <stop offset="55%" stop-color="#FDF8F2"/>
-        <stop offset="100%" stop-color="#F6EBE0"/>
-      </radialGradient>
-      <radialGradient id="core" cx="34%" cy="28%" r="74%">
-        <stop offset="0%" stop-color="#FFFFFF"/>
-        <stop offset="16%" stop-color="#FFFAF0" stop-opacity="0.98"/>
-        <stop offset="46%" stop-color="${SUN_BLUE}"/>
-        <stop offset="82%" stop-color="${SUN_BLUE}"/>
-        <stop offset="100%" stop-color="${SUN_DEEP}"/>
-      </radialGradient>
-      <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-        <stop offset="40%" stop-color="${SUN_BLUE}" stop-opacity="0"/>
-        <stop offset="70%" stop-color="${SUN_BLUE}" stop-opacity="0.20"/>
-        <stop offset="100%" stop-color="${SUN_BLUE}" stop-opacity="0"/>
-      </radialGradient>
-      <radialGradient id="gloss" cx="32%" cy="26%" r="46%">
-        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.78"/>
-        <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.16"/>
-        <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+        <stop offset="16%" stop-color="#FFEEDA"/>
+        <stop offset="60%" stop-color="#E9A877"/>
+        <stop offset="100%" stop-color="#C8743F"/>
       </radialGradient>
     </defs>
-    <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-    <circle cx="${cx}" cy="${cy}" r="155" fill="url(#halo)"/>
-    <g stroke="${SUN_BLUE}" stroke-linecap="round">
-      ${rays}
-    </g>
-    <circle cx="${cx}" cy="${cy}" r="96" fill="url(#core)"/>
-    <circle cx="${cx}" cy="${cy}" r="96" fill="url(#gloss)"/>
+    <rect width="512" height="512" rx="114" fill="url(#bg)"/>
+    <path d="M176.6 107.5 L176.6 325.1 A79.4 79.4 0 0 0 335.4 325.1 L335.4 221.7" fill="none" stroke="${MARK_NAVY}" stroke-width="65.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="256" cy="336.9" r="40.4" fill="url(#pearl)"/>
+    <circle cx="243.4" cy="323.4" r="12.1" fill="#FFFFFF" opacity="0.45"/>
   </svg>`;
   const iconUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(ICON_SVG)));
 
@@ -152,12 +131,101 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     document.documentElement.classList.add(storedTheme === "dark" ? "lt-theme-dark" : "lt-theme-light");
     if (document.body) document.body.style.background = manifestBg;
   } catch (_) {}
+  // PRE-REACT BOOT OVERLAY — paints the Luma sun the very moment our JS runs.
+  // Why: iOS caches the launch splash PNG aggressively. Even after we update
+  // makeSplash (the ring-free design), iOS may keep showing the OLD cached
+  // splash on startup until the PWA is reinstalled. By drawing the SAME sun
+  // here, in pure HTML/SVG, before React mounts, we cover whatever iOS chose
+  // to show — so the user always sees the new Luma sun. React's own boot
+  // overlay then takes over seamlessly; this static one removes itself when
+  // React mounts.
+  try {
+    var injectPreBoot = function(){
+      if (!document.body || document.getElementById("lumaPreBoot")) return;
+      var sunFill = storedTheme === "dark" ? "#F4F1FA" : "#1F1B2E";
+      var bg = manifestBg;
+      var pre = document.createElement("div");
+      pre.id = "lumaPreBoot";
+      pre.setAttribute("aria-hidden", "true");
+      pre.style.cssText = "position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;background:"+bg+";opacity:1;pointer-events:none;overflow:hidden";
+      var markStroke = storedTheme === "dark" ? "#F4F1FA" : "#1F1B2E";
+      var icoBgA = storedTheme === "dark" ? "#241F30" : "#FFFCF7";
+      var icoBgB = storedTheme === "dark" ? "#17131F" : "#F3E6D7";
+      var ICON = 104;
+      pre.innerHTML =
+        '<style>'
+        + '#lumaPreBoot *{backface-visibility:hidden;-webkit-backface-visibility:hidden}'
+        + '@keyframes lumaPreIcon{0%{opacity:0;transform:translateZ(0) scale(0.9)}100%{opacity:1;transform:translateZ(0) scale(1)}}'
+        + '@keyframes lumaPreAura{0%{opacity:0;transform:translate(-50%,-50%) scale(0.8)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}'
+        + '@keyframes lumaPreBreath{0%,100%{transform:translateZ(0) scale(1)}50%{transform:translateZ(0) scale(1.018)}}'
+        + '.lpaura{position:absolute;left:50%;top:43%;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle, rgba(232,168,120,0.14) 0%, rgba(232,168,120,0.05) 46%, transparent 70%);transform:translate(-50%,-50%);animation:lumaPreAura 1.6s cubic-bezier(0.16,1,0.3,1) both;will-change:transform,opacity;pointer-events:none;z-index:0}'
+        + '</style>'
+        + '<div class="lpaura"></div>'
+        + '<div style="position:relative;z-index:2;will-change:transform,opacity;animation:lumaPreIcon 1.0s cubic-bezier(0.16,1,0.3,1) both">'
+        + '<div style="will-change:transform;animation:lumaPreBreath 4.4s ease-in-out 1.0s infinite">'
+        + '<svg width="' + ICON + '" height="' + ICON + '" viewBox="0 0 100 100" style="display:block;overflow:visible;filter:drop-shadow(0 16px 34px rgba(80,70,95,0.20))">'
+        + '<defs>'
+        + '<linearGradient id="lumaPreIcoBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + icoBgA + '"/><stop offset="100%" stop-color="' + icoBgB + '"/></linearGradient>'
+        + '<radialGradient id="lumaPrePearl" cx="38%" cy="32%" r="74%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="30%" stop-color="#FFF2E6"/><stop offset="70%" stop-color="#F8D2B2"/><stop offset="100%" stop-color="#EDB78F"/></radialGradient>'
+        + '</defs>'
+        + '<rect x="0" y="0" width="100" height="100" rx="22.37" fill="url(#lumaPreIcoBg)"/>'
+        + '<path d="M34.5 21 L34.5 63.5 A15.5 15.5 0 0 0 65.5 63.5 L65.5 43.3" fill="none" stroke="' + markStroke + '" stroke-width="12.8" stroke-linecap="round"/>'
+        + '<circle cx="50" cy="65.8" r="7.9" fill="url(#lumaPrePearl)"/>'
+        + '<circle cx="47.6" cy="63.4" r="2.5" fill="#FFFFFF" opacity="0.5"/>'
+        + '</svg>'
+        + '</div>'
+        + '</div>';
+      document.body.appendChild(pre);
+      // ── Single, smooth hand-off ────────────────────────────────────────
+      // The pre-boot splash is the ONE AND ONLY splash. It removes itself the
+      // moment BOTH are true: (1) the entrance animation has played at least
+      // once (minShow), and (2) React has signalled it's mounted and painted
+      // (window.__lumaReady). Then it fades out once, gracefully — no second
+      // overlay, no competing timers, no animation restart.
+      var bornAt = performance.now();
+      var minShow = 1100;          // clean fade-in is seen, then we move on
+      var fadeMs = 650;
+      var removed = false;
+      var fadeOut = function(){
+        if (removed) return; removed = true;
+        var el = document.getElementById("lumaPreBoot");
+        if (!el) return;
+        // Freeze every inner animation and clear will-change the instant we
+        // begin to leave. Running keyframe loops + a simultaneous opacity
+        // transition + live compositor layers is what caused the hitch on
+        // mobile; once everything inside is static, the opacity fade is glass.
+        var kids = el.querySelectorAll("*");
+        for (var i=0;i<kids.length;i++){
+          kids[i].style.animation = "none";
+          kids[i].style.willChange = "auto";
+        }
+        // next frame: apply the fade (ensures the freeze has committed first)
+        requestAnimationFrame(function(){
+          el.style.transition = "opacity " + fadeMs + "ms ease";
+          el.style.opacity = "0";
+          setTimeout(function(){ el.parentNode && el.parentNode.removeChild(el); }, fadeMs + 60);
+        });
+      };
+      var tryFinish = function(){
+        var waited = performance.now() - bornAt;
+        var ready = (typeof window !== "undefined") && window.__lumaReady;
+        if (ready && waited >= minShow) { fadeOut(); return; }
+        // poll until both conditions met, capped so we never hang on splash
+        if (waited < 6000) { setTimeout(tryFinish, 60); }
+        else fadeOut();   // safety: never trap the user on the splash
+      };
+      setTimeout(tryFinish, minShow);
+    };
+    if (document.body) injectPreBoot();
+    else if (typeof document.addEventListener==="function") document.addEventListener("DOMContentLoaded", injectPreBoot, {once:true});
+  } catch (_) {}
   const manifest = {
     name: "Luma", short_name: "Luma",
     description: "A schedule. A rhythm. A safety.",
     start_url: ".", scope: ".", display: "standalone", orientation: "any",
     background_color: manifestBg, theme_color: manifestBg,
     icons: [
+      { src: iconUrl, sizes: "192x192", type: "image/svg+xml", purpose: "any" },
       { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "any" },
       { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "maskable" },
     ],
@@ -190,84 +258,42 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       grd.addColorStop(1, "#FFFFFF");
       g.fillStyle = grd; g.fillRect(0, 0, w, h);
     }
-    // Sun — warm peach/bronze pearl, the premium Luma sun from the welcome
-    // slide. Core #E8A878 (peach), #C97548 (deeper bronze at base).
-    const ACCENT = "#E8A878";
-    const ACCENT_DEEP = "#C97548";
-    const cx = w/2, cy = h * 0.42;
-    const R = Math.min(w, h) * 0.085;
-    // (1) Outer soft glow — warm peach aura
-    const glow = g.createRadialGradient(cx, cy, R*0.6, cx, cy, R*3.2);
-    if (dark) {
-      glow.addColorStop(0, "rgba(232,168,120,0.20)");
-      glow.addColorStop(0.6, "rgba(232,168,120,0.08)");
-      glow.addColorStop(1, "rgba(232,168,120,0)");
-    } else {
-      glow.addColorStop(0, "rgba(232,168,120,0.28)");
-      glow.addColorStop(0.6, "rgba(232,168,120,0.10)");
-      glow.addColorStop(1, "rgba(232,168,120,0)");
-    }
-    g.fillStyle = glow;
-    g.beginPath(); g.arc(cx, cy, R*3.2, 0, Math.PI*2); g.fill();
-    // (NOTE) No thin halo ring here — the welcome-guide sun (SceneIntro) has
-    // none, and the ring was exactly what made the launch icon look different
-    // (flatter, with a circle around it). Removed so the two match.
-    // (3) 8 rays — alternating long/short, matching SceneIntro's rhythm exactly.
-    g.strokeStyle = ACCENT;
-    g.lineCap = "round";
-    for (let i = 0; i < 8; i++) {
-      const ang = (i/8) * Math.PI * 2;
-      const isLong = i % 2 === 0;
-      const r1 = R * 1.31;
-      const r2 = R * (isLong ? 1.88 : 1.69);
-      g.lineWidth = R * (isLong ? 0.13 : 0.10);
-      g.globalAlpha = dark ? 0.85 : 1;
-      g.beginPath();
-      g.moveTo(cx + Math.sin(ang)*r1, cy - Math.cos(ang)*r1);
-      g.lineTo(cx + Math.sin(ang)*r2, cy - Math.cos(ang)*r2);
-      g.stroke();
-    }
-    g.globalAlpha = 1;
-    // (4) Core orb — radial gradient matching SceneIntro: white highlight in
-    // the upper-left, through warm cream, out to peach and deep bronze. The
-    // off-centre highlight (cx-0.35R, cy-0.42R) is what gives it the rounded
-    // "pearl" depth instead of a flat disc.
-    const core = g.createRadialGradient(
-      cx - R*0.35, cy - R*0.42, R*0.1,
-      cx, cy, R
-    );
-    core.addColorStop(0, "#FFFFFF");
-    core.addColorStop(0.20, "#FFFAF0");
-    core.addColorStop(0.55, ACCENT);
-    core.addColorStop(1, ACCENT_DEEP);
-    g.fillStyle = core;
-    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.fill();
-    // (No crisp inner rim — SceneIntro doesn't have one; it added a hard edge
-    // that read as a second ring. The gloss below gives the orb its finish.)
-    // (6) Soft gloss — light catching the top-left of the orb
-    const gloss = g.createRadialGradient(
-      cx - R*0.28, cy - R*0.36, 0,
-      cx - R*0.28, cy - R*0.36, R*0.7
-    );
-    gloss.addColorStop(0, `rgba(255,255,255,${dark ? 0.5 : 0.7})`);
-    gloss.addColorStop(0.6, "rgba(255,255,255,0.12)");
-    gloss.addColorStop(1, "rgba(255,255,255,0)");
-    g.fillStyle = gloss;
-    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.fill();
-    // (7) Wordmark below the sun — "Luma" in the same font family used in-app
-    // ("Nunito" via G.serif). Falls back to rounded system fonts if Nunito
-    // isn't yet loaded when the splash canvas renders.
-    g.fillStyle = dark ? "#E9E5F2" : "#1F1B2E";
-    g.textAlign = "center"; g.textBaseline = "middle";
-    g.font = `700 ${Math.round(R*0.95)}px "Nunito", -apple-system, system-ui, sans-serif`;
-    const wordY = cy + R*3.6;
-    g.fillText("Luma", cx, wordY);
-    // (8) Accent dot — a single crisp peach/bronze dot centered below the
-    // wordmark, echoing the "TORSDAG ·" accent in-app. Small, clean, no glow.
-    g.fillStyle = ACCENT;
+    // App icon — rounded-square "lu" mark (NO pearl). This is the launch
+    // animation's starting state; the pearl arrives via the boot animation,
+    // so the static iOS launch image flows seamlessly into it.
+    var markStroke = dark ? "#F4F1FA" : "#1F1B2E";
+    var IS = Math.min(w, h) * 0.34;
+    var cx = w/2, cy = h * 0.44;
+    var icoX = cx - IS/2, icoY = cy - IS/2;
+    var pxv = function(vx){ return icoX + vx/100*IS; };
+    var pyv = function(vy){ return icoY + vy/100*IS; };
+    var rr = IS * 0.2237;
+    // soft grounding shadow + rounded-square background
+    g.save();
+    g.shadowColor = dark ? "rgba(0,0,0,0.5)" : "rgba(80,70,95,0.18)";
+    g.shadowBlur = IS*0.13; g.shadowOffsetY = IS*0.045;
     g.beginPath();
-    g.arc(cx, wordY + R*0.95, Math.max(2, R*0.085), 0, Math.PI*2);
-    g.fill();
+    g.moveTo(icoX+rr, icoY);
+    g.arcTo(icoX+IS, icoY, icoX+IS, icoY+IS, rr);
+    g.arcTo(icoX+IS, icoY+IS, icoX, icoY+IS, rr);
+    g.arcTo(icoX, icoY+IS, icoX, icoY, rr);
+    g.arcTo(icoX, icoY, icoX+IS, icoY, rr);
+    g.closePath();
+    var bgGrad = g.createLinearGradient(icoX, icoY, icoX, icoY+IS);
+    if (dark){ bgGrad.addColorStop(0,"#241F30"); bgGrad.addColorStop(1,"#17131F"); }
+    else { bgGrad.addColorStop(0,"#FFFCF7"); bgGrad.addColorStop(1,"#F3E6D7"); }
+    g.fillStyle = bgGrad; g.fill();
+    g.restore();
+    // "lu" mark — left stroke, soft bowl, short right stroke (no pearl)
+    g.beginPath();
+    g.moveTo(pxv(34.5), pyv(21));
+    g.lineTo(pxv(34.5), pyv(63.5));
+    g.arc(pxv(50), pyv(63.5), 15.5/100*IS, Math.PI, 0, true);
+    g.lineTo(pxv(65.5), pyv(43.3));
+    g.lineWidth = 12.8/100*IS;
+    g.strokeStyle = markStroke;
+    g.lineCap = "round"; g.lineJoin = "round";
+    g.stroke();
     return c.toDataURL("image/png");
   };
   // Device size table — portrait orientation (iOS expects portrait splashes
@@ -321,7 +347,11 @@ const SCREENS = {
   // undertone, so it sits between aqua-home and cool-week without competing
   // with either.
   comm:    { h:"#8FB8B2", hl:"#EBF3F1", hll:"#F6FAF9", hb:"#F2F8F6", soft:"#BBD3CD", deep:"#557D78" },
-  stories: { h:"#C9A875", hl:"#FAF2E4", hll:"#FDF9F0", hb:"#FCF7EC", soft:"#E5CEA0", deep:"#8C7038" },
+  // stories — was a dull yellow-beige (#C9A875). Shifted to a soft peach-rose
+  // so the screen feels warmer and more storybook-romantic. Differentiated
+  // from timer's brighter peach (#E89B89) by being slightly more muted and
+  // pinker — a gentler, story-time hue.
+  stories: { h:"#E2A088", hl:"#FAEDE6", hll:"#FDF7F3", hb:"#FCF4EE", soft:"#EDC4B3", deep:"#A66B55" },
   calm:    { h:"#A8C9B0", hl:"#EFF5F0", hll:"#F8FBF8", hb:"#F4F9F4", soft:"#CFDED2", deep:"#688D72" },
   idcard:  { h:"#D88B8B", hl:"#FAEAEA", hll:"#FDF5F5", hb:"#FCF3F3", soft:"#EDB8B8", deep:"#A35858" },
   tools:   { h:"#D9886B", hl:"#F8ECE5", hll:"#FCF7F3", hb:"#FBF5EE", soft:"#EDC1AE", deep:"#A2604A" },
@@ -423,6 +453,24 @@ function uid(prefix="a"){
   const now=Date.now();
   if(now===__uidLast){ __uidSeq++; } else { __uidLast=now; __uidSeq=0; }
   return `${prefix}_${now}_${__uidSeq}`;
+}
+// When a confirmation dialog (e.g. "Discard changes?") opens on top of an
+// editor sheet, scroll the editor back to its top first. Otherwise the
+// dialog can pop up while the editor is scrolled deep down, making the
+// dialog feel disconnected from any visible context. Picks the LAST (= top-
+// most) visible [data-modal-scroll] in the DOM, since later modals stack
+// above earlier ones.
+function scrollActiveSheetToTop(){
+  try{
+    const all=document.querySelectorAll("[data-modal-scroll]");
+    for(let i=all.length-1;i>=0;i--){
+      const el=all[i];
+      if(el.scrollTop>0){
+        el.scrollTo({top:0,behavior:"smooth"});
+        return;
+      }
+    }
+  }catch(_){/* defensive: never break a save flow over scroll */}
 }
 // HSL→hex for the free color spectrum rail in editors
 function hslToHex(h,s,l){h/=360;const a=s*Math.min(l,1-l);const f=n=>{const k=(n+h*12)%12;const c=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*c).toString(16).padStart(2,"0");};return `#${f(0)}${f(8)}${f(4)}`;}
@@ -728,39 +776,58 @@ const ACTS0=[];
 // "older" experience — so e.g. a bedtime story becomes "Läs en bok". When no
 // dark variant is given, the normal label is used in both modes.
 const ROUTINE_TEMPLATES=[
+  // ── Consolidated routine templates ──────────────────────────────────────
+  //   Each template is now ONE activity (e.g. "Morgonrutin") with the small
+  //   sub-tasks (Vakna, Klä på, Borsta tänder...) as CHECKLIST STEPS inside
+  //   it. This matches how routines actually feel to a person living with
+  //   cognitive support needs: one thing on the schedule ("now we're doing
+  //   the morning"), with the small steps inside as a guide. Far less
+  //   visually noisy than seeing six 5-minute slots stacked on the timeline.
+  //
+  //   Times are sensible defaults the caregiver adjusts. The TemplatePicker
+  //   opens the full editor pre-filled with these values when tapped, so
+  //   everything — name, time, colour, steps, timer — is editable before
+  //   the activity is actually added to the schedule.
   {id:"morning",emoji:"🌅",sv:"Morgonrutin",en:"Morning routine",acts:[
-    {time:"07:00",endTime:"07:15",sv:"Vakna",en:"Wake up",emoji:"⏰",color:ACT_C[4],steps:[]},
-    {time:"07:15",endTime:"07:35",sv:"Klä på",en:"Get dressed",svDark:"Klä på sig",enDark:"Get dressed",emoji:"👕",color:ACT_C[5],steps:[{emoji:"👕",sv:"Tröja",en:"Shirt"},{emoji:"👖",sv:"Byxor",en:"Trousers"},{emoji:"🧦",sv:"Strumpor",en:"Socks"}]},
-    {time:"07:35",endTime:"08:00",sv:"Frukost",en:"Breakfast",emoji:"🥣",color:ACT_C[0],steps:[{emoji:"🧴",sv:"Tvätta händerna",en:"Wash hands"},{emoji:"🥣",sv:"Ät frukost",en:"Eat breakfast"}]},
-    {time:"08:00",endTime:"08:10",sv:"Borsta tänderna",en:"Brush teeth",emoji:"🪥",color:ACT_C[2],steps:[]},
-    {time:"08:10",endTime:"08:20",sv:"Packa väskan",en:"Pack the bag",emoji:"🎒",color:ACT_C[3],steps:[{emoji:"📚",sv:"Böcker",en:"Books"},{emoji:"🥤",sv:"Vattenflaska",en:"Water bottle"}]},
-    {time:"08:20",endTime:"08:30",sv:"Ta på skor & jacka",en:"Shoes & jacket",emoji:"👟",color:ACT_C[6],steps:[]},
+    {time:"07:00",endTime:"08:30",sv:"Morgonrutin",en:"Morning routine",emoji:"🌅",color:ACT_C[4],steps:[
+      {emoji:"⏰",sv:"Vakna",en:"Wake up"},
+      {emoji:"👕",sv:"Klä på sig",en:"Get dressed"},
+      {emoji:"🥣",sv:"Frukost",en:"Breakfast",timerMin:15},
+      {emoji:"🪥",sv:"Borsta tänderna",en:"Brush teeth",timerMin:2},
+      {emoji:"🎒",sv:"Packa väskan",en:"Pack the bag"},
+      {emoji:"👟",sv:"Skor & jacka",en:"Shoes & jacket"},
+    ]},
   ]},
   {id:"school",emoji:"🎒",sv:"Skola & jobb",en:"School & work",svDark:"Vardag",enDark:"Weekday",acts:[
-    {time:"08:30",endTime:"09:00",sv:"Gå till skolan",en:"Go to school",svDark:"Iväg till jobbet",enDark:"Head to work",emoji:"🚶",color:ACT_C[3],steps:[{emoji:"🎒",sv:"Ryggsäck",en:"Backpack"},{emoji:"👟",sv:"Skor",en:"Shoes"}]},
-    {time:"09:00",endTime:"11:30",sv:"Lektioner",en:"Lessons",svDark:"Arbeta",enDark:"Work",emoji:"📚",color:ACT_C[7],steps:[]},
-    {time:"11:30",endTime:"12:00",sv:"Lunch",en:"Lunch",emoji:"🥪",color:ACT_C[2],steps:[]},
-    {time:"12:00",endTime:"14:00",sv:"Eftermiddag",en:"Afternoon",svDark:"Eftermiddag",enDark:"Afternoon",emoji:"✏️",color:ACT_C[9],steps:[]},
-    {time:"14:00",endTime:"14:30",sv:"Rast",en:"Break",svDark:"Paus",enDark:"Break",emoji:"☕",color:ACT_C[8],steps:[]},
-    {time:"15:00",endTime:"15:30",sv:"Gå hem",en:"Go home",svDark:"Hem igen",enDark:"Head home",emoji:"🏠",color:ACT_C[5],steps:[]},
-    {time:"16:00",endTime:"16:45",sv:"Läxor",en:"Homework",svDark:"Återhämtning",enDark:"Wind down",emoji:"📝",color:ACT_C[1],steps:[]},
+    {time:"08:30",endTime:"15:30",sv:"Skola",en:"School",svDark:"Jobb",enDark:"Work",emoji:"🎒",color:ACT_C[3],steps:[
+      {emoji:"🚶",sv:"Gå till skolan",en:"Walk to school",svDark:"Iväg till jobbet",enDark:"Head to work"},
+      {emoji:"📚",sv:"Lektioner",en:"Lessons",svDark:"Arbeta",enDark:"Work"},
+      {emoji:"🥪",sv:"Lunch",en:"Lunch"},
+      {emoji:"✏️",sv:"Eftermiddag",en:"Afternoon"},
+      {emoji:"🏠",sv:"Gå hem",en:"Walk home",svDark:"Hem igen",enDark:"Head home"},
+    ]},
+    {time:"16:00",endTime:"16:45",sv:"Läxor",en:"Homework",svDark:"Återhämtning",enDark:"Wind down",emoji:"📝",color:ACT_C[1],timer:{on:true,type:"ring",min:25,color:ACT_C[1]},steps:[]},
   ]},
   {id:"training",emoji:"🤸",sv:"Träning",en:"Exercise",acts:[
-    {time:"16:00",endTime:"16:15",sv:"Byt om",en:"Change clothes",emoji:"🩳",color:ACT_C[6],steps:[{emoji:"👕",sv:"Träningskläder",en:"Sports clothes"},{emoji:"👟",sv:"Träningsskor",en:"Trainers"}]},
-    {time:"16:15",endTime:"16:30",sv:"Värm upp",en:"Warm up",emoji:"🤸",color:ACT_C[8],steps:[]},
-    {time:"16:30",endTime:"17:15",sv:"Träna",en:"Train",emoji:"⚽",color:ACT_C[3],steps:[]},
-    {time:"17:15",endTime:"17:25",sv:"Stretcha",en:"Stretch",emoji:"🧘",color:ACT_C[10]||ACT_C[4],steps:[]},
-    {time:"17:25",endTime:"17:40",sv:"Duscha",en:"Shower",emoji:"🚿",color:ACT_C[2],steps:[]},
-    {time:"17:40",endTime:"17:50",sv:"Drick & ät något",en:"Drink & snack",emoji:"💧",color:ACT_C[0],steps:[]},
+    {time:"16:00",endTime:"17:50",sv:"Träning",en:"Exercise",emoji:"🤸",color:ACT_C[8],steps:[
+      {emoji:"👕",sv:"Byt om till träningskläder",en:"Change into sports clothes"},
+      {emoji:"🤸",sv:"Värm upp",en:"Warm up",timerMin:5},
+      {emoji:"⚽",sv:"Träna",en:"Train"},
+      {emoji:"🧘",sv:"Stretcha",en:"Stretch",timerMin:5},
+      {emoji:"🚿",sv:"Duscha",en:"Shower"},
+      {emoji:"💧",sv:"Drick & ät något",en:"Drink & snack"},
+    ]},
   ]},
   {id:"bedtime",emoji:"🌙",sv:"Kvällsrutin",en:"Evening routine",acts:[
-    {time:"18:00",endTime:"18:30",sv:"Middag",en:"Dinner",emoji:"🍽️",color:ACT_C[0],steps:[]},
-    {time:"19:00",endTime:"19:20",sv:"Plocka undan",en:"Tidy up",emoji:"🧹",color:ACT_C[8],steps:[{emoji:"🧸",sv:"Leksaker",en:"Toys"},{emoji:"👕",sv:"Kläder",en:"Clothes"}]},
-    {time:"19:30",endTime:"20:00",sv:"Bad",en:"Bath",svDark:"Dusch",enDark:"Shower",emoji:"🛁",color:ACT_C[5],steps:[]},
-    {time:"20:00",endTime:"20:10",sv:"Borsta tänderna",en:"Brush teeth",emoji:"🪥",color:ACT_C[2],steps:[]},
-    {time:"20:10",endTime:"20:20",sv:"Pyjamas",en:"Pyjamas",emoji:"🩱",color:ACT_C[6],steps:[]},
-    {time:"20:20",endTime:"20:40",sv:"Läs en bok",en:"Read a book",emoji:"📖",color:ACT_C[4],steps:[]},
-    {time:"20:40",endTime:"21:00",sv:"Sova",en:"Sleep",svDark:"Sova",enDark:"Sleep",emoji:"🌙",color:"#8E92D2",steps:[]},
+    {time:"18:00",endTime:"18:30",sv:"Middag",en:"Dinner",emoji:"🍽️",color:ACT_C[0],timer:{on:true,type:"lava",min:20,color:ACT_C[0]},steps:[]},
+    {time:"19:00",endTime:"21:00",sv:"Kvällsrutin",en:"Evening routine",emoji:"🌙",color:"#8E92D2",timer:{on:true,type:"sun",min:30,color:"#8E92D2"},steps:[
+      {emoji:"🧹",sv:"Plocka undan",en:"Tidy up"},
+      {emoji:"🛁",sv:"Bad",en:"Bath",svDark:"Dusch",enDark:"Shower"},
+      {emoji:"🪥",sv:"Borsta tänderna",en:"Brush teeth",timerMin:2},
+      {emoji:"🩱",sv:"Pyjamas",en:"Pyjamas"},
+      {emoji:"📖",sv:"Läs en bok",en:"Read a book",timerMin:15},
+      {emoji:"🌙",sv:"Sova",en:"Sleep"},
+    ]},
   ]},
 ];
 
@@ -838,6 +905,22 @@ function withAlpha(hex,alpha){
   const a=Math.max(0,Math.min(1,alpha));
   const hh=Math.round(a*255).toString(16).padStart(2,"0").toUpperCase();
   return`${hex}${hh}`;
+}
+// Time-of-day pastel hue for the Luma sun + wordmark in dark mode.
+// The sun shouldn't be locked to one cold blue — it should breathe with
+// natural light. Returns a muted pastel hex; never neon. Optional
+// screenAccent param: if given, lightly blends ~18% toward it so the sun
+// harmonises with whichever colour screen the user is on (home blue,
+// week deeper blue, emotion lila, etc).
+// Returns a soft pastel version of a hue for use as the Luma sun and
+// wordmark in DARK MODE. The caller passes the EFFECTIVE accent — for
+// home/week screens, that's the dynamic weekColors[todayJS] (today's
+// configured day color), for other screens it's the screen's static
+// accent. Lifted toward white so it reads as a calm pastel, never neon.
+function lumaDarkAccent(effectiveHue){
+  // Lift 38% toward white — keeps the hue identity recognisable while
+  // calming it enough to feel mature on a dark canvas.
+  return shadeHex(effectiveHue,0.38);
 }
 // Returns a version of the color that's legible AND pleasant as a fill/accent
 // on the light background. Pure white / very light colours map to a soft,
@@ -929,11 +1012,11 @@ const SIGVARD_LAMP_PALETTE=[
   "#FFFFFF", // white — soft & minimal
 ];
 
-const CFG0={cardStyle:"normal",theme:"light",schedView:"both",showSigvard:false,sigvardColor:"#FF4848",showBanner:false,showNowLine:true,nowLineColor:"auto",weekColors:SIGVARD0,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","lava","monster"],defaultType:"wave",defaultMin:5,defaultColor:"#8AAFD2",dotMode:"pearl"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]}};
+const CFG0={cardStyle:"normal",theme:"light",logoStyle:"none",schedView:"both",showSigvard:false,sigvardColor:"#FF4848",showBanner:false,showNowLine:true,nowLineColor:"auto",weekColors:SIGVARD0,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","lava","monster"],defaultType:"wave",defaultMin:5,defaultColor:"#8AAFD2",dotMode:"pearl"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]}};
 
 const TR={
-  sv:{other:"EN",myDay:"Min dag",editorOpen:"Redigera",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Inga aktiviteter – tryck Redigera",addAct:"Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Solnedgång",lava:"Lava",monster:"Monster",monsterFull:"Mätt!",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",themeLabel:"Utseende",themeLight:"Ljust",themeDark:"Mörkt",themeHint:"Mörkt läge ger hela appen ett lugnt, mörkt utseende.",modeChoiceTitle:"Välj utseende",modeChoiceDesc:"Hur vill du att Luma ska se ut? Du kan alltid ändra detta i inställningarna.",modeChoiceContinue:"Fortsätt",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redigering & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Hem",comm:"Tala",sigvardOn:"Sigvard-lampor",sigvardColor:"Färg på lampor",sigvardColorHint:"Tidslinjen följer samma färg",schedVisuals:"Visa i schemat",schedVisualsHint:"Slå av om det blir för mycket – båda kan användas, en av dem, eller inget alls.",bannerLabel:"\"Pågår nu\"-rad",bannerHint:"Liten rad högst upp som visar pågående eller nästa aktivitet.",nowLineLabel:"Tidsstreck",nowLineHint:"Linjen som följer aktuell tid genom dagen.",nowLineColor:"Färg på strecket",nowLineSameAsSig:"Samma som lamporna",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",barometerStyle:"Mätarens stil",barometerStyleHint:"Hur känslorna visas för användaren.",styleArc:"Bågformad",styleVertical:"Lodrät",addEmotion:"+ Lägg till känsla",editEmotion:"Redigera känsla",emotionName:"Namn",emotionNamePH:"t.ex. Stressad",customLabel:"Egen",changePhoto:"Byt foto",resetEmotions:"Återställ förvalda",resetEmotionsHint:"Sätter tillbaka standardkänslorna till sina ursprungliga namn, emojis och färger.",confirmDeleteEmotion:"Ta bort?",reasonField:"Anteckningsfält",reasonFieldHint:"Användaren får skriva några ord om sin känsla. Stäng av om det är för mycket.",reasonLabelPH:"t.ex. Varför? eller Vad hände?",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – tryck Redigera för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",helloMyNameIs:"Hej, jag heter",yearsOld:"år",emptyCardTitle:"Kortet är inte ifyllt än",emptyCardDesc:"Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Tryck Redigera för att fylla i det.",createCardTitle:"Skapa mitt-mig-kortet",createCardDesc:"Sammanfattar viktig information — namn, kontaktpersoner, och vad som hjälper i pressade situationer. Visas vid behov.",showLarge:"Visa stort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng",week:"Vecka",myWeek:"Min vecka",weekEmpty:"Inga aktiviteter den här veckan",weekAdd:"Lägg till aktivitet",dayColors:"Veckodagsfärger",dayColorsHint:"Tryck på en dag för att välja färg",resetColors:"Återställ till standard",monday:"Måndag",tuesday:"Tisdag",wednesday:"Onsdag",thursday:"Torsdag",friday:"Fredag",saturday:"Lördag",sunday:"Söndag",skylight:"Himmel",skyHint:"Låt blicken vila",notTodayHint:"Du tittar på en annan dag. Stegen kan inte bockas av nu.",editStory:"Redigera berättelse",storyType:"Typ",typeSeq:"Steg-för-steg",typeSeqDesc:"Flera sidor",typeFT:"Först-Sedan",typeFTDesc:"Två aktiviteter",coverImage:"Huvudbild",camera:"Kamera",gallery:"Galleri",emoji:"Emoji",removePhoto:"Ta bort foto",storyPlacehSeq:"t.ex. Städa rummet",storyPlacehFT:"t.ex. Först läxor, sedan TV",ftLabels:"Etiketter (visas över korten)",ftSection:"Först och Sedan",pageImage:"Bild på sidan",pageTextPH:"Skriv vad som händer på sidan…",pageTimer:"Timer på sidan",off:"Av",sunset:"Solnedgång",editingLabel:"Redigerar",duEditing:"Du redigerar",cover:"Huvudbild",schedule:"Schema",doneTitle:"Klart",doneSub:"Du kan vila en stund.",dayOpen:"Din dag är öppen",allActsDoneTitle:"Alla aktiviteter är klara",allActsDoneSub:"Du kan vila resten av dagen.",lampOne:"1 lampa = 1 minut",lampMany:"1 lampa = {n} minuter",lampSec:"1 lampa = {n} sek",dotToCandle:"Ljus",dotToPearl:"Pärlor",unitLamp:"lampa",unitFlame:"låga",unitSecShort:"sek",unitMinOne:"minut",unitMinMany:"minuter",stepCountOne:"1 steg",stepCountMany:"{n} steg",noName:"(Utan namn)",unsavedTitle:"Osparade ändringar",unsavedDesc:"Vill du spara innan du stänger?",discardChanges:"Släng",keepEditing:"Fortsätt redigera",overlapTitle:"Tidskrock",overlapDesc:"Den nya aktiviteten {t} överlappar:",goBack:"Gå tillbaka",saveAnyway:"Spara ändå",editAct:"Redigera aktivitet",newAct:"Ny aktivitet",actNamePH:"t.ex. Frukost",timeStart:"Start",timeEnd:"Slut (frivilligt)",repeat:"Upprepa",repNone:"Endast idag",repDaily:"Varje dag",repWeekdays:"Vardagar",repWeekend:"Helger",repPickDays:"Välj veckodagar",repDailyShort:"Dagligen",repDaysSuffix:"dagar",daysShort:["sön","mån","tis","ons","tor","fre","lör"],resetSection:"Återställ",resetDataDesc:"Rensar alla aktiviteter, berättelser, känslohistorik och inställningar. Kan inte ångras.",resetDataBtn:"Rensa all data",resetDataConfirm:"Är du säker? Allt data raderas och kan inte återskapas.",backupSection:"Säkerhetskopiering",backupDesc:"Spara allt – scheman, kort, berättelser och inställningar – till en fil. Använd den för att återställa eller flytta till en annan enhet.",exportBtn:"Exportera till fil",importBtn:"Importera från fil",importConfirm:"Detta ersätter all nuvarande data med innehållet i filen. Fortsätt?",importBad:"Filen kunde inte läsas som en Luma-säkerhetskopia.",importOk:"Importerat ✓",exportOk:"Exporterat ✓",tmplTitle:"Vill du komma igång snabbt?",tmplDesc:"Lägg till en färdig rutin – du kan ändra allt efteråt.",tmplAdd:"Lägg till",tmplDismiss:"Nej tack",tmplAdded:"Tillagd ✓",tmplPickTitle:"Förslag på rutiner",tmplPickDesc:"Plussa in de aktiviteter du vill. Du kan ändra allt efteråt.",tmplPickDone:"Klar",tmplAddAll:"Lägg till alla",tmplAdded2:"Tillagd"},
-  en:{other:"SV",myDay:"My Day",editorOpen:"Edit",editorClose:"Close",list:"List",card:"Cards",noActs:"No activities – tap Edit",addAct:"New activity",save:"Save",cancel:"Cancel",actName:"Activity name",actTime:"Time",pickEmoji:"Pick emoji",pickColor:"Colour",steps:"Checklist",stepPH:"e.g. Put on shoes",timerAct:"Timer – activity",timerType:"Timer type",timerMin:"Minutes",timerColor:"Timer colour",sector:"Time Timer",ring:"Ring",dots:"Dot timer",wave:"Wave",sun:"Sunset",lava:"Lava",monster:"Monster",monsterFull:"Full!",pause:"Pause",resume:"Start",reset:"Reset",next:"Next",prev:"Back",min:"min",settings:"Settings",themeLabel:"Appearance",themeLight:"Light",themeDark:"Dark",themeHint:"Dark mode gives the whole app a calm, dark look.",modeChoiceTitle:"Choose appearance",modeChoiceDesc:"How would you like Luma to look? You can always change this in settings.",modeChoiceContinue:"Continue",cardStyle:"Card style",styleNormal:"Normal",styleCompact:"Compact",styleBig:"Large",syncTitle:"Sharing",sameDevice:"Same device",syncMode:"Via code",sameDeviceDesc:"Edit & user view on same device.",syncModeDesc:"Share schedule via code.",yourCode:"Your code",codeHint:"Give this code to the user",enterCode:"Enter code",connect:"Connect",wrongCode:"Not found.",copied:"Copied ✓",openTimer:"Start timer",allDoneMsg:"Great job! 🌟",emotions:"How are you?",emotionSaved:"Saved! ✓",emotionReason:"Why?",emotionHistory:"History",noHistory:"No history",toolsTimer:"Timer",toolsEmotion:"Mood",home:"Home",comm:"Talk",sigvardOn:"Sigvard lamps",sigvardColor:"Lamp colour",sigvardColorHint:"The time line follows the same colour",schedVisuals:"Show in schedule",schedVisualsHint:"Turn off if it gets noisy – use both, one of them, or neither.",bannerLabel:"\"Happening now\" bar",bannerHint:"Small bar at the top showing the current or upcoming activity.",nowLineLabel:"Time line",nowLineHint:"The line that follows the current time through the day.",nowLineColor:"Line colour",nowLineSameAsSig:"Same as lamps",visibleTools:"Visible tools",schedView:"Schedule view",viewBoth:"List + Cards",viewList:"List only",viewCard:"Cards only",addCard:"+ New card",addCat:"+ New category",catName:"Category name",autoTimer:"Syncs with start time",preview:"Preview",startTimer:"Start",timerSettings:"Timer settings for user view",allowedTimers:"Allowed timers",defaultTimer:"Default timer",visibleEmotions:"Visible emotions",barometerStyle:"Barometer style",barometerStyleHint:"How feelings are shown to the user.",styleArc:"Arc",styleVertical:"Vertical",addEmotion:"+ Add feeling",editEmotion:"Edit feeling",emotionName:"Name",emotionNamePH:"e.g. Stressed",customLabel:"Custom",changePhoto:"Change photo",resetEmotions:"Reset defaults",resetEmotionsHint:"Restores the standard feelings to their original names, emojis and colours.",confirmDeleteEmotion:"Remove?",reasonField:"Notes field",reasonFieldHint:"User can write a few words about their feeling. Turn off if it's too much.",reasonLabelPH:"e.g. Why? or What happened?",enlarge:"Enlarge",cardImage:"Image",uploadPhoto:"Upload photo",useEmoji:"Use emoji instead",stories:"Stories",newStory:"New story",storyTitle:"Title",pages:"Pages",addPage:"+ Add page",pageNum:"Page",storyText:"Page text",noStories:"No stories – tap Edit to create",renameCat:"Rename category",calm:"Calm",calmTitle:"Find calm",breathing:"Breathe",grounding:"54321",breathIn:"Breathe in",breathHold:"Hold",breathOut:"Breathe out",breathDone:"Well done",groundIntro:"Pause. Let's do this together.",groundStart:"Begin",see5:"5 things you can see",hear4:"4 things you can hear",touch3:"3 things you can touch",smell2:"2 things you can smell",taste1:"1 thing you can taste",iAmHere:"I am here. I am safe.",roundsDone:"Done",calmSettings:"Calm – exercises",idcard:"My card",myName:"My name",myAge:"Age",aboutMe:"About me",myTriggers:"This can be hard",whatHelps:"This helps me",emergencyContacts:"Call",contactName:"Name",contactPhone:"Phone",contactRelation:"Relation",addContact:"+ Add contact",call:"Call",idHint:"Show this to someone who wants to help","editCard":"Edit my card",helloMyNameIs:"Hi, my name is",yearsOld:"years old",emptyCardTitle:"The card isn't filled in yet",emptyCardDesc:"My card shows important information that can be valuable in situations where you need help. Tap Edit to fill it in.",createCardTitle:"Create your card",createCardDesc:"A summary of important information — name, contacts, and what helps in stressful moments. Shown when needed.",showLarge:"Show large",tools:"Tools",firstthen:"First-Then",choices:"Choices",rewards:"Reward",recipes:"Recipes",first:"First",then:"Then",ftDone:"Done!",chQuestion:"What do you want?",chTap:"Tap to choose",stars:"stars",goalReached:"You've earned your reward! 🎉",reward:"Reward",starsGoal:"Goal – number of stars",addChoice:"+ New choice",newCategory:"+ New category",rewardEmoji:"Emoji",rewardText:"Reward",ingredients:"Ingredients",instructions:"How to make it",servings:"Servings",time:"Time",newRecipe:"New recipe",step:"Step",addStep:"+ Add step",useReward:"Give star when done",resetStars:"Reset stars",starsEarned:"Stars earned",bannerNowOngoing:"Happening now",bannerNextUp:"Next up",bannerDayLabel:"Today",bannerNoActsLeft:"Nothing left today",close:"Close",week:"Week",myWeek:"My week",weekEmpty:"No activities this week",weekAdd:"Add activity",dayColors:"Day colours",dayColorsHint:"Tap a day to pick a colour",resetColors:"Reset to default",monday:"Monday",tuesday:"Tuesday",wednesday:"Wednesday",thursday:"Thursday",friday:"Friday",saturday:"Saturday",sunday:"Sunday",skylight:"Sky",skyHint:"Let your gaze rest",notTodayHint:"You're viewing a different day. Steps can't be checked off now.",editStory:"Edit story",storyType:"Type",typeSeq:"Step-by-step",typeSeqDesc:"Multiple pages",typeFT:"First-Then",typeFTDesc:"Two activities",coverImage:"Cover image",camera:"Camera",gallery:"Gallery",emoji:"Emoji",removePhoto:"Remove photo",storyPlacehSeq:"e.g. Clean the room",storyPlacehFT:"e.g. First homework, then TV",ftLabels:"Labels (shown above the cards)",ftSection:"First and Then",pageImage:"Page image",pageTextPH:"Write what happens on this page…",pageTimer:"Page timer",off:"Off",sunset:"Sunset",editingLabel:"Editing",duEditing:"Editing",cover:"Cover",schedule:"Schedule",doneTitle:"Done",doneSub:"Take a moment to rest.",dayOpen:"Your day is open",allActsDoneTitle:"All activities done",allActsDoneSub:"You can rest the rest of the day.",lampOne:"1 lamp = 1 minute",lampMany:"1 lamp = {n} minutes",lampSec:"1 lamp = {n} sec",dotToCandle:"Candles",dotToPearl:"Pearls",unitLamp:"lamp",unitFlame:"flame",unitSecShort:"sec",unitMinOne:"minute",unitMinMany:"minutes",stepCountOne:"1 step",stepCountMany:"{n} steps",noName:"(No name)",unsavedTitle:"Unsaved changes",unsavedDesc:"Save before closing?",discardChanges:"Discard",keepEditing:"Keep editing",overlapTitle:"Time conflict",overlapDesc:"The new activity {t} overlaps:",goBack:"Go back",saveAnyway:"Save anyway",editAct:"Edit activity",newAct:"New activity",actNamePH:"e.g. Breakfast",timeStart:"Start",timeEnd:"End (optional)",repeat:"Repeat",repNone:"Today only",repDaily:"Every day",repWeekdays:"Weekdays",repWeekend:"Weekends",repPickDays:"Pick days of week",repDailyShort:"Daily",repDaysSuffix:"days",daysShort:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],resetSection:"Reset",resetDataDesc:"Clears all activities, stories, mood history and settings. Cannot be undone.",resetDataBtn:"Clear all data",resetDataConfirm:"Are you sure? All data will be erased and cannot be recovered.",backupSection:"Backup",backupDesc:"Save everything – schedules, cards, stories and settings – to a file. Use it to restore or move to another device.",exportBtn:"Export to file",importBtn:"Import from file",importConfirm:"This replaces all current data with the file's contents. Continue?",importBad:"The file couldn't be read as a Luma backup.",importOk:"Imported ✓",exportOk:"Exported ✓",tmplTitle:"Want a quick start?",tmplDesc:"Add a ready-made routine – you can change everything afterwards.",tmplAdd:"Add",tmplDismiss:"No thanks",tmplAdded:"Added ✓",tmplPickTitle:"Suggested routines",tmplPickDesc:"Add the activities you want. You can change everything afterwards.",tmplPickDone:"Done",tmplAddAll:"Add all",tmplAdded2:"Added"},
+  sv:{other:"EN",myDay:"Min dag",editorOpen:"Redigera",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Lägg till aktiviteter i redigeraren",addAct:"Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Solnedgång",lava:"Lava",monster:"Monster",monsterFull:"Mätt!",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",themeLabel:"Utseende",themeLight:"Ljust",themeDark:"Mörkt",themeHint:"Mörkt läge ger hela appen ett lugnt, mörkt utseende.",modeChoiceTitle:"Välj utseende",modeChoiceDesc:"Hur vill du att Luma ska se ut? Du kan alltid ändra detta i inställningarna.",modeChoiceContinue:"Fortsätt",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redigering & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Hem",comm:"Tala",sigvardOn:"Sigvard-lampor",sigvardColor:"Färg på lampor",sigvardColorHint:"Tidslinjen följer samma färg",schedVisuals:"Visa i schemat",schedVisualsHint:"Slå av om det blir för mycket – båda kan användas, en av dem, eller inget alls.",bannerLabel:"\"Pågår nu\"-rad",bannerHint:"Liten rad högst upp som visar pågående eller nästa aktivitet.",nowLineLabel:"Tidsstreck",nowLineHint:"Linjen som följer aktuell tid genom dagen.",nowLineColor:"Färg på strecket",nowLineSameAsSig:"Samma som lamporna",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",barometerStyle:"Mätarens stil",barometerStyleHint:"Hur känslorna visas för användaren.",styleArc:"Bågformad",styleVertical:"Lodrät",addEmotion:"+ Lägg till känsla",editEmotion:"Redigera känsla",emotionName:"Namn",emotionNamePH:"t.ex. Stressad",customLabel:"Egen",changePhoto:"Byt foto",resetEmotions:"Återställ förvalda",resetEmotionsHint:"Sätter tillbaka standardkänslorna till sina ursprungliga namn, emojis och färger.",confirmDeleteEmotion:"Ta bort?",reasonField:"Anteckningsfält",reasonFieldHint:"Användaren får skriva några ord om sin känsla. Stäng av om det är för mycket.",reasonLabelPH:"t.ex. Varför? eller Vad hände?",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – tryck Redigera för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",helloMyNameIs:"Hej, jag heter",yearsOld:"år",emptyCardTitle:"Kortet är inte ifyllt än",emptyCardDesc:"Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Tryck Redigera för att fylla i det.",createCardTitle:"Skapa mitt-mig-kortet",createCardDesc:"Sammanfattar viktig information — namn, kontaktpersoner, och vad som hjälper i pressade situationer. Visas vid behov.",showLarge:"Visa stort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng",week:"Vecka",myWeek:"Min vecka",weekEmpty:"Inga aktiviteter den här veckan",weekAdd:"Lägg till aktivitet",dayColors:"Veckodagsfärger",dayColorsHint:"Tryck på en dag för att välja färg",resetColors:"Återställ till standard",monday:"Måndag",tuesday:"Tisdag",wednesday:"Onsdag",thursday:"Torsdag",friday:"Fredag",saturday:"Lördag",sunday:"Söndag",skylight:"Himmel",skyHint:"Låt blicken vila",notTodayHint:"Du tittar på en annan dag. Stegen kan inte bockas av nu.",editStory:"Redigera berättelse",storyType:"Typ",typeSeq:"Steg-för-steg",typeSeqDesc:"Flera sidor",typeFT:"Först-Sedan",typeFTDesc:"Två aktiviteter",coverImage:"Huvudbild",camera:"Kamera",gallery:"Galleri",emoji:"Emoji",removePhoto:"Ta bort foto",storyPlacehSeq:"t.ex. Städa rummet",storyPlacehFT:"t.ex. Först läxor, sedan TV",ftLabels:"Etiketter (visas över korten)",ftSection:"Först och Sedan",pageImage:"Bild på sidan",pageTextPH:"Skriv vad som händer på sidan…",pageTimer:"Timer på sidan",off:"Av",sunset:"Solnedgång",editingLabel:"Redigerar",duEditing:"Du redigerar",cover:"Huvudbild",schedule:"Schema",doneTitle:"Klart",doneSub:"Du kan vila en stund.",dayOpen:"Inga aktiviteter idag",allActsDoneTitle:"Alla aktiviteter är klara",allActsDoneSub:"Du kan vila resten av dagen.",lampOne:"1 lampa = 1 minut",lampMany:"1 lampa = {n} minuter",lampSec:"1 lampa = {n} sek",dotToCandle:"Ljus",dotToPearl:"Pärlor",unitLamp:"lampa",unitFlame:"låga",unitSecShort:"sek",unitMinOne:"minut",unitMinMany:"minuter",stepCountOne:"1 steg",stepCountMany:"{n} steg",noName:"(Utan namn)",unsavedTitle:"Osparade ändringar",unsavedDesc:"Vill du spara innan du stänger?",discardChanges:"Släng",keepEditing:"Fortsätt redigera",overlapTitle:"Tidskrock",overlapDesc:"Den nya aktiviteten {t} överlappar:",goBack:"Gå tillbaka",saveAnyway:"Spara ändå",editAct:"Redigera aktivitet",newAct:"Ny aktivitet",actNamePH:"t.ex. Frukost",timeStart:"Start",timeEnd:"Slut (frivilligt)",repeat:"Upprepa",repNone:"Endast idag",repDaily:"Varje dag",repWeekdays:"Vardagar",repWeekend:"Helger",repPickDays:"Välj veckodagar",repDailyShort:"Dagligen",repDaysSuffix:"dagar",daysShort:["sön","mån","tis","ons","tor","fre","lör"],resetSection:"Återställ",resetDataDesc:"Rensar alla aktiviteter, berättelser, känslohistorik och inställningar. Kan inte ångras.",resetDataBtn:"Rensa all data",resetDataConfirm:"Är du säker? Allt data raderas och kan inte återskapas.",backupSection:"Säkerhetskopiering",backupDesc:"Spara allt – scheman, kort, berättelser och inställningar – till en fil. Använd den för att återställa eller flytta till en annan enhet.",exportBtn:"Exportera till fil",importBtn:"Importera från fil",importConfirm:"Detta ersätter all nuvarande data med innehållet i filen. Fortsätt?",importBad:"Filen kunde inte läsas som en Luma-säkerhetskopia.",importOk:"Importerat ✓",exportOk:"Exporterat ✓",tmplTitle:"Vill du komma igång snabbt?",tmplDesc:"Lägg till en färdig rutin – du kan ändra allt efteråt.",tmplAdd:"Lägg till",tmplDismiss:"Nej tack",tmplAdded:"Tillagd ✓",tmplPickTitle:"Förslag på rutiner",tmplPickDesc:"Plussa in de aktiviteter du vill. Du kan ändra allt efteråt.",tmplPickDone:"Klar",tmplAddAll:"Lägg till alla",tmplAdded2:"Tillagd",undoSaved:"Klart!",undoBtn:"Ångra",logoStyle:"Logga-stil",logoStyleHint:"Hur Luma-loggan visas högst upp i appen.",logoStyleNone:"Bara solen",logoStyleGlass:"Glaslåda",logoStylePillow:"Mjuk bädd",logoStyleSquircle:"Appikon"},
+  en:{other:"SV",myDay:"My Day",editorOpen:"Edit",editorClose:"Close",list:"List",card:"Cards",noActs:"Add activities in the editor",addAct:"New activity",save:"Save",cancel:"Cancel",actName:"Activity name",actTime:"Time",pickEmoji:"Pick emoji",pickColor:"Colour",steps:"Checklist",stepPH:"e.g. Put on shoes",timerAct:"Timer – activity",timerType:"Timer type",timerMin:"Minutes",timerColor:"Timer colour",sector:"Time Timer",ring:"Ring",dots:"Dot timer",wave:"Wave",sun:"Sunset",lava:"Lava",monster:"Monster",monsterFull:"Full!",pause:"Pause",resume:"Start",reset:"Reset",next:"Next",prev:"Back",min:"min",settings:"Settings",themeLabel:"Appearance",themeLight:"Light",themeDark:"Dark",themeHint:"Dark mode gives the whole app a calm, dark look.",modeChoiceTitle:"Choose appearance",modeChoiceDesc:"How would you like Luma to look? You can always change this in settings.",modeChoiceContinue:"Continue",cardStyle:"Card style",styleNormal:"Normal",styleCompact:"Compact",styleBig:"Large",syncTitle:"Sharing",sameDevice:"Same device",syncMode:"Via code",sameDeviceDesc:"Edit & user view on same device.",syncModeDesc:"Share schedule via code.",yourCode:"Your code",codeHint:"Give this code to the user",enterCode:"Enter code",connect:"Connect",wrongCode:"Not found.",copied:"Copied ✓",openTimer:"Start timer",allDoneMsg:"Great job! 🌟",emotions:"How are you?",emotionSaved:"Saved! ✓",emotionReason:"Why?",emotionHistory:"History",noHistory:"No history",toolsTimer:"Timer",toolsEmotion:"Mood",home:"Home",comm:"Talk",sigvardOn:"Sigvard lamps",sigvardColor:"Lamp colour",sigvardColorHint:"The time line follows the same colour",schedVisuals:"Show in schedule",schedVisualsHint:"Turn off if it gets noisy – use both, one of them, or neither.",bannerLabel:"\"Happening now\" bar",bannerHint:"Small bar at the top showing the current or upcoming activity.",nowLineLabel:"Time line",nowLineHint:"The line that follows the current time through the day.",nowLineColor:"Line colour",nowLineSameAsSig:"Same as lamps",visibleTools:"Visible tools",schedView:"Schedule view",viewBoth:"List + Cards",viewList:"List only",viewCard:"Cards only",addCard:"+ New card",addCat:"+ New category",catName:"Category name",autoTimer:"Syncs with start time",preview:"Preview",startTimer:"Start",timerSettings:"Timer settings for user view",allowedTimers:"Allowed timers",defaultTimer:"Default timer",visibleEmotions:"Visible emotions",barometerStyle:"Barometer style",barometerStyleHint:"How feelings are shown to the user.",styleArc:"Arc",styleVertical:"Vertical",addEmotion:"+ Add feeling",editEmotion:"Edit feeling",emotionName:"Name",emotionNamePH:"e.g. Stressed",customLabel:"Custom",changePhoto:"Change photo",resetEmotions:"Reset defaults",resetEmotionsHint:"Restores the standard feelings to their original names, emojis and colours.",confirmDeleteEmotion:"Remove?",reasonField:"Notes field",reasonFieldHint:"User can write a few words about their feeling. Turn off if it's too much.",reasonLabelPH:"e.g. Why? or What happened?",enlarge:"Enlarge",cardImage:"Image",uploadPhoto:"Upload photo",useEmoji:"Use emoji instead",stories:"Stories",newStory:"New story",storyTitle:"Title",pages:"Pages",addPage:"+ Add page",pageNum:"Page",storyText:"Page text",noStories:"No stories – tap Edit to create",renameCat:"Rename category",calm:"Calm",calmTitle:"Find calm",breathing:"Breathe",grounding:"54321",breathIn:"Breathe in",breathHold:"Hold",breathOut:"Breathe out",breathDone:"Well done",groundIntro:"Pause. Let's do this together.",groundStart:"Begin",see5:"5 things you can see",hear4:"4 things you can hear",touch3:"3 things you can touch",smell2:"2 things you can smell",taste1:"1 thing you can taste",iAmHere:"I am here. I am safe.",roundsDone:"Done",calmSettings:"Calm – exercises",idcard:"My card",myName:"My name",myAge:"Age",aboutMe:"About me",myTriggers:"This can be hard",whatHelps:"This helps me",emergencyContacts:"Call",contactName:"Name",contactPhone:"Phone",contactRelation:"Relation",addContact:"+ Add contact",call:"Call",idHint:"Show this to someone who wants to help","editCard":"Edit my card",helloMyNameIs:"Hi, my name is",yearsOld:"years old",emptyCardTitle:"The card isn't filled in yet",emptyCardDesc:"My card shows important information that can be valuable in situations where you need help. Tap Edit to fill it in.",createCardTitle:"Create your card",createCardDesc:"A summary of important information — name, contacts, and what helps in stressful moments. Shown when needed.",showLarge:"Show large",tools:"Tools",firstthen:"First-Then",choices:"Choices",rewards:"Reward",recipes:"Recipes",first:"First",then:"Then",ftDone:"Done!",chQuestion:"What do you want?",chTap:"Tap to choose",stars:"stars",goalReached:"You've earned your reward! 🎉",reward:"Reward",starsGoal:"Goal – number of stars",addChoice:"+ New choice",newCategory:"+ New category",rewardEmoji:"Emoji",rewardText:"Reward",ingredients:"Ingredients",instructions:"How to make it",servings:"Servings",time:"Time",newRecipe:"New recipe",step:"Step",addStep:"+ Add step",useReward:"Give star when done",resetStars:"Reset stars",starsEarned:"Stars earned",bannerNowOngoing:"Happening now",bannerNextUp:"Next up",bannerDayLabel:"Today",bannerNoActsLeft:"Nothing left today",close:"Close",week:"Week",myWeek:"My week",weekEmpty:"No activities this week",weekAdd:"Add activity",dayColors:"Day colours",dayColorsHint:"Tap a day to pick a colour",resetColors:"Reset to default",monday:"Monday",tuesday:"Tuesday",wednesday:"Wednesday",thursday:"Thursday",friday:"Friday",saturday:"Saturday",sunday:"Sunday",skylight:"Sky",skyHint:"Let your gaze rest",notTodayHint:"You're viewing a different day. Steps can't be checked off now.",editStory:"Edit story",storyType:"Type",typeSeq:"Step-by-step",typeSeqDesc:"Multiple pages",typeFT:"First-Then",typeFTDesc:"Two activities",coverImage:"Cover image",camera:"Camera",gallery:"Gallery",emoji:"Emoji",removePhoto:"Remove photo",storyPlacehSeq:"e.g. Clean the room",storyPlacehFT:"e.g. First homework, then TV",ftLabels:"Labels (shown above the cards)",ftSection:"First and Then",pageImage:"Page image",pageTextPH:"Write what happens on this page…",pageTimer:"Page timer",off:"Off",sunset:"Sunset",editingLabel:"Editing",duEditing:"Editing",cover:"Cover",schedule:"Schedule",doneTitle:"Done",doneSub:"Take a moment to rest.",dayOpen:"No activities today",allActsDoneTitle:"All activities done",allActsDoneSub:"You can rest the rest of the day.",lampOne:"1 lamp = 1 minute",lampMany:"1 lamp = {n} minutes",lampSec:"1 lamp = {n} sec",dotToCandle:"Candles",dotToPearl:"Pearls",unitLamp:"lamp",unitFlame:"flame",unitSecShort:"sec",unitMinOne:"minute",unitMinMany:"minutes",stepCountOne:"1 step",stepCountMany:"{n} steps",noName:"(No name)",unsavedTitle:"Unsaved changes",unsavedDesc:"Save before closing?",discardChanges:"Discard",keepEditing:"Keep editing",overlapTitle:"Time conflict",overlapDesc:"The new activity {t} overlaps:",goBack:"Go back",saveAnyway:"Save anyway",editAct:"Edit activity",newAct:"New activity",actNamePH:"e.g. Breakfast",timeStart:"Start",timeEnd:"End (optional)",repeat:"Repeat",repNone:"Today only",repDaily:"Every day",repWeekdays:"Weekdays",repWeekend:"Weekends",repPickDays:"Pick days of week",repDailyShort:"Daily",repDaysSuffix:"days",daysShort:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],resetSection:"Reset",resetDataDesc:"Clears all activities, stories, mood history and settings. Cannot be undone.",resetDataBtn:"Clear all data",resetDataConfirm:"Are you sure? All data will be erased and cannot be recovered.",backupSection:"Backup",backupDesc:"Save everything – schedules, cards, stories and settings – to a file. Use it to restore or move to another device.",exportBtn:"Export to file",importBtn:"Import from file",importConfirm:"This replaces all current data with the file's contents. Continue?",importBad:"The file couldn't be read as a Luma backup.",importOk:"Imported ✓",exportOk:"Exported ✓",tmplTitle:"Want a quick start?",tmplDesc:"Add a ready-made routine – you can change everything afterwards.",tmplAdd:"Add",tmplDismiss:"No thanks",tmplAdded:"Added ✓",tmplPickTitle:"Suggested routines",tmplPickDesc:"Add the activities you want. You can change everything afterwards.",tmplPickDone:"Done",tmplAddAll:"Add all",tmplAdded2:"Added",undoSaved:"Done!",undoBtn:"Undo",logoStyle:"Logo style",logoStyleHint:"How the Luma logo appears at the top of the app.",logoStyleNone:"Just the sun",logoStyleGlass:"Glass box",logoStylePillow:"Soft pillow",logoStyleSquircle:"App icon"},
 };
 
 const TTYPES=["sector","ring","dots","wave","sun","lava","monster"];
@@ -1390,6 +1473,224 @@ function LumaDoneMark({darkBg=false,t,size=130,accentColor}){
     </div>
   );
 }
+
+/* ═══ LumaIcon — the Luma brand mark: the "lu" monogram (a tall left stroke
+   flowing into a soft cup) with the warm brand pearl resting in the bowl.
+   `color` sets the stroke; the pearl always keeps the brand peach. This
+   replaces the previous sun. (The launch/welcome sun still lives in the boot
+   overlay, to be animated into the wordmark's pearl.) */
+function LumaIcon({size=32,color="#1E1B27",style={}}){
+  const uid=`lm-${color.slice(1)}-${Math.round(size)}`;
+  return(
+    <svg width={size} height={size} viewBox="10 10 80 80" style={{overflow:"visible",display:"inline-block",...style}}>
+      <defs>
+        <radialGradient id={`${uid}-p`} cx="38%" cy="32%" r="72%">
+          <stop offset="0%" stopColor="#FFFFFF"/>
+          <stop offset="16%" stopColor="#FFEEDA"/>
+          <stop offset="60%" stopColor="#E9A877"/>
+          <stop offset="100%" stopColor="#C8743F"/>
+        </radialGradient>
+      </defs>
+      <path d="M34.5 21 L34.5 63.5 A15.5 15.5 0 0 0 65.5 63.5 L65.5 43.3"
+        fill="none" stroke={color} strokeWidth="12.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="50" cy="65.8" r="7.9" fill={`url(#${uid}-p)`}/>
+      <circle cx="47.4" cy="63.1" r="2.4" fill="#FFFFFF" opacity="0.45"/>
+    </svg>
+  );
+}
+
+/* ═══ LumaWordmark — the "luma" wordmark as a self-contained SVG, with the
+   warm brand "pearl" sitting inside the bowl of the "u" (the same motif that
+   lives in the app icon). Used in boot screens, intro/outro, headers, large
+   brand moments.
+
+   Robust placement: the pearl's SIZE and VERTICAL position are fractions of
+   the font-size (which we control), so they never drift across devices. Only
+   the HORIZONTAL centre is read from the real rendered "u" glyph.
+
+   Props are backwards-compatible with the old wordmark:
+     • size, color, style → unchanged
+     • showSun            → now means "show the pearl" (old call sites still work)
+     • showDot            → clearer alias for the same thing (false = plain word)
+   Tunables: weight (700), pearlR (radius ÷ font-size, 0.07),
+             pearlCY (pearl centre height above baseline ÷ font-size, 0.30). */
+function LumaWordmark({size=42,color="#1F1B2E",showSun=true,showDot,weight=700,pearlR=0.07,pearlCY=0.30,style={}}){
+  const showPearl=(showDot!==undefined?showDot:showSun) && !isDark();
+  const textRef=useRef(null);
+  const [m,setM]=useState(null); // { w, cx }
+  const baseline=size*0.97;      // matches the <text> y below
+  useLayoutEffect(()=>{
+    const el=textRef.current;
+    if(!el) return;
+    let raf=0;
+    const measure=()=>{
+      try{
+        const w=el.getComputedTextLength();
+        const u=el.getExtentOfChar(1);   // index 1 === "u" — x/width only
+        setM({w,cx:u.x+u.width/2});
+      }catch(e){/* glyph not measurable yet — retried after fonts load */}
+    };
+    measure();
+    if(document.fonts&&document.fonts.ready){document.fonts.ready.then(()=>{raf=requestAnimationFrame(measure);});}
+    return()=>{if(raf) cancelAnimationFrame(raf);};
+  },[size,weight]);
+  const padX=size*0.05;
+  const W=(m?m.w:size*2.55)+padX*2;
+  const uid=`lw-${color.slice(1)}-${Math.round(size)}`;
+  const pearl=m?{cx:m.cx,cy:baseline-size*pearlCY,r:size*pearlR}:null;
+  return(
+    <svg width={W} height={size} viewBox={`0 0 ${W} ${size}`}
+      style={{overflow:"visible",display:"inline-block",verticalAlign:"middle",...style}}>
+      <defs>
+        <radialGradient id={`${uid}-pearl`} cx="34%" cy="28%" r="78%">
+          <stop offset="0%" stopColor="#FFFFFF"/>
+          <stop offset="18%" stopColor="#FFFAF0"/>
+          <stop offset="52%" stopColor="#E8A878"/>
+          <stop offset="100%" stopColor="#C97548"/>
+        </radialGradient>
+      </defs>
+      <text ref={textRef} x={padX} y={baseline}
+        fontFamily="'Nunito','Inter',system-ui,sans-serif"
+        fontWeight={weight} fontSize={size} letterSpacing={size*-0.005} fill={color}>luma</text>
+      {showPearl&&pearl&&(
+        <g>
+          <circle cx={pearl.cx} cy={pearl.cy} r={pearl.r} fill={`url(#${uid}-pearl)`}/>
+          <circle cx={pearl.cx-pearl.r*0.28} cy={pearl.cy-pearl.r*0.34} r={pearl.r*0.26} fill="#FFFFFF" opacity="0.42"/>
+        </g>
+      )}
+    </svg>
+  );
+}
+
+/* ═══ Dynamic time-of-day SKY HEADER (home + week, light theme) ═══════════
+   A living banner: the sun rises in the east, peaks at midday, sets in the
+   west, then a crescent moon takes over at night — sky colours tween
+   continuously, aligned to the app phases (dawn 05–12, midday 12–17,
+   dusk 17–24, night 00–05) that home/week already use. "luma" + the
+   floating pearl rest on the left; the date sits right with a warm/cool
+   accent. Calm by default: the sun/moon position is read from the real
+   clock, so there's no looping animation — it simply *is* the time. */
+const _skLerp=(a,b,t)=>a+(b-a)*t;
+const _skMix=(a,b,t)=>[_skLerp(a[0],b[0],t),_skLerp(a[1],b[1],t),_skLerp(a[2],b[2],t)];
+const _skSmooth=t=>t*t*(3-2*t);
+const _skHx=h=>{h=h.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];};
+const _skRgb=c=>`rgb(${c[0]|0},${c[1]|0},${c[2]|0})`;
+const SKY_KEY=[
+ {h:0,   top:'#10182F',mid:'#172240',bot:'#22304F',hill:'#0C1226',warm:false},
+ {h:5,   top:'#46466A',mid:'#7A6273',bot:'#C18C76',hill:'#3A3550',warm:true },
+ {h:7,   top:'#F2D9C2',mid:'#F6C7A6',bot:'#EFA478',hill:'#D08A63',warm:true },
+ {h:9.5, top:'#FBEEE1',mid:'#FAE6D6',bot:'#F6D8C3',hill:'#E7B79A',warm:true },
+ {h:12.5,top:'#D6E8F6',mid:'#E7F1F8',bot:'#F2F4F1',hill:'#BCD0E0',warm:false},
+ {h:16,  top:'#E6EEF6',mid:'#F0ECEA',bot:'#F6E8DF',hill:'#D8C3B4',warm:false},
+ {h:18.5,top:'#F6DEC9',mid:'#F1C0AB',bot:'#DD9DA6',hill:'#C07F84',warm:true },
+ {h:20,  top:'#E0CFE3',mid:'#D3B2C9',bot:'#BE96AE',hill:'#8E6E86',warm:true },
+ {h:21.5,top:'#8478A6',mid:'#5E5586',bot:'#473F69',hill:'#352F52',warm:false},
+ {h:23,  top:'#222C50',mid:'#212B52',bot:'#283760',hill:'#141A33',warm:false},
+ {h:24,  top:'#10182F',mid:'#172240',bot:'#22304F',hill:'#0C1226',warm:false},
+];
+function skyAt(h){
+  let i=0; while(i<SKY_KEY.length-1 && h>SKY_KEY[i+1].h) i++;
+  const a=SKY_KEY[i], b=SKY_KEY[Math.min(i+1,SKY_KEY.length-1)];
+  const t=_skSmooth(b.h===a.h?0:(h-a.h)/(b.h-a.h));
+  return {top:_skMix(_skHx(a.top),_skHx(b.top),t),mid:_skMix(_skHx(a.mid),_skHx(b.mid),t),
+          bot:_skMix(_skHx(a.bot),_skHx(b.bot),t),hill:_skMix(_skHx(a.hill),_skHx(b.hill),t),
+          warm:(t<0.5?a.warm:b.warm)};
+}
+const _skSunCol=e=>_skMix(_skHx('#F4923C'),_skHx('#FFD982'),_skSmooth(e));
+const SKY_STARS=Array.from({length:42},(_,i)=>({x:20+((i*73)%760),y:8+((i*39)%112),r:0.6+((i*7)%10)/10*1.4,ph:((i*53)%100)/100}));
+
+// White "luma" + a small, light pearl floating in the u. Pearl placement is
+// read from the real glyph (getExtentOfChar) so it sits perfectly regardless
+// of device font metrics — matching the approved preview exactly.
+function SkyWordmark({size=30}){
+  const textRef=useRef(null);
+  const [u,setU]=useState(null);
+  const baseline=size*0.97;
+  useLayoutEffect(()=>{
+    const el=textRef.current; if(!el) return; let raf=0;
+    const measure=()=>{ try{ const e=el.getExtentOfChar(1); setU({x:e.x,y:e.y,w:e.width,h:e.height}); }catch(_){ } };
+    measure();
+    if(document.fonts&&document.fonts.ready){document.fonts.ready.then(()=>{raf=requestAnimationFrame(measure);});}
+    return()=>{ if(raf) cancelAnimationFrame(raf); };
+  },[size]);
+  const padX=size*0.05;
+  const W=size*2.7+padX*2;
+  const pearl=u?{cx:u.x+u.w/2, cy:u.y+u.h*0.46, r:Math.max(1.2,u.h*0.058)}:null;
+  return(
+    <svg width={W} height={size} viewBox={`0 0 ${W} ${size}`} style={{overflow:"visible",display:"block",flexShrink:0,filter:"drop-shadow(0 1px 5px rgba(60,45,55,.30))"}}>
+      <defs>
+        <radialGradient id="skWmPearl" cx="38%" cy="32%" r="74%">
+          <stop offset="0%" stopColor="#FFFFFF"/>
+          <stop offset="30%" stopColor="#FFF2E6"/>
+          <stop offset="70%" stopColor="#F8D2B2"/>
+          <stop offset="100%" stopColor="#EDB78F"/>
+        </radialGradient>
+      </defs>
+      <text ref={textRef} x={padX} y={baseline} fontFamily="'Nunito','Inter',system-ui,sans-serif" fontWeight={700} fontSize={size} letterSpacing={size*-0.006} fill="#FFFFFF">luma</text>
+      {pearl&&(<g>
+        <circle cx={pearl.cx} cy={pearl.cy} r={pearl.r} fill="url(#skWmPearl)"/>
+        <circle cx={pearl.cx-pearl.r*0.3} cy={pearl.cy-pearl.r*0.34} r={pearl.r*0.34} fill="#FFFFFF" opacity="0.5"/>
+      </g>)}
+    </svg>
+  );
+}
+
+function SkyHeader({now,lang}){
+  const h=now.getHours()+now.getMinutes()/60;
+  const sk=skyAt(h);
+  const sunUp = h>5.2 && h<19.6;
+  let halo=null, rays=null, body=null, moon=null;
+  if(sunUp){
+    const prog=(h-5.2)/(19.6-5.2), elev=Math.sin(prog*Math.PI);
+    const x=_skLerp(70,730,prog), y=_skLerp(112,70,elev), col=_skSunCol(elev), R=_skLerp(26,22,elev);
+    const rayA=0.18+0.34*(1-elev);
+    rays=Array.from({length:12}).map((_,i)=>{
+      const ang=(i/12)*2*Math.PI, r1=R+8, r2=r1+_skLerp(10,20,1-elev);
+      return <line key={i} x1={x+Math.cos(ang)*r1} y1={y+Math.sin(ang)*r1} x2={x+Math.cos(ang)*r2} y2={y+Math.sin(ang)*r2} stroke={_skRgb(col)} strokeWidth={2.4} strokeLinecap="round" opacity={rayA}/>;
+    });
+    halo=<circle cx={x} cy={y} r={_skLerp(64,48,elev)} fill={_skRgb(col)} opacity={0.14+0.10*(1-elev)}/>;
+    body=<g><circle cx={x} cy={y} r={R} fill={_skRgb(col)}/><circle cx={x} cy={y} r={R*0.62} fill="#FFFDF0" opacity="0.55"/></g>;
+  } else {
+    const mh = h<5.2 ? h+(24-19.6) : h-19.6;
+    const span=(24-19.6)+5.2, prog=mh/span, elev=Math.sin(prog*Math.PI);
+    const x=_skLerp(110,690,prog), y=_skLerp(108,72,elev), R=26;
+    moon=<g><circle cx={x} cy={y} r={R*2.4} fill="#EAE6D8" opacity="0.10"/><circle cx={x} cy={y} r={R} fill="#EFEAD8"/><circle cx={x+14} cy={y-7} r={R*0.92} fill={_skRgb(sk.bot)}/></g>;
+  }
+  const starOp = h>=19.6 ? Math.min(1,(h-19.6)/1.6) : h<=6 ? Math.max(0,(6-h)/2.2) : 0;
+  const hillPath=(baseY,amp,phase)=>{ let d=`M0 236 L0 ${baseY}`; for(let x=0;x<=800;x+=40){const y=baseY-Math.sin((x/800)*Math.PI*1.4+phase)*amp-Math.sin(x/120)*amp*0.3; d+=` L${x} ${y.toFixed(1)}`;} return d+' L800 236 Z'; };
+  const wd=now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{weekday:"long"});
+  const dm=now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{day:"numeric",month:"long"});
+  return(
+    <div style={{position:"relative",overflow:"hidden",zIndex:2,display:"flex",alignItems:"flex-end",
+      marginTop:"calc(-20px - env(safe-area-inset-top, 0px))",
+      marginLeft:-22,marginRight:-22,marginBottom:-6,
+      minHeight:"calc(112px + env(safe-area-inset-top, 0px))"}}>
+      <svg viewBox="0 0 800 236" preserveAspectRatio="xMidYMax slice" style={{position:"absolute",inset:0,width:"100%",height:"100%",display:"block"}}>
+        <defs>
+          <linearGradient id="skHdrGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={_skRgb(sk.top)}/>
+            <stop offset="52%" stopColor={_skRgb(sk.mid)}/>
+            <stop offset="100%" stopColor={_skRgb(sk.bot)}/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="800" height="236" fill="url(#skHdrGrad)"/>
+        <g>{SKY_STARS.map((s,i)=><circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#FFFDF4" opacity={Number((starOp*(0.5+0.5*s.ph)).toFixed(2))}/>)}</g>
+        {halo}{rays}{body}{moon}
+        <path d={hillPath(146,22,2.1)} fill={_skRgb(_skMix(sk.hill,[0,0,0],0.18))} opacity="0.55"/>
+        <path d={hillPath(168,16,0.6)} fill={_skRgb(sk.hill)}/>
+      </svg>
+      <div style={{position:"relative",width:"100%",display:"flex",alignItems:"flex-end",justifyContent:"space-between",padding:"0 22px 16px",gap:14,zIndex:2}}>
+        <SkyWordmark size={30}/>
+        <div style={{display:"flex",alignItems:"center",gap:7,paddingBottom:3,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
+          <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{wd}</span>
+          <span style={{width:4,height:4,borderRadius:"50%",background:"rgba(255,255,255,0.7)",flexShrink:0}}/>
+          <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{dm}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 /* ═══ LumaSymbol — small animated brand-glyph used as the "nothing selected yet" state
    in editor previews. When a user hasn't chosen an emoji/photo yet, this gentle Luma sun
@@ -3458,15 +3759,25 @@ function TimerThumb({type,color,size=120,min=30}){
      within ½ step (15 min) of the lamp's centre. Signals what's coming next.
    - Future (calm lit): everything below the "approaching" window.
 */
-const SIGVARD_MIN_PER_LAMP=30; // 30 minutes per lamp → 48 lamps total
-const SIGVARD_LAMP=8, SIGVARD_GAP=42, SIGVARD_PAD_V=14;
+// ── SIGVARD LED-style ──
+// Many small dense lamps that light up at the top and "drain" downward one
+// by one as the day progresses, like LED indicator strips.
+//   • 15 minutes per lamp → 96 lamps cover 24 hours
+//   • Each lamp is 3px tall with 5px gap → 8px step = 24min/8px = 0.333 min/px
+// All time-based positioning (activity rows, now-line) is derived from
+// `yForTime(min)` which interpolates linearly between lamps, so the now-line
+// at minute 14:23 sits exactly at the proportional pixel — never offset.
+const SIGVARD_MIN_PER_LAMP=15; // 15 minutes per lamp → 96 lamps total (24h)
+const SIGVARD_LAMP=3, SIGVARD_GAP=5, SIGVARD_PAD_V=12;
 const SIGVARD_STEP=SIGVARD_LAMP+SIGVARD_GAP;
 const SIGVARD_TOTAL_LAMPS=Math.ceil(24*60/SIGVARD_MIN_PER_LAMP);
 const SIGVARD_HALF_STEP_MIN=SIGVARD_MIN_PER_LAMP/2;
 // Vertical center of lamp i (relative to lamps container top) in px
 const yForLamp=(i)=>SIGVARD_PAD_V+i*SIGVARD_STEP+SIGVARD_LAMP/2;
-// Vertical center for any time (minutes-of-day) — clamped to the lamp column.
-// At minute i*30 this equals yForLamp(i) exactly.
+// Vertical position for any time (minutes-of-day) — linearly interpolated
+// across the lamp strip so it stays exactly proportional to time. At minute
+// `i*SIGVARD_MIN_PER_LAMP` this lands precisely on lamp i's centre; between
+// lamps it slides smoothly with sub-pixel precision.
 const yForTime=(min)=>{
   const clamped=Math.max(0,Math.min(24*60,min));
   const lampIdx=clamped/SIGVARD_MIN_PER_LAMP;
@@ -3494,36 +3805,63 @@ function SigvardTimeline({now,color="#FF4848"}){
   return(
     <div role="img" aria-label={`Tidslinje, klockan är ${hh}:${mm}`} style={{display:"flex",alignItems:"stretch",gap:4,flexShrink:0,alignSelf:"flex-start"}}>
       <style>{`
-        @keyframes ${animId}{0%,100%{box-shadow:${isAuto?"0 0 10px rgba(255,255,255,0.9), 0 0 20px rgba(180,180,200,0.5), 0 0 0 1px rgba(31,27,46,0.18)":`0 0 10px ${withAlpha(effColor,0.67)}, 0 0 20px ${withAlpha(effColor,0.4)}`};transform:scale(1)}50%{box-shadow:${isAuto?"0 0 18px rgba(255,255,255,1), 0 0 32px rgba(200,200,220,0.7), 0 0 48px rgba(180,180,200,0.4), 0 0 0 1px rgba(31,27,46,0.22)":`0 0 18px ${withAlpha(effColor,0.87)}, 0 0 32px ${withAlpha(effColor,0.6)}, 0 0 48px ${withAlpha(effColor,0.27)}`};transform:scale(1.18)}}
-        ${isAuto?`@keyframes ${breatheId}{0%,100%{opacity:0.92;box-shadow:0 0 5px rgba(255,255,255,0.7), inset 0 -1px 1px rgba(31,27,46,0.08)}50%{opacity:1;box-shadow:0 0 9px rgba(255,255,255,0.95), 0 0 14px rgba(220,220,235,0.5), inset 0 -1px 1px rgba(31,27,46,0.08)}}`:""}
+        @keyframes ${animId}{0%,100%{box-shadow:${isAuto?"0 0 4px rgba(255,255,255,0.9), 0 0 8px rgba(180,180,200,0.5)":`0 0 5px ${withAlpha(effColor,0.85)}, 0 0 10px ${withAlpha(effColor,0.55)}`};transform:scale(1)}50%{box-shadow:${isAuto?"0 0 7px rgba(255,255,255,1), 0 0 14px rgba(200,200,220,0.7)":`0 0 8px ${withAlpha(effColor,1)}, 0 0 16px ${withAlpha(effColor,0.75)}, 0 0 24px ${withAlpha(effColor,0.35)}`};transform:scale(1.55)}}
+        ${isAuto?`@keyframes ${breatheId}{0%,100%{opacity:0.92;box-shadow:0 0 2px rgba(255,255,255,0.7), inset 0 0.5px 0 rgba(255,255,255,0.4)}50%{opacity:1;box-shadow:0 0 4px rgba(255,255,255,0.95), 0 0 8px rgba(220,220,235,0.5), inset 0 0.5px 0 rgba(255,255,255,0.4)}}`:""}
       `}</style>
       <div aria-hidden="true" style={{
         display:"flex",flexDirection:"column",alignItems:"center",
         padding:`${SIGVARD_PAD_V}px 6px`,
-        background:`linear-gradient(180deg, ${G.white} 0%, #FBFAFE 100%)`,
+        // Liquid Glass — same vocabulary as the header logo box. Translucent
+        // surface that lifts off the page background, with a hairline border
+        // and a soft inner highlight along the top edge.
+        background:isDark()?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.55)",
+        backdropFilter:"blur(18px) saturate(180%)",
+        WebkitBackdropFilter:"blur(18px) saturate(180%)",
         borderRadius:14,
-        boxShadow:"0 4px 18px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.9)",
-        border:`1px solid ${G.border}`,
+        boxShadow:isDark()
+          ?"inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 18px rgba(0,0,0,0.32)"
+          :"inset 0 1px 0 rgba(255,255,255,0.7), 0 4px 18px rgba(31,27,46,0.08)",
+        border:`1px solid ${isDark()?"rgba(255,255,255,0.10)":"rgba(31,27,46,0.06)"}`,
         minWidth:28,flexShrink:0,
       }}>
         {Array.from({length:SIGVARD_TOTAL_LAMPS}).map((_,i)=>{
-          const lampMin=i*SIGVARD_MIN_PER_LAMP;
-          const isPast=nowM > lampMin;
-          const isNow =!isPast && (lampMin - nowM) <= SIGVARD_HALF_STEP_MIN;
+          // ── LED-stil med timglas-precision ──
+          // Varje 3px lampa representerar en 15-min-period [i*15, (i+1)*15].
+          //   • Förbi (släckt): mörk hairline-prick
+          //   • Framtid (tänd): full färg med mjuk glow
+          //   • Nu (dräneras gradvis): timglas-fyllning som tappar färg från
+          //     topp till botten — så även för en så liten 3px lampa flyttar
+          //     sig fyllningen sub-minutligt med exakt time-precision.
+          const lampStartMin=i*SIGVARD_MIN_PER_LAMP;
+          const lampEndMin=lampStartMin+SIGVARD_MIN_PER_LAMP;
+          const isPast = nowM >= lampEndMin;
+          const isFuture = nowM < lampStartMin;
+          const isNow = !isPast && !isFuture;
+          // Dränerings-andel (0..1) inom nu-lampan
+          const drained = isNow?(nowM-lampStartMin)/SIGVARD_MIN_PER_LAMP:0;
+          const fillPct=Math.round((1-drained)*100);
+          const emptyColor=isDark()?"#2C2640":"#3A3450";
+          // Background per state. Future = full färg gradient (rund LED).
+          // Past = mörk prick. Now = linjär fyllning som glider.
+          const lampBg = isPast
+            ? emptyColor
+            : isFuture
+              ? `radial-gradient(circle at 35% 30%, ${cLight}, ${effColor} 70%, ${cDeep})`
+              : `linear-gradient(180deg, ${cLight} 0%, ${effColor} ${Math.max(0,fillPct-15)}%, ${cDeep} ${fillPct}%, ${emptyColor} ${fillPct}%, ${emptyColor} 100%)`;
           return <div key={i} style={{
             width:SIGVARD_LAMP,height:SIGVARD_LAMP,borderRadius:"50%",
             marginBottom:i===SIGVARD_TOTAL_LAMPS-1?0:SIGVARD_GAP,
-            background:isPast
-              ?"radial-gradient(circle at 30% 30%, #4A4258, #1F1B2E)"
-              :(isNow
-                ?`radial-gradient(circle at 30% 30%, ${cLight}, ${effColor})`
-                :`radial-gradient(circle at 30% 30%, ${effColor}, ${cDeep})`),
+            background:lampBg,
+            // Subtle outer glow on lit lamps + tiny inner highlight; past
+            // lamps just sit there as quiet dots. Now-lamp pulses subtly.
             boxShadow:isPast
-              ?"inset 0 1px 2px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.1)"
-              :(isNow?undefined:`0 0 6px ${litGlow}, inset 0 -1px 1px rgba(0,0,0,0.15)`),
-            border:`1px solid ${isPast?"#2C2640":cBorder}`,
-            transition:"background .4s, box-shadow .4s, border-color .4s",
-            animation:isNow?`${animId} 2.4s ease-in-out infinite`:(isAuto&&!isPast?`${breatheId} ${3.6+i*0.06}s ease-in-out infinite`:undefined),
+              ?"none"
+              :isFuture
+                ?`0 0 3px ${withAlpha(effColor,0.55)}, inset 0 0.5px 0 rgba(255,255,255,0.35)`
+                :`0 0 4px ${withAlpha(effColor,0.75)}, inset 0 0.5px 0 rgba(255,255,255,0.4)`,
+            border:isPast?`0.5px solid ${isDark()?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.10)"}`:"none",
+            transition:"background .6s ease, box-shadow .4s",
+            animation:isNow?`${animId} 3.4s ease-in-out infinite`:(isAuto&&!isPast?`${breatheId} ${3.6+i*0.04}s ease-in-out infinite`:undefined),
           }}/>;
         })}
       </div>
@@ -3532,11 +3870,15 @@ function SigvardTimeline({now,color="#FF4848"}){
 }
 
 /* ═══ Timeline view: Sigvard + activities scroll together, auto-scroll to "now" ═══ */
-function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRef,topInset=0}){
+function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRef,topInset=0,ghostActs,onGhostAdd,onGhostEdit}){
   const scrollRef=useRef(null);
   const cardRefs=useRef({});
   const[measured,setMeasured]=useState({});
   const nowM=now.getHours()*60+now.getMinutes();
+  const nowHour=now.getHours();
+  // Schedule lives on Home, so use the Home screen palette for accents
+  // (current-hour label tint, etc).
+  const effS=scrPal("home");
 
   useEffect(()=>{
     if(!scrollRef.current) return;
@@ -3577,7 +3919,68 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
     positions.push({item,y,naturalY,h});
     prevBottom=y+h;
   }
-  const totalContentH=Math.max(SIGVARD_TOTAL_HEIGHT,prevBottom+30);
+
+  // ── GHOST POSITIONS ──
+  // Suggestions are positioned independently of real activities. The rules:
+  //   1. A ghost is HIDDEN if its time window (start..end) overlaps any
+  //      real activity's band. Don't try to "push" ghosts around real
+  //      activities — that would show them at wrong times. Just drop them.
+  //   2. Remaining ghosts stack amongst themselves (multiple ghost
+  //      suggestions at the same time → soft-stack with MIN_GAP).
+  //   3. A ghost can never be pushed into another real activity's band.
+  //   4. Real activities' positions take priority — the ghost layer wraps
+  //      around them in vertical space.
+  const ghostPositions=[];
+  if(isEd&&Array.isArray(ghostActs)&&ghostActs.length>0){
+    // Build real-activity time bands (in minutes-of-day) — start to actual end.
+    const realBands=acts.map(a=>{
+      const s=hm(a.time);
+      const e=a.endTime?hm(a.endTime):s+30;
+      return [s,e];
+    });
+    // Step 1: drop any ghost whose time window overlaps a real band.
+    const overlapsReal=(gs,ge)=>realBands.some(([rs,re])=>{
+      // Overlap if ghost start is inside real, OR real start is inside ghost.
+      return !(ge<=rs||gs>=re);
+    });
+    const ghostsVisible=ghostActs.filter(g=>{
+      const gs=hm(g.time);
+      const ge=g.endTime?hm(g.endTime):gs+30;
+      return !overlapsReal(gs,ge);
+    });
+    // Step 2: sort by start time + soft-stack ghosts amongst themselves.
+    const ghostsSorted=[...ghostsVisible].sort((a,b)=>hm(a.time)-hm(b.time));
+    const GHOST_H=66;
+    // Build "forbidden zones" — Y-ranges occupied by real activity cards.
+    // A ghost cannot be placed inside these; if its natural Y would land
+    // there, push it down past the next forbidden zone instead.
+    const forbidden=positions.map(p=>[p.y,p.y+p.h]).sort((a,b)=>a[0]-b[0]);
+    const clearOf=(y,h)=>{
+      // Find first forbidden zone the ghost would intersect, or null.
+      for(const [fy0,fy1] of forbidden){
+        if(!(y+h<=fy0||y>=fy1)) return fy1+MIN_GAP; // push past this zone
+      }
+      return y;
+    };
+    let gPrevBottom=-Infinity;
+    for(const g of ghostsSorted){
+      const startM=hm(g.time);
+      let naturalY=yForTime(startM)-4;
+      naturalY=Math.max(naturalY,gPrevBottom+MIN_GAP);
+      // Push past any real activity band it would intersect.
+      let y=naturalY;
+      let safetyCounter=10; // avoid infinite loop in pathological cases
+      while(safetyCounter-->0){
+        const pushed=clearOf(y,GHOST_H);
+        if(pushed===y) break;
+        y=pushed;
+      }
+      ghostPositions.push({ghost:g,y,h:GHOST_H});
+      gPrevBottom=y+GHOST_H;
+    }
+  }
+  const lastGhostBottom=ghostPositions.length?ghostPositions[ghostPositions.length-1].y+ghostPositions[ghostPositions.length-1].h:0;
+  const totalContentH=Math.max(SIGVARD_TOTAL_HEIGHT,prevBottom+30,lastGhostBottom+30);
 
   // Find next upcoming activity for the banner
   const upcoming=sorted.filter(a=>{
@@ -3798,47 +4201,62 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
         </button>
         );
       })()}
-      <div ref={scrollRef} style={{flex:1,display:"flex",overflowY:"auto",padding:`${14+topInset}px 14px 30px 6px`,position:"relative"}}>
+      <div ref={scrollRef} style={{flex:1,display:"flex",overflowY:"auto",padding:`${14+topInset}px 14px ${isEd?220:30}px 6px`,position:"relative"}}>
       {!isEd&&(
-        // Time-of-day column on the far left, only used in user (non-editor) view.
-        // Width is locale-sensitive — "12 PM" needs more room than "06:00".
-        <div style={{flexShrink:0,position:"relative",width:t?.myDay==="My Day"?56:38,height:totalContentH}}>
-          {/* Hour anchors — discrete time markers every hour give the empty
-              space a steady rhythm even when no activity sits at that hour.
-              Only shown when Sigvard lamps are OFF (when on, the lamps already
-              provide continuous time-of-day reference). Aligned to the activity
-              time labels so the column feels coherent when both kinds coexist. */}
-          {!cfg.showSigvard&&Array.from({length:25}).map((_,h)=>{
-            const yLine=yForTime(h*60);
-            // Hide an hour marker if it lands inside (or right next to) any
-            // activity's ACTUAL rendered band. When activities are packed close
-            // in time, their cards get pushed down past their natural position;
-            // a fixed-time hour marker sitting in that pushed region would look
-            // stranded next to a card whose real time is different, reading as
-            // "the times don't line up". Checking the real band (y..y+h) instead
-            // of natural-time proximity keeps the left column coherent.
-            const tooClose=positions.some(p=>{
-              const startM=hm(p.item.time);
-              if(Math.abs(startM-h*60)<12) return true;
-              return yLine>=p.y-12 && yLine<=p.y+p.h+6;
-            });
-            if(tooClose) return null;
-            // Format consistently with activity labels (HH:MM in SV, h AM/PM in EN)
-            const lbl=t?.myDay==="My Day"
-              ? (h===0?"12 AM":h<12?`${h} AM`:h===12?"12 PM":h===24?"12 AM":`${h-12} PM`)
-              : String(h).padStart(2,"0")+":00";
+        // Time-of-day column — CLEAN.
+        // One label per activity at its start time. Nothing else.
+        // The phone clock is always visible at the top of the screen, so the
+        // app doesn't need to repeat "08:00, 09:00, 10:00" markers in the
+        // column — that just creates noise. The activity start times are
+        // what the user actually needs: when does it begin?
+        <div style={{flexShrink:0,position:"relative",width:t?.myDay==="My Day"?64:54,height:totalContentH}}>
+          {positions.map(({item,y})=>{
+            const startM=hm(item.time);
+            const itemHour=Math.floor(startM/60);
+            const itemMin=startM%60;
+            const isItemNow=nowHour===itemHour;
+            const isEnglish=t?.myDay==="My Day";
+            const startLabel=isEnglish
+              ? `${itemHour===0?12:itemHour>12?itemHour-12:itemHour}:${String(itemMin).padStart(2,"0")}${itemHour>=12?" PM":" AM"}`
+              : `${String(itemHour).padStart(2,"0")}:${String(itemMin).padStart(2,"0")}`;
+            const accentCol=isDark()?shadeHex(effS.h,0.55):effS.deep;
+            const inkCol=isDark()?"#E8E2F0":G.ink;
             return(
-              <div key={`hr-${h}`} style={{position:"absolute",top:yLine-5,right:6,fontFamily:G.font,fontWeight:600,fontSize:9.5,color:isDark()?"#8A85A0":"#6E6884",letterSpacing:.4,fontVariantNumeric:"tabular-nums",whiteSpace:"nowrap",lineHeight:1,pointerEvents:"none"}}>
-                {lbl}
-              </div>
+              <div key={`tl-${item.id}`} style={{
+                position:"absolute",top:y-2,right:6,textAlign:"right",lineHeight:1,pointerEvents:"none",
+                fontFamily:G.font,
+                fontWeight:isItemNow?800:700,
+                fontSize:13,
+                color:isItemNow?accentCol:inkCol,
+                fontVariantNumeric:"tabular-nums",
+                letterSpacing:-.1,
+                transition:"color .5s ease",
+              }}>{startLabel}</div>
             );
           })}
-          {/* Activity start times — primary, in the activity's own color */}
-          {positions.map(({item,y})=>(
-            <div key={`tl-${item.id}`} style={{position:"absolute",top:y+2,right:6,fontFamily:G.font,fontWeight:700,fontSize:11,color:onCardColor(item.color),letterSpacing:0.3,fontVariantNumeric:"tabular-nums",whiteSpace:"nowrap",lineHeight:1}}>
-              {fmtT(item.time,t)}
-            </div>
-          ))}
+          {/* GHOST TIMES — italic + dim for tentativeness */}
+          {isEd&&ghostPositions.map(({ghost:g,y})=>{
+            const startM=hm(g.time);
+            const itemHour=Math.floor(startM/60);
+            const itemMin=startM%60;
+            const isEnglish=t?.myDay==="My Day";
+            const startLabel=isEnglish
+              ? `${itemHour===0?12:itemHour>12?itemHour-12:itemHour}:${String(itemMin).padStart(2,"0")}`
+              : `${String(itemHour).padStart(2,"0")}:${String(itemMin).padStart(2,"0")}`;
+            return(
+              <div key={`gtl-${g.ghostKey}`} style={{
+                position:"absolute",top:y-2,right:6,textAlign:"right",lineHeight:1,pointerEvents:"none",
+                fontFamily:G.font,
+                fontWeight:500,
+                fontSize:12,
+                color:isDark()?"#7C7691":"#A8A2B5",
+                opacity:0.55,
+                fontVariantNumeric:"tabular-nums",
+                letterSpacing:-.05,
+                fontStyle:"italic",
+              }}>{startLabel}</div>
+            );
+          })}
         </div>
       )}
       {cfg.showSigvard&&!isEd&&(
@@ -3862,14 +4280,35 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
           //   • anything else → that exact colour
           const rawNlc=cfg.nowLineColor;
           const isAuto=rawNlc==="auto"||cfg.sigvardColor==="auto"&&!rawNlc;
-          const lineColor=isAuto?"#FFFFFF":(rawNlc||cfg.sigvardColor||"#FF4848");
+          const baseLineColor=isAuto?"#FFFFFF":(rawNlc||cfg.sigvardColor||"#FF4848");
           const lineMin=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
           const lineY=yForTime(lineMin);
-          const pulseId=`nowPulse_${isAuto?"auto":lineColor.replace("#","")}`;
+          // Find the activity (if any) whose time range the now-line is currently
+          // passing through. When the line is "inside" an ongoing activity, it
+          // adopts that activity's colour and gets a richer pulsing glow — a
+          // gentle, kind signal: "this is what's happening right now". Cards
+          // themselves stay clean (the user prefers that aesthetic).
+          const overAct=positions.find(({item})=>{
+            const sM=hm(item.time);
+            const eM=item.endTime?hm(item.endTime):sM+30;
+            return lineMin>=sM&&lineMin<=eM;
+          });
+          const overActive=!!overAct;
+          const lineColor=overActive?overAct.item.color:baseLineColor;
+          // Stable animation id per state so the keyframe is reusable without
+          // colliding across colour changes. Each variant has its own block.
+          const pulseId=overActive
+            ?`nowPulseOver_${(overAct.item.color||"x").replace("#","")}`
+            :`nowPulse_${isAuto?"auto":baseLineColor.replace("#","")}`;
           return(
             <>
-              <div style={{position:"absolute",top:lineY-1,left:-12,right:0,height:2,background:isAuto?`linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 40%, rgba(255,255,255,0.4) 100%)`:`linear-gradient(90deg, ${shade(lineColor,-0.1)} 0%, ${shade(lineColor,0.1)} 40%, ${withAlpha(lineColor,0.2)} 100%)`,borderRadius:1,zIndex:1,pointerEvents:"none",animation:`${pulseId} 2.4s ease-in-out infinite`,transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
-              <style>{`@keyframes ${pulseId}{0%,100%{box-shadow:0 0 6px ${isAuto?"rgba(184,197,216,0.5)":withAlpha(lineColor,0.33)};opacity:.85}50%{box-shadow:${isAuto?"0 0 14px rgba(255,255,255,0.95), 0 0 22px rgba(184,197,216,0.55)":`0 0 14px ${withAlpha(lineColor,0.67)}, 0 0 22px ${withAlpha(lineColor,0.27)}`};opacity:1}}`}</style>
+              <div style={{position:"absolute",top:lineY-1,left:-12,right:0,height:2,background:overActive
+                ?`linear-gradient(90deg, ${shade(lineColor,-0.05)} 0%, ${shade(lineColor,0.12)} 40%, ${withAlpha(lineColor,0.35)} 100%)`
+                :(isAuto?`linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 40%, rgba(255,255,255,0.4) 100%)`:`linear-gradient(90deg, ${shade(lineColor,-0.1)} 0%, ${shade(lineColor,0.1)} 40%, ${withAlpha(lineColor,0.2)} 100%)`),borderRadius:1,zIndex:overActive?25:1,pointerEvents:"none",animation:`${pulseId} ${overActive?"3.4s":"2.4s"} ease-in-out infinite`,transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1), background .8s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
+              <style>{overActive
+                ? `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 8px ${withAlpha(lineColor,0.45)}, 0 0 14px ${withAlpha(lineColor,0.18)};opacity:.92}50%{box-shadow:0 0 18px ${withAlpha(lineColor,0.85)}, 0 0 32px ${withAlpha(lineColor,0.40)}, 0 0 48px ${withAlpha(lineColor,0.18)};opacity:1}}`
+                : `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 6px ${isAuto?"rgba(184,197,216,0.5)":withAlpha(lineColor,0.33)};opacity:.85}50%{box-shadow:${isAuto?"0 0 14px rgba(255,255,255,0.95), 0 0 22px rgba(184,197,216,0.55)":`0 0 14px ${withAlpha(lineColor,0.67)}, 0 0 22px ${withAlpha(lineColor,0.27)}`};opacity:1}}`
+              }</style>
             </>
           );
         })()}
@@ -3903,6 +4342,76 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
             </div>
           );
         })}
+        {/* GHOST SUGGESTIONS — only in editor mode, only when ghost list provided.
+            Each ghost is a semi-transparent dashed card positioned at its
+            template-suggested time. Two interactions:
+              • + button (right) → adds as-is, ghost disappears
+              • tap the card body → opens editor with this draft
+            Visually "not yet committed" via dashed border, opacity 0.55, no
+            shadow. Lets the caregiver see what a "starter day" would look
+            like, and quickly opt-in to the pieces they want. */}
+        {isEd&&ghostPositions.length>0&&(()=>{
+          const isEnglish=t?.myDay==="My Day";
+          return ghostPositions.map(({ghost:g,y:yTop,h:railH})=>{
+            const startM=hm(g.time);
+            const endM=g.endTime?hm(g.endTime):null;
+            const railHActual=endM?Math.max(railH,yForTime(endM)-yForTime(startM)):railH;
+            return(
+              <div key={`ghost-${g.ghostKey}`} className="lt-press-soft" onClick={()=>onGhostEdit&&onGhostEdit(g)} style={{
+                position:"absolute",top:yTop,left:0,right:0,zIndex:1,cursor:"pointer",
+                animation:"weekColIn .5s cubic-bezier(0.32,0.72,0,1) both",
+              }}>
+                {/* Faint color rail to mirror real activity cards */}
+                <div aria-hidden style={{position:"absolute",left:-8,top:4,width:3,height:railHActual,background:`linear-gradient(180deg,${g.color},${g.color}55)`,borderRadius:2,opacity:0.35,pointerEvents:"none"}}/>
+                <div style={{
+                  display:"flex",alignItems:"center",gap:12,
+                  padding:"12px 12px 12px 14px",borderRadius:14,
+                  background:isDark()?`${g.color}10`:`${g.color}06`,
+                  border:`1.5px dashed ${isDark()?g.color+"55":g.color+"55"}`,
+                  opacity:0.85,
+                  transition:"opacity .25s ease, background .25s ease, border-color .25s ease",
+                }}>
+                  <div style={{
+                    width:44,height:44,borderRadius:12,flexShrink:0,
+                    background:`linear-gradient(140deg, ${g.color}1A, ${g.color}33)`,
+                    border:`1px dashed ${g.color}55`,
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    fontSize:22,opacity:0.85,
+                  }}>{g.emoji}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{
+                      fontFamily:G.serif,fontWeight:500,fontSize:15.5,
+                      color:isDark()?"#E2DBED":G.inkSoft,
+                      letterSpacing:-.2,lineHeight:1.15,
+                      whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+                    }}>{g.name}</div>
+                    <div style={{
+                      fontFamily:G.font,fontWeight:600,fontSize:11,
+                      color:isDark()?"#9A93AE":"#8B8597",
+                      marginTop:3,letterSpacing:.2,
+                      fontVariantNumeric:"tabular-nums",
+                    }}>
+                      <span style={{fontStyle:"italic",marginRight:7,opacity:0.85}}>{isEnglish?"suggested":"förslag"}</span>
+                      <span>{g.time}{g.endTime?` – ${g.endTime}`:""}</span>
+                    </div>
+                  </div>
+                  {/* Quick add (+) button */}
+                  <button onClick={(e)=>{e.stopPropagation();onGhostAdd&&onGhostAdd(g);}}
+                    aria-label={isEnglish?"Add":"Lägg till"}
+                    className="lt-press"
+                    style={{
+                      flexShrink:0,width:36,height:36,borderRadius:11,border:"none",cursor:"pointer",
+                      background:`linear-gradient(135deg, ${g.color}, ${shadeHex(g.color,-0.15)})`,
+                      color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",
+                      boxShadow:`0 4px 12px -3px ${g.color}88, inset 0 1px 0 rgba(255,255,255,0.3)`,
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                </div>
+              </div>
+            );
+          });
+        })()}
       </div>
       </div>
     </div>
@@ -3925,14 +4434,17 @@ function TimerSep({timer,isEditor,onOpen,t}){
   );
 }
 
-function Confetti({behind=false,accent}){
-  // Canvas-based confetti. Earlier DOM versions placed each piece as its own
-  // absolutely-positioned div; on iOS Safari those promote to compositor layers
-  // that can paint ABOVE sibling content regardless of z-index, so "behind the
-  // checklist" never held. A single <canvas> is one element that obeys normal
-  // stacking, so when it sits in a zIndex:0 layer it stays strictly behind the
-  // content. Soft & premium: pieces fade in, drift down with sway + rotation,
-  // then fade out. `accent` blends the activity colour into the palette.
+function Confetti({behind=false,accent,dark=false}){
+  // Canvas-based celebration. Two modes:
+  // • LIGHT: classic confetti — coloured pieces drift downward with sway/rotation
+  // • DARK:  mature glow-embers — soft luminous points drift UPWARD slowly,
+  //          fade in/out, in muted whites + accent. Calm celebration that
+  //          fits the night palette (no childish bright flakes against dark).
+  // Earlier DOM versions placed each piece as its own absolutely-positioned div;
+  // on iOS Safari those promote to compositor layers that can paint ABOVE
+  // sibling content regardless of z-index. A single <canvas> obeys normal
+  // stacking, so when it sits in a zIndex:0 layer it stays strictly behind
+  // the content. `accent` blends the activity colour into the palette.
   const canvasRef=useRef(null);
   const accentRef=useRef(accent);
   accentRef.current=accent;
@@ -3949,11 +4461,105 @@ function Confetti({behind=false,accent}){
       ctx.setTransform(dpr,0,0,dpr,0,0);
     };
     resize();
+    const hexToRgb=(hex)=>{const n=parseInt((hex||"#888").slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255];};
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  DARK MODE — rising luminous embers
+    // ════════════════════════════════════════════════════════════════════════
+    if(dark){
+      const a=accentRef.current||"#B7A8E0";
+      const [ar,ag,ab]=hexToRgb(a);
+      // Palette: soft whites + accent. Each ember picks one.
+      const palette=[
+        [255,255,255],
+        [248,242,255],
+        [ar,ag,ab],
+        [ar,ag,ab],
+        [240,228,248],
+      ];
+      const N=behind?22:28;
+      const embers=Array.from({length:N}).map(()=>{
+        const [r,g,b]=palette[Math.floor(Math.random()*palette.length)];
+        const startY=H+10+Math.random()*40;
+        // Each ember drifts up to a different height; some go high, others
+        // dissolve early. Creates a layered feeling instead of uniform stream.
+        const ceil=H*(0.05+Math.random()*0.45);
+        const dur=(4.2+Math.random()*3.0)*60;     // frames startY → ceil
+        return{
+          x:Math.random()*W,
+          y:startY,
+          ceil,
+          size:1.8+Math.random()*2.6,
+          r,g,b,
+          maxO:behind?0.45+Math.random()*0.30:0.65+Math.random()*0.30,
+          vy:-(startY-ceil)/dur,                   // negative — moving UP
+          swayAmp:6+Math.random()*16,
+          swayFreq:0.4+Math.random()*0.6,
+          phase:Math.random()*Math.PI*2,
+          // Twinkle: a slow per-ember pulse on top of the global fade
+          twinkleFreq:0.025+Math.random()*0.025,
+          twinklePhase:Math.random()*Math.PI*2,
+          delay:Math.random()*1.5*60,
+        };
+      });
+      let frame=0, raf=0, running=true;
+      const FADE_IN=40, FADE_OUT_PX=120;
+      const draw=()=>{
+        if(!running) return;
+        frame++;
+        ctx.clearRect(0,0,W,H);
+        // Use additive blending so overlapping embers brighten naturally
+        ctx.globalCompositeOperation="lighter";
+        let alive=false;
+        for(const e of embers){
+          if(frame<e.delay) { alive=true; continue; }
+          const t=frame-e.delay;
+          e.y+=e.vy;
+          const sway=Math.sin(t*0.018*e.swayFreq+e.phase)*e.swayAmp;
+          const px=e.x+sway;
+          const distAboveCeil=e.ceil-e.y;
+          let o=e.maxO;
+          if(t<FADE_IN) o*=t/FADE_IN;
+          if(distAboveCeil>-FADE_OUT_PX) o*=Math.max(0,(-distAboveCeil)/FADE_OUT_PX);
+          // Twinkle: gentle 0.7-1.0 multiplier so embers softly pulse
+          const twinkle=0.7+0.3*(Math.sin(t*e.twinkleFreq+e.twinklePhase)*0.5+0.5);
+          o*=twinkle;
+          if(e.y>e.ceil-FADE_OUT_PX){
+            alive=true;
+            // Glow halo (soft outer)
+            ctx.save();
+            ctx.globalAlpha=Math.max(0,o*0.4);
+            const grad=ctx.createRadialGradient(px,e.y,0,px,e.y,e.size*5);
+            grad.addColorStop(0,`rgba(${e.r},${e.g},${e.b},1)`);
+            grad.addColorStop(1,`rgba(${e.r},${e.g},${e.b},0)`);
+            ctx.fillStyle=grad;
+            ctx.fillRect(px-e.size*5,e.y-e.size*5,e.size*10,e.size*10);
+            ctx.restore();
+            // Bright core
+            ctx.save();
+            ctx.globalAlpha=Math.max(0,o);
+            ctx.fillStyle=`rgb(${e.r},${e.g},${e.b})`;
+            ctx.beginPath();
+            ctx.arc(px,e.y,e.size,0,Math.PI*2);
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+        ctx.globalCompositeOperation="source-over";
+        if(alive) raf=requestAnimationFrame(draw);
+      };
+      raf=requestAnimationFrame(draw);
+      window.addEventListener("resize",resize);
+      return()=>{ running=false; cancelAnimationFrame(raf); window.removeEventListener("resize",resize); };
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    //  LIGHT MODE — classic falling confetti
+    // ════════════════════════════════════════════════════════════════════════
     const base=["#E89B89","#C2607A","#9683C2","#8FBFA1","#8AAFD2","#D9B868"];
     const a=accentRef.current;
     const cols=a?[a,a,...base]:base;
     const N=behind?26:34;
-    const hexToRgb=(hex)=>{const n=parseInt((hex||"#888").slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255];};
     const pieces=Array.from({length:N}).map(()=>{
       const [r,g,b]=hexToRgb(cols[Math.floor(Math.random()*cols.length)]);
       const startY=-20-Math.random()*H*0.3;
@@ -4062,11 +4668,12 @@ function ActivityDetail({item,stepsDone,readOnly,onClose,onCheck,onStepTimer,t})
       // themes (confetti itself stays light-only below).
       if(typeof navigator!=="undefined"&&navigator.vibrate) navigator.vibrate([18,60,18,60,28]);
     }
-    if(allDone&&steps.length>0&&!readOnly&&!isDark()){
+    if(allDone&&steps.length>0&&!readOnly){
       setCelebrate(true);
       // Longer than the slowest piece's full fall (~5.7s) so confetti finishes
-      // and clears on its own, never cut off mid-air.
-      const id=setTimeout(()=>setCelebrate(false),6000);
+      // and clears on its own, never cut off mid-air. Dark mode embers run a
+      // touch longer (rise is slower), so 7.5s ensures all fade gracefully.
+      const id=setTimeout(()=>setCelebrate(false),isDark()?7500:6000);
       return()=>clearTimeout(id);
     }
   },[allDone,readOnly]);
@@ -4084,15 +4691,15 @@ function ActivityDetail({item,stepsDone,readOnly,onClose,onCheck,onStepTimer,t})
     <>
       {fullTmr&&<FullTimer type={item.timer.type} totalSec={secsLeft} color={tc} t={t} autoRun={true} onClose={()=>setFullTmr(false)} activity={item}/>}
       <Overlay onClose={onClose}>
-        <Sheet scroll dark={isDark()}>
+        <Sheet scroll dark={isDark()} accent={item.color}>
           {/* Own isolated stacking context: confetti canvas (zIndex:0) strictly
               behind the content (zIndex:1). isolation:isolate makes this a
               self-contained context so nothing inside can paint over siblings
               outside it, and the two layers obey z-index reliably. */}
           <div style={{position:"relative",isolation:"isolate"}}>
-            {celebrate&&!isDark()&&(
+            {celebrate&&(
               <div style={{position:"fixed",inset:0,zIndex:60,pointerEvents:"none",overflow:"hidden"}}>
-                <Confetti behind accent={item.color}/>
+                <Confetti behind accent={item.color} dark={isDark()}/>
               </div>
             )}
             <div style={{position:"relative",zIndex:1}}>
@@ -4742,7 +5349,7 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
   };
   // Intercepts every "close" path (overlay tap, cancel button, back gesture).
   // If there are unsaved edits, ask before throwing them away.
-  const attemptClose=()=>{ if(isDirty()) setDiscardOpen(true); else onClose(); };
+  const attemptClose=()=>{ if(isDirty()){ scrollActiveSheetToTop(); setDiscardOpen(true); } else onClose(); };
   const pp=40, esl=EMOJIS.slice(epage*pp,(epage+1)*pp);
   const addStep=()=>{
     // A step is valid if it has ANY content — text, a photo, or a chosen emoji.
@@ -4805,8 +5412,29 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
   };
   const doSave=()=>{
     const conf=findConflicts();
-    if(conf.length>0){setConflicts(conf);return;}
-    onSave(buildSaved());onClose();
+    if(conf.length>0){
+      // Conflict detected — make sure the user SEES the warning popup.
+      // The editor sheet might be scrolled deep, so scroll it back to
+      // the top first; the popup slides up from the bottom and will be
+      // clearly visible. Soft warning haptic too.
+      scrollActiveSheetToTop();
+      if(typeof navigator!=="undefined"&&navigator.vibrate) navigator.vibrate([18,80,18,80,18]);
+      setConflicts(conf);
+      return;
+    }
+    // Trigger the calm save-success animation on the button, then commit
+    // and close. The button gets .saveBtn-confirming for ~750ms — "Spara"
+    // fades to "Sparad ✓" with a quiet stroke-draw check. Only one editor
+    // is ever open at a time (top-level overlay), so a global query is safe.
+    const btn=document.querySelector(".saveBtn");
+    if(btn){
+      btn.classList.add("saveBtn-confirming");
+      if(typeof navigator!=="undefined"&&navigator.vibrate) navigator.vibrate([12,40,20]);
+      setTimeout(()=>{onSave(buildSaved());onClose();},750);
+    }else{
+      // Fallback if the button isn't reachable for any reason — still save.
+      onSave(buildSaved());onClose();
+    }
   };
   const confirmConflictSave=()=>{onSave(buildSaved());setConflicts(null);onClose();};
   const toggleDay=d=>setRepeat(r=>{const days=r.days||[];return{type:"custom",days:days.includes(d)?days.filter(x=>x!==d):[...days,d].sort()};});
@@ -5114,11 +5742,25 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
             </button>
           )}
           <button onClick={attemptClose} style={{flex:1,padding:"15px 0",borderRadius:14,border:`1px solid ${P.cardBorderHi}`,background:P.cardBg2,color:P.text2,fontFamily:G.font,fontWeight:600,fontSize:14,cursor:"pointer"}}>{t.cancel}</button>
-          <button onClick={doSave} className="lt-press saveBtn" style={{...saveBtnStyle(color&&color!=="#FFFFFF"&&color!=="#1F1B2E"?color:"#9683C2"),flex:2,padding:"16px 0"}}>
-            <svg className="saveTick" width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
-              <path d="M2.5 7.2 L5.8 10.5 L11.5 3.5"/>
-            </svg>
-            {t.save}
+          <button onClick={doSave} className="lt-press saveBtn" style={{...saveBtnStyle(color&&color!=="#FFFFFF"&&color!=="#1F1B2E"?color:"#9683C2"),flex:2,padding:"16px 0",position:"relative",overflow:"hidden"}}>
+            {/* ORIGINAL label — the "Spara" + small tick the user sees by default.
+                Wrapped so CSS can crossfade both out together during save success. */}
+            <span className="saveOriginalLabel" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
+              <svg className="saveTick" width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+                <path d="M2.5 7.2 L5.8 10.5 L11.5 3.5"/>
+              </svg>
+              <span>{t.save}</span>
+            </span>
+            {/* SAVED LABEL — quietly fades in when the user taps Save.
+                The check stroke draws in alongside the word, like Apple's
+                native confirm interactions. No bouncing, no fireworks —
+                just a stillsam "this is done" moment. */}
+            <span className="saveSavedLabel" aria-hidden>
+              <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2.5 7.2 L5.8 10.5 L11.5 3.5"/>
+              </svg>
+              <span>{lang==="sv"?"Sparad":"Saved"}</span>
+            </span>
           </button>
         </div>
         {conflicts&&(
@@ -5194,6 +5836,7 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
 /* ═══ Settings ═══ */
 function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSupervisor,onOpenDemo,onOpenWelcomeTour,onResetAll,notifsEnabled,setNotifsEnabled,requestNotifPermission,notifSupported}){
   const[cs,setCs]=useState(cfg.cardStyle);
+  const[ls,setLs]=useState(cfg.logoStyle||"none");
   const[sv,setSv]=useState(cfg.schedView);
   const[sig,setSig]=useState(cfg.showSigvard);
   const[sigC,setSigC]=useState(cfg.sigvardColor||"#FF4848");
@@ -5284,7 +5927,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
       try{ window.location.reload(); }catch(_){ flash(t.importOk); }
     }catch(_){ setPendingImport(null); flash(t.importBad); }
   };
-  const save=()=>{setCfg(x=>({...x,cardStyle:cs,schedView:sv,showSigvard:sig,sigvardColor:sigC,showBanner:banner,showNowLine:nowLn,nowLineColor:nowLnC,weekColors:wc,tools,timerCfg:tc,visibleEmotions:vEmos}));onClose();};
+  const save=()=>{setCfg(x=>({...x,cardStyle:cs,logoStyle:ls,schedView:sv,showSigvard:sig,sigvardColor:sigC,showBanner:banner,showNowLine:nowLn,nowLineColor:nowLnC,weekColors:wc,tools,timerCfg:tc,visibleEmotions:vEmos}));onClose();};
   // Display order Mon→Sun mapped to JS day index (0=Sun)
   const DAY_ORDER=[1,2,3,4,5,6,0];
   const dayLabel=jsDay=>{const map=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];return t[map[jsDay]];};
@@ -6116,7 +6759,23 @@ function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
           To make it discoverable, we auto-scroll to the end whenever the
           user enters editor mode (see effect below). overflowX switches to
           hidden during drag-reorder. */}
-      <div ref={tabBarRef} style={{padding:"18px 16px 10px",display:"flex",gap:8,overflowX:dragId?"hidden":"auto",alignItems:"center",scrollBehavior:"smooth",flexShrink:0}}>
+      <div ref={tabBarRef} style={{
+        padding:"18px 16px 10px",
+        display:"flex",gap:8,
+        overflowX:dragId?"hidden":"auto",
+        overflowY:"hidden",
+        alignItems:"center",
+        scrollBehavior:"smooth",
+        flexShrink:0,
+        // iOS-friendly horizontal swipe: pan-x isolates from the parent's
+        // vertical scroll, momentum + overscroll-contain make the first
+        // touch register reliably. When a pill is being dragged for reorder
+        // we disable pan-x so the drag handler keeps the gesture instead.
+        touchAction:dragId?"none":"pan-x",
+        WebkitOverflowScrolling:"touch",
+        overscrollBehaviorX:"contain",
+        scrollSnapType:"x proximity",
+      }}>
         {cats.map((c,i)=>{
           const active=sel===i;
           const isDragging=dragId===c.id;
@@ -6130,10 +6789,20 @@ function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
               position:"relative",flexShrink:0,paddingTop:isEditor?6:0,
               transition:isDragging?"none":"transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
               zIndex:isDragging?10:1,
-              touchAction:isEditor?"none":"auto",
+              // Touch-action strategy:
+              // · While THIS pill is being dragged → "none" so the JS drag
+              //   handler owns the entire gesture (no browser scroll fights).
+              // · In editor mode otherwise → "pan-x" so the user can still
+              //   horizontally swipe the category row even when their finger
+              //   lands on a pill. A vertical drag (the gesture that starts
+              //   the reorder) still works because the JS pointermove handler
+              //   takes over once it detects vertical motion above threshold.
+              // · In non-editor mode → "auto" (everything default).
+              touchAction:isDragging?"none":(isEditor?"pan-x":"auto"),
               willChange:isDragging?"transform":"auto",
             }}>
               <button
+                className="lt-press-soft"
                 onPointerDown={isEditor?(e)=>startDrag(e,c.id,i,e.currentTarget.parentElement):undefined}
                 onClick={()=>{
                   // Ignore the click if a drag just ended (the pointerup that
@@ -6419,7 +7088,7 @@ function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
     }
     return false;
   };
-  const attemptCloseCard=()=>{ if(cardDirty()) setDiscardOpen(true); else onClose(); };
+  const attemptCloseCard=()=>{ if(cardDirty()){ scrollActiveSheetToTop(); setDiscardOpen(true); } else onClose(); };
   const saveCard=()=>{
     if(!cardText.trim()) return;
     if(modal.type==="editCard"){
@@ -6526,7 +7195,7 @@ function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
   if(modal.type==="editCat"){
     return(
       <Overlay onClose={onClose}>
-        <Sheet scroll dark>
+        <Sheet scroll dark accent={S.h}>
           <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:edPal().text,marginBottom:6,letterSpacing:-.5}}>{t.renameCat}</div>
           <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:edPal().text3,marginBottom:24,lineHeight:1.4}}>{lang==="sv"?"Ändra namn och färg.":"Change name and color."}</div>
           <SLabel>{t.catName}</SLabel>
@@ -6553,7 +7222,7 @@ function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
   if(modal.type==="addCat"){
     return(
       <Overlay onClose={onClose}>
-        <Sheet scroll dark>
+        <Sheet scroll dark accent={S.h}>
           <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:edPal().text,marginBottom:6,letterSpacing:-.5}}>{t.addCat}</div>
           <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:edPal().text3,marginBottom:24,lineHeight:1.4}}>{lang==="sv"?"Skapa en ny kategori för dina kort.":"Create a new category for your cards."}</div>
           <SLabel>{t.catName}</SLabel>
@@ -6591,7 +7260,7 @@ function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
     const editing=modal.type==="editCard";
     return(
       <Overlay onClose={attemptCloseCard}>
-        <Sheet scroll dark>
+        <Sheet scroll dark accent={S.h}>
           <div style={{fontFamily:G.serif,fontWeight:500,fontSize:26,color:edPal().text,marginBottom:6,letterSpacing:-.5}}>{editing?(lang==="sv"?"Redigera kort":"Edit card"):t.addCard}</div>
           <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:edPal().text3,marginBottom:24,lineHeight:1.4}}>{editing?(lang==="sv"?`Ändra bild, emoji eller text.`:`Change image, emoji or text.`):(lang==="sv"?`Skapa ett nytt kort i "${cat.sv}".`:`Add a new card to "${cat.en}".`)}</div>
 
@@ -7153,7 +7822,7 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
         </svg>
         <span>{t.emotionHistory}</span>
       </button>
-      <div style={{flex:1,padding:"18px 20px 180px"}}>
+      <div style={{flex:1,padding:showH?"56px 20px 180px":"18px 20px 180px"}}>
         {showH?(hist.length===0?(
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"50px 30px 30px",gap:14}}>
             <style>{`@keyframes empHistFloat{0%,100%{transform:translateY(0);opacity:0.85}50%{transform:translateY(-3px);opacity:1}}`}</style>
@@ -7191,62 +7860,185 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
               <div style={{position:"absolute",top:-30,left:"50%",transform:"translateX(-50%)",width:200,height:200,borderRadius:"50%",background:`radial-gradient(circle, ${sel?sel.color:S.h}1A 0%, transparent 70%)`,pointerEvents:"none",transition:"background .55s ease"}}/>
               <svg width={248} height={134} style={{position:"relative",overflow:"visible"}}>
                 <defs>
-                  {arcs.map(arc=>(
-                    <linearGradient key={`g${arc.i}`} id={`emoArcG${arc.i}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={arc.col} stopOpacity="0.95"/>
-                      <stop offset="100%" stopColor={arc.col} stopOpacity="0.62"/>
-                    </linearGradient>
-                  ))}
-                  <filter id="emoArcGlow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="3.2" result="b"/>
-                    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-                  </filter>
-                  <filter id="emoNeedleShadow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#1F1B2E" floodOpacity="0.28"/>
-                  </filter>
+                  {/* APPLE-LEVEL CRYSTAL ORB — Vision Pro / Liquid Glass
+                      rendering. Every layer simulates a real optical property
+                      of crystal glass catching directional sunlight:
+                        L1  Atmospheric halo (color bleeds into surrounding air)
+                        L2  Focal caustic (bright pool where light focuses
+                            after passing through — the "magnifier" effect)
+                        L3  Ground contact shadow (orb has weight)
+                        L4  GLASS BODY: crystal-clear center, color rim
+                        L5  Bottom refraction pool (color pools where light
+                            bends through bottom half)
+                        L6  Chromatic rim (warmer edge top, cooler edge bottom,
+                            like prismatic separation in real crystal)
+                        L7  Dimensional dark rim (3D depth at the very edge)
+                        L8  Top crescent arc highlight (THE classic glass detail)
+                        L9  Broad upper-left sheen (atmospheric reflection)
+                        L10 Primary catchlight (large soft glow + crisp core)
+                        L11 Secondary tiny catchlight (point reflection)
+                        L12 Exit caustics (bright spots where rays exit) */}
+                  <radialGradient id="emoPearlGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor={sel?sel.color:"#E8A878"} stopOpacity="0.60"/>
+                    <stop offset="50%" stopColor={sel?sel.color:"#E8A878"} stopOpacity="0.22"/>
+                    <stop offset="100%" stopColor={sel?sel.color:"#E8A878"} stopOpacity="0"/>
+                  </radialGradient>
+                  {/* Focal caustic — pool of bright light beneath where rays
+                      converge after passing through the crystal */}
+                  <radialGradient id="emoGlassCaustic" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor={sel?shadeHex(sel.color,0.45):"#FFEAD3"} stopOpacity={isDark()?"0.70":"0.85"}/>
+                    <stop offset="35%" stopColor={sel?sel.color:"#E8A878"} stopOpacity={isDark()?"0.32":"0.45"}/>
+                    <stop offset="100%" stopColor={sel?sel.color:"#E8A878"} stopOpacity="0"/>
+                  </radialGradient>
+                  {/* GLASS BODY — the heart of the upgrade. Crystal-clear in
+                      the very middle (50% white in light mode!) so light
+                      truly passes through. Color comes from the edge, not
+                      the center. This is what makes premium glass feel real. */}
+                  <radialGradient id="emoGlassBody" cx="42%" cy="38%" r="62%">
+                    <stop offset="0%" stopColor={isDark()?"rgba(255,255,255,0.55)":"rgba(255,255,255,0.92)"}/>
+                    <stop offset="22%" stopColor={isDark()?"rgba(255,255,255,0.30)":"rgba(255,255,255,0.65)"}/>
+                    <stop offset="50%" stopColor={sel?sel.color:"#E8A878"} stopOpacity={isDark()?"0.10":"0.08"}/>
+                    <stop offset="78%" stopColor={sel?sel.color:"#E8A878"} stopOpacity={isDark()?"0.28":"0.24"}/>
+                    <stop offset="100%" stopColor={sel?shadeHex(sel.color,-0.20):"#A87850"} stopOpacity={isDark()?"0.62":"0.65"}/>
+                  </radialGradient>
+                  {/* Bottom refraction — focused color pool */}
+                  <radialGradient id="emoGlassRefract" cx="58%" cy="74%" r="52%">
+                    <stop offset="0%" stopColor={sel?sel.color:"#E8A878"} stopOpacity={isDark()?"0.55":"0.65"}/>
+                    <stop offset="50%" stopColor={sel?sel.color:"#E8A878"} stopOpacity={isDark()?"0.15":"0.20"}/>
+                    <stop offset="100%" stopColor={sel?sel.color:"#E8A878"} stopOpacity="0"/>
+                  </radialGradient>
+                  {/* Chromatic edge — warm top-left → cool bottom-right.
+                      Prismatic separation that real crystal exhibits. */}
+                  <linearGradient id="emoGlassChroma" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor={sel?shadeHex(sel.color,0.25):"#FFC9A0"} stopOpacity={isDark()?"0.30":"0.38"}/>
+                    <stop offset="50%" stopColor="#FFFFFF" stopOpacity="0"/>
+                    <stop offset="100%" stopColor={sel?shadeHex(sel.color,-0.30):"#7A5530"} stopOpacity={isDark()?"0.28":"0.32"}/>
+                  </linearGradient>
+                  {/* Dimensional rim — subtle darker edge for 3D depth.
+                      Very gentle in light mode (where a strong dark rim would
+                      read as a black outline against the bright background);
+                      stronger in dark mode where it adds important contour. */}
+                  <radialGradient id="emoGlassRim" cx="50%" cy="50%" r="50%">
+                    <stop offset="85%" stopColor={sel?shadeHex(sel.color,-0.30):"#7A5530"} stopOpacity="0"/>
+                    <stop offset="95%" stopColor={sel?shadeHex(sel.color,-0.30):"#7A5530"} stopOpacity={isDark()?"0.50":"0.18"}/>
+                    <stop offset="100%" stopColor={sel?shadeHex(sel.color,-0.30):"#7A5530"} stopOpacity="0"/>
+                  </radialGradient>
+                  {/* Top arc — the iconic glass crescent highlight */}
+                  <linearGradient id="emoGlassArc" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0"/>
+                    <stop offset="25%" stopColor="#FFFFFF" stopOpacity={isDark()?"0.85":"1"}/>
+                    <stop offset="50%" stopColor="#FFFFFF" stopOpacity={isDark()?"0.70":"0.88"}/>
+                    <stop offset="75%" stopColor="#FFFFFF" stopOpacity={isDark()?"0.40":"0.50"}/>
+                    <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0"/>
+                  </linearGradient>
+                  {/* Broad atmospheric sheen */}
+                  <radialGradient id="emoGlassSheen" cx="32%" cy="26%" r="38%">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity={isDark()?"0.50":"0.70"}/>
+                    <stop offset="55%" stopColor="#FFFFFF" stopOpacity="0.10"/>
+                    <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0"/>
+                  </radialGradient>
+                  {/* Primary catchlight glow — soft halo around the main
+                      specular point. Makes the catchlight feel like it's
+                      bleeding into the glass, not painted on top. */}
+                  <radialGradient id="emoGlassCatchlightGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity={isDark()?"0.70":"0.85"}/>
+                    <stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.18"/>
+                    <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0"/>
+                  </radialGradient>
+                  {/* Track gradient — extremely subtle grey-white */}
+                  <linearGradient id="emoTrackBg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={isDark()?"rgba(255,255,255,0.08)":"rgba(31,27,46,0.06)"}/>
+                    <stop offset="100%" stopColor={isDark()?"rgba(255,255,255,0.04)":"rgba(31,27,46,0.02)"}/>
+                  </linearGradient>
                 </defs>
-                {/* faint inner track for depth */}
-                <path d={`M${ap(Math.PI).x},${ap(Math.PI).y} A${R2},${R2} 0 0,1 ${ap(0).x},${ap(0).y}`} fill="none" stroke={`${tk().ink}0A`} strokeWidth={24} strokeLinecap="round"/>
-                {/* colored segments — ALL same width so every junction aligns
-                    perfectly. Selected pops via opacity + a glow drawn BEHIND
-                    (never by changing width, which skewed the junctions). */}
+                {/* (1) Soft background track — the calm grey-white base arc */}
+                <path
+                  d={`M${ap(Math.PI).x},${ap(Math.PI).y} A${R2},${R2} 0 0,1 ${ap(0).x},${ap(0).y}`}
+                  fill="none"
+                  stroke="url(#emoTrackBg)"
+                  strokeWidth={14}
+                  strokeLinecap="round"
+                />
+                {/* (2) Soft color hints — each emotion's colour at LOW opacity
+                    so the eye reads the bow as "a soft path of emotions"
+                    without it screaming. Dimmed further when an emotion
+                    is selected, so the pearl can take focus. */}
                 {arcs.map(arc=>{
                   const isSel=selIdx===arc.i;
                   return(
-                    <Fragment key={arc.i}>
-                      {isSel&&(
-                        <path d={arc.d} fill="none" stroke={arc.col} strokeWidth={20} strokeLinecap="butt" filter="url(#emoArcGlow)" opacity={0.55} style={{pointerEvents:"none"}}/>
-                      )}
-                      <path d={arc.d} fill="none"
-                        stroke={`url(#emoArcG${arc.i})`}
-                        strokeWidth={20}
-                        strokeLinecap="butt"
-                        style={{transition:"opacity .45s ease",opacity:sel&&!isSel?0.32:1}}
-                      />
-                    </Fragment>
+                    <path key={arc.i} d={arc.d} fill="none"
+                      stroke={arc.col}
+                      strokeWidth={14}
+                      strokeLinecap="butt"
+                      opacity={isSel?0.55:(sel?0.18:0.32)}
+                      style={{transition:"opacity .5s ease"}}
+                    />
                   );
                 })}
-                {/* tick marks between segments */}
-                {arcs.map((arc,i)=>{
-                  if(i===0) return null;
-                  const a=Math.PI-(i/N)*Math.PI;
-                  const inner=({x:cx+(R2-12)*Math.cos(a),y:cy-(R2-12)*Math.sin(a)});
-                  const outer=({x:cx+(R2+12)*Math.cos(a),y:cy-(R2+12)*Math.sin(a)});
-                  return (<line key={`t${i}`} x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y} stroke="#FFFFFF" strokeWidth={2.4} strokeLinecap="round" opacity={0.7}/>);
+                {/* (3) Tiny dots at each emotion's centre — subtle marker
+                    that aligns with the emotion tile below. Acts as a
+                    visual anchor for the pearl's resting point. */}
+                {visibleEmos.map((e,i)=>{
+                  const a=Math.PI-(i+0.5)/N*Math.PI;
+                  const p=ap(a);
+                  const isSel=selIdx===i;
+                  return(
+                    <circle key={`dot${i}`} cx={p.x} cy={p.y} r={isSel?0:3}
+                      fill={e.color}
+                      opacity={0.7}
+                      style={{transition:"r .35s ease"}}
+                    />
+                  );
                 })}
-                {/* needle — tapered, rotates around hub with spring. Tip stops
-                    just short of the arc band so it points cleanly without
-                    poking into the coloured segment. */}
-                <g transform={`rotate(${90-(needleA*180/Math.PI)} ${cx} ${cy})`} style={{transition:"transform .6s cubic-bezier(.34,1.56,.64,1)"}} filter="url(#emoNeedleShadow)">
-                  <path d={`M${cx-5.5},${cy} L${cx},${cy-(R2-16)} L${cx+5.5},${cy} Z`} fill={sel?sel.color:tk().ink3} style={{transition:"fill .5s ease"}}/>
+                {/* (4) The Luma-pearl — sits ON the arc at the selected
+                    emotion's position (or centre when nothing selected).
+                    Soft halo behind, then the pearl itself, then a white
+                    glint for the rounded-pearl gloss. Smoothly transitions
+                    between positions like a real bead sliding on a wire. */}
+                <g style={{transition:"transform .6s cubic-bezier(.34,1.56,.64,1)",transform:`translate(${np.x-cx}px, ${np.y-cy}px)`}}>
+                  {/* L1 — Outer atmospheric halo */}
+                  <circle cx={cx} cy={cy} r={20} fill="url(#emoPearlGlow)"
+                    style={{transition:"opacity .5s ease",opacity:sel?1:0.7}}>
+                    {!sel&&<animate attributeName="r" values="18;22;18" dur="3.6s" repeatCount="indefinite"/>}
+                    {sel&&<animate attributeName="r" values="19;21;19" dur="3.4s" repeatCount="indefinite"/>}
+                  </circle>
+                  {/* L2 — Focal caustic BENEATH orb (rays converging through
+                      crystal create a bright pool of light) */}
+                  <ellipse cx={cx} cy={cy+13} rx={9.5} ry={3.5} fill="url(#emoGlassCaustic)" style={{transition:"fill .5s ease"}}/>
+                  {/* L3 — Ground contact shadow */}
+                  <ellipse cx={cx} cy={cy+12} rx={6.2} ry={1.3} fill="rgba(31,27,46,0.28)" opacity={isDark()?0.30:0.50}/>
+                  {/* L4 — GLASS BODY: crystal-clear center, color rim. This
+                      is the key upgrade — center is nearly transparent. */}
+                  <circle cx={cx} cy={cy} r={11} fill="url(#emoGlassBody)"
+                    style={{transition:"fill .5s ease"}}>
+                    {!sel&&<animate attributeName="r" values="10.5;11.5;10.5" dur="3.6s" repeatCount="indefinite"/>}
+                    {sel&&<animate attributeName="r" values="10.85;11.15;10.85" dur="3.4s" repeatCount="indefinite"/>}
+                  </circle>
+                  {/* L5 — Bottom refraction pool (color bends toward lower-right) */}
+                  <circle cx={cx} cy={cy} r={11} fill="url(#emoGlassRefract)" style={{transition:"fill .5s ease"}}/>
+                  {/* L6 — Chromatic edge (warm top, cool bottom — prismatic) */}
+                  <circle cx={cx} cy={cy} r={11} fill="url(#emoGlassChroma)" style={{transition:"fill .5s ease"}}/>
+                  {/* L7 — Dimensional dark rim (3D depth at the very edge) */}
+                  <circle cx={cx} cy={cy} r={11} fill="url(#emoGlassRim)" style={{transition:"fill .5s ease"}}/>
+                  {/* L8 — Top arc crescent (THE iconic glass highlight) */}
+                  <path d={`M ${cx-7.8} ${cy-7.0} Q ${cx} ${cy-10.8} ${cx+7.8} ${cy-7.0}`}
+                    fill="none" stroke="url(#emoGlassArc)" strokeWidth={1.6} strokeLinecap="round"/>
+                  {/* L9 — Broad atmospheric sheen upper-left */}
+                  <circle cx={cx} cy={cy} r={11} fill="url(#emoGlassSheen)"/>
+                  {/* L10 — Primary catchlight: large soft glow + crisp white
+                      core. The glow makes the catchlight feel like it's
+                      bleeding INTO the glass, not painted on top. */}
+                  <ellipse cx={cx-3.4} cy={cy-4.2} rx={3.6} ry={4.6} fill="url(#emoGlassCatchlightGlow)"
+                    transform={`rotate(-22 ${cx-3.4} ${cy-4.2})`}/>
+                  <ellipse cx={cx-3.5} cy={cy-4.3} rx={2.3} ry={3.0} fill="#FFFFFF" opacity={isDark()?0.95:1}
+                    transform={`rotate(-22 ${cx-3.5} ${cy-4.3})`}/>
+                  {/* L11 — Secondary tiny catchlight (point reflection) */}
+                  <circle cx={cx-1.3} cy={cy-1.6} r={0.85} fill="#FFFFFF" opacity={isDark()?0.75:0.92}/>
+                  {/* L12 — Exit caustics (where light exits the glass) */}
+                  <circle cx={cx+5.0} cy={cy+5.6} r={0.9} fill="#FFFFFF" opacity={isDark()?0.50:0.72}/>
+                  <circle cx={cx+6.2} cy={cy+4.4} r={0.45} fill="#FFFFFF" opacity={isDark()?0.32:0.50}/>
+                  <circle cx={cx+4.0} cy={cy+6.6} r={0.4} fill="#FFFFFF" opacity={isDark()?0.28:0.42}/>
                 </g>
-                {/* hub: glow + ring + center */}
-                <circle cx={cx} cy={cy} r={16} fill={sel?sel.color:tk().ink3} opacity={0.18} style={{transition:"fill .5s ease"}}>
-                  {!sel&&<animate attributeName="r" values="14;17;14" dur="3.2s" repeatCount="indefinite"/>}
-                </circle>
-                <circle cx={cx} cy={cy} r={11} fill={sel?sel.color:tk().ink3} style={{transition:"fill .5s ease"}}/>
-                <circle cx={cx} cy={cy} r={5.5} fill="#fff"/>
-                <circle cx={cx} cy={cy} r={2.2} fill={sel?sel.color:tk().ink3} style={{transition:"fill .5s ease"}}/>
               </svg>
             </div>
             <div style={{display:"flex",gap:7,justifyContent:"center",marginBottom:20,flexWrap:"nowrap",alignItems:"stretch"}}>
@@ -7437,7 +8229,7 @@ function CustomEmotionEditor({existing,onSave,onDelete,onClose,t,lang}){
   const[discardOpen,setDiscardOpen]=useState(false);
   const initial=useRef(JSON.stringify({name:initialName,emoji:existing?.emoji||"",photo:existing?.photo||null,color:existing?.color||ACT_C[0]}));
   const isDirty=()=> JSON.stringify({name,emoji,photo,color})!==initial.current;
-  const attemptClose=()=>{ if(isDirty()) setDiscardOpen(true); else onClose(); };
+  const attemptClose=()=>{ if(isDirty()){ scrollActiveSheetToTop(); setDiscardOpen(true); } else onClose(); };
   const Sc=SCREENS.emotion;
 
   const handlePhoto=ev=>{
@@ -7842,11 +8634,14 @@ function ActRow({item,cardStyle,isEditor,onEdit,onTap,onMarkDone,idx,lifeState="
   const handleClick=()=>{
     if(isEditor)onEdit(item);else onTap(item);
   };
-  // Adaptive visual weight — past recedes, now is centered/full, future waits quietly
+  // Adaptive visual weight — past recedes, now is fully present, future waits
+  // quietly with a small breath of dimming so the eye lands on NOW first.
+  // The subtle steps (1.00 → 0.92 → 0.42) form a calm depth of field.
   const isPast = lifeState==="past";
   const isNow  = lifeState==="now";
-  const wrapOpacity = isPast?0.42:1;
-  const wrapSaturate = isPast?0.6:1;
+  const isFuture = lifeState==="future";
+  const wrapOpacity = isPast?0.42:(isFuture?0.92:1);
+  const wrapSaturate = isPast?0.6:(isFuture?0.9:1);
   return(
     <div style={{animation:anim==="in"?`rIn .35s cubic-bezier(.2,.7,.2,1) both`:`rExit .8s cubic-bezier(.4,0,.2,1) forwards`,animationDelay:anim==="in"?`${idx*0.04}s`:"0s",opacity:wrapOpacity,filter:`saturate(${wrapSaturate})`,transition:"opacity .8s cubic-bezier(0.32, 0.72, 0, 1), filter .8s cubic-bezier(0.32, 0.72, 0, 1)"}}>
       <style>{`@keyframes rIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}@keyframes rExit{0%{opacity:1;transform:scale(1);filter:none}40%{opacity:1;transform:scale(1.015);filter:brightness(1.04)}100%{opacity:0;transform:scale(.92) translateY(8px);filter:brightness(1.1)}}`}</style>
@@ -7854,37 +8649,111 @@ function ActRow({item,cardStyle,isEditor,onEdit,onTap,onMarkDone,idx,lifeState="
         onClick={handleClick}
         className="lt-press-soft"
         style={{
-          background: isNow ? (isDark()?`linear-gradient(165deg, rgba(255,255,255,0.11) 0%, ${item.color}22 100%)`:`linear-gradient(165deg, rgba(255,255,255,0.97) 0%, ${item.color}0E 100%)`) : (isDark()?"linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.035) 100%)":`linear-gradient(165deg, #FFFFFF 0%, #FFFFFF 58%, ${item.color}0A 100%)`),
-          backdropFilter: isNow?"blur(12px) saturate(1.3)":(isDark()?"blur(16px) saturate(1.25)":"none"),
-          WebkitBackdropFilter: isNow?"blur(12px) saturate(1.3)":(isDark()?"blur(16px) saturate(1.25)":"none"),
+          background: isDark()?"linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.035) 100%)":`linear-gradient(165deg, #FFFFFF 0%, #FFFFFF 58%, ${item.color}0A 100%)`,
+          backdropFilter: isDark()?"blur(16px) saturate(1.25)":"none",
+          WebkitBackdropFilter: isDark()?"blur(16px) saturate(1.25)":"none",
           borderRadius:big?22:18,
           overflow:"hidden",
           position:"relative",
-          boxShadow: isNow?(isDark()?`inset 0 1px 0 rgba(255,255,255,0.14), 0 18px 40px -16px ${item.color}66, 0 6px 16px -8px rgba(0,0,0,0.6)`:`0 1px 0 rgba(255,255,255,0.9) inset, 0 16px 38px -14px ${item.color}55, 0 6px 14px -6px ${item.color}2E`):(isDark()?"inset 0 1px 0 rgba(255,255,255,0.07), 0 10px 26px -16px rgba(0,0,0,0.65)":`inset 0 1px 0 rgba(255,255,255,0.95), 0 12px 26px -14px ${item.color}3A, 0 4px 10px -6px rgba(31,27,46,0.10)`),
-          border:`1px solid ${isNow?`${item.color}4A`:tk().cardBorder}`,
+          // NOW gets a subtle visual lift — never loud. The card body stays
+          // the same calm white/glass; the "happening now" signal is:
+          //   • a soft inner halo of the activity's colour at low alpha
+          //   • a faintly more saturated border
+          //   • a slightly stronger coloured glow underneath
+          // All three together make NOW feel "lit from within" without
+          // changing the card's silhouette or screaming for attention.
+          boxShadow: isNow
+            ? (isDark()
+              ? `inset 0 0 0 1px ${item.color}3A, inset 0 1px 0 rgba(255,255,255,0.12), 0 14px 32px -14px ${item.color}80, 0 4px 12px -4px rgba(0,0,0,0.4)`
+              : `inset 0 0 0 1px ${item.color}55, inset 0 1px 0 rgba(255,255,255,0.95), 0 16px 36px -12px ${item.color}55, 0 4px 12px -6px rgba(31,27,46,0.10)`)
+            : (isDark()
+              ? `inset 0 1px 0 rgba(255,255,255,0.07), 0 10px 26px -16px rgba(0,0,0,0.65)`
+              : `inset 0 1px 0 rgba(255,255,255,0.95), 0 12px 26px -14px ${item.color}3A, 0 4px 10px -6px rgba(31,27,46,0.10)`),
+          border:`1px solid ${isNow?`${item.color}${isDark()?"4E":"55"}`:tk().cardBorder}`,
           cursor:"pointer",
-          animation: isNow?`actNowBreath_${item.id} 3.4s ease-in-out infinite`:"none",
           transition:"box-shadow .55s cubic-bezier(0.32, 0.72, 0, 1), border-color .55s cubic-bezier(0.32, 0.72, 0, 1), transform .26s cubic-bezier(0.32, 0.72, 0, 1)",
           userSelect:"none",
           WebkitUserSelect:"none",
           WebkitTouchCallout:"none",
         }}
-        onMouseEnter={e=>{if(!isNow){e.currentTarget.style.boxShadow=sh.md;e.currentTarget.style.borderColor=`${item.color}40`;}}}
-        onMouseLeave={e=>{if(!isNow){e.currentTarget.style.boxShadow=isDark()?"inset 0 1px 0 rgba(255,255,255,0.07), 0 10px 26px -16px rgba(0,0,0,0.65)":`inset 0 1px 0 rgba(255,255,255,0.95), 0 12px 26px -14px ${item.color}3A, 0 4px 10px -6px rgba(31,27,46,0.10)`;e.currentTarget.style.borderColor=tk().cardBorder;}}}>
-        {isNow&&<style>{`@keyframes actNowBreath_${item.id}{0%,100%{box-shadow:0 1px 0 rgba(255,255,255,0.9) inset, 0 14px 34px -14px ${item.color}4A, 0 6px 14px -6px ${item.color}2A}50%{box-shadow:0 1px 0 rgba(255,255,255,0.9) inset, 0 18px 44px -14px ${item.color}66, 0 8px 18px -6px ${item.color}3A}}`}</style>}
+        onMouseEnter={e=>{e.currentTarget.style.boxShadow=sh.md;e.currentTarget.style.borderColor=`${item.color}40`;}}
+        onMouseLeave={e=>{e.currentTarget.style.boxShadow=isNow?(isDark()?`inset 0 0 0 1px ${item.color}3A, inset 0 1px 0 rgba(255,255,255,0.12), 0 14px 32px -14px ${item.color}80, 0 4px 12px -4px rgba(0,0,0,0.4)`:`inset 0 0 0 1px ${item.color}55, inset 0 1px 0 rgba(255,255,255,0.95), 0 16px 36px -12px ${item.color}55, 0 4px 12px -6px rgba(31,27,46,0.10)`):(isDark()?`inset 0 1px 0 rgba(255,255,255,0.07), 0 10px 26px -16px rgba(0,0,0,0.65)`:`inset 0 1px 0 rgba(255,255,255,0.95), 0 12px 26px -14px ${item.color}3A, 0 4px 10px -6px rgba(31,27,46,0.10)`);e.currentTarget.style.borderColor=isNow?`${item.color}${isDark()?"4E":"55"}`:tk().cardBorder;}}>
         {/* Crisp top rim highlight — light catching the glass edge */}
         <div style={{position:"absolute",top:0,left:big?0:"14%",right:big?0:"14%",height:1,background:isDark()?"linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent)":"linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent)",pointerEvents:"none",zIndex:3}}/>
         {big&&<div style={{padding:"16px 0 4px",display:"flex",alignItems:"center",justifyContent:"center"}}>
           <div style={{width:64,height:64,borderRadius:18,background:item.photo?"#000":(isDark()?`linear-gradient(135deg,${item.color}3A,${item.color}1A)`:`linear-gradient(135deg,${item.color}1F,${item.color}38)`),display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,overflow:"hidden",border:item.photo?"none":(isDark()?`0.5px solid ${item.color}3D`:`0.5px solid rgba(255,255,255,0.8)`),boxShadow:item.photo?`0 6px 16px ${item.color}33`:(isDark()?`inset 0 1px 0 rgba(255,255,255,0.08)`:`inset 0 1px 0 rgba(255,255,255,0.9), 0 4px 10px -3px ${item.color}30`),flexShrink:0}}>{item.photo?<img src={item.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:item.emoji}</div>
         </div>}
         <div style={{display:"flex",alignItems:"center",gap:compact?10:13,padding:big?"4px 18px 18px":(compact?"12px 14px":"16px 18px"),position:"relative",justifyContent:big?"center":"flex-start"}}>
-          {!big&&<div style={{position:"absolute",left:0,top:0,bottom:0,width:4,background:`linear-gradient(180deg,${item.color},${item.color}80)`,borderRadius:"18px 0 0 18px"}}/>}
+          {!big&&(()=>{
+            // Edge rail respects life-stage — the card's most visible identity mark.
+            //   Past   → muted, almost monochrome (the moment has passed)
+            //   Now    → vivid + soft inner glow (the present is alive)
+            //   Future → clear color, calm (waiting)
+            // This subtle gradient-change turns the rail into a time language.
+            const railBg = isPast
+              ? `linear-gradient(180deg, ${item.color}55, ${item.color}22)`
+              : isNow
+                ? `linear-gradient(180deg, ${item.color}, ${item.color})`
+                : `linear-gradient(180deg, ${item.color}, ${item.color}88)`;
+            const railShadow = isNow
+              ? `0 0 8px -1px ${item.color}66, inset 0 0 0 1px ${item.color}33`
+              : "none";
+            return(
+              <div style={{
+                position:"absolute",left:0,top:0,bottom:0,width:4,
+                background:railBg,
+                boxShadow:railShadow,
+                borderRadius:"18px 0 0 18px",
+                transition:"background .8s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .8s cubic-bezier(0.32, 0.72, 0, 1)",
+              }}/>
+            );
+          })()}
           {!big&&<div style={{marginLeft:4}}/>}
-          {!big&&<div style={{fontSize:compact?30:38,lineHeight:1,width:compact?44:54,minWidth:compact?44:54,maxWidth:compact?44:54,height:compact?44:54,maxHeight:compact?44:54,borderRadius:compact?13:15,background:item.photo?"#000":(isDark()?`linear-gradient(150deg, ${item.color}3A 0%, ${item.color}1A 100%)`:`linear-gradient(150deg, rgba(255,255,255,0.9) 0%, ${item.color}16 52%, ${item.color}2A 100%)`),display:"flex",alignItems:"center",justifyContent:"center",border:item.photo?"none":(isDark()?`0.5px solid ${item.color}3D`:`0.5px solid rgba(255,255,255,0.8)`),boxShadow:item.photo?"none":(isDark()?`inset 0 1px 0 rgba(255,255,255,0.08)`:`inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -6px 12px ${item.color}1C, 0 4px 10px -3px ${item.color}30`),flexShrink:0,overflow:"hidden"}}>{item.photo?<img src={item.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>:item.emoji}</div>}
+          {!big&&(
+            <div style={{fontSize:compact?30:38,lineHeight:1,width:compact?44:54,minWidth:compact?44:54,maxWidth:compact?44:54,height:compact?44:54,maxHeight:compact?44:54,borderRadius:compact?13:15,background:item.photo?"#000":(isDark()?`linear-gradient(150deg, ${item.color}3A 0%, ${item.color}1A 100%)`:`linear-gradient(150deg, rgba(255,255,255,0.9) 0%, ${item.color}16 52%, ${item.color}2A 100%)`),display:"flex",alignItems:"center",justifyContent:"center",border:item.photo?"none":(isDark()?`0.5px solid ${item.color}3D`:`0.5px solid rgba(255,255,255,0.8)`),boxShadow:item.photo?"none":(isDark()?`inset 0 1px 0 rgba(255,255,255,0.08)`:`inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -6px 12px ${item.color}1C, 0 4px 10px -3px ${item.color}30`),flexShrink:0,overflow:"hidden",position:"relative"}}>
+              {item.photo
+                ?<img src={item.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                :<>
+                  {/* Specular highlight — a soft glassy gleam in the upper-left
+                      corner. Suggests light reflecting off a polished surface,
+                      making the emoji feel like it rests on a real object.
+                      Only in light mode (dark mode reads as glass already). */}
+                  {!isDark()&&<div aria-hidden style={{
+                    position:"absolute",
+                    top:1,left:1,
+                    width:"55%",height:"45%",
+                    borderRadius:"inherit",
+                    background:`radial-gradient(ellipse at 30% 25%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.2) 35%, transparent 70%)`,
+                    pointerEvents:"none",
+                  }}/>}
+                  <span style={{position:"relative",zIndex:1}}>{item.emoji}</span>
+                </>}
+            </div>
+          )}
           <div style={{flex:big?"0 1 auto":1,minWidth:0,textAlign:big?"center":"left"}}>
             <div style={{fontFamily:G.serif,fontWeight:500,fontSize:compact?16:big?22:19,color:tk().ink,lineHeight:1.2,letterSpacing:-.3}}>{item.name}</div>
             <div style={{display:"flex",alignItems:"center",gap:7,marginTop:big?8:6,flexWrap:"wrap",justifyContent:big?"center":"flex-start"}}>
-              <span style={{fontFamily:G.font,fontWeight:500,fontSize:11.5,color:onCardColor(item.color),letterSpacing:.5}}>{fmtT(item.time,t)}{item.endTime?` – ${fmtT(item.endTime,t)}`:""}</span>
+              <span style={{fontFamily:G.font,fontWeight:500,fontSize:11.5,color:onCardColor(item.color),letterSpacing:.5,display:"inline-flex",alignItems:"center",gap:5}}>
+                <span>{fmtT(item.time,t)}</span>
+                {item.endTime&&(
+                  isNow?(
+                    <>
+                      {/* Pulsing dot — "time is flowing through this activity" */}
+                      <span aria-hidden style={{
+                        display:"inline-block",
+                        width:4,height:4,borderRadius:"50%",
+                        background:item.color,
+                        boxShadow:`0 0 6px ${item.color}AA`,
+                        animation:"actDotPulse 2.2s ease-in-out infinite",
+                      }}/>
+                      <style>{`@keyframes actDotPulse{0%,100%{transform:scale(1);opacity:0.9}50%{transform:scale(1.4);opacity:1}}`}</style>
+                    </>
+                  ):(
+                    <span style={{opacity:0.6}}>–</span>
+                  )
+                )}
+                {item.endTime&&<span>{fmtT(item.endTime,t)}</span>}
+              </span>
               {item.repeat&&item.repeat.type&&item.repeat.type!=="none"&&(
                 <Tag col={item.color}>{item.repeat.type==="daily"?(t?.repDailyShort||"Dagligen"):item.repeat.type==="weekdays"?(t?.repWeekdays||"Vardagar"):item.repeat.type==="weekend"?(t?.repWeekend||"Helger"):(item.repeat.days||[]).length+" "+(t?.repDaysSuffix||"dagar")}</Tag>
               )}
@@ -8764,21 +9633,34 @@ function Overlay({children,onClose,tall,level=0}){
     </div>
   );
 }
-function Sheet({children,scroll,tall,dark}){
+function Sheet({children,scroll,tall,dark,accent}){
   if(dark){
     const P=edPal();const night=isDark();
+    // Each editor can pass `accent` (its tool's primary hex) to tint the top
+    // wash with that tool's identity — story editor gets peach, card editor
+    // gets mint, etc. Falls back to the historical defaults if no accent
+    // is provided (so untouched editors still look like before).
+    const darkWashDefault=ED.glow("#9683C2",0.20);
+    const lightWashDefault=EL.glow("#8AAFD2",0.5);
+    const darkWash=accent?ED.glow(accent,0.22):darkWashDefault;
+    const lightWash=accent?EL.glow(accent,0.5):lightWashDefault;
     return(<div data-modal-scroll style={{
       position:"absolute",top:0,left:0,right:0,bottom:0,
       background:night
-        ?`radial-gradient(80% 42% at 50% -4%, var(--edWash, ${ED.glow("#9683C2",0.20)}) 0%, transparent 56%), linear-gradient(180deg, ${ED.bg2} 0%, ${ED.bg1} 44%, ${ED.bg0} 100%)`
-        :`radial-gradient(85% 45% at 50% -4%, var(--edWash, ${EL.glow("#8AAFD2",0.5)}) 0%, transparent 60%), linear-gradient(180deg, ${EL.bg2} 0%, ${EL.bg1} 50%, ${EL.bg0} 100%)`,
+        ?`radial-gradient(80% 42% at 50% -4%, var(--edWash, ${darkWash}) 0%, transparent 56%), linear-gradient(180deg, ${ED.bg2} 0%, ${ED.bg1} 44%, ${ED.bg0} 100%)`
+        :`radial-gradient(85% 45% at 50% -4%, var(--edWash, ${lightWash}) 0%, transparent 60%), linear-gradient(180deg, ${EL.bg2} 0%, ${EL.bg1} 50%, ${EL.bg0} 100%)`,
       borderRadius:tall?"0":"28px 28px 0 0",
       padding:tall
         ?"calc(env(safe-area-inset-top, 0px) + 22px) 20px max(28px, env(safe-area-inset-bottom, 12px))"
         :"calc(env(safe-area-inset-top, 0px) + 26px) 20px max(28px, env(safe-area-inset-bottom, 12px))",
       overflowY:"auto",overflowX:"hidden",overscrollBehavior:"contain",overflowAnchor:"none",
       boxShadow:tall?"none":(night?"0 -24px 60px rgba(0,0,0,0.5)":"0 -24px 60px rgba(60,90,140,0.16)"),
+      // Soft entrance — gentle rise + fade, mirrors iOS sheet feel. Bezier
+      // is iOS's standard "ease-out-quart" which decelerates smoothly into
+      // place without overshoot (overshoot would feel cartoonish on editors).
+      animation:"ltSheetRise .42s cubic-bezier(0.22, 1, 0.36, 1) both",
     }}>
+      <style>{`@keyframes ltSheetRise{0%{transform:translateY(18px);opacity:0}100%{transform:translateY(0);opacity:1}}`}</style>
       {night&&<div style={{position:"absolute",inset:0,pointerEvents:"none",opacity:0.8,backgroundImage:`radial-gradient(1px 1px at 16% 7%,rgba(255,255,255,0.5),transparent),radial-gradient(1.3px 1.3px at 68% 5%,rgba(255,255,255,0.38),transparent),radial-gradient(1px 1px at 85% 12%,rgba(255,255,255,0.42),transparent),radial-gradient(1px 1px at 34% 15%,rgba(255,255,255,0.3),transparent),radial-gradient(1.2px 1.2px at 9% 20%,rgba(255,255,255,0.28),transparent),radial-gradient(1px 1px at 54% 18%,rgba(255,255,255,0.24),transparent),radial-gradient(1px 1px at 78% 23%,rgba(255,255,255,0.2),transparent)`,backgroundRepeat:"no-repeat"}}/>}
       <div style={{position:"relative",zIndex:1}}>{children}</div>
     </div>);
@@ -8786,7 +9668,12 @@ function Sheet({children,scroll,tall,dark}){
   return(<div data-modal-scroll style={{
     position:"absolute",
     top:0,left:0,right:0,bottom:0,
-    background:G.white,
+    // Atmospheric wash from top — a faint warm/cool radial glow that picks up
+    // the screen accent if available, giving user-view sheets the same calm
+    // luminous feel as the editor sheets (instead of flat white).
+    background: accent
+      ? `radial-gradient(85% 35% at 50% -2%, ${accent}1A 0%, transparent 60%), ${G.white}`
+      : `radial-gradient(85% 35% at 50% -2%, rgba(232,168,120,0.07) 0%, transparent 60%), ${G.white}`,
     borderRadius:tall?"0":"28px 28px 0 0",
     padding:tall
       ?"calc(env(safe-area-inset-top, 0px) + 16px) 22px max(28px, env(safe-area-inset-bottom, 12px))"
@@ -8796,7 +9683,9 @@ function Sheet({children,scroll,tall,dark}){
     overscrollBehavior:"contain",
     overflowAnchor:"none",
     boxShadow:tall?"none":"0 -24px 60px rgba(31,27,46,0.18)",
+    animation:"ltSheetRise .42s cubic-bezier(0.22, 1, 0.36, 1) both",
   }}>
+    <style>{`@keyframes ltSheetRise{0%{transform:translateY(18px);opacity:0}100%{transform:translateY(0);opacity:1}}`}</style>
     <div style={{position:"relative",zIndex:1}}>{children}</div>
   </div>);
 }
@@ -8874,11 +9763,26 @@ function EmojiPicker({value,onChange,color:rawColor,lang,t,onClose,title}){
           <button onClick={onClose} aria-label={lang==="sv"?"Stäng":"Close"} className="lt-press" style={{flexShrink:0,padding:"9px 16px",borderRadius:12,border:"none",background:dark?"rgba(255,255,255,0.1)":"#1F1B2E",color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:13,cursor:"pointer"}}>{lang==="sv"?"Klar":"Done"}</button>
         </div>
 
-        {/* Category tab strip */}
-        <div style={{padding:"2px 16px 12px",overflowX:"auto",scrollbarWidth:"none",touchAction:"pan-x",flexShrink:0}}>
-          <div style={{display:"flex",gap:7,minWidth:"max-content"}}>
+        {/* Category tab strip. iOS-friendly horizontal scroll:
+            · touchAction:"pan-x" isolates the gesture from the parent Sheet's
+              vertical scroll, so swiping the strip never gets eaten by the
+              modal's pan-y handler.
+            · WebkitOverflowScrolling:"touch" enables hardware momentum.
+            · scroll-snap with mandatory + start gives a clean lock onto each
+              category button so the user can flick through them. */}
+        <div style={{
+          padding:"2px 16px 12px",
+          overflowX:"auto",overflowY:"hidden",
+          scrollbarWidth:"none",
+          touchAction:"pan-x",
+          WebkitOverflowScrolling:"touch",
+          overscrollBehaviorX:"contain",
+          flexShrink:0,
+          scrollSnapType:"x proximity",
+        }}>
+          <div style={{display:"flex",gap:7,minWidth:"max-content",alignItems:"center"}}>
             {tabs.map(tb=>{const active=tab===tb.key;return(
-              <button key={tb.key} onClick={()=>setTab(tb.key)} style={{
+              <button key={tb.key} onClick={()=>setTab(tb.key)} className="lt-press-soft" style={{
                 padding:"9px 15px",borderRadius:16,
                 border:active?`1.5px solid ${color}`:`1px solid ${dark?edPal().cardBorder:G.border}`,
                 background:active?`linear-gradient(140deg, ${color}1A, ${color}28)`:(dark?edPal().cardBg:G.white),
@@ -8951,18 +9855,30 @@ const GHOSTT=()=>isDark()
 // Dark: premium accent-tinted glass — soft rosa/lila wash, accent border, accent text.
 const saveBtnStyle=(accent,extra={})=>{
   if(isDark()){
-    return {borderRadius:16,border:`1px solid ${accent}55`,
-      background:`linear-gradient(135deg, ${accent}26, ${accent}14)`,
-      color:"#F4F1FA",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",
+    // Premium iOS-native: frosted vibrancy over a soft accent wash. Single
+    // tight inner highlight + a quiet outer glow. No multi-stop gradient.
+    return {borderRadius:14,border:`1px solid ${accent}55`,
+      background:`linear-gradient(180deg, ${accent}38 0%, ${accent}24 100%)`,
+      backdropFilter:"blur(20px) saturate(180%)",
+      WebkitBackdropFilter:"blur(20px) saturate(180%)",
+      color:"#FFFFFF",fontFamily:G.font,fontWeight:600,fontSize:15,cursor:"pointer",
       outline:"none",WebkitTapHighlightColor:"transparent",
-      boxShadow:`inset 0 1px 0 rgba(255,255,255,0.10), inset 0 0 0 1px ${accent}22`,
-      display:"flex",alignItems:"center",justifyContent:"center",gap:8,letterSpacing:.3,...extra};
+      boxShadow:`inset 0 1px 0 rgba(255,255,255,0.18), 0 6px 18px -6px ${accent}AA`,
+      display:"flex",alignItems:"center",justifyContent:"center",gap:9,letterSpacing:-.05,
+      transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .3s ease",
+      ...extra};
   }
-  return {borderRadius:16,border:"none",background:`linear-gradient(135deg, ${accent}, ${accent}DC)`,
-    color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",
+  // Premium iOS-native: SOLID accent (not gradient) with one quiet inner
+  // highlight to suggest dimension. iOS system buttons use solid fills, not
+  // gradients — gradients read as "designed in Figma 2018".
+  return {borderRadius:14,border:"none",
+    background:accent,
+    color:"#fff",fontFamily:G.font,fontWeight:600,fontSize:15,cursor:"pointer",
     outline:"none",WebkitTapHighlightColor:"transparent",
-    boxShadow:`0 12px 28px ${accent}45, 0 3px 8px ${accent}28`,
-    display:"flex",alignItems:"center",justifyContent:"center",gap:8,letterSpacing:.3,...extra};
+    boxShadow:`inset 0 1px 0 rgba(255,255,255,0.30), 0 6px 16px -4px ${accent}55, 0 1px 3px rgba(31,27,46,0.10)`,
+    display:"flex",alignItems:"center",justifyContent:"center",gap:9,letterSpacing:-.05,
+    transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .3s ease, background .2s ease",
+    ...extra};
 };
 
 function TabB({active,gold,children,onClick,color,deep,flex=1}){
@@ -9490,7 +10406,7 @@ function StoryEditor({story,onSave,onDel,onClose,t,lang}){
   // Snapshot of the initial values so we can detect unsaved changes on close.
   const initial=useRef(JSON.stringify({type:story?.type||"sequence",title:story?.sv||"",emoji:story?.emoji||(story?.type==="firstthen"?"📋":"📖"),photo:story?.photo||null,color:story?.color||(story?.type==="firstthen"?"#D9886B":"#C9A875"),firstLabel:story?.firstLabel||"",thenLabel:story?.thenLabel||"",pages:story?.pages?story.pages.map(p=>({...p})):(story?.type==="firstthen"?[{id:"first",emoji:"📚",photo:null,sv:"",en:""},{id:"then",emoji:"🎉",photo:null,sv:"",en:""}]:[])}));
   const isDirty=()=> JSON.stringify({type,title,emoji,photo,color,firstLabel,thenLabel,pages})!==initial.current;
-  const attemptClose=()=>{ if(isDirty()) setDiscardOpen(true); else onClose(); };
+  const attemptClose=()=>{ if(isDirty()){ scrollActiveSheetToTop(); setDiscardOpen(true); } else onClose(); };
   const pp=40;
   const S=scrPal("stories");
   const isFT=type==="firstthen";
@@ -9547,7 +10463,7 @@ function StoryEditor({story,onSave,onDel,onClose,t,lang}){
   // Section card — same notebook-style vocabulary as Settings + EditModal + EmotionEditor
   return(
     <Overlay onClose={attemptClose}>
-      <Sheet scroll dark>
+      <Sheet scroll dark accent={S.h}>
         <style>{`@keyframes stSectionIn{0%{opacity:0}100%{opacity:1}}`}</style>
         <div style={{marginBottom:18}}>
           <div style={{fontFamily:G.font,fontWeight:600,fontSize:11,letterSpacing:.6,textTransform:"uppercase",color:edPal().glow(color&&color!=="#FFFFFF"?color:"#C9A875",1),marginBottom:5,opacity:.95}}>{lang==="sv"?"Redigera":"Edit"}</div>
@@ -9749,6 +10665,7 @@ function StoryScreen({lang,t,isEditor,stories,setStories,onOpenStory,onOpenEdito
                   </div>
                 )}
                 <div onClick={()=>isEditor?onOpenEditor(s):onOpenStory(s)} className="lt-press-soft" style={{
+                  position:"relative",
                   background:isDark()?`linear-gradient(180deg, rgba(255,255,255,0.06) 0%, ${s.color}14 100%)`:`linear-gradient(180deg, #FFFFFF 0%, ${s.color}07 100%)`,
                   borderRadius:22,
                   padding:"20px 14px 16px",
@@ -9756,7 +10673,18 @@ function StoryScreen({lang,t,isEditor,stories,setStories,onOpenStory,onOpenEdito
                   border:`1px solid ${isDark()?s.color+"3D":s.color+"28"}`,
                   boxShadow:isDark()?`inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 32px -16px rgba(0,0,0,0.7)`:`0 8px 24px ${s.color}1A, 0 2px 6px ${s.color}0F`,
                   transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .2s ease",
+                  overflow:"hidden",
                 }}>
+                  {/* Book-spine hint — a soft 6px gradient on the left edge
+                      that fades inward. Subtle nod to "this is a book" without
+                      forcing the metaphor. Only on left so the card reads as
+                      a story to open from the left, like a real book. */}
+                  <div aria-hidden style={{
+                    position:"absolute",left:0,top:0,bottom:0,width:6,
+                    background:`linear-gradient(90deg, ${s.color}${isDark()?"40":"30"} 0%, transparent 100%)`,
+                    borderRadius:"22px 0 0 22px",
+                    pointerEvents:"none",
+                  }}/>
                   {/* Cover tile — larger, with inner highlight + soft colored shadow */}
                   <div style={{
                     width:92,height:92,margin:"0 auto 14px",borderRadius:22,
@@ -11045,7 +11973,13 @@ function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActi
     cfg.calmTools?.skylight!==false&&{key:"skylight",emoji:"☁️",title:t.skylight,desc:lang==="en"?"Rest your gaze on the sky":"Vila blicken mot himlen",color:"#B89DC4",gradFrom:"#B89DC4",gradTo:"#D5C5DD"},
   ].filter(Boolean);
   return(
-    <div style={{flex:1,overflowY:"auto",background:"transparent"}}>
+    <div style={{flex:1,overflowY:"auto",background:"transparent",animation:"calmRadialReveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both"}}>
+      <style>{`
+        @keyframes calmRadialReveal{
+          0%{opacity:0;clip-path:circle(0% at 50% 50%)}
+          100%{opacity:1;clip-path:circle(150% at 50% 50%)}
+        }
+      `}</style>
       {/* Exercises are rendered at App ROOT (above the header) — see App. */}
       <div style={{padding:"28px 22px 120px"}}>
         <style>{`
@@ -11247,43 +12181,39 @@ function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActi
    future waits quietly. Edit mode = tap to edit.
 ═══════════════════════════════════════════════════ */
 function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,headerTapCount}){
+  // ════════════════════════════════════════════════════════════════════════
+  //  WEEKSCREEN — OVERVIEW (rhythm chart)
+  //  ════════════════════════════════════════════════════════════════════════
+  //  PHILOSOPHY: This is the OVERVIEW tab, not a detail view. The home tab is
+  //  where today is read in detail. Here the goal is one-glance comprehension:
+  //  "how does the week look? which days are full, which are calm, which are
+  //  empty?" — NOT "what exactly is happening at 14:30 on Wednesday".
+  //
+  //  KEY DECISIONS:
+  //  • Duration is dropped from the visual scale entirely. A 15-min activity
+  //    and a 2-hour one render identically — both as fixed-height segments.
+  //    This makes clashes structurally impossible no matter how packed a day.
+  //  • The day is split into 3 zones (morning / day / evening). Exact times
+  //    belong in the detail view; the zone is enough for an overview.
+  //  • Today's column is wider (1.45×) than the others — anchors the eye.
+  //  • Tap a column → "peeks" that day in a small panel below, with a tidy
+  //    time-sorted list. Tap an activity in the list → opens it.
+  //  • Full dark-mode adapted via tk() tokens and a few dark-aware shadows.
+  // ════════════════════════════════════════════════════════════════════════
+
   const S=scrPal("week");
+  const dark=isDark();
   const weekColors=(cfg?.weekColors&&cfg.weekColors.length===7)?cfg.weekColors:SIGVARD0;
-  // focusedDay = jsDay user has tapped to "peek" at, or null = default (today is strong)
+  // focusedDay = jsDay user has tapped to "peek" at, or null = default (today)
   const[focusedDay,setFocusedDay]=useState(null);
   // When the app header is tapped, reset peek focus to today
   useEffect(()=>{
     if(headerTapCount>0) setFocusedDay(null);
   },[headerTapCount]);
-  // Build per-day date key for state lookup
+  // Per-day date key for state lookup (e.g. "2026-05-28")
   const dKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-  const HOUR_H=58;
-  // Full 24-hour day — midnight to midnight. Earlier this started at 06:00 to
-  // save vertical space, but that hid early-morning activities entirely. With
-  // initial scroll positioned to "now" (or first activity) the user still
-  // lands somewhere relevant — they can simply scroll up to see earlier hours.
-  const HOUR_START=0;
-  const HOUR_END=24; // extends to midnight so day-column color reaches the actual day boundary
-  const HOURS=Array.from({length:HOUR_END-HOUR_START},(_,i)=>HOUR_START+i);
-  const TOTAL_H=HOURS.length*HOUR_H;
-  // Extra room so the day-column color reaches and fully encloses the midnight marker
-  // (the "00" label sits at the very bottom and the colored bar must visually reach it).
-  const MIDNIGHT_PAD=14;
-  const TIME_W=lang==="en"?44:34;
-  const scrollRef=useRef(null);
-  // Pill is only relevant when the target activity is BELOW the visible
-  // viewport. Single state, only toggled when value changes — minimal renders.
-  const[targetBelow,setTargetBelow]=useState(false);
-  // Refs for direct DOM manipulation of collapse-driven elements. We avoid
-  // React state for the collapse value entirely because re-rendering the
-  // entire WeekScreen (7 day columns × N activities × hour grid) on every
-  // scroll frame caused stutter on iOS even with rAF throttling. Imperative
-  // style mutation on a handful of targeted elements is ~50× cheaper per frame.
-  const titleAreaRef=useRef(null);
-  const weekRangeRef=useRef(null);
-  const dayHeaderRowRef=useRef(null);
 
-  // Current week's Monday → Sunday
+  // ─── This week: Monday → Sunday ─────────────────────────────────────────
   const today=new Date(now);
   today.setHours(0,0,0,0);
   const todayJS=today.getDay();
@@ -11293,22 +12223,17 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
   const weekDays=[0,1,2,3,4,5,6].map(i=>{
     const d=new Date(monday);
     d.setDate(monday.getDate()+i);
-    return{date:d,day:d.getDate(),jsDay:d.getDay(),isToday:d.getTime()===today.getTime(),isPast:d.getTime()<today.getTime()};
+    return{
+      date:d, day:d.getDate(), jsDay:d.getDay(),
+      isToday:d.getTime()===today.getTime(),
+      isPast:d.getTime()<today.getTime(),
+      isWeekend:d.getDay()===0||d.getDay()===6,
+    };
   });
   const DAY_LABELS={sv:["MÅN","TIS","ONS","TOR","FRE","LÖR","SÖN"],en:["MON","TUE","WED","THU","FRI","SAT","SUN"]};
   const labels=DAY_LABELS[lang==="sv"?"sv":"en"];
 
-  // Auto-scroll to bring "now" hour into view (or 8am if before)
-  useEffect(()=>{
-    if(!scrollRef.current) return;
-    const nowMin=now.getHours()*60+now.getMinutes();
-    const scrollH=scrollRef.current.clientHeight;
-    const focusY=Math.max(0,((nowMin/60)-HOUR_START)*HOUR_H - scrollH/3);
-    scrollRef.current.scrollTop=focusY;
-  // eslint-disable-next-line
-  },[]);
-
-  // Does activity belong on a day with this jsDay?
+  // Does activity recur on this jsDay?
   const onJsDay=(a,jsDay)=>{
     if(!a.repeat||a.repeat.type==="none") return true;
     if(a.repeat.type==="daily") return true;
@@ -11317,19 +12242,23 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
     if(a.repeat.type==="custom") return (a.repeat.days||[]).includes(jsDay);
     return true;
   };
-  const yForAct=a=>Math.max(0,((hm(a.time)/60)-HOUR_START)*HOUR_H);
-  const hForAct=a=>{
-    if(a.endTime){
-      const dur=hm(a.endTime)-hm(a.time);
-      return Math.max(40,(dur/60)*HOUR_H);
-    }
-    return 54;
-  };
 
-  const monthLabel=monday.toLocaleString(lang==="sv"?"sv-SE":"en-GB",{month:"short"});
-  const sundayMonth=weekDays[6].date.toLocaleString(lang==="sv"?"sv-SE":"en-GB",{month:"short"});
-  const sameMonth=monday.getMonth()===weekDays[6].date.getMonth();
-  // ISO 8601 week number — standard in Sweden & most of Europe
+  // ─── Group each day's activities into 3 zones ──────────────────────────
+  // Morning: < 12:00, Day: 12:00–18:00, Evening: ≥ 18:00
+  const zoneOf=a=>{
+    const m=hm(a.time);
+    if(m<12*60) return 0;
+    if(m<18*60) return 1;
+    return 2;
+  };
+  const dayActs=weekDays.map(d=>{
+    const list=acts.filter(a=>onJsDay(a,d.jsDay)).sort((x,y)=>hm(x.time)-hm(y.time));
+    const zones=[[],[],[]];
+    list.forEach(a=>zones[zoneOf(a)].push(a));
+    return{day:d, list, zones, count:list.length};
+  });
+
+  // ─── ISO week number ───────────────────────────────────────────────────
   const getWeekNumber=(d)=>{
     const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
     const dayNum=t.getUTCDay()||7;
@@ -11338,637 +12267,544 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
     return Math.ceil(((t-yearStart)/86400000+1)/7);
   };
   const weekNum=getWeekNumber(monday);
-  // Just the week number — earlier we also showed the date range
-  // ("Vecka 22 · 25 – 31 Maj") but the dates already appear in the day
-  // pills below, which made the range feel redundant and visually noisy.
-  const weekRange=`${lang==="sv"?"Vecka":"Week"} ${weekNum}`;
 
-  const nowMin=now.getHours()*60+now.getMinutes();
-  const nowY=((nowMin/60)-HOUR_START)*HOUR_H;
-  const showNowLine=nowMin>=HOUR_START*60&&nowMin<=HOUR_END*60;
+  // ─── Currently-focused day for the bottom peek panel ───────────────────
+  const focusedDayObj=focusedDay==null
+    ? dayActs.find(da=>da.day.isToday)
+    : dayActs.find(da=>da.day.jsDay===focusedDay);
+  const focusedDayLabelIdx=focusedDayObj?weekDays.findIndex(d=>d.jsDay===focusedDayObj.day.jsDay):-1;
+  const focusedDayLong=focusedDayObj
+    ? focusedDayObj.day.date.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{weekday:"long",day:"numeric",month:"long"})
+    : "";
 
-  // Any activity at all on the current week's days?
-  const anyActs=acts.some(a=>weekDays.some(d=>onJsDay(a,d.jsDay)));
+  // ─── Theme-aware tokens for the chart ──────────────────────────────────
+  const PEACH="#E89B89", PEACH_DEEP="#C2607A";
+  // Polish C — softer, almost-invisible column backgrounds. The chart is the
+  // content; the columns themselves should fade into the page. Today gets a
+  // gentle wash IN ITS OWN WEEKDAY COLOUR (set in Settings) so the user's
+  // chosen palette is celebrated. Weekend & past stay quiet.
+  const colBg="transparent";
+  // Function: returns the today-wash gradient for the given weekday hex.
+  const colBgTodayFor=(wdc)=>dark
+    ?`linear-gradient(180deg, ${wdc}1A 0%, ${wdc}07 100%)`
+    :`linear-gradient(180deg, ${wdc}10 0%, ${wdc}04 100%)`;
+  const colBgWeekend="transparent";
+  const colBgEmpty="transparent";
+  const colBgPeek=dark?"linear-gradient(180deg, rgba(138,175,210,0.10) 0%, rgba(138,175,210,0.04) 100%)":"linear-gradient(180deg, rgba(138,175,210,0.07) 0%, rgba(138,175,210,0.02) 100%)";
+  // No hard ring on today anymore — the coloured wash + dot above is the signal.
+  const colBorderToday="1px solid transparent";
+  const colBorderPeek=dark?"1px solid rgba(138,175,210,0.35)":"1px solid rgba(138,175,210,0.30)";
+  const zoneDividerColor=dark?"rgba(255,255,255,0.04)":"rgba(31,27,46,0.03)";
+  const cardBg=dark?"rgba(255,255,255,0.05)":"#FFFFFF";
+  const cardBorder=dark?"rgba(255,255,255,0.09)":"rgba(31,27,46,0.05)";
+  const cardShadow=dark?"0 8px 26px -10px rgba(0,0,0,0.5)":"0 8px 26px -10px rgba(31,27,46,0.12)";
 
-  /* ─────────── "Nästa aktivitet" pill target ───────────
-     Mirrors the day-view pill: shows the currently-happening activity, or the
-     next upcoming one today. Falls back to nothing once today's activities are
-     all in the past — at which point the pill simply doesn't render. Editor
-     mode hides this entirely (no need for navigation aids while authoring). */
-  const todayJsDay=now.getDay();
-  const todayDateKey=dKey(now);
-  const todayActsForPill=isEd ? [] : acts.filter(a=>{
-    if(!onJsDay(a,todayJsDay)) return false;
-    if(dailyState?.[todayDateKey]?.[a.id]?.done) return false;
-    const endM=a.endTime?hm(a.endTime):hm(a.time)+30;
-    return endM>nowMin; // Future end → still in play
-  }).sort((x,y)=>hm(x.time)-hm(y.time));
-  // Prefer the in-progress one if any; otherwise the next upcoming.
-  const pillCurrent=todayActsForPill.find(a=>{
-    const sM=hm(a.time);
-    const eM=a.endTime?hm(a.endTime):sM+30;
-    return sM<=nowMin&&eM>nowMin;
-  });
-  const pillNext=todayActsForPill.find(a=>hm(a.time)>nowMin);
-  const pillTarget=pillCurrent||pillNext||null;
+  // ─── Card grid layout — today wider ────────────────────────────────────
+  // 28px zone-labels column + 7 day columns. Today is 1.45fr, others 1fr.
+  // Column-width rhythm — visualises the flow of the week:
+  //   passed days are slimmer and toned down (gentle echo of "already happened"),
+  //   today is the widest column (the anchor — what's happening now),
+  //   upcoming days sit at default width (full presence, ready to be looked at).
+  // The eye naturally reads left→right as past → now → ahead.
+  const colW=(d)=>{
+    if(d.isToday) return "1.7fr";
+    if(d.isPast) return "0.55fr";
+    return "1fr";
+  };
+  const gridCols=`36px ${weekDays.map(d=>colW(d)).join(" ")}`;
 
-  /* Tap → jump to target. Two effects:
-     1. If user has another day "peeked" (focused), clear it so today's column
-        becomes wide and the user actually sees what they tapped.
-     2. Scroll the timeline so the target activity lands ~1/3 down the viewport,
-        same composition rule as the day view's auto-scroll. */
-  const jumpToPillTarget=()=>{
-    if(!pillTarget||!scrollRef.current) return;
-    setFocusedDay(null);
-    const y=yForAct(pillTarget);
-    const viewH=scrollRef.current.clientHeight;
-    scrollRef.current.scrollTo({top:Math.max(0,y-viewH/3),behavior:"smooth"});
+  // Tap a column → peek (or unpeek if tapping the already-peeked / today again)
+  // Also smoothly scrolls the peek panel into view so the list appears without
+  // the user having to scroll themselves.
+  const scrollBodyRef=useRef(null);
+  const peekPanelRef=useRef(null);
+  const scrollToPanel=()=>{
+    // Wait a frame so the panel (which may have just mounted/updated) is laid out.
+    requestAnimationFrame(()=>{
+      const el=peekPanelRef.current;
+      const scr=scrollBodyRef.current;
+      if(!el||!scr) return;
+      // Compute target so the panel's top sits ~16px below the chart card.
+      const elTop=el.offsetTop;
+      scr.scrollTo({top:Math.max(0,elTop-12),behavior:"smooth"});
+    });
+  };
+  const peekDay=(jsDay,isToday)=>{
+    if(isToday){
+      setFocusedDay(null); // today is already the default — leave unpeeked
+    } else {
+      setFocusedDay(prev=>prev===jsDay?null:jsDay);
+    }
+    scrollToPanel();
   };
 
-  /* Watch scroll position. Two effects:
-     1. Pill visibility — only setState when boolean changes (≤2 renders total)
-     2. Header collapse — IMPERATIVE DOM mutation, zero React re-renders.
+  // ─── Build segment color list per zone (with "+N" overflow) ────────────
+  const MAX_SEG_PER_ZONE=6;
+  const segmentsFor=(zoneActs)=>{
+    if(zoneActs.length<=MAX_SEG_PER_ZONE) return{shown:zoneActs,more:0};
+    return{shown:zoneActs.slice(0,MAX_SEG_PER_ZONE-1),more:zoneActs.length-(MAX_SEG_PER_ZONE-1)};
+  };
 
-     React state for the collapse value caused stutter on iOS during fast
-     scrolling because each scroll frame re-rendered the entire WeekScreen
-     tree (7 day-columns, hour grid, activity tiles, all absolute-positioned
-     with transitions). Even rAF throttling couldn't compensate for the cost
-     of those re-renders. Direct style mutation via refs is what scroll-driven
-     UI is supposed to use; collapse now updates at native scroll speed. */
-  useEffect(()=>{
-    const el=scrollRef.current;
-    if(!el) return;
-    const targetY=pillTarget?yForAct(pillTarget):null;
-    let lastBelow=null;
-    let rafPending=false;
-    let pendingTop=0;
-    /* Single frame of work — runs at most 60Hz. Reads the latest scrollTop
-       (captured at scroll-event time) and applies styles directly to DOM. */
-    const applyFrame=()=>{
-      rafPending=false;
-      const top=pendingTop;
-      const raw=top<0?0:top>120?1:top/120;
-      const eased=raw*raw*(3-2*raw); // smoothstep — gentle at both ends
-      // Title area — paddings, max-height, opacity on its inner range label
-      const ta=titleAreaRef.current;
-      if(ta){
-        ta.style.paddingTop=(24-eased*22)+"px";
-        ta.style.paddingBottom=(14-eased*12)+"px";
-        // Smoothly interpolate height with the eased value (no hard 0/60 snap,
-        // which previously caused a visible bump when scrolling back up).
-        ta.style.maxHeight=(60*(1-eased))+"px";
-        ta.style.overflow="hidden";
-      }
-      const wr=weekRangeRef.current;
-      if(wr) wr.style.opacity=String(1-eased);
-      // Day-header row paddings (the row that contains MÅN/TIS/.../SÖN discs)
-      const dh=dayHeaderRowRef.current;
-      if(dh){
-        dh.style.paddingTop=(18-eased*10)+"px";
-        dh.style.paddingBottom=(12-eased*6)+"px";
-        // CSS variable lets day-tile children read collapse via inheritance.
-        // No re-render needed: tiles read this in their style via calc()/var().
-        dh.style.setProperty("--collapse",String(eased));
-      }
-    };
-    const onScroll=()=>{
-      const top=el.scrollTop;
-      pendingTop=top;
-      // Pill below-state — cheap check, only setState on real transitions
-      if(targetY!==null){
-        const visibleBot=top+el.clientHeight-80;
-        const below=targetY>visibleBot;
-        if(below!==lastBelow){
-          lastBelow=below;
-          setTargetBelow(below);
-        }
-      }
-      if(!rafPending){
-        rafPending=true;
-        requestAnimationFrame(applyFrame);
-      }
-    };
-    onScroll(); // initial
-    el.addEventListener("scroll",onScroll,{passive:true});
-    window.addEventListener("resize",onScroll);
-    return()=>{
-      el.removeEventListener("scroll",onScroll);
-      window.removeEventListener("resize",onScroll);
-    };
-  // eslint-disable-next-line
-  },[pillTarget?.id,pillTarget?.time,pillTarget?.endTime]);
+  // Any activities this week?
+  const anyActs=dayActs.some(da=>da.count>0);
+
+  // ─── Time-of-day responsive background ─────────────────────────────────
+  // Light mode only. The body gradient is paired carefully with the App-root
+  // header tint (`effS.hb`) of the same time of day, so there's no visible
+  // seam between header and body. Each preset starts in a colour very close
+  // to where the header bottom lands, then transitions to a slightly warmer
+  // / softer bottom. Top stop is therefore quite light — almost a continuation
+  // of the header — rather than a strongly different colour.
+  //   ·  05:00 – 11:59  →  DAWN — peach-tinted top to warmer cream bottom
+  //   ·  12:00 – 16:59  →  MIDDAY — sky-blue tinted top to soft cream
+  //   ·  17:00 – 23:59  →  DUSK — lilac-tinted top to soft rose bottom
+  //   ·  00:00 – 04:59  →  DEEP NIGHT — uses the dusk palette (still dim)
+  const lightBackground=(()=>{
+    const h=now.getHours()+now.getMinutes()/60;
+    // Top stops match the header's lower edge (about 7-10% alpha of the hue
+    // over white). Bottom stops carry the same family a bit deeper.
+    const dawn ="linear-gradient(180deg, #F5EBE1 0%, #F8E8DE 50%, #FAEDE5 100%)";
+    const midday="linear-gradient(180deg, #ECF2F8 0%, #F1F0EA 60%, #F8F4ED 100%)";
+    const dusk ="linear-gradient(180deg, #EBE5F0 0%, #EFE2EC 55%, #F4DDDD 100%)";
+    if(h<5)        return dusk;
+    if(h<12)       return dawn;
+    if(h<17)       return midday;
+    return dusk;
+  })();
 
   return(
-    <div
-      style={{flex:1,display:"flex",flexDirection:"column",background:"transparent",overflow:"hidden",position:"relative"}}
-      onClick={e=>{
-        // Tapping anywhere outside a day-tile/header resets focus to today.
-        // Day-headers and tiles stop propagation, so this fires for everything else:
-        // title area, hour-grid background, day-column empty areas (for today's column).
-        setFocusedDay(null);
-      }}
-    >
+    <div style={{
+      flex:1,minHeight:0,height:"100%",display:"flex",flexDirection:"column",
+      // Transparent — the App root's tinted `effS.hb` (which already follows
+      // dawn/midday/dusk for the week screen) fills the entire surface as one
+      // uniform colour. No second gradient here means no visible seam between
+      // header and body — they're the same layer of paint.
+      background:dark?"#0E0E10":"transparent",
+    }}>
       <style>{`
-        @keyframes wkTileIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
-        @keyframes wkNowPulse{0%,100%{opacity:1}50%{opacity:0.55}}
+        @keyframes weekColIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+        @keyframes weekSegIn{0%{opacity:0;transform:scaleY(0)}100%{opacity:0.95;transform:scaleY(1)}}
+        @keyframes weekPanelIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+        /* ── Zone-symbol bespoke animations ──────────────────────────────
+           SVGs are hand-built (not emoji), so animations target specific
+           pieces — rays rotate independently of core, cloud drifts while
+           sun stays put, stars twinkle on different tempos. */
+        /* MORGON sun — rays rotate slowly, core breathes warmly, glow pulses */
+        @keyframes wzSunRays{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes wzSunCore{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.08);filter:brightness(1.12)}}
+        @keyframes wzSunGlow{0%,100%{opacity:0.55;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+        .wz-sun-rays{animation:wzSunRays 18s linear infinite}
+        .wz-sun-core{animation:wzSunCore 3.6s ease-in-out infinite;transform-origin:13px 13px}
+        .wz-sun-glow{animation:wzSunGlow 4.2s ease-in-out infinite;transform-origin:13px 13px}
+        /* DAG cloud drifts gently horizontally; sun behind stays steady */
+        @keyframes wzDayCloud{0%,100%{transform:translateX(0)}50%{transform:translateX(1.6px)}}
+        @keyframes wzDaySun{0%,100%{filter:brightness(1)}50%{filter:brightness(1.10)}}
+        .wz-day-cloud{animation:wzDayCloud 4.8s ease-in-out infinite}
+        .wz-day-sun{animation:wzDaySun 4.2s ease-in-out infinite}
+        /* KVÄLL moon — very slow tilt, stars twinkle on their own tempos */
+        @keyframes wzMoonBody{0%,100%{transform:rotate(-5deg);filter:brightness(1)}50%{transform:rotate(5deg);filter:brightness(1.08)}}
+        @keyframes wzStarTwinkle{0%,100%{opacity:0.35;transform:scale(0.85)}50%{opacity:1;transform:scale(1.15)}}
+        .wz-moon-body{animation:wzMoonBody 7s ease-in-out infinite}
+        .wz-star{transform-origin:center;transform-box:fill-box}
+        .wz-star-1{animation:wzStarTwinkle 2.4s ease-in-out infinite}
+        .wz-star-2{animation:wzStarTwinkle 3.1s 0.4s ease-in-out infinite}
+        .wz-star-3{animation:wzStarTwinkle 2.7s 1.2s ease-in-out infinite}
+        .week-col{animation:weekColIn 0.55s cubic-bezier(0.22,1,0.36,1) both}
+        .week-seg{animation:weekSegIn 0.4s cubic-bezier(0.22,1,0.36,1) both;transform-origin:center}
+        .week-peek-panel{animation:weekPanelIn 0.35s cubic-bezier(0.22,1,0.36,1) both}
       `}</style>
 
-      {/* Title area — collapses on scroll via direct DOM mutation (see
-          scroll effect above). Style values are initial; the scroll handler
-          rewrites padding/maxHeight imperatively without triggering React
-          re-renders. The "Idag" pill lives separately to avoid clipping. */}
-      <div ref={titleAreaRef} style={{padding:"24px 22px 14px",flexShrink:0,maxHeight:60,overflow:"hidden"}}>
-        <div ref={weekRangeRef} style={{fontFamily:G.serif,fontWeight:600,fontSize:14,color:isDark()?tk().ink2:"#7C7691",letterSpacing:.3,textTransform:"capitalize"}}>{weekRange}</div>
-      </div>
+      {/* ── Scrollable body ──
+          Holds EVERYTHING below the header — including the week meta line.
+          That meta ("Vecka 22 · 25 – 31 maj") was previously locked in place
+          at the top, which felt heavy. Putting it inside the scroll body lets
+          it scroll out of view gracefully when the user scrolls down to the
+          day list — the rhythm chart then sits at the top, getting more room. */}
+      <div ref={scrollBodyRef} style={{flex:1,minHeight:0,overflowY:"auto",padding:"6px 14px 24px",WebkitOverflowScrolling:"touch"}}>
 
-      {/* "Idag" pill — lifted out into its own absolute overlay so it can stay
-          visible and intact regardless of the title-area's collapse. Lives in
-          the top-right corner; only shown when peeking at another day. Tap to
-          return focus to today's column. */}
-      <div
-        onClick={e=>{e.stopPropagation();setFocusedDay(null);}}
-        className="lt-press-soft"
-        style={{
-          position:"absolute",top:14,right:14,zIndex:25,
-          opacity:focusedDay!==null?1:0,
-          transform:focusedDay!==null?"translateY(0)":"translateY(-4px)",
-          transition:"opacity 0.32s cubic-bezier(0.32, 0.72, 0, 1), transform 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
-          pointerEvents:focusedDay!==null?"auto":"none",
-          display:"flex",alignItems:"center",gap:5,
-          padding:"6px 10px 6px 8px",borderRadius:14,
-          background:"rgba(255,255,255,0.85)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",
-          border:"1px solid rgba(31,27,46,0.06)",
-          boxShadow:"0 2px 8px rgba(31,27,46,0.06)",
-          fontFamily:G.font,fontWeight:500,fontSize:11,color:tk().ink2,letterSpacing:.2,
-          cursor:"pointer",
-        }}>
-        <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 11L5 7l4-4"/>
-        </svg>
-        <span>{lang==="sv"?"Idag":"Today"}</span>
-      </div>
-
-      {/* Day-header row — sticky context, today header extends upward like a bookmark.
-          Padding collapses via direct DOM mutation in the scroll handler. */}
-      <div ref={dayHeaderRowRef} style={{display:"flex",padding:"18px 6px 12px 6px",flexShrink:0,position:"relative",alignItems:"flex-end"}}>
-        <div style={{width:TIME_W,flexShrink:0}}/>
-        {weekDays.map((d,i)=>{
-          const dCol=weekColors[d.jsDay]||S.h;
-          // Three-state: today (strongest, default), peeked (medium, on tap), other (quiet)
-          const isPeeked=focusedDay===d.jsDay&&!d.isToday;
-          const showStrong=d.isToday&&focusedDay===null;
-          const showMedium=isPeeked;
-          // Today stays identifiable even when peeking another day — softer than strong, stronger than quiet
-          const todaySofter=d.isToday&&focusedDay!==null;
-          // Light-colour detection — proper luminance check, not just a few
-          // hard-coded hex values. Catches white, yellow, light pink, pale
-          // mint, etc. — any colour where white text would vanish. Uses
-          // the standard rec.709 luminance formula on the chosen colour.
-          const isLight=(()=>{
-            const rgb=hexToRgb(dCol);
-            if(!rgb) return false;
-            const lum=0.299*rgb[0]+0.587*rgb[1]+0.114*rgb[2];
-            return lum>200;
-          })();
-          // Match column flex widths EXACTLY so the disc centers over the colored strip.
-          // These must mirror the colFlex logic in the day-column rendering below.
-          const headerFlex = showStrong ? 1.85 : todaySofter ? 1.50 : showMedium ? 1.00 : d.isPast ? 0.5 : 0.7;
-          // Base sizes — actual rendered size scales via CSS variable
-          // --collapse (set on the dayHeaderRow by the scroll handler).
-          // Using transform:scale ensures GPU compositing; no layout/paint
-          // cost per frame. Today's bookmark extension uses the same var.
-          const discBase = showStrong ? 46 : todaySofter ? 36 : showMedium ? 34 : d.isPast ? 18 : 30;
-          const numBase  = showStrong ? 21 : todaySofter ? 17 : showMedium ? 16 : d.isPast ? 9 : 13.5;
-          return(
-            <div key={i}
-              onClick={e=>{
-                e.stopPropagation();
-                // Tap on today always returns to default (today big again).
-                // Tap on another day toggles peek-focus.
-                if(d.isToday){
-                  setFocusedDay(null);
-                } else {
-                  setFocusedDay(prev=>prev===d.jsDay?null:d.jsDay);
-                }
-              }}
-              className="lt-press-soft"
-              style={{flex:headerFlex,textAlign:"center",padding:"4px 0 6px",
-                marginTop:d.isToday?`calc(-16px * (1 - var(--collapse, 0)))`:0,
-                opacity:d.isPast?0.28:1,filter:d.isPast?"saturate(0.4)":"none",
-                transition:"flex .5s cubic-bezier(0.32, 0.72, 0, 1), opacity .6s cubic-bezier(0.32, 0.72, 0, 1), filter .6s cubic-bezier(0.32, 0.72, 0, 1)",
-                position:"relative",cursor:"pointer"}}>
-              {/* Day label — quiet */}
-              <div style={{fontFamily:G.font,fontWeight:500,fontSize:9.5,color:showStrong||showMedium||todaySofter?tk().ink:(isDark()?"rgba(244,241,250,0.62)":"#7C7691"),letterSpacing:.7,marginBottom:5,transition:"color .35s ease"}}>{labels[i]}</div>
-              {/* Date number — wrapped in color disc. transform:scale driven by
-                  --collapse CSS variable on the parent row so the shrink happens
-                  on the compositor thread, not in JS. willChange tells the
-                  browser to keep this on its own layer for cheap repaints. */}
-              <div style={{position:"relative",width:discBase,height:discBase,margin:"0 auto"}}>
-                {/* Soft breathing halo behind today's disc — only when strong */}
-                {showStrong&&(
-                  <>
-                    <style>{`
-                      @keyframes wkTodayHalo{0%,100%{opacity:0.35;transform:scale(0.95)}50%{opacity:0.7;transform:scale(1.18)}}
-                      @keyframes wkTodayBreath{0%,100%{transform:scale(1) scale(calc(1 - 0.30 * var(--collapse, 0)));filter:brightness(1)}50%{transform:scale(1.03) scale(calc(1 - 0.30 * var(--collapse, 0)));filter:brightness(1.05)}}
-                    `}</style>
-                    <div style={{position:"absolute",inset:-8,borderRadius:"50%",background:`radial-gradient(circle, ${dCol}66 0%, ${dCol}22 50%, transparent 75%)`,filter:"blur(6px)",animation:"wkTodayHalo 3.6s ease-in-out infinite",pointerEvents:"none"}}/>
-                  </>
-                )}
-                <div style={{
-                  width:discBase,height:discBase,borderRadius:"50%",
-                  display:"flex",alignItems:"center",justifyContent:"center",
-                  position:"relative",
-                  // Concept C — "Färgcirklar": every day (today, peeked,
-                  // today-softer, AND future days) gets its full hue. Past
-                  // days stay quiet (handled via opacity in the outer div).
-                  // The day-pill is now a chromatic "pearl row".
-                  background:`linear-gradient(140deg, ${dCol}, ${dCol}DC)`,
-                  // Border: light colours (white, yellow, pale) get a
-                  // visible dark hairline so the disc reads as a shape on
-                  // a light page; saturated colours just need a whisper.
-                  border:`1px solid ${isLight?"rgba(31,27,46,0.22)":"rgba(31,27,46,0.04)"}`,
-                  boxShadow:showStrong
-                    ?`0 6px 16px ${dCol}77, 0 2px 4px ${dCol}55, inset 0 1px 0 rgba(255,255,255,0.5)`
-                    :showMedium
-                    ?`0 3px 8px ${dCol}44, inset 0 1px 0 rgba(255,255,255,0.4)`
-                    :todaySofter
-                    ?`0 3px 8px ${dCol}44, inset 0 1px 0 rgba(255,255,255,0.45)`
-                    // Future days get a quiet lift shadow in their colour;
-                    // past days get just an inner highlight (no drop shadow).
-                    :d.isPast
-                    ?`inset 0 1px 0 rgba(255,255,255,0.35)`
-                    :`0 2px 6px ${dCol}33, inset 0 1px 0 rgba(255,255,255,0.45)`,
-                  transition:"background .4s ease, box-shadow .4s ease",
-                  transform:`scale(${showMedium?1.04:1}) scale(calc(1 - 0.30 * var(--collapse, 0)))`,
-                  // Gentle "alive" breath on today only — separate from halo.
-                  animation:showStrong?"wkTodayBreath 3.2s ease-in-out infinite":"none",
-                  willChange:"transform",
-                }}>
-                  {d.isPast?(
-                    /* Past days — show a small ✓ inside instead of the date
-                       number, signalling the day has been completed. Text
-                       colour adapts to disc luminance for legibility. */
-                    <svg width={discBase*0.46} height={discBase*0.46} viewBox="0 0 16 16" style={{color:isLight?G.ink:"#FFFFFF",opacity:0.88}}>
-                      <path d="M3 8.5 L6.5 12 L13 4.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  ):(
-                    /* Date number. On LIGHT discs (white, yellow, etc) we
-                       use the app's dark ink for legibility — white text
-                       would vanish. On saturated discs, white text with a
-                       soft drop shadow keeps it crisp. */
-                    <span style={{
-                      fontFamily:G.serif,
-                      fontWeight:600,
-                      fontSize:numBase,
-                      color:isLight?G.ink:"#FFFFFF",
-                      textShadow:isLight?"none":"0 1px 2px rgba(31,27,46,0.30)",
-                      lineHeight:1,letterSpacing:-.3,
-                      transition:"color .35s ease",
-                    }}>{d.day}</span>
-                  )}
-                </div>
+        {(()=>{
+          // Premium, calm contrast with the live sky. Against a dark or cool
+          // sky we use a soft warm champagne/peach; against a light warm sky a
+          // muted dusty rose-taupe. Never a loud saturated accent.
+          const _sk=skyAt(now.getHours()+now.getMinutes()/60);
+          const lum=(_sk.hill[0]*0.299+_sk.hill[1]*0.587+_sk.hill[2]*0.114)/255;
+          const labelCol = isDark()
+            ? "rgba(255,255,255,0.55)"
+            : (lum<0.55
+                ? "#E7BFA0"            // dark/dusky sky -> soft champagne peach
+                : "#8A7F8E");          // light sky -> muted dusty mauve-taupe
+          // ── Date range for this week (Mon→Sun). Handles weeks that straddle
+          //    two months ("29 maj – 4 juni") as well as same-month weeks
+          //    ("25–31 maj"). Long month names read calmer/more premium than
+          //    the abbreviated forms (which add inconsistent periods in sv).
+          const _wkMon=weekDays[0].date, _wkSun=weekDays[6].date;
+          const _wkLoc=lang==="sv"?"sv-SE":"en-GB";
+          const _wkMonth=(d)=>d.toLocaleDateString(_wkLoc,{month:"long"});
+          const dateRange=_wkMon.getMonth()===_wkSun.getMonth()
+            ? `${_wkMon.getDate()}–${_wkSun.getDate()} ${_wkMonth(_wkSun)}`
+            : `${_wkMon.getDate()} ${_wkMonth(_wkMon)} – ${_wkSun.getDate()} ${_wkMonth(_wkSun)}`;
+          return (
+            // ── Editorial "hero" week header ──
+            //   eyebrow label (adaptive labelCol) sits above a large serif
+            //   numeral (inkSoft display ink), with a quiet date range (ink2)
+            //   baseline-aligned beside it. The air around the big numeral is
+            //   what reads as "premium" — let it breathe.
+            <div style={dark?{padding:"12px 16px 14px",marginBottom:12,borderRadius:20,background:"linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.035) 100%)",backdropFilter:"blur(22px) saturate(1.6)",WebkitBackdropFilter:"blur(22px) saturate(1.6)",border:"1px solid rgba(255,255,255,0.12)",boxShadow:"0 10px 30px -14px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.20)"}:{padding:"4px 6px 14px"}}>
+              <div style={{fontFamily:G.font,fontSize:11,fontWeight:700,letterSpacing:3,textTransform:"uppercase",color:labelCol,marginBottom:1,transition:"color .5s ease"}}>{lang==="sv"?"Vecka":"Week"}</div>
+              <div style={{display:"flex",alignItems:"baseline",gap:11}}>
+                <span style={dark?{fontFamily:G.serif,fontWeight:800,fontSize:46,lineHeight:0.92,letterSpacing:-1,background:"linear-gradient(180deg, rgba(244,242,252,0.72) 0%, rgba(244,242,252,0.34) 52%, rgba(244,242,252,0.15) 100%)",WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}:{fontFamily:G.serif,fontWeight:800,fontSize:46,lineHeight:0.92,letterSpacing:-1,background:"linear-gradient(180deg, #5E5775 0%, #6E6786 52%, #847D98 100%)",WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}}>{weekNum}</span>
+                <span style={{fontFamily:G.font,fontSize:13.5,fontWeight:500,color:dark?"rgba(163,158,181,0.72)":tk().ink2,transition:"color .5s ease"}}>{dateRange}</span>
               </div>
-              {/* "Today" indicator — always visible under today's disc, regardless of focus */}
-              {d.isToday&&(
-                <div style={{marginTop:6,display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>
-                  <div style={{width:4,height:4,borderRadius:"50%",background:tk().ink,opacity:0.7}}/>
-                  <div style={{fontFamily:G.font,fontWeight:600,fontSize:8.5,color:tk().ink,letterSpacing:.8,textTransform:"uppercase",opacity:0.7}}>{lang==="sv"?"Idag":"Today"}</div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-        {/* Hairline divider beneath header — soft, full width edge-to-edge for visual binding */}
-        <div style={{position:"absolute",bottom:0,left:0,right:0,height:1,background:"linear-gradient(90deg, transparent 0%, rgba(31,27,46,0.07) 12%, rgba(31,27,46,0.07) 88%, transparent 100%)"}}/>
-      </div>
-
-      {/* Grid body — scrollable. paddingBottom gives clearance so the App-level "Add activity" button never overlaps the last hour at scroll-bottom. */}
-      <div ref={scrollRef} style={{flex:1,overflowY:"auto",position:"relative",paddingBottom:140}}>
-        {/* ───── "Nästa aktivitet" pill ─────
-            Sticky at the top of the scroll viewport so it remains reachable
-            no matter where the user has scrolled. Tap to jump the timeline to
-            the target activity. Same visual vocabulary as the day-view pill
-            (white glassmorphic, pulsing colored dot, ellipsised activity name).
-            Hidden when there's no relevant target (editor mode, or all of
-            today's activities have already ended). */}
-        {pillTarget&&(()=>{
-          const isEn=t?.myDay==="My Day";
-          const isCurrent=!!pillCurrent;
-          // Hidden when the target activity is visible in the viewport.
-          // Pill is shown only when target activity is BELOW the viewport
-          // (user needs to scroll down to reach it). Hidden when in view or
-          // when user has scrolled past — popping back up after the user has
-          // moved past feels like the app pulling them backwards.
-          const visible=targetBelow;
-          return(
-            <div style={{position:"sticky",top:8,zIndex:20,display:"flex",justifyContent:"center",pointerEvents:"none",padding:"0 16px",marginBottom:-32}}>
-              <button onClick={jumpToPillTarget} aria-label={isEn?"Jump to next activity":"Hoppa till nästa aktivitet"} className="lt-press-soft" style={{
-                pointerEvents:visible?"auto":"none",
-                opacity:visible?1:0,
-                transform:visible?"translateY(0) scale(1)":"translateY(-10px) scale(0.94)",
-                transition:"opacity 0.32s ease, transform 0.36s cubic-bezier(0.32, 0.72, 0, 1)",
-                padding:"8px 14px 8px 12px",borderRadius:999,
-                border:`1px solid ${tk().border}`,
-                background:isDark()?"linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))":"linear-gradient(135deg, rgba(255,255,255,0.96), rgba(252,250,254,0.96))",
-                backdropFilter:"saturate(180%) blur(14px)",
-                WebkitBackdropFilter:"saturate(180%) blur(14px)",
-                boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.14), 0 8px 22px -10px rgba(0,0,0,0.7)":"0 6px 20px rgba(31,27,46,0.12), inset 0 1px 0 rgba(255,255,255,0.9)",
-                display:"flex",alignItems:"center",gap:7,cursor:"pointer",
-                fontFamily:G.font,fontWeight:600,fontSize:12,color:tk().ink,letterSpacing:.2,
-                whiteSpace:"nowrap",maxWidth:"calc(100% - 16px)",
-              }}>
-                <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:8,height:8,borderRadius:"50%",background:pillTarget.color,boxShadow:`0 0 8px ${pillTarget.color}AA, 0 0 0 2px ${pillTarget.color}22`,animation:"wkPillDot 2.2s ease-in-out infinite",flexShrink:0}}/>
-                <style>{`@keyframes wkPillDot{0%,100%{box-shadow:0 0 6px ${pillTarget.color}99, 0 0 0 2px ${pillTarget.color}1F;transform:scale(1)}50%{box-shadow:0 0 12px ${pillTarget.color}EE, 0 0 0 3px ${pillTarget.color}33;transform:scale(1.18)}}`}</style>
-                <span style={{overflow:"hidden",textOverflow:"ellipsis",flex:1,minWidth:0}}>
-                  {isCurrent ? (isEn?"Now":"Pågår nu") : (isEn?"Next":"Nästa")}
-                  <span style={{color:tk().ink2,fontWeight:500,marginLeft:6}}>· {pillTarget.name}</span>
-                </span>
-                {/* Down-chevron — quietly signals "tap to jump down to this".
-                    Slightly dimmed so it doesn't pull focus from the activity
-                    name; the pulse animation on the colour dot already draws
-                    the eye. Hidden when target is currently in progress (no
-                    jump needed — user is already there in time). */}
-                {!isCurrent&&(
-                  <span style={{color:tk().ink3,flexShrink:0,marginLeft:2,display:"inline-flex",alignItems:"center",animation:"wkPillChev 2.6s ease-in-out infinite"}}>
-                    <IconChevron dir="down" size={12} strokeWidth={2.2}/>
-                  </span>
-                )}
-                <style>{`@keyframes wkPillChev{0%,100%{transform:translateY(0);opacity:0.7}50%{transform:translateY(1.5px);opacity:1}}`}</style>
-              </button>
             </div>
           );
         })()}
-        {!anyActs&&isEd?null:!anyActs?(
-          <div style={{padding:"72px 30px 60px",textAlign:"center"}}>
-            <style>{`
-              @keyframes wkEmpty{0%,100%{transform:translateY(0);opacity:0.9}50%{transform:translateY(-4px);opacity:1}}
-              @keyframes wkEmptyHalo{0%,100%{opacity:0.35;transform:scale(0.95)}50%{opacity:0.6;transform:scale(1.08)}}
-            `}</style>
-            <div style={{position:"relative",width:110,height:110,margin:"0 auto 16px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <div style={{position:"absolute",inset:0,borderRadius:"50%",background:`radial-gradient(circle, ${S.h}33 0%, ${S.h}10 50%, transparent 75%)`,filter:"blur(8px)",animation:"wkEmptyHalo 4.5s ease-in-out infinite"}}/>
-              <svg width="76" height="76" viewBox="0 0 64 64" style={{position:"relative",zIndex:1,animation:"wkEmpty 4.6s ease-in-out infinite"}}>
-                <defs>
-                  <linearGradient id="wkEmptyFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={`${S.h}22`}/>
-                    <stop offset="100%" stopColor={`${S.h}55`}/>
-                  </linearGradient>
-                </defs>
-                <rect x="10" y="14" width="44" height="40" rx="6" fill="url(#wkEmptyFill)" stroke={`${S.h}88`} strokeWidth="1.6"/>
-                <line x1="10" y1="24" x2="54" y2="24" stroke={`${S.h}99`} strokeWidth="1.4"/>
-                <line x1="24.6" y1="24" x2="24.6" y2="54" stroke={`${S.h}44`} strokeWidth="1"/>
-                <line x1="39.4" y1="24" x2="39.4" y2="54" stroke={`${S.h}44`} strokeWidth="1"/>
-                <path d="M22 10 v6 M42 10 v6" stroke={`${S.h}aa`} strokeWidth="1.8" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:tk().inkSoft,letterSpacing:-.4,lineHeight:1.1,marginBottom:8}}>{t.weekEmpty}</div>
-            <div style={{fontFamily:G.font,fontWeight:400,fontSize:13.5,color:tk().ink2,letterSpacing:.1,lineHeight:1.5,maxWidth:280,marginLeft:"auto",marginRight:"auto"}}>{lang==="sv"?"Veckan visar alla aktiviteter samlat. Lägg till dem via redigeringsläget.":"The week shows all activities together. Add them via edit mode."}</div>
-          </div>
-        ):null}
-        <div style={{position:"relative",height:TOTAL_H+MIDNIGHT_PAD,display:"flex",padding:"0 6px"}}>
-          {/* Global horizontal hour-lines — span the whole grid edge-to-edge for a calmer rhythm */}
-          {HOURS.map((_,i)=>i%2===0&&i!==0&&(
-            <div key={`hl-${i}`} style={{position:"absolute",top:i*HOUR_H,left:TIME_W+6,right:6,height:1,background:"rgba(31,27,46,0.04)",pointerEvents:"none",zIndex:0}}/>
-          ))}
 
-          {/* Global now-line — uses same color setting as home schedule (cfg.nowLineColor/sigvardColor),
-              with "auto" rendering as a white pulsing line for a calm, identity-free now indicator. */}
-          {showNowLine&&(()=>{
-            const todayIdx=weekDays.findIndex(d=>d.isToday);
-            if(todayIdx<0) return null;
-            const flexFor=(d)=>{
-              const isPeeked=focusedDay===d.jsDay&&!d.isToday;
-              const showStrong=d.isToday&&focusedDay===null;
-              const showMedium=isPeeked;
-              const todaySofter=d.isToday&&focusedDay!==null;
-              return showStrong?1.85:todaySofter?1.50:showMedium?1.00:d.isPast?0.5:0.7;
-            };
-            const totalFlex=weekDays.reduce((sum,d)=>sum+flexFor(d),0);
-            const leftFlex=weekDays.slice(0,todayIdx).reduce((sum,d)=>sum+flexFor(d),0);
-            const todayFlex=flexFor(weekDays[todayIdx]);
-            const dotCenterPct=((leftFlex+todayFlex/2)/totalFlex)*100;
-            // Resolve line color from settings — same as DayView for consistency.
-            // "auto" = a white line with subtle warm pulse (no fixed color identity).
-            const rawColor=cfg?.nowLineColor||cfg?.sigvardColor||"#FF4848";
-            const isAuto=rawColor==="auto"||cfg?.sigvardColor==="auto"&&!cfg?.nowLineColor;
-            const lineColor=isAuto?"#FFFFFF":rawColor;
-            const glowColor=isAuto?(weekColors[weekDays[todayIdx].jsDay]||S.h):lineColor;
-            return(
-              <>
-                <style>{`
-                  @keyframes wkNowDotPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.18);opacity:0.85}}
-                  @keyframes wkNowRingPulse{0%{opacity:0.6;transform:scale(0.8)}100%{opacity:0;transform:scale(2.2)}}
-                  @keyframes wkNowAutoGlow{0%,100%{opacity:0.4}50%{opacity:0.95}}
-                `}</style>
-                {/* Soft halo above and below the line — atmospheric glow */}
-                <div style={{position:"absolute",top:nowY-6,left:TIME_W,right:6,height:13,background:`linear-gradient(180deg, transparent 0%, ${glowColor}24 50%, transparent 100%)`,filter:"blur(3px)",pointerEvents:"none",zIndex:2,transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1)",animation:isAuto?"wkNowAutoGlow 3s ease-in-out infinite":"none"}}/>
-                {/* The line itself */}
-                <div style={{position:"absolute",top:nowY,left:TIME_W,right:6,height:isAuto?1.8:1.5,background:`linear-gradient(90deg, transparent 0%, ${lineColor}CC 6%, ${lineColor} 50%, ${lineColor}CC 94%, transparent 100%)`,boxShadow:isAuto?`0 0 12px ${glowColor}AA, 0 0 4px #FFFFFF`:`0 0 10px ${lineColor}66`,zIndex:3,pointerEvents:"none",transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1)"}}>
-                  {/* Outer pulse ring on the dot */}
-                  <div style={{position:"absolute",left:`calc(${dotCenterPct}% - 7px)`,top:-6.5,width:14,height:14,borderRadius:"50%",background:`${glowColor}77`,animation:"wkNowRingPulse 2.6s ease-out infinite",transition:"left .5s cubic-bezier(0.32, 0.72, 0, 1)",pointerEvents:"none"}}/>
-                  {/* Inner solid dot */}
-                  <div style={{position:"absolute",left:`calc(${dotCenterPct}% - 5px)`,top:-4.5,width:10,height:10,borderRadius:"50%",background:isAuto?"linear-gradient(140deg, #FFFFFF, #F5F5FA)":`linear-gradient(140deg, ${lineColor}, ${lineColor}DC)`,boxShadow:`0 0 10px ${glowColor}, 0 0 4px ${glowColor}AA, inset 0 1px 0 rgba(255,255,255,0.6)`,animation:"wkNowDotPulse 2.6s ease-in-out infinite",transition:"left .5s cubic-bezier(0.32, 0.72, 0, 1)",border:isAuto?`1px solid ${glowColor}44`:"none"}}/>
-                </div>
-              </>
-            );
-          })()}
+        {/* ── The rhythm card ── */}
+        <div style={{
+          background:cardBg,
+          borderRadius:24,
+          padding:"16px 14px 18px",
+          boxShadow:cardShadow,
+          border:`1px solid ${cardBorder}`,
+          position:"relative",
+        }}>
 
-          {/* Time column */}
-          <div style={{width:TIME_W,flexShrink:0,position:"relative"}}>
-            {HOURS.map((h,i)=>(
-              <div key={h} style={{position:"absolute",top:i*HOUR_H-5,left:0,right:0,paddingRight:6,textAlign:"right"}}>
-                <div style={{fontFamily:G.font,fontSize:9.5,fontWeight:500,color:isDark()?tk().ink2:"#7C7691",letterSpacing:.4}}>{lang==="sv"?String(h).padStart(2,"0"):(h===0?"12 AM":h<12?`${h} AM`:h===12?"12 PM":`${h-12} PM`)}</div>
-              </div>
-            ))}
-            {/* End-of-day marker at the very bottom. Reads "24" in Swedish
-                (24h convention for day-end) and "12 AM" in English. This is
-                distinct from the "00" label at the top which marks day-start. */}
-            <div style={{position:"absolute",top:HOURS.length*HOUR_H,left:0,right:0,paddingRight:6,textAlign:"right",transform:"translateY(-50%)"}}>
-              <div style={{fontFamily:G.font,fontSize:9.5,fontWeight:500,color:isDark()?tk().ink2:"#7C7691",letterSpacing:.4}}>{lang==="sv"?"24":"12 AM"}</div>
-            </div>
+          {/* Day-name row */}
+          <div style={{display:"grid",gridTemplateColumns:gridCols,gap:5,marginBottom:6}}>
+            <div/>
+            {weekDays.map((d,i)=>{
+              const wdc=weekColors[d.jsDay]||PEACH;
+              const todayLabelHue=dark?shadeHex(wdc,0.45):shadeHex(wdc,-0.18);
+              return(
+              <div key={d.jsDay} style={{
+                fontSize:d.isToday?11.5:(d.isPast?9:10),
+                fontWeight:d.isToday?800:700,
+                color:d.isToday?todayLabelHue:tk().ink3,
+                textAlign:"center",
+                letterSpacing:0.7,
+                opacity:d.isPast?0.5:1,
+                transition:"opacity .3s ease",
+              }}>{labels[i]}</div>
+              );
+            })}
           </div>
 
-          {/* Day columns */}
-          {weekDays.map((d,dayIdx)=>{
-            // Per-activity time filter: remove activities whose end time has already
-            // passed in real terms, OR that have been marked done for this specific date.
-            // Past days, today's past activities, and explicitly-completed activities all
-            // disappear. Sigvard convention: completed = gone.
-            const dayKey=dKey(d.date);
-            const dayActs=acts.filter(a=>{
-              if(!onJsDay(a,d.jsDay)) return false;
-              // Check per-date done state (e.g. user tapped trash today → don't show again today)
-              const dst=dailyState?.[dayKey]?.[a.id];
-              if(dst?.done) return false;
-              // Build the activity's actual datetime on this column's date
-              const actDate=new Date(d.date);
-              const startM=hm(a.time);
-              const endM=a.endTime?hm(a.endTime):startM;
-              actDate.setHours(Math.floor(endM/60),endM%60,0,0);
-              // Activity is "gone" once its end time has passed
-              return actDate.getTime()>now.getTime();
-            }).sort((a,b)=>hm(a.time)-hm(b.time));
-            const dCol=weekColors[d.jsDay]||S.h;
-            const isLight=dCol==="#FFFFFF"||dCol==="#F5F2EE";
-            // Four-state column rendering:
-            //   strong       = today, default (nothing peeked)
-            //   medium       = a different day user has tapped to peek at
-            //   today-softer = today, when user is peeking another day (still distinguishable)
-            //   quiet        = all other days
-            const isPeeked=focusedDay===d.jsDay&&!d.isToday;
-            const showStrong=d.isToday&&focusedDay===null;
-            const showMedium=isPeeked;
-            const todaySofter=d.isToday&&focusedDay!==null;
-            // Column width: today always has the largest flex. Peeked column zooms up
-            // but stays smaller than today. Past days shrink.
-            // - showStrong (today, default)      → 1.85 (the biggest)
-            // - todaySofter (today while peeking)→ 1.50 (still the biggest, keeps "you are here")
-            // - showMedium (a non-today peek)   → 1.00 (zoom up, but smaller than today)
-            // - past days                       → 0.5 (shrunk)
-            // - normal days                     → 0.7 (quietly present)
-            const colFlex = showStrong ? 1.85 : todaySofter ? 1.50 : showMedium ? 1.00 : d.isPast ? 0.5 : 0.7;
-            // Color fills the full day-column from morning to midnight — strong at top, holding presence to bottom.
-            // Not a fade-out: the day "owns" its space until 00:00, then the next day takes over.
-            const strongBg = isLight
-              ? `linear-gradient(180deg, ${dCol} 0%, ${dCol}F8 100%)`
-              : `linear-gradient(180deg, ${dCol}77 0%, ${dCol}66 50%, ${dCol}5C 100%)`;
-            const mediumBg = isLight
-              ? `linear-gradient(180deg, ${dCol}E5 0%, ${dCol}D8 100%)`
-              : `linear-gradient(180deg, ${dCol}44 0%, ${dCol}3D 50%, ${dCol}36 100%)`;
-            // Today, when peeking elsewhere, retains a softer-but-still-clear tint —
-            // never fully fades to "quiet" so users always see "here is today"
-            const todaySoftBg = isLight
-              ? `linear-gradient(180deg, ${dCol}F0 0%, ${dCol}E8 100%)`
-              : `linear-gradient(180deg, ${dCol}3A 0%, ${dCol}33 50%, ${dCol}2C 100%)`;
-            const quietBg = `linear-gradient(180deg, ${dCol}0F 0%, ${dCol}08 100%)`;
-            const bg = showStrong ? strongBg : showMedium ? mediumBg : todaySofter ? todaySoftBg : quietBg;
-            return(
-              <div key={dayIdx}
-                onClick={e=>{
-                  if(isEd&&dayActs.length===0){onAdd();return;}
-                  // Tap empty area of a non-today column → peek toggle
-                  if(!d.isToday){
-                    e.stopPropagation();
-                    setFocusedDay(prev=>prev===d.jsDay?null:d.jsDay);
-                  } else if(focusedDay!==null){
-                    // Tap today's column while peeking elsewhere → return to default
-                    e.stopPropagation();
-                    setFocusedDay(null);
-                  }
-                }}
-                style={{
-                  flex:colFlex,position:"relative",
-                  background:bg,
-                  // Today's column extends upward by 14px to visually emphasize "you are here"
-                  marginTop:d.isToday?-14:0,
-                  borderRadius:d.isToday?"14px 14px 0 0":0,
-                  opacity:d.isPast?0.3:1,
-                  filter:d.isPast?"saturate(0.4)":"none",
-                  transition:"flex .5s cubic-bezier(0.32, 0.72, 0, 1), margin-top .5s cubic-bezier(0.32, 0.72, 0, 1), background .45s cubic-bezier(0.32, 0.72, 0, 1), opacity .8s cubic-bezier(0.32, 0.72, 0, 1), filter .8s cubic-bezier(0.32, 0.72, 0, 1)",
-                  cursor:isEd&&dayActs.length===0?"pointer":d.isToday&&focusedDay===null?"default":"pointer",
-                }}>
-                {/* Activity tiles */}
-                {dayActs.map((a,ai)=>{
-                  const y=yForAct(a);
-                  const h=hForAct(a);
-                  const endM=a.endTime?hm(a.endTime):hm(a.time)+30;
-                  const startM=hm(a.time);
-                  const isNowAct=d.isToday&&startM<=nowMin&&endM>nowMin;
-                  // On any tinted column (strong, medium, or today-softer), tiles get white
-                  // background with colored accent stripe — classic Sigvard look.
-                  // On quiet columns, tiles stand on their own colored gradient.
-                  const onTintedColumn = showStrong || showMedium || todaySofter;
-                  const tileBg = onTintedColumn
-                    ? (a.photo?"#000":(isDark()
-                        ? `linear-gradient(155deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.05) 100%)`
-                        : "#FFFFFF"))
-                    : (a.photo?"#000":(isDark()
-                        ? `linear-gradient(150deg, ${a.color}30, ${a.color}1A)`
-                        : `linear-gradient(150deg, ${a.color}38, ${a.color}55)`));
-                  const tileBorder = onTintedColumn
-                    ? (isNowAct?`1.5px solid ${a.color}`:(isDark()?`1px solid rgba(255,255,255,0.10)`:`1px solid rgba(31,27,46,0.08)`))
-                    : (isNowAct?`1.5px solid ${a.color}`:(isDark()?`1px solid ${a.color}40`:`1px solid ${a.color}3A`));
-                  const tileShadow = onTintedColumn
-                    ? (isNowAct
-                        ?(isDark()
-                          ?`0 8px 22px -8px ${a.color}80, inset 0 1px 0 rgba(255,255,255,0.14)`
-                          :`0 8px 20px ${a.color}40, 0 2px 6px rgba(31,27,46,0.18), inset 0 1px 0 rgba(255,255,255,0.5)`)
-                        :(isDark()
-                          ?`0 6px 16px -10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.07)`
-                          :`0 3px 10px rgba(31,27,46,0.12), 0 1px 3px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.7)`))
-                    : (isNowAct
-                        ?(isDark()
-                          ?`0 8px 22px -8px ${a.color}66, inset 0 1px 0 rgba(255,255,255,0.10)`
-                          :`0 8px 20px ${a.color}40, 0 2px 6px ${a.color}28, inset 0 1px 0 rgba(255,255,255,0.35)`)
-                        :(isDark()
-                          ?`0 4px 12px -8px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)`
-                          :`0 2px 6px ${a.color}1F, inset 0 1px 0 rgba(255,255,255,0.4)`));
-                  // Tile y-position must compensate for today's column being shifted up by 14px,
-                  // otherwise activities appear above the time line they belong to (looking "past")
-                  const tileY = d.isToday ? y+14 : y;
-                  // Non-focused days dim their activities — they're context, not active focus.
-                  // When user peeks a day (medium), it lights up. Today (strong) is always full opacity.
-                  const tileOpacity = onTintedColumn ? 1 : 0.48;
-                  // Tile padding inside the column edges — today gets slightly more inset because the
-                  // column is wider, so tiles can breathe a bit more without losing emphasis
-                  const tileInset = d.isToday ? 5 : 3;
-                  return(
-                    <div key={a.id}
-                      onClick={e=>{e.stopPropagation(); isEd?onEdit(a):onTap(a,dayKey);}}
-                      className="lt-press-soft"
-                      style={{
-                        position:"absolute",
-                        top:tileY,left:tileInset,right:tileInset,height:h,
-                        background:tileBg,
-                        backdropFilter:isDark()&&!a.photo?"blur(10px) saturate(1.2)":"none",
-                        WebkitBackdropFilter:isDark()&&!a.photo?"blur(10px) saturate(1.2)":"none",
-                        border:tileBorder,
-                        borderRadius:d.isToday?13:11,
-                        overflow:"hidden",
-                        cursor:"pointer",
-                        boxShadow:tileShadow,
-                        opacity:tileOpacity,
-                        transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1), left .5s cubic-bezier(0.32, 0.72, 0, 1), right .5s cubic-bezier(0.32, 0.72, 0, 1), transform .26s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .35s ease, opacity .55s cubic-bezier(0.32, 0.72, 0, 1), filter .55s ease, border .35s ease, background .45s ease",
-                        animation:isNowAct
-                          ? `wkNowTile_${a.color.replace("#","")} 3s ease-in-out infinite`
-                          : `wkTileIn .45s ${(ai*0.04+dayIdx*0.05).toFixed(2)}s cubic-bezier(0.32, 0.72, 0, 1) both`,
-                        display:"flex",flexDirection:"column",alignItems:"center",justifyContent:h>50?"flex-start":"center",
-                        padding:h>56?"6px 3px 5px":h>40?"4px 2px":"2px 2px",
-                        zIndex:isNowAct?2:1,
-                      }}>
-                      {isNowAct&&<style>{isDark()
-                        ?`@keyframes wkNowTile_${a.color.replace("#","")}{0%,100%{box-shadow:0 8px 22px -8px ${a.color}66, inset 0 1px 0 rgba(255,255,255,0.12)}50%{box-shadow:0 12px 30px -8px ${a.color}99, inset 0 1px 0 rgba(255,255,255,0.12)}}`
-                        :`@keyframes wkNowTile_${a.color.replace("#","")}{0%,100%{box-shadow:0 6px 16px ${a.color}3A, 0 2px 6px rgba(31,27,46,0.14), inset 0 1px 0 rgba(255,255,255,0.5)}50%{box-shadow:0 10px 26px ${a.color}5C, 0 3px 10px ${a.color}33, inset 0 1px 0 rgba(255,255,255,0.5)}}`}</style>}
-                      {onTintedColumn&&!a.photo&&(
-                        <div style={{position:"absolute",left:0,top:0,bottom:0,width:3,background:a.color,borderRadius:"11px 0 0 11px"}}/>
-                      )}
-                      {a.photo?(
-                        <>
-                          <img src={a.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover",position:"absolute",inset:0}}/>
-                          {/* Bottom gradient overlay for photo tiles when name shows */}
-                          {h>50&&<div style={{position:"absolute",left:0,right:0,bottom:0,height:"50%",background:"linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 100%)",pointerEvents:"none"}}/>}
-                          {h>50&&<span style={{position:"absolute",bottom:4,left:4,right:4,fontFamily:G.font,fontSize:8.5,fontWeight:500,color:"#FFFFFF",lineHeight:1.1,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:.15,textShadow:"0 1px 2px rgba(0,0,0,0.6)",zIndex:2}}>{a.name}</span>}
-                        </>
-                      ):(
-                        <>
-                          <span style={{fontSize:h>60?22:h>44?19:h>30?16:14,lineHeight:1,marginBottom:h>56?3:0,filter:`drop-shadow(0 1px 1px ${a.color}55)`}}>{a.emoji}</span>
-                          {h>50&&(
-                            <span style={{fontFamily:G.font,fontSize:8.5,fontWeight:500,color:tk().ink,lineHeight:1.1,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%",whiteSpace:"nowrap",letterSpacing:.15,padding:"0 2px",opacity:0.88}}>{a.name}</span>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-                {/* Subtle midnight marker — a soft inner shadow at the very bottom of the column,
-                    showing visually where the day ends at 00:00 and the next begins. Only visible
-                    on tinted (current/peeked) columns to keep quiet columns calm. */}
-                {(showStrong||showMedium||todaySofter)&&(
-                  <div style={{position:"absolute",bottom:0,left:0,right:0,height:24,background:`linear-gradient(180deg, transparent 0%, ${dCol}44 100%)`,pointerEvents:"none"}}/>
+          {/* Day-number row — POLISH C.
+              Mature analog-diary aesthetic. The colourful filled discs were
+              the main "Lego/childish" element of the previous design. Now
+              just typography: dates as numerals, with a single dot under
+              TODAY in that weekday's chosen colour (from settings). Past
+              days dim subtly, today reads bolder + tinted in its weekday
+              colour, future days as neutral ink. Calm, timeless, grown-up. */}
+          <div style={{display:"grid",gridTemplateColumns:gridCols,gap:5,marginBottom:14}}>
+            <div/>
+            {weekDays.map(d=>{
+              const isToday=d.isToday;
+              const isPast=d.isPast;
+              // Use this weekday's chosen colour from settings — each day has
+              // its own identity, today celebrates that. shadeHex lifts the
+              // colour in dark mode (to a brighter, pastel echo) and deepens
+              // it in light mode (for readable contrast against white).
+              const wdc=weekColors[d.jsDay]||PEACH;
+              const todayHue=dark?shadeHex(wdc,0.45):shadeHex(wdc,-0.18);
+              const numColor=isToday
+                ?todayHue
+                :(dark?"#E8E2F0":G.ink);
+              return(
+              <div key={d.jsDay} style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",gap:3}}>
+                <div style={{
+                  fontFamily:G.serif,
+                  fontWeight:isToday?700:500,
+                  fontSize:isToday?17:15,
+                  lineHeight:1,
+                  color:numColor,
+                  opacity:isPast?0.45:1,
+                  letterSpacing:-.2,
+                  transition:"opacity .3s ease, color .3s ease",
+                  fontVariantNumeric:"tabular-nums",
+                }}>{d.day}</div>
+                {/* Tiny dot under today — in the weekday's chosen colour */}
+                {isToday&&(
+                  <div aria-hidden style={{
+                    width:5,height:5,borderRadius:"50%",
+                    background:`linear-gradient(140deg, ${wdc}, ${shadeHex(wdc,-0.20)})`,
+                    boxShadow:dark?`0 0 6px ${wdc}80`:`0 1px 3px ${wdc}66`,
+                  }}/>
                 )}
               </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          {/* ── Grid: zone labels + 7 day columns ── */}
+          <div style={{display:"grid",gridTemplateColumns:gridCols,gap:5,height:232,position:"relative"}}>
+
+            {/* Zone labels (left column) — bespoke hand-drawn SVG icons with
+                individual gentle animations. Sun radiates with rotating rays
+                and a soft pulsing glow; the daytime sun-behind-cloud has a
+                slowly-drifting cloud and a steady warm centre; the moon has
+                tiny twinkling stars and a soft brightness wink. All built
+                in Lumas peach/cream palette and dark-mode aware.
+                ── POLISH C ──
+                Replaced the rich illustrations with quiet 13-px stroke icons.
+                Lighter weight, no animations, no fills — the chart is the
+                content, not the labels. The icons just whisper "morning /
+                midday / evening" via simple shapes:
+                  • a solid circle (sun)
+                  • a circle with a dashed orbit (sun-behind-something)
+                  • a simple crescent (moon)
+                Stroke colour is muted (60-70% of normal ink) so they recede. */}
+            {/* ── Zone symbols — a calm temporal arc: sunrise → full sun →
+                moon+twinkle. In LIGHT mode each glyph carries a soft time-of-day
+                tint (peach / sky-blue / lilac). In DARK mode all three drop to
+                the muted slate so no colour shows and they recede quietly. */}
+            <div style={{display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"4px 0"}}>
+              {/* MORGON — sunrise over the horizon */}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",color:dark?"#7C7691":"#C9956B"}}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 18.6 H20"/>
+                  <path d="M8.2 18.6a3.8 3.8 0 0 1 7.6 0"/>
+                  <path d="M12 8 V9.7"/>
+                  <path d="M6.7 11.5 L7.9 12.7"/>
+                  <path d="M17.3 11.5 L16.1 12.7"/>
+                </svg>
+              </div>
+              {/* DAG — full sun (replaces the old dashed orbit that read like a
+                  settings gear) */}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",color:dark?"#7C7691":"#6FA0C4"}}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3.3"/>
+                  <path d="M12 4 V5.8 M12 18.2 V20 M4 12 H5.8 M18.2 12 H20 M6.3 6.3 L7.6 7.6 M16.4 16.4 L17.7 17.7 M17.7 6.3 L16.4 7.6 M6.3 17.7 L7.6 16.4"/>
+                </svg>
+              </div>
+              {/* KVÄLL — crescent moon with a small twinkle */}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",color:dark?"#7C7691":"#9A86C9"}}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12.9A6.7 6.7 0 1 1 11.4 5.2 5.3 5.3 0 0 0 19 12.9Z"/>
+                  <path d="M18.8 4.4 V6.4 M17.8 5.4 H19.8"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* Day columns */}
+            {dayActs.map((da,colIdx)=>{
+              const d=da.day;
+              const isToday=d.isToday;
+              const isPast=d.isPast;
+              const isWeekend=d.isWeekend;
+              const isEmpty=da.count===0;
+              const isPeeked=focusedDay===d.jsDay&&!isToday;
+              // Today's wash uses the user's chosen weekday colour (Settings →
+              // Day colours), so the day's identity carries through here too.
+              const wdcCol=weekColors[d.jsDay]||PEACH;
+              const bg=isPeeked?colBgPeek:isToday?colBgTodayFor(wdcCol):isEmpty?colBgEmpty:isWeekend?colBgWeekend:colBg;
+              // Borders are pre-built CSS strings now; just use them directly.
+              const border=isToday?colBorderToday:isPeeked?colBorderPeek:"1px solid transparent";
+              // Polish C — no shadow on today; the wash + dot above + bold
+              // numeral are signal enough. Cleaner reading.
+              const shadow="none";
+              // Past days fade & desaturate — they're context, not focus.
+              // Today and upcoming days stay at full presence.
+              const pastFilter=isPast&&!isPeeked?"saturate(0.5) opacity(0.55)":"none";
+              return(
+                <div key={d.jsDay}
+                  onClick={()=>peekDay(d.jsDay,isToday)}
+                  className="week-col lt-press-soft"
+                  style={{
+                    background:bg, borderRadius:12, position:"relative",
+                    display:"flex", flexDirection:"column", padding:"5px 3px",
+                    overflow:"hidden", border, boxShadow:shadow,
+                    cursor:"pointer", transition:"background .25s ease, border-color .25s ease, filter .3s ease, transform .26s cubic-bezier(0.32, 0.72, 0, 1)",
+                    animationDelay:`${0.05+colIdx*0.05}s`,
+                    filter:pastFilter,
+                  }}>
+
+                  {/* Zone dividers — subtle inner lines */}
+                  <div style={{position:"absolute",left:6,right:6,top:"33.33%",height:1,background:zoneDividerColor,pointerEvents:"none"}}/>
+                  <div style={{position:"absolute",left:6,right:6,top:"66.66%",height:1,background:zoneDividerColor,pointerEvents:"none"}}/>
+
+                  {/* Three zones */}
+                  {[0,1,2].map(zi=>{
+                    const{shown,more}=segmentsFor(da.zones[zi]);
+                    return(
+                      <div key={zi} style={{
+                        flex:"1 0 33.33%",
+                        display:"flex",flexDirection:"column",
+                        gap:3, justifyContent:"flex-start",
+                        padding:"3px 0", alignItems:"stretch",
+                      }}>
+                        {shown.map((a,ai)=>{
+                          // For TODAY only — is this activity's window already
+                          // behind us? End-time before "now" → soften with
+                          // reduced opacity + desaturation. The segment fades
+                          // back rather than being struck through, matching
+                          // the calmer overall aesthetic.
+                          const segStart=hm(a.time);
+                          const segEnd=a.endTime?hm(a.endTime):segStart+30;
+                          const nowMin=now.getHours()*60+now.getMinutes();
+                          const isSegPast=isToday&&segEnd<=nowMin;
+                          return(
+                          <span key={a.id||ai} className="week-seg" style={{
+                            // Polish C — thin "paint stroke" bars instead of
+                            // thick blocks. 4px tall, fully rounded (pill),
+                            // 70% opacity so colour is present but not loud.
+                            // Active day gets slightly taller (5px) and a
+                            // touch more opacity (85%) for gentle emphasis.
+                            height:isToday?5:4,
+                            borderRadius:999,
+                            background:a.color||PEACH,
+                            margin:"0 4px",
+                            opacity:isSegPast?0.25:(isToday?0.85:0.65),
+                            filter:isSegPast?"saturate(0.4)":"none",
+                            boxShadow:"none",
+                            animationDelay:`${0.1+colIdx*0.05+ai*0.03}s`,
+                            transition:"opacity .3s ease, filter .3s ease",
+                          }}/>
+                          );
+                        })}
+                        {more>0&&(
+                          <div style={{
+                            fontSize:8.5,fontWeight:700,
+                            color:isToday?PEACH_DEEP:tk().ink3,
+                            textAlign:"center",marginTop:2,letterSpacing:0.3,
+                          }}>{`+${more}`}</div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Empty-day mark */}
+                  {isEmpty&&(
+                    <div style={{
+                      position:"absolute",top:"50%",left:"50%",
+                      transform:"translate(-50%,-50%)",
+                      color:tk().ink3,fontWeight:600,fontSize:16,opacity:0.4,
+                    }}>—</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Activity-count row under columns */}
+          <div style={{display:"grid",gridTemplateColumns:gridCols,gap:5,marginTop:12}}>
+            <div/>
+            {dayActs.map(da=>{
+              const past=da.day.isPast;
+              return(
+              <div key={da.day.jsDay} style={{
+                fontSize:da.day.isToday?12:(past?9:10.5),
+                fontWeight:da.day.isToday?800:600,
+                color:da.day.isToday?PEACH_DEEP:tk().ink3,
+                textAlign:"center",letterSpacing:0.2,
+                opacity:da.count===0?0.4:(past?0.5:1),
+                transition:"opacity .3s ease",
+              }}>{da.count===0?"—":da.count}</div>
+              );
+            })}
+          </div>
         </div>
+
+        {/* ── Peek panel (the focused day's activity list) ── */}
+        {focusedDayObj&&focusedDayObj.list.length>0&&(
+          <div ref={peekPanelRef} key={focusedDayObj.day.jsDay} className="week-peek-panel" style={{
+            marginTop:16,
+            background:cardBg,
+            borderRadius:20,
+            padding:"16px 16px 12px",
+            boxShadow:cardShadow,
+            border:`1px solid ${cardBorder}`,
+          }}>
+            <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:10,marginBottom:10}}>
+              <div style={{fontFamily:G.serif,fontWeight:700,fontSize:16,color:tk().ink,letterSpacing:-0.2,textTransform:"capitalize"}}>
+                {focusedDayLong}{focusedDayObj.day.isToday?` · ${lang==="sv"?"idag":"today"}`:""}
+              </div>
+              <div style={{fontSize:11,fontWeight:600,color:tk().ink3,letterSpacing:0.3}}>
+                {`${focusedDayObj.count} ${focusedDayObj.count===1?(lang==="sv"?"aktivitet":"activity"):(lang==="sv"?"aktiviteter":"activities")}`}
+              </div>
+            </div>
+            <div style={{display:"flex",flexDirection:"column"}}>
+              {focusedDayObj.list.map((a,i)=>{
+                const isLast=i===focusedDayObj.list.length-1;
+                const ds=dailyState?.[dKey(focusedDayObj.day.date)]?.[a.id];
+                const done=!!ds?.done;
+                // If we're viewing TODAY, check whether this activity's window
+                // has already passed — its end time is before "now". For these
+                // we strike through (just like a checked-off item) so the user
+                // can see at a glance what's done with for the day. Activities
+                // without an explicit endTime get a 30-min default window.
+                const nowMin=now.getHours()*60+now.getMinutes();
+                const startM=hm(a.time);
+                const endM=a.endTime?hm(a.endTime):startM+30;
+                const isPastTime=focusedDayObj.day.isToday&&endM<=nowMin;
+                const struck=done||isPastTime;
+                return(
+                  <div key={a.id} onClick={()=>onTap&&onTap(a)} className="lt-press-soft" style={{
+                    display:"flex",alignItems:"center",gap:11,
+                    padding:"10px 4px",
+                    borderBottom:isLast?"none":`1px solid ${dark?"rgba(255,255,255,0.05)":"rgba(31,27,46,0.04)"}`,
+                    cursor:"pointer", opacity:struck?0.45:1,
+                    transition:"opacity .3s ease",
+                  }}>
+                    <div style={{
+                      fontSize:11,fontWeight:700,color:tk().ink3,
+                      width:42,flexShrink:0,fontVariantNumeric:"tabular-nums",letterSpacing:0.2,
+                      textDecoration:struck?"line-through":"none",
+                      textDecorationColor:dark?"rgba(255,255,255,0.35)":"rgba(31,27,46,0.3)",
+                    }}>{a.time}</div>
+                    <div style={{
+                      width:30,height:30,borderRadius:9,flexShrink:0,
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      fontSize:16,
+                      background:`linear-gradient(140deg, ${a.color}20, ${a.color}35)`,
+                      border:`1px solid ${a.color}30`,
+                      boxShadow:`inset 0 1px 0 ${dark?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.5)"}`,
+                      filter:struck?"saturate(0.55)":"none",
+                    }}>{a.emoji||"•"}</div>
+                    <div style={{flex:1,minWidth:0,fontSize:13.5,fontWeight:600,color:tk().ink,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textDecoration:struck?"line-through":"none",textDecorationColor:dark?"rgba(255,255,255,0.35)":"rgba(31,27,46,0.3)"}}>
+                      {a.name||t.noName}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Empty-week fallback ──
+            Uses the same mini-sun-mandala empty state as Hem, so the app
+            feels cohesive — both empty schedules tell the same visual story
+            (a soft, hopeful sun) instead of mixing rich mandala + plain emoji. */}
+        {!anyActs&&(
+          <div style={{
+            marginTop:18,
+            background:cardBg,
+            borderRadius:18,
+            padding:"32px 18px 26px",
+            border:`1px solid ${cardBorder}`,
+            textAlign:"center",
+          }}>
+            <style>{`@keyframes wkEmpHalo{0%,100%{transform:scale(0.92);opacity:.5}50%{transform:scale(1.08);opacity:.9}}@keyframes wkEmpFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes wkEmpRot{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+            <div style={{position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:14}}>
+              <div style={{position:"absolute",width:96,height:96,borderRadius:"50%",background:`radial-gradient(circle, ${S.h}30 0%, transparent 70%)`,animation:"wkEmpHalo 4.4s ease-in-out infinite"}}/>
+              <div style={{position:"relative",width:64,height:64,borderRadius:20,background:`linear-gradient(140deg, ${S.h}2E, ${S.h}4E)`,border:`1px solid ${S.h}45`,boxShadow:`0 8px 22px ${S.h}33, inset 0 1px 0 rgba(255,255,255,0.5)`,display:"flex",alignItems:"center",justifyContent:"center",animation:"wkEmpFloat 5s ease-in-out infinite"}}>
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke={shadeHex(S.h,-0.35)} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="4.2" fill={`${S.h}33`}/>
+                  <g style={{transformOrigin:"12px 12px",animation:"wkEmpRot 28s linear infinite"}}>
+                    <path d="M12 3 v2.2 M12 18.8 v2.2 M3 12 h2.2 M18.8 12 h2.2 M5.6 5.6 l1.6 1.6 M16.8 16.8 l1.6 1.6 M5.6 18.4 l1.6 -1.6 M16.8 7.2 l1.6 -1.6"/>
+                  </g>
+                </svg>
+              </div>
+            </div>
+            <div style={{fontFamily:G.serif,fontWeight:700,fontSize:15,color:tk().ink,marginBottom:4}}>
+              {lang==="sv"?"Inga aktiviteter den här veckan":"No activities this week"}
+            </div>
+            <div style={{fontSize:12.5,color:tk().ink3,lineHeight:1.4}}>
+              {lang==="sv"?"Lägg till aktiviteter i redigeraren":"Add activities in the editor"}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
@@ -12137,7 +12973,7 @@ function IdCardEditor({cfg,setCfg,onClose,t}){
   const[discardOpen,setDiscardOpen]=useState(false);
   const initial=useRef(JSON.stringify({name:init.name||"",photo:init.photo||null,age:init.age||"",condition:init.condition||"",triggers:init.triggers||"",helpful:init.helpful||"",contacts:init.contacts?init.contacts.map(k=>({...k})):[]}));
   const isDirty=()=> JSON.stringify(c)!==initial.current;
-  const attemptClose=()=>{ if(isDirty()) setDiscardOpen(true); else onClose(); };
+  const attemptClose=()=>{ if(isDirty()){ scrollActiveSheetToTop(); setDiscardOpen(true); } else onClose(); };
   const fileRef=useRef(null);
   const scrollRef=useRef(null);
   // Guarantee the editor opens scrolled to the very top (shows photo + name),
@@ -12308,37 +13144,8 @@ function SupervisorDemo({onClose,onOpenClient,lang}){
       {/* Top bar */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 28px",borderBottom:`1px solid ${G.border}`,background:G.white,boxShadow:sh.xs,position:"sticky",top:0,zIndex:6}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <svg width={28} height={28} viewBox="0 0 26 26" style={{overflow:"visible"}}>
-            <defs>
-              <radialGradient id="svCoreV2" cx="35%" cy="30%" r="70%">
-                <stop offset="0%" stopColor="#FFFFFF"/>
-                <stop offset="20%" stopColor="#FFFAF0" stopOpacity="0.95"/>
-                <stop offset="55%" stopColor={S.h}/>
-                <stop offset="100%" stopColor={S.deep}/>
-              </radialGradient>
-              <radialGradient id="svOuterV2" cx="50%" cy="50%" r="50%">
-                <stop offset="40%" stopColor={S.h} stopOpacity="0"/>
-                <stop offset="70%" stopColor={S.h} stopOpacity="0.18"/>
-                <stop offset="100%" stopColor={S.h} stopOpacity="0"/>
-              </radialGradient>
-            </defs>
-            <circle cx="13" cy="13" r="13" fill="url(#svOuterV2)"/>
-            <g style={{transformOrigin:"13px 13px",animation:"lumaRotate 22s linear infinite"}}>
-              {Array.from({length:8}).map((_,i)=>{
-                const ang=(i/8)*2*Math.PI;
-                const isLong=i%2===0;
-                const r1=8.5, r2=isLong?12.2:11;
-                const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
-                const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
-                return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={S.h} strokeWidth={isLong?1.6:1.1} strokeLinecap="round"/>;
-              })}
-            </g>
-            <g style={{transformOrigin:"13px 13px",animation:"lumaCoreBreath 3.4s ease-in-out infinite"}}>
-              <circle cx="13" cy="13" r="6.5" fill="url(#svCoreV2)"/>
-              <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
-            </g>
-          </svg>
-          <span style={{fontFamily:G.serif,fontWeight:600,fontSize:17,color:G.ink,letterSpacing:0.3}}>Luma</span>
+          <LumaIcon size={28} color={S.deep}/>
+          <LumaWordmark size={17} color={G.ink} showSun={false}/>
           <span style={{fontFamily:G.font,fontWeight:600,fontSize:10,color:S.deep,background:S.hl,borderRadius:6,padding:"3px 8px",letterSpacing:1.2,textTransform:"uppercase"}}>{lang==="sv"?"Stödperson":"Caregiver"}</span>
           <span style={{fontFamily:G.font,fontWeight:600,fontSize:9,color:G.ink3,background:"#FEF3C7",border:"1px solid #FCD34D40",borderRadius:6,padding:"3px 8px",letterSpacing:1.2,textTransform:"uppercase"}}>Demo</span>
         </div>
@@ -12458,56 +13265,230 @@ function ActivityStartAlert({activity,onDismiss,onOpen,t,lang}){
 ═══════════════════════════════════════════════════ */
 
 function SceneIntro(){
-  // Real Luma sun — same as the one in the app header, scaled up for hero presence.
-  // Rotating rays + breathing core + outer glow + highlight dot.
+  // ════════════════════════════════════════════════════════════════════════
+  //  WELCOME — "The light arrives"
+  //  A cinematic, physics-driven sequence rendered on a single canvas for
+  //  buttery 60fps: the Luma sun rises into a warming dawn sky, travels a
+  //  hand-tuned Bézier arc trailing soft light, decelerates, and lands in the
+  //  bowl of the "u" — blooming into the brand's warm pearl with a spring
+  //  settle and concentric light rings. The icon and wordmark assemble around
+  //  it. Every phase is eased by hand; nothing is linear.
+  // ════════════════════════════════════════════════════════════════════════
+  const canvasRef=useRef(null);
+  const [done,setDone]=useState(false);        // drives the wordmark reveal
+  const reduced = typeof window!=="undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  useEffect(()=>{
+    const cv=canvasRef.current; if(!cv) return;
+    const ctx=cv.getContext("2d");
+    const DPR=Math.min(3, window.devicePixelRatio||1);
+    const CSS=300, H=300;
+    cv.width=CSS*DPR; cv.height=H*DPR; ctx.scale(DPR,DPR);
+
+    // ── geometry ──────────────────────────────────────────────────────────
+    const cx=CSS/2, icy=H*0.46;        // icon centre
+    const ICON=128, IR=ICON/2;
+    const v=(p)=> p/100*ICON;          // icon-viewbox(0..100) -> px
+    const ix=cx-IR, iy=icy-IR;         // icon top-left
+    const seat={ x:ix+v(50), y:iy+v(65.8) };   // pearl seat (bowl of u)
+    const seatR=v(7.9);
+
+    // Bézier arc: start high-left, control upper-right, end at the seat.
+    const P0={x:cx-118, y:icy-150};
+    const P1={x:cx+86,  y:icy-140};    // control — gives the graceful crest
+    const P2=seat;
+    const bez=(t)=>{ const u=1-t; return {
+      x:u*u*P0.x+2*u*t*P1.x+t*t*P2.x,
+      y:u*u*P0.y+2*u*t*P1.y+t*t*P2.y }; };
+
+    // easings
+    const easeInOut=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+    const easeOut=t=>1-Math.pow(1-t,3);
+    const easeIn=t=>t*t;
+    // (Landing no longer uses a pearl spring — the glimmer handles the finish.)
+
+    // timeline (ms)
+    const T_RISE=260;      // fade/scale in of the icon plate
+    const T_ARC0=420, T_ARC1=2120;     // sun travels the arc
+    const T_BLOOM=2120;    // landing instant
+    const T_PEARL0=2120, T_PEARL1=2760;
+    const T_WORD=2300;     // tell React to reveal wordmark
+
+    const trail=[];        // {x,y,r,a}
+    let raf, t0=performance.now(), firedWord=false;
+
+    // pre-rendered radial sprites for speed/quality
+    const mkOrb=(d, stops)=>{
+      const o=document.createElement("canvas"); o.width=o.height=d;
+      const g=o.getContext("2d");
+      const rg=g.createRadialGradient(d*0.38,d*0.32,d*0.05, d/2,d/2,d/2);
+      stops.forEach(([off,col])=>rg.addColorStop(off,col));
+      g.fillStyle=rg; g.beginPath(); g.arc(d/2,d/2,d/2,0,7); g.fill();
+      return o;
+    };
+    const sunSprite=mkOrb(128,[[0,"#FFFFFF"],[0.20,"#FFF3E2"],[0.55,"#F4A861"],[1,"#E0873F"]]);
+
+    const roundRectPath=(x,y,w,h,r)=>{ ctx.beginPath();
+      ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); };
+
+    const drawIcon=(plateA,pearlScale=0)=>{
+      // plate
+      ctx.save(); ctx.globalAlpha=plateA;
+      // soft drop shadow
+      ctx.shadowColor="rgba(80,70,95,0.20)"; ctx.shadowBlur=34; ctx.shadowOffsetY=16;
+      const bg=ctx.createLinearGradient(ix,iy,ix,iy+ICON);
+      bg.addColorStop(0,"#FFFCF7"); bg.addColorStop(1,"#F3E6D7");
+      roundRectPath(ix,iy,ICON,ICON,v(22.37)); ctx.fillStyle=bg; ctx.fill();
+      ctx.shadowColor="transparent";
+      // top sheen
+      const sh=ctx.createLinearGradient(ix,iy,ix,iy+ICON*0.5);
+      sh.addColorStop(0,"rgba(255,255,255,0.55)"); sh.addColorStop(1,"rgba(255,255,255,0)");
+      roundRectPath(ix+2,iy+2,ICON-4,ICON*0.5,v(20)); ctx.fillStyle=sh; ctx.fill();
+      // "lu" mark
+      ctx.beginPath();
+      ctx.moveTo(ix+v(34.5),iy+v(21));
+      ctx.lineTo(ix+v(34.5),iy+v(63.5));
+      ctx.arc(ix+v(50),iy+v(63.5),v(15.5),Math.PI,0,true);
+      ctx.lineTo(ix+v(65.5),iy+v(43.3));
+      ctx.lineWidth=v(12.8); ctx.strokeStyle="#1F1B2E";
+      ctx.lineCap="round"; ctx.lineJoin="round"; ctx.stroke();
+      ctx.restore();
+      // Seated pearl — grows in at landing and STAYS (pearlScale 0→1).
+      if(pearlScale>0){
+        const pr=seatR*pearlScale;
+        ctx.save();
+        ctx.shadowColor="rgba(224,135,63,0.4)"; ctx.shadowBlur=8*pearlScale;
+        const pg=ctx.createRadialGradient(seat.x-pr*0.3,seat.y-pr*0.34,pr*0.1, seat.x,seat.y,pr);
+        pg.addColorStop(0,"#FFFFFF"); pg.addColorStop(0.3,"#FFF2E6");
+        pg.addColorStop(0.7,"#F8D2B2"); pg.addColorStop(1,"#EDB78F");
+        ctx.fillStyle=pg; ctx.beginPath(); ctx.arc(seat.x,seat.y,pr,0,7); ctx.fill();
+        ctx.restore();
+        // tiny specular highlight
+        ctx.save(); ctx.globalAlpha=0.5*pearlScale; ctx.fillStyle="#FFFFFF";
+        ctx.beginPath(); ctx.arc(seat.x-pr*0.3,seat.y-pr*0.34,pr*0.26,0,7); ctx.fill();
+        ctx.restore();
+      }
+    };
+
+    const frame=(now)=>{
+      const t=now-t0;
+      ctx.clearRect(0,0,CSS,H);
+
+      // ── dawn sky warming behind the icon ────────────────────────────────
+      const warm=Math.max(0, Math.min(1, (t-T_ARC0)/(T_ARC1-T_ARC0)));
+      const aura=ctx.createRadialGradient(cx,icy,10, cx,icy,170);
+      const aA=0.05+0.16*easeOut(warm);
+      aura.addColorStop(0,`rgba(244,168,97,${aA})`);
+      aura.addColorStop(0.45,`rgba(244,168,97,${aA*0.4})`);
+      aura.addColorStop(1,"rgba(244,168,97,0)");
+      ctx.fillStyle=aura; ctx.fillRect(0,0,CSS,H);
+
+      // ── icon plate fades/scales in first ───────────────────────────────
+      const plateP=Math.max(0,Math.min(1,t/T_RISE));
+      const plateA=easeOut(plateP);
+
+      // landing progress — pearl scales in from T_BLOOM and stays
+      const pearlScale = t>=T_BLOOM ? Math.min(1, (t-T_BLOOM)/420) : 0;
+      drawIcon(plateA, easeOut(pearlScale));
+
+      // ── the travelling sun ──────────────────────────────────────────────
+      if(t>=T_ARC0 && t<T_BLOOM){
+        const at=Math.min(1,(t-T_ARC0)/(T_ARC1-T_ARC0));
+        const e=easeInOut(at);
+        const pos=bez(e);
+        const scale=1 - 0.86*easeIn(at);     // 1 -> ~0.14
+        const sd=64*scale;
+
+        // motion trail (sampled previous positions)
+        trail.unshift({x:pos.x,y:pos.y,r:sd*0.5});
+        if(trail.length>14) trail.pop();
+        for(let i=trail.length-1;i>=1;i--){
+          const tr=trail[i]; const a=(1-i/trail.length)*0.22;
+          ctx.save(); ctx.globalAlpha=a;
+          ctx.fillStyle="rgba(244,168,97,1)";
+          ctx.beginPath(); ctx.arc(tr.x,tr.y,tr.r*0.7,0,7); ctx.fill();
+          ctx.restore();
+        }
+
+        // glow
+        ctx.save();
+        const gl=ctx.createRadialGradient(pos.x,pos.y,sd*0.2, pos.x,pos.y,sd*1.8);
+        gl.addColorStop(0,"rgba(255,228,190,0.55)");
+        gl.addColorStop(1,"rgba(255,228,190,0)");
+        ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(pos.x,pos.y,sd*1.8,0,7); ctx.fill();
+        ctx.restore();
+
+        // rays — rotate + retract as it shrinks
+        const rayA=(1-at)*0.9;
+        if(rayA>0.02){
+          ctx.save(); ctx.translate(pos.x,pos.y); ctx.rotate(at*Math.PI*0.9);
+          ctx.strokeStyle=`rgba(240,164,90,${rayA})`; ctx.lineCap="round";
+          for(let i=0;i<8;i++){ const a=(i/8)*Math.PI*2, lng=i%2===0;
+            const r1=sd*0.62, r2=r1+ (lng?sd*0.34:sd*0.24);
+            ctx.lineWidth=(lng?1.6:1.1)*scale*1.6;
+            ctx.beginPath(); ctx.moveTo(Math.sin(a)*r1,-Math.cos(a)*r1);
+            ctx.lineTo(Math.sin(a)*r2,-Math.cos(a)*r2); ctx.stroke(); }
+          ctx.restore();
+        }
+
+        // core
+        ctx.drawImage(sunSprite, pos.x-sd/2, pos.y-sd/2, sd, sd);
+        ctx.save(); ctx.globalAlpha=0.7; ctx.fillStyle="#fff";
+        ctx.beginPath(); ctx.arc(pos.x-sd*0.16,pos.y-sd*0.16,sd*0.1,0,7); ctx.fill(); ctx.restore();
+      }
+
+      // ── soft flash as the sun settles into the pearl ───────────────────
+      // The pearl itself now stays (painted in drawIcon). Here we add only a
+      // brief warm glow at the landing instant for a graceful touchdown.
+      if(t>=T_BLOOM){
+        const bt=Math.min(1,(t-T_BLOOM)/620);
+        if(bt<1){
+          const eo=easeOut(bt);
+          ctx.save(); ctx.globalAlpha=(1-bt)*0.6;
+          const gr=ctx.createRadialGradient(seat.x,seat.y,0, seat.x,seat.y,seatR*3*(0.4+eo*0.6));
+          gr.addColorStop(0,"rgba(255,246,230,0.85)");
+          gr.addColorStop(0.5,"rgba(245,200,150,0.35)");
+          gr.addColorStop(1,"rgba(245,200,150,0)");
+          ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(seat.x,seat.y,seatR*3*(0.4+eo*0.6),0,7); ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      if(!firedWord && t>=T_WORD){ firedWord=true; setDone(true); }
+
+      if(t < T_PEARL1+700){ raf=requestAnimationFrame(frame); }
+      else { // settle to final static frame — logo WITH the pearl
+        ctx.clearRect(0,0,CSS,H);
+        const aur=ctx.createRadialGradient(cx,icy,10,cx,icy,170);
+        aur.addColorStop(0,"rgba(244,168,97,0.16)"); aur.addColorStop(1,"rgba(244,168,97,0)");
+        ctx.fillStyle=aur; ctx.fillRect(0,0,CSS,H);
+        drawIcon(1,1);
+      }
+    };
+
+    if(reduced){
+      // Respect reduced motion: just paint the final composed logo WITH pearl.
+      const aur=ctx.createRadialGradient(cx,icy,10,cx,icy,170);
+      aur.addColorStop(0,"rgba(244,168,97,0.16)"); aur.addColorStop(1,"rgba(244,168,97,0)");
+      ctx.fillStyle=aur; ctx.fillRect(0,0,CSS,H);
+      drawIcon(1,1); setDone(true);
+    } else {
+      raf=requestAnimationFrame(frame);
+    }
+    return ()=>{ if(raf) cancelAnimationFrame(raf); };
+  },[reduced]);
+
   return(
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:28,padding:"40px 32px"}}>
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:18,padding:"30px 32px"}}>
       <style>{`
-        @keyframes dILogoIn{0%{opacity:0;transform:scale(0.88)}100%{opacity:1;transform:scale(1)}}
-        @keyframes dILumaRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        @keyframes dILumaCoreBreath{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.05);filter:brightness(1.10)}}
-        @keyframes dIRayFadeA{0%,100%{opacity:0.75}50%{opacity:0.45}}
-        @keyframes dIRayFadeB{0%,100%{opacity:0.45}50%{opacity:0.8}}
-        @keyframes dIWordmark{0%{opacity:0;letter-spacing:5px}100%{opacity:1;letter-spacing:0.5px}}
-        @keyframes dIDot{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.4)}}
+        @keyframes dIWordIn{0%{opacity:0;transform:translateY(12px);filter:blur(4px)}100%{opacity:1;transform:translateY(0);filter:blur(0)}}
       `}</style>
-      <div style={{width:140,height:140,position:"relative",animation:"dILogoIn 1.2s cubic-bezier(0.22,1,0.36,1) both"}}>
-        <svg width={140} height={140} viewBox="0 0 26 26" style={{overflow:"visible"}}>
-          <defs>
-            <radialGradient id="dILumaCore" cx="35%" cy="30%" r="70%">
-              <stop offset="0%" stopColor="#FFFFFF"/>
-              <stop offset="20%" stopColor="#FFFAF0" stopOpacity="0.95"/>
-              <stop offset="55%" stopColor="#E8A878"/>
-              <stop offset="100%" stopColor="#C97548"/>
-            </radialGradient>
-            <radialGradient id="dILumaOuterGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="40%" stopColor="#E8A878" stopOpacity="0"/>
-              <stop offset="70%" stopColor="#E8A878" stopOpacity="0.20"/>
-              <stop offset="100%" stopColor="#E8A878" stopOpacity="0"/>
-            </radialGradient>
-          </defs>
-          {/* Outer soft glow */}
-          <circle cx="13" cy="13" r="13" fill="url(#dILumaOuterGlow)"/>
-          {/* Rotating ray group — 8 rays, alternating long/short */}
-          <g style={{transformOrigin:"13px 13px",animation:"dILumaRotate 22s linear infinite"}}>
-            {Array.from({length:8}).map((_,i)=>{
-              const ang=(i/8)*2*Math.PI;
-              const isLong=i%2===0;
-              const r1=8.5, r2=isLong?12.2:11;
-              const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
-              const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
-              return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#E8A878" strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"dIRayFadeA":"dIRayFadeB"} ${3+i*0.18}s ease-in-out infinite`}}/>;
-            })}
-          </g>
-          {/* Core orb with breath + highlight */}
-          <g style={{transformOrigin:"13px 13px",animation:"dILumaCoreBreath 3.4s ease-in-out infinite"}}>
-            <circle cx="13" cy="13" r="6.5" fill="url(#dILumaCore)"/>
-            <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
-          </g>
-        </svg>
+      <canvas ref={canvasRef} style={{width:300,height:300,display:"block"}}/>
+      <div style={{height:60,marginTop:-18,opacity:done?1:0,
+        animation:done?"dIWordIn 1.05s cubic-bezier(0.22,1,0.36,1) both":"none"}}>
+        <LumaWordmark size={52} color="#1F1B2E" showSun={false}/>
       </div>
-      <div style={{fontFamily:G.serif,fontSize:52,fontWeight:600,color:"#1F1B2E",letterSpacing:0.5,animation:"dIWordmark 1.4s 0.4s cubic-bezier(0.22,1,0.36,1) both"}}>Luma</div>
-      <div style={{width:5,height:5,borderRadius:"50%",background:"#E8A878",animation:"dIDot 2.5s 1.2s ease-in-out infinite"}}/>
     </div>
   );
 }
@@ -13161,40 +14142,13 @@ function SceneOutro({onStart,lang}){
         @keyframes dOTextIn{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
         @keyframes dOBtnIn{0%{opacity:0;transform:translateY(14px) scale(0.94)}100%{opacity:1;transform:translateY(0) scale(1)}}
       `}</style>
-      <div style={{width:100,height:100,position:"relative",animation:"dOLogoIn 1.2s cubic-bezier(0.22,1,0.36,1) both"}}>
-        <svg width={100} height={100} viewBox="0 0 26 26" style={{overflow:"visible"}}>
-          <defs>
-            <radialGradient id="dOLumaCore" cx="35%" cy="30%" r="70%">
-              <stop offset="0%" stopColor="#FFFFFF"/>
-              <stop offset="20%" stopColor="#FFFAF0" stopOpacity="0.95"/>
-              <stop offset="55%" stopColor="#E8A878"/>
-              <stop offset="100%" stopColor="#C97548"/>
-            </radialGradient>
-            <radialGradient id="dOLumaGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="40%" stopColor="#E8A878" stopOpacity="0"/>
-              <stop offset="70%" stopColor="#E8A878" stopOpacity="0.20"/>
-              <stop offset="100%" stopColor="#E8A878" stopOpacity="0"/>
-            </radialGradient>
-          </defs>
-          <circle cx="13" cy="13" r="13" fill="url(#dOLumaGlow)"/>
-          <g style={{transformOrigin:"13px 13px",animation:"dOLumaRotate 22s linear infinite"}}>
-            {Array.from({length:8}).map((_,i)=>{
-              const ang=(i/8)*2*Math.PI;
-              const isLong=i%2===0;
-              const r1=8.5, r2=isLong?12.2:11;
-              const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
-              const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
-              return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#E8A878" strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"dORayFadeA":"dORayFadeB"} ${3+i*0.18}s ease-in-out infinite`}}/>;
-            })}
-          </g>
-          <g style={{transformOrigin:"13px 13px",animation:"dOLumaBreath 3.4s ease-in-out infinite"}}>
-            <circle cx="13" cy="13" r="6.5" fill="url(#dOLumaCore)"/>
-            <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
-          </g>
-        </svg>
+      <div style={{animation:"dOLogoIn 1.2s cubic-bezier(0.22,1,0.36,1) both"}}>
+        <LumaIcon size={100} color="#1F1B2E"/>
       </div>
       <div style={{textAlign:"center",maxWidth:320}}>
-        <div style={{fontFamily:G.serif,fontSize:36,fontWeight:600,color:"#1F1B2E",letterSpacing:0.4,marginBottom:14,animation:"dOTextIn 0.9s 0.3s cubic-bezier(0.22,1,0.36,1) both"}}>Luma</div>
+        <div style={{marginBottom:14,animation:"dOTextIn 0.9s 0.3s cubic-bezier(0.22,1,0.36,1) both"}}>
+          <LumaWordmark size={36} color="#1F1B2E"/>
+        </div>
         <div style={{fontFamily:"-apple-system, sans-serif",fontSize:14,color:"#7C7691",lineHeight:1.5,letterSpacing:0.2,animation:"dOTextIn 0.9s 0.55s cubic-bezier(0.22,1,0.36,1) both"}}>{en?<>A schedule. A rhythm.<br/>A safety.</>:<>Ett schema. En rytm.<br/>En trygghet.</>}</div>
       </div>
       <button onClick={onStart} style={{
@@ -13383,10 +14337,9 @@ function NavIcon({type,active,color,size=22}){
   return(
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={{opacity:op,transition:"stroke 0.35s ease, opacity 0.35s ease"}}>
       {type==="home"&&(<>
-        {/* Gentle sun above a horizon — represents "today" / the day's path */}
-        <circle cx="12" cy="9" r="3.2" fill={color} fillOpacity={fillOp}/>
-        <path d="M12 4 v1.4 M12 12.6 v1.4 M5.4 9 h1.4 M17.2 9 h1.4 M7.4 4.4 l1 1 M15.6 4.4 l-1 1 M7.4 13.6 l1-1 M15.6 13.6 l-1-1"/>
-        <path d="M3.5 19 h17" strokeOpacity="0.4"/>
+        {/* Soft house — calm "home / today" symbol in the app's stroke language */}
+        <path d="M4.5 11 L12 5 L19.5 11 V19 Q19.5 20 18.5 20 H5.5 Q4.5 20 4.5 19 Z" fill={color} fillOpacity={fillOp}/>
+        <path d="M9.6 20 V14.5 Q9.6 13.8 10.3 13.8 H13.7 Q14.4 13.8 14.4 14.5 V20"/>
       </>)}
       {type==="timer"&&(<>
         {/* Quiet clock — no minute marks, single calm hand */}
@@ -13441,12 +14394,20 @@ function NavIcon({type,active,color,size=22}){
 /* ═══ Routine template picker — a calm, browsable sheet of suggested routines.
    Each category expands to its activities; tap + to add one (or "Add all").
    Added items show a check. Nothing is forced — pick only what you want. ═══ */
-function TemplatePicker({onClose,onAddActs,onEditAct,t,lang}){
+function TemplatePicker({onClose,onAddActs,onEditAct,t,lang,markAddedRef}){
   const[expanded,setExpanded]=useState(ROUTINE_TEMPLATES[0]?.id||null);
   const[added,setAdded]=useState({});
   const dark=isDark();
   const label=(o)=>{ if(dark){ const dk=lang==="sv"?o.svDark:o.enDark; if(dk) return dk; } return lang==="sv"?o.sv:o.en; };
   const keyFor=(cid,i)=>`${cid}:${i}`;
+  // Expose a function so App can mark a slot as added after the user
+  // edits-and-saves a suggestion (the picker can't see saves itself).
+  useEffect(()=>{
+    if(markAddedRef){
+      markAddedRef.current=(cid,i)=>setAdded(p=>({...p,[keyFor(cid,i)]:true}));
+    }
+    return()=>{ if(markAddedRef) markAddedRef.current=null; };
+  },[markAddedRef]);
   const addOne=(cid,i,act)=>{
     if(added[keyFor(cid,i)]) return;
     onAddActs([act]);
@@ -13521,7 +14482,7 @@ function TemplatePicker({onClose,onAddActs,onEditAct,t,lang}){
                             {/* Tapping the row body opens the FULL editor pre-filled
                                 so everything (name, time, emoji, colour, steps, timer)
                                 can be changed before it's added on Save. */}
-                            <button onClick={()=>onEditAct&&onEditAct(a)} className="lt-press-soft" style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:11,border:"none",background:"transparent",font:"inherit",textAlign:"left",cursor:"pointer",padding:0}}>
+                            <button onClick={()=>onEditAct&&onEditAct(a,tpl.id,i)} className="lt-press-soft" style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:11,border:"none",background:"transparent",font:"inherit",textAlign:"left",cursor:"pointer",padding:0}}>
                               <span style={{fontSize:19,flexShrink:0,width:38,height:38,borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",
                                 background:dark?`${a.color}24`:`${a.color}1A`,border:`1px solid ${a.color}2E`}}>{a.emoji}</span>
                               <div style={{flex:1,minWidth:0}}>
@@ -13568,10 +14529,15 @@ export default function App(){
   // can't animate) to the live app with the same Luma sun, now gently
   // ROTATING, then fades out. Gives the "loading sun that spins harmoniously"
   // feel right as the app opens. Shows ~1.1s, then fades.
-  const[booting,setBooting]=useState(true);
   useEffect(()=>{
-    const tHide=setTimeout(()=>setBooting(false),1100);
-    return()=>clearTimeout(tHide);
+    // Tell the pre-boot splash we're mounted AND have painted a real frame,
+    // so it can fade out on actual readiness (smooth, single hand-off) rather
+    // than a blind timer. Double-rAF = wait for the browser to commit a paint.
+    let raf1, raf2;
+    raf1=requestAnimationFrame(()=>{ raf2=requestAnimationFrame(()=>{
+      try{ window.__lumaReady=true; }catch(_){}
+    });});
+    return()=>{ if(raf1)cancelAnimationFrame(raf1); if(raf2)cancelAnimationFrame(raf2); };
   },[]);
   useLayoutEffect(()=>{
     const apply=()=>{
@@ -13884,11 +14850,102 @@ export default function App(){
   // One-time routine-template suggestion for new users (shown in the editor
   // until they add one or dismiss it). Never nags again afterwards.
   const[tmplDone,setTmplDone]=usePersistentState("templatesPromptDone",false);
-  // Session-only hide for the empty-schedule suggestion prompt. Unlike tmplDone
-  // (persisted "no thanks"), this resets on reload so suggestions reappear for
-  // an empty schedule — the prompt is meant to stay available while empty.
+  // Legacy session-hide for the empty-state suggestion CARD on the schedule.
+  // The new ghost-card system on the schedule replaces this card's primary
+  // role, but we keep these defined so the old card path still compiles.
   const[tmplHiddenThisSession,setTmplHiddenThisSession]=useState(false);
   const[showTmplPicker,setShowTmplPicker]=useState(false);
+  // GHOST SUGGESTIONS — proposed activities rendered as semi-transparent
+  // placeholders in the schedule when in editor mode and the day is empty.
+  // The user can tap + on a ghost (adds as-is) or tap the body (opens editor).
+  // Once a slot is added or dismissed, it disappears from the ghost list.
+  // Persisted so suggestions don't reappear on reload after the user said no.
+  const[ghostsHidden,setGhostsHidden]=usePersistentState("luma_ghosts_hidden",{});
+  const[ghostsAllOff,setGhostsAllOff]=usePersistentState("luma_ghosts_all_off",false);
+  // Build the live ghost list from all ROUTINE_TEMPLATES. Each is keyed by
+  // "tplId:idx" so we can hide individual ones as they're added or dismissed.
+  // Resolves localized name/steps just like addTemplateActs does.
+  const ghostActsList=useMemo(()=>{
+    if(ghostsAllOff) return [];
+    // Build all template suggestions, minus the ones the user already
+    // added/dismissed individually. The list PERSISTS while the user adds
+    // activities one by one — they should be able to pick all of them
+    // across a session without ghosts disappearing prematurely.
+    // The "schedule empty" auto-reset below brings the full set back
+    // whenever the user clears their day.
+    const dark=isDark();
+    const pick=(o)=>{ if(dark){ const dk=lang==="sv"?o.svDark:o.enDark; if(dk) return dk; } return lang==="sv"?o.sv:o.en; };
+    const list=[];
+    ROUTINE_TEMPLATES.forEach(tpl=>{
+      tpl.acts.forEach((a,idx)=>{
+        const key=`${tpl.id}:${idx}`;
+        if(ghostsHidden[key]) return;
+        list.push({
+          ghostKey:key,
+          tplId:tpl.id, tplIdx:idx,
+          time:a.time, endTime:a.endTime,
+          name:pick(a),
+          emoji:a.emoji, color:a.color,
+          steps:(a.steps||[]).map((s)=>({emoji:s.emoji,text:pick(s),...(s.timerMin?{timerMin:s.timerMin}:{})})),
+          timer:a.timer||null,
+        });
+      });
+    });
+    return list;
+  // eslint-disable-next-line
+  },[ghostsHidden,ghostsAllOff,lang,cfg.theme]);
+  // When the schedule becomes empty, also reset which individual ghosts were
+  // "added" — those slots are no longer filled. So the full suggestion set
+  // returns intact. (Without this, a ghost the user once added would still
+  // be missing after they cleared everything.)
+  useEffect(()=>{
+    if(acts.length===0&&Object.keys(ghostsHidden||{}).length>0){
+      setGhostsHidden({});
+    }
+  // eslint-disable-next-line
+  },[acts.length]);
+  const onGhostAdd=(g)=>{
+    // Add as a real activity; hide from ghost list.
+    setActs(prev=>{
+      const newAct={
+        id:uid(),
+        time:g.time, endTime:g.endTime,
+        name:g.name, emoji:g.emoji, color:g.color,
+        done:false, stepsDone:{},
+        steps:(g.steps||[]).map(s=>({id:uid(),emoji:s.emoji,text:s.text,...(s.timerMin?{timerMin:s.timerMin}:{})})),
+        timer:g.timer?{...g.timer}:{on:false,type:"sector",min:10,color:g.color},
+      };
+      return [...prev,newAct].sort((x,y)=>hm(x.time)-hm(y.time));
+    });
+    setGhostsHidden(h=>({...h,[g.ghostKey]:true}));
+    if(typeof navigator!=="undefined"&&navigator.vibrate) navigator.vibrate(12);
+  };
+  // Pending ghost-edit slot: when the user saves the editor we hide the slot.
+  // Declared BEFORE onGhostEdit (which uses it). Cancelling the editor leaves
+  // it set, but it's harmless — handleSave only acts on it when a save actually
+  // occurs, and the next ghost-edit overwrites it.
+  const pendingGhostKeyRef=useRef(null);
+  // Belt-and-braces: clear pendingGhostKeyRef whenever the editor CLOSES.
+  // Save path also clears it in handleSave; this handles the cancel path so
+  // a cancelled ghost-edit can't leak into the next (unrelated) save.
+  useEffect(()=>{
+    if(!showEd) pendingGhostKeyRef.current=null;
+  },[showEd]);
+  const onGhostEdit=(g)=>{
+    // Open the full editor pre-filled from this ghost. When the user saves,
+    // we'll mark the ghost as hidden so it disappears from the schedule.
+    const draft={
+      time:g.time, endTime:g.endTime,
+      name:g.name, emoji:g.emoji, color:g.color,
+      done:false, stepsDone:{},
+      steps:(g.steps||[]).map(s=>({id:uid(),emoji:s.emoji,text:s.text,...(s.timerMin?{timerMin:s.timerMin}:{})})),
+      timer:g.timer?{...g.timer}:{on:false,type:"sector",min:10,color:g.color},
+      repeat:{type:"none"},
+    };
+    pendingGhostKeyRef.current=g.ghostKey;
+    setEditAct(draft);
+    setShowEd(true);
+  };
   // Add a specific subset of activities (from the picker). Each entry is a
   // template activity object; they're converted to real activities and merged.
   const addTemplateActs=(acts)=>{
@@ -13900,8 +14957,8 @@ export default function App(){
       name:pick(a),
       emoji:a.emoji, color:a.color,
       done:false, stepsDone:{},
-      steps:(a.steps||[]).map((s)=>({id:uid(),emoji:s.emoji,text:pick(s)})),
-      timer:{on:false,type:"sector",min:10,color:a.color},
+      steps:(a.steps||[]).map((s)=>({id:uid(),emoji:s.emoji,text:pick(s),...(s.timerMin?{timerMin:s.timerMin}:{})})),
+      timer:a.timer?{...a.timer}:{on:false,type:"sector",min:10,color:a.color},
     }));
     setActs(prev=>[...prev,...newActs].sort((x,y)=>hm(x.time)-hm(y.time)));
   };
@@ -13910,7 +14967,19 @@ export default function App(){
   // then Save — which adds it as a brand-new activity (fresh uid means
   // handleSave appends rather than overwrites). This is the "tap a suggestion →
   // edit everything → save adds it" flow for the empty-schedule prompt.
-  const editTemplateAct=(a)=>{
+  //
+  // IMPORTANT: We do NOT close the picker here. Editor sits on top (zIndex
+  // 9500 vs picker 9300), so when the user saves and the editor closes,
+  // the picker reappears with all OTHER suggestions still available to add
+  // or edit. Previously we closed the picker on edit → user lost the rest
+  // of the suggestions after saving one, which forced them to reopen.
+  // Track which template slot the user is editing. When they save (handleSave
+  // is called with the draft → new id assigned by EditModal → appended to
+  // acts), we mark the slot as "added" in the picker so the + button shows
+  // ✓ and can't be tapped again, preventing duplicates.
+  const tmplMarkRef=useRef(null);
+  const pendingEditedSlotRef=useRef(null);
+  const editTemplateAct=(a,cid,idx)=>{
     const dark=isDark();
     const pick=(o)=>{ if(dark){ const dk=lang==="sv"?o.svDark:o.enDark; if(dk) return dk; } return lang==="sv"?o.sv:o.en; };
     const draft={
@@ -13918,11 +14987,11 @@ export default function App(){
       name:pick(a),
       emoji:a.emoji, color:a.color,
       done:false, stepsDone:{},
-      steps:(a.steps||[]).map((s)=>({id:uid(),emoji:s.emoji,text:pick(s)})),
-      timer:{on:false,type:"sector",min:10,color:a.color},
+      steps:(a.steps||[]).map((s)=>({id:uid(),emoji:s.emoji,text:pick(s),...(s.timerMin?{timerMin:s.timerMin}:{})})),
+      timer:a.timer?{...a.timer}:{on:false,type:"sector",min:10,color:a.color},
       repeat:{type:"none"},
     };
-    setShowTmplPicker(false);
+    pendingEditedSlotRef.current=(cid!=null&&idx!=null)?{cid,idx}:null;
     setEditAct(draft);
     setShowEd(true);
   };
@@ -14183,7 +15252,23 @@ export default function App(){
     return `${wd} · ${dm}`;
   })();
   const effView=cfg.schedView==="card"?"card":cfg.schedView==="list"?"list":view;
-  const handleSave=item=>setActs(a=>a.find(x=>x.id===item.id)?a.map(x=>x.id===item.id?item:x):[...a,item]);
+  const handleSave=item=>{
+    setActs(a=>a.find(x=>x.id===item.id)?a.map(x=>x.id===item.id?item:x):[...a,item]);
+    // If this save originated from "edit a template suggestion" (legacy
+    // picker overlay), mark the picker slot as added.
+    const slot=pendingEditedSlotRef.current;
+    if(slot && tmplMarkRef.current){
+      tmplMarkRef.current(slot.cid, slot.idx);
+    }
+    pendingEditedSlotRef.current=null;
+    // If this save originated from a ghost-edit on the schedule, hide the
+    // ghost so it doesn't reappear — the user has already committed it.
+    const ghostKey=pendingGhostKeyRef.current;
+    if(ghostKey){
+      setGhostsHidden(h=>({...h,[ghostKey]:true}));
+      pendingGhostKeyRef.current=null;
+    }
+  };
   const handleDel=id=>setActs(a=>a.filter(x=>x.id!==id));
   // Check/uncheck step — always writes to today's date entry
   const handleCheck=(aid,sd)=>setDayStepsDone(aid,sd,todayKey);
@@ -14243,11 +15328,23 @@ export default function App(){
     // Timer screen — header + page background follow the user's chosen
     // timer colour. Reads `liveTimerColor` (App-level state pushed up from
     // TimerScreen) so picking a new colour on the screen instantly retints
-    // the whole tool. Only applied in LIGHT mode — dark mode keeps its
-    // calm near-black palette.
-    if(screen==="timer"&&!isDark()){
+    // the logo, icons and accents. In LIGHT mode the page background also
+    // picks up the colour; in DARK mode the page stays its calm near-black
+    // base (only the accent colour shifts) so the screen doesn't suddenly
+    // bathe in a hue at night.
+    if(screen==="timer"){
       const c=liveTimerColor;
       if(c){
+        if(isDark()){
+          return{
+            ...curS,
+            h:c,
+            soft:c,
+            deep:shadeHex(c,-0.35),
+            // hb / hl / hll intentionally left as dark-mode defaults so the
+            // page surface stays calm and dark even when the accent shifts.
+          };
+        }
         return{
           ...curS,
           h:c,
@@ -14258,6 +15355,27 @@ export default function App(){
           hll:withAlpha(c,0.10),
         };
       }
+    }
+    // Week — header + entire-page tint follow the time-of-day rhythm. The
+    // WeekScreen itself is transparent so this `effS.hb` IS the full-screen
+    // background. Stronger alpha here than for most other screens because
+    // it's doing all the work (no second gradient layered on top).
+    if(screen==="week"&&!isDark()){
+      const h=now.getHours()+now.getMinutes()/60;
+      let c;
+      if(h<5)        c="#B6A6DC";       // pre-dawn → light airy lilac (lightened: the old #9683C2 read murky/dark as a light-mode wash at night)
+      else if(h<12)  c="#E8A878";       // morning → warm peach
+      else if(h<17)  c=SCREENS.week.h;  // midday → calm sky blue (default)
+      else           c="#B89DC4";       // evening → soft twilight lilac
+      return{
+        ...curS,
+        h:c,
+        hl:withAlpha(c,0.14),
+        soft:withAlpha(c,0.32),
+        deep:shade(c,-0.35),
+        hb:withAlpha(c,0.12),
+        hll:withAlpha(c,0.16),
+      };
     }
     // Home in card view → the header reflects the active card's hue (logo,
     // wordmark, auroras). We deliberately do NOT tint the page background `hb`
@@ -14277,7 +15395,52 @@ export default function App(){
         };
       }
     }
-    // Home (list/edit) stays its own harmonious tech-blue.
+    // Home (list/edit) → poetic time-of-day "sunlight halo" hue.
+    // The sun glyph, Luma wordmark, AND a soft radial halo behind the logo
+    // all follow the dawn/midday/dusk rhythm in the same hue family — as if
+    // the actual sun's light is falling onto the corner of the screen.
+    // Runs in BOTH light AND dark mode so the logo/sun reflects time of
+    // day in either theme. (Dark mode renders the colour via the sun and
+    // wordmark only; the page background stays night-dark.)
+    if(screen==="home"){
+      const h=now.getHours()+now.getMinutes()/60;
+      let c;
+      if(h<5)        c="#9683C2";       // pre-dawn → twilight purple
+      else if(h<12)  c="#E8A878";       // morning → warm peach
+      else if(h<17)  c=SCREENS.home.h;  // midday → calm sky blue (default)
+      else           c="#B89DC4";       // evening → soft twilight lilac
+      return{
+        ...curS,
+        h:c,
+        hl:withAlpha(c,0.13),
+        soft:withAlpha(c,0.30),
+        deep:shade(c,-0.35),
+        // Page background stays white. The halo is rendered separately as a
+        // soft radial-gradient behind the logo (see the lt-app-root header).
+        hb:curS.hb,
+        hll:curS.hll,
+      };
+    }
+    // Week → same time-of-day rhythm as home (so the sun/wordmark
+    // reflect dawn/midday/dusk on the week screen too). Page background
+    // stays the week base; only the accent hue (h/soft/deep) follows time.
+    if(screen==="week"){
+      const h=now.getHours()+now.getMinutes()/60;
+      let c;
+      if(h<5)        c="#9683C2";
+      else if(h<12)  c="#E8A878";
+      else if(h<17)  c=SCREENS.week.h;
+      else           c="#B89DC4";
+      return{
+        ...curS,
+        h:c,
+        hl:withAlpha(c,0.13),
+        soft:withAlpha(c,0.30),
+        deep:shade(c,-0.35),
+        hb:curS.hb,
+        hll:curS.hll,
+      };
+    }
     return curS;
   })();
   // Per-screen header character. Home is the lightest/airiest (single soft
@@ -14321,60 +15484,58 @@ export default function App(){
       background:isDark()
       ? "#0E0E10"
       : (screen==="home"
-        ? "#FFFFFF"
-        : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background .5s ease"}}>
+        // ───── HOME BACKGROUND — atmospheric, layered sunlight ─────
+        // Card view excluded so the card's own colour can shine.
+        // Five stacked CSS gradient layers, evaluated top→bottom (so the
+        // LAST listed one is the BOTTOM-most layer / the base):
+        //
+        //  (1) Main sunlight source — strong soft radial from upper-left
+        //      where the Luma sun glyph sits. The brightest light.
+        //  (2) Secondary diffusion — a softer warm "breath" lower-right of
+        //      the source, simulating how diffuse light spreads asymmetrically
+        //      across a surface. Gives the gradient organic asymmetry.
+        //  (3) Atmospheric complement — a very faint counter-colour (a step
+        //      cooler/pinker than the main hue) placed mid-right. Real
+        //      sunrises and sunsets have a counter-tone where the light
+        //      breaks; this hint of complementary colour is what makes a
+        //      gradient look "real" rather than "designed".
+        //  (4) Diffuse base wash — extremely soft full-screen wash of the
+        //      main hue at very low alpha, so even far corners share the
+        //      time-of-day character. No hard fade-to-white border.
+        //  (5) Pure white base — bottom layer, what shows through where
+        //      none of the above reach.
+        //
+        // The complement colour is derived from the main hue with a small
+        // hue shift: peach → soft rose, sky-blue → cool mint, lila → rose.
+        ? (effView==="card"&&!isEd&&cardColor
+          ? "#FFFFFF"
+          : (()=>{
+              const h=now.getHours()+now.getMinutes()/60;
+              // Complement hue — a step toward pink/lila for dawn/dusk, or
+              // a touch toward cream for midday. Each chosen to feel like
+              // the natural counter-light at that time of day.
+              let comp;
+              if(h<5)        comp="#D8B4D4";   // pre-dawn → cool pink
+              else if(h<12)  comp="#E6B3D0";   // morning → blush pink
+              else if(h<17)  comp="#D4DCE8";   // midday → cool silver
+              else           comp="#E0BFCA";   // evening → warm rose
+              return [
+                // (1) Main sunlight from upper-left
+                `radial-gradient(60% 50% at 8% -4%, ${effS.h}30 0%, ${effS.h}18 24%, transparent 60%)`,
+                // (2) Secondary diffusion below the source
+                `radial-gradient(70% 55% at 28% 12%, ${effS.h}1C 0%, ${effS.h}0C 30%, transparent 65%)`,
+                // (3) Atmospheric complement on the far side
+                `radial-gradient(85% 60% at 110% 30%, ${comp}1A 0%, ${comp}08 35%, transparent 70%)`,
+                // (4) Diffuse base wash — gives every corner a hint
+                `radial-gradient(120% 80% at 50% 100%, ${effS.h}06 0%, transparent 70%)`,
+                // (5) Pure white base
+                "#FFFFFF",
+              ].join(", ");
+            })())
+        : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background 1.2s ease"}}>
       {/* BOOT OVERLAY — the Luma sun (matching the welcome guide), gently
           rotating, shown for a moment as the app opens then fading away. Sits
           above everything (zIndex high) and ignores taps once fading. */}
-      {booting&&(
-        <div aria-hidden="true" style={{
-          position:"fixed",inset:0,zIndex:99999,
-          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:24,
-          background:isDark()?"#0E0E10":"#FBFDFE",
-          animation:"lumaBootFade .5s ease .6s forwards",
-          pointerEvents:"none",
-        }}>
-          <style>{`
-            @keyframes lumaBootFade{to{opacity:0;visibility:hidden}}
-            @keyframes lumaBootRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-            @keyframes lumaBootBreath{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.05);filter:brightness(1.08)}}
-            @keyframes lumaBootRayA{0%,100%{opacity:.75}50%{opacity:.45}}
-            @keyframes lumaBootRayB{0%,100%{opacity:.45}50%{opacity:.8}}
-            @keyframes lumaBootWord{0%{opacity:0;letter-spacing:5px}100%{opacity:1;letter-spacing:.5px}}
-          `}</style>
-          <svg width={132} height={132} viewBox="0 0 26 26" style={{overflow:"visible"}}>
-            <defs>
-              <radialGradient id="bootCore" cx="35%" cy="30%" r="70%">
-                <stop offset="0%" stopColor="#FFFFFF"/>
-                <stop offset="20%" stopColor="#FFFAF0" stopOpacity="0.95"/>
-                <stop offset="55%" stopColor="#E8A878"/>
-                <stop offset="100%" stopColor="#C97548"/>
-              </radialGradient>
-              <radialGradient id="bootGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="40%" stopColor="#E8A878" stopOpacity="0"/>
-                <stop offset="70%" stopColor="#E8A878" stopOpacity="0.20"/>
-                <stop offset="100%" stopColor="#E8A878" stopOpacity="0"/>
-              </radialGradient>
-            </defs>
-            <circle cx="13" cy="13" r="13" fill="url(#bootGlow)"/>
-            <g style={{transformOrigin:"13px 13px",animation:"lumaBootRotate 22s linear infinite"}}>
-              {Array.from({length:8}).map((_,i)=>{
-                const ang=(i/8)*2*Math.PI;
-                const isLong=i%2===0;
-                const r1=8.5, r2=isLong?12.2:11;
-                const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
-                const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
-                return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#E8A878" strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"lumaBootRayA":"lumaBootRayB"} ${3+i*0.18}s ease-in-out infinite`}}/>;
-              })}
-            </g>
-            <g style={{transformOrigin:"13px 13px",animation:"lumaBootBreath 3.4s ease-in-out infinite"}}>
-              <circle cx="13" cy="13" r="6.5" fill="url(#bootCore)"/>
-              <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
-            </g>
-          </svg>
-          <div style={{fontFamily:G.serif,fontSize:38,fontWeight:600,color:isDark()?"#F4F1FA":"#1F1B2E",letterSpacing:.5,animation:"lumaBootWord 1s .15s cubic-bezier(0.22,1,0.36,1) both"}}>Luma</div>
-        </div>
-      )}
       <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent",height:"100%",width:"100%"}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
@@ -14411,7 +15572,7 @@ export default function App(){
           -webkit-tap-highlight-color: transparent;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
-          background: #0E0E10;
+          background: #FBFDFE;
           margin: 0;
           padding: 0;
           width: 100%;
@@ -14424,8 +15585,27 @@ export default function App(){
              viewport-fit=cover in standalone. */
           overflow: hidden;
         }
-        @media (prefers-color-scheme: dark) {
-          html, body { background: #0E0E10; margin: 0; padding: 0; min-height: 100dvh; }
+        /* Hide scrollbars across the whole app's internal scrollers — modal
+           sheets, tab strips, lists. They're still scrollable; the bar just
+           doesn't draw. On iOS they're invisible by default; this rule keeps
+           desktop/PWA browser views equally clean. */
+        [data-modal-scroll]::-webkit-scrollbar,
+        [data-emotion-scroll]::-webkit-scrollbar {
+          width: 0;
+          height: 0;
+          display: none;
+        }
+        [data-modal-scroll], [data-emotion-scroll] {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        /* iPhone photos arrive with EXIF rotation metadata; older browsers
+           ignore it and show the photo sideways/upside-down. Forcing
+           from-image rotation guarantees uploaded photos display the right
+           way up everywhere. Also enables crisp downscaling on retina. */
+        img {
+          image-orientation: from-image;
+          -webkit-user-drag: none;
         }
         html.lt-theme-dark, html.lt-theme-dark body { background: #0E0E10; margin: 0; padding: 0; }
         html.lt-theme-light, html.lt-theme-light body { background: #FBFDFE; margin: 0; padding: 0; }
@@ -14518,6 +15698,13 @@ export default function App(){
         button, [role="button"], .lt-press, .lt-press-soft, .lt-press-tight {
           touch-action: manipulation;
           -webkit-tap-highlight-color: transparent;
+          /* Prevent accidental text-selection when long-pressing a button.
+             Without this, iOS Safari highlights the button label in blue
+             after a hold — feels like the app glitched. user-select:none
+             keeps the press feeling like a button press. */
+          -webkit-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none;
         }
         /* Kill the browser's default focus ring that lingers after tap on iOS Safari.
            Real keyboard-only focus uses :focus-visible which we don't disable. */
@@ -14535,6 +15722,71 @@ export default function App(){
         .lt-press-soft:active { transform: scale(0.985); }
         .lt-press-tight { transition: transform .22s cubic-bezier(0.32, 0.72, 0, 1); }
         .lt-press-tight:active { transform: scale(0.94); }
+        /* ─── SAVE SUCCESS — calm premium iOS confirmation ─────────────────
+           When the user taps Save, the button quietly transforms to confirm
+           the action. No bouncing, no rings, no fireworks — just a stillsam
+           "yes, this happened" moment in the spirit of native iOS.
+
+             0-150ms : "Spara" text + tick fade out
+             100-450ms: bakgrund får mjuk brightness/saturation-lyft
+             150-550ms: "Sparad" (or "Saved") fadar in jämte en mjuk
+                       stroke-draw-bock — texten och bocken hör ihop
+             550-700ms: håller stilla
+             700ms   : editor stänger
+           Total: ~750ms */
+        @keyframes saveLabelOut {
+          0%   { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        @keyframes saveLabelIn {
+          0%   { opacity: 0; transform: translateY(2px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes saveCheckStrokeDraw {
+          0%   { stroke-dashoffset: 22; }
+          100% { stroke-dashoffset: 0; }
+        }
+        @keyframes saveSurfaceLift {
+          0%   { filter: brightness(1)    saturate(1); }
+          50%  { filter: brightness(1.10) saturate(1.10); }
+          100% { filter: brightness(1.05) saturate(1.05); }
+        }
+
+        /* Lock the button + start the subtle surface lift. */
+        .saveBtn-confirming {
+          animation: saveSurfaceLift .50s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+          pointer-events: none;
+        }
+        /* Original "Spara" text + small tick fade out crisply. */
+        .saveBtn-confirming .saveOriginalLabel {
+          animation: saveLabelOut .15s ease-out forwards;
+        }
+        /* The "Sparad ✓" replacement label — hidden by default, fades in. */
+        .saveSavedLabel {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          opacity: 0;
+          pointer-events: none;
+          font-family: inherit;
+          font-weight: inherit;
+          font-size: inherit;
+          color: inherit;
+          letter-spacing: inherit;
+        }
+        .saveSavedLabel svg {
+          stroke-dasharray: 22;
+          stroke-dashoffset: 22;
+        }
+        .saveBtn-confirming .saveSavedLabel {
+          animation: saveLabelIn .35s cubic-bezier(0.32, 0.72, 0, 1) .15s forwards;
+        }
+        .saveBtn-confirming .saveSavedLabel svg {
+          animation: saveCheckStrokeDraw .42s cubic-bezier(0.32, 0.72, 0, 1) .20s forwards;
+        }
         /* Photo-conversion spinner */
         @keyframes phSpin { to { transform: rotate(360deg); } }
         /* Gentle fade+settle for newly chosen/cropped photos */
@@ -14556,6 +15808,21 @@ export default function App(){
           background: #FFFFFF;
           box-shadow: 0 0 0 4px rgba(31,27,46,0.05);
         }
+        html.lt-theme-dark .lt-input:focus {
+          /* In dark mode, focus shouldn't flash white. Use a slightly lifted
+             dark tint with a subtle pale ring so the focus is unmistakable
+             but the field still belongs to the night palette. */
+          border-color: rgba(255,255,255,0.22);
+          background: rgba(255,255,255,0.06);
+          box-shadow: 0 0 0 4px rgba(255,255,255,0.05);
+        }
+        /* Custom text-selection colour — matches Luma's peach identity.
+           Default browser selection is harsh blue; this stays in the warm
+           palette so any text the user selects feels intentional. */
+        ::selection { background: rgba(232,168,120,0.30); color: inherit; }
+        ::-moz-selection { background: rgba(232,168,120,0.30); color: inherit; }
+        html.lt-theme-dark ::selection { background: rgba(232,168,120,0.35); color: inherit; }
+        html.lt-theme-dark ::-moz-selection { background: rgba(232,168,120,0.35); color: inherit; }
         /* Accessibility — a clear focus ring for KEYBOARD users only (:focus-visible
            never triggers on touch/mouse taps, so the calm touch UI is untouched).
            Helps anyone navigating with a keyboard or switch device. */
@@ -14601,7 +15868,7 @@ export default function App(){
            Nunito from Google Fonts. Variable weight for clean rendering
            across all heading scales. Loaded via @import (rather than <link>)
            so it travels with the artifact and works offline. */
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Urbanist:wght@400;500;600;700;800&display=swap');
 
         /* Global type rendering — enables kerning, common ligatures, contextual
            alternates, and lets variable-font optical sizing follow the rendered
@@ -14639,10 +15906,12 @@ export default function App(){
           pastel surface — no overlay needed to "lift" it. Anything added
           here will re-introduce banding unless it's truly full-screen and
           edge-fading nowhere. Kept empty deliberately. */}
-      {/* Vecka light: cool tech-blue at the top toning down to WHITE so the
-          schedule sits on a clean white field (in focus). Built as light
-          overlays only — a blue wash near the top, then a white veil that
-          grows downward — so nothing can ever composite dark. */}
+      {/* ── ONE CONTINUOUS SURFACE ─────────────────────────────────────────
+          A single tinted field sits behind the header, the tab pill AND the
+          body, fading out softly downward. Because the header itself is
+          transparent, there is no edge where it "ends" — the colour simply
+          dissolves into the page, so the whole screen reads as one surface
+          whether you're at the top or scrolled down. */}
       {!isDark()&&screen==="week"&&(
         <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
           <div style={{position:"absolute",top:0,left:0,right:0,height:"100%",
@@ -14661,16 +15930,14 @@ export default function App(){
         // Per-screen header: each tool has its own fullness and glow shape (see
         // HEADER_CHAR) so every header is unique, while sharing one calm design
         // language. The screen's own hue colours it; calm/Lugn is the fullest.
-        background: isDark()
-          ? "transparent"
-          : screen==="home"&&effView==="card"&&!isEd
+        background: !isDark()&&screen==="home"&&effView==="card"&&!isEd
           ? `linear-gradient(180deg, ${effS.h}54 0%, ${effS.h}30 30%, ${effS.h}14 56%, ${effS.h}06 82%, #FFFFFF 100%)`
-          : screen==="home"
-          ? `transparent`
           : `transparent`,
         backdropFilter: isDark()?"none":"none",
         WebkitBackdropFilter: isDark()?"none":"none",
-        padding:isDark()?"calc(20px + env(safe-area-inset-top, 0px)) 22px 8px":"calc(20px + env(safe-area-inset-top, 0px)) 22px 6px",
+        padding:isEd
+          ? "calc(14px + env(safe-area-inset-top, 0px)) 22px 4px"
+          : "calc(16px + env(safe-area-inset-top, 0px)) 22px 6px",
         flexShrink:0,
         position:"relative",
         overflow:"hidden",
@@ -14743,79 +16010,54 @@ export default function App(){
           animation:"headerShine 10s ease-in-out infinite",
           willChange:"transform, opacity",
         }}/>}
-        {/* Luma wordmark — stylized sun with rays */}
-        <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:10,position:"relative",zIndex:2}}>
+        {/* Luma wordmark — stylized sun with rays.
+            Note: The "halo behind logo" on Home is no longer a separate
+            element here — instead, the entire page background (set on
+            lt-app-root above) is a radial gradient emanating from this
+            point in the time-of-day colour, fading to white. The header
+            and body are one unified painted surface. */}
+        {((screen==="home"||screen==="week")&&!isEd&&!isDark()) ? (
+          <SkyHeader now={now} lang={lang}/>
+        ) : (<>
+        <div style={{
+          display:"flex",
+          flexDirection:"row",
+          // Icon and wordmark are vertically centred to each other — a clean
+          // app-icon + wordmark lockup.
+          alignItems:"center",
+          gap:13,
+          marginBottom:10,position:"relative",zIndex:2,
+        }}>
           <style>{`
             @keyframes lumaRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
             @keyframes lumaCoreBreath{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.04);filter:brightness(1.08)}}
             @keyframes rayFade1{0%,100%{opacity:.85}50%{opacity:.58}}
             @keyframes rayFade2{0%,100%{opacity:.58}50%{opacity:.85}}
           `}</style>
-          <svg width={26} height={26} viewBox="0 0 26 26" style={{flexShrink:0,overflow:"visible",opacity:1,filter:isDark()?`drop-shadow(0 0 3px ${effS.h}2E)`:"none"}}>
-            {(()=>{
-              // In dark mode the sun is a calmer, dimmed tint of the screen accent —
-              // mature and harmonised with the wordmark. In light mode it's softened
-              // just slightly from full saturation for the same grown-up feel.
-              const sunH=isDark()?shadeHex(effS.h,0.22):effS.h;
-              const sunDeep=isDark()?shadeHex(effS.h,-0.12):effS.deep;
-              const rayCol=isDark()?shadeHex(effS.h,0.3):effS.h;
-              return(<>
-            <defs>
-              <radialGradient id="lumaCore" cx="34%" cy="28%" r="74%">
-                <stop offset="0%" stopColor={isDark()?"#F6F2FA":"#FFFFFF"}/>
-                <stop offset="16%" stopColor={isDark()?"#ECE6F2":"#FFFDF7"} stopOpacity="0.98"/>
-                <stop offset="46%" stopColor={sunH}/>
-                <stop offset="82%" stopColor={sunH}/>
-                <stop offset="100%" stopColor={sunDeep}/>
-              </radialGradient>
-              <radialGradient id="lumaOuterGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="40%" stopColor={effS.h} stopOpacity="0"/>
-                <stop offset="70%" stopColor={effS.h} stopOpacity={isDark()?"0.07":"0.18"}/>
-                <stop offset="100%" stopColor={effS.h} stopOpacity="0"/>
-              </radialGradient>
-              {/* Soft top-left gloss — reads like real light catching the orb */}
-              <radialGradient id="lumaGloss" cx="32%" cy="26%" r="46%">
-                <stop offset="0%" stopColor="#FFFFFF" stopOpacity={isDark()?"0.5":"0.7"}/>
-                <stop offset="60%" stopColor="#FFFFFF" stopOpacity="0.12"/>
-                <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0"/>
-              </radialGradient>
-            </defs>
-            {/* Outer soft glow */}
-            <circle cx="13" cy="13" r="13" fill="url(#lumaOuterGlow)"/>
-            {/* Thin halo ring — refined finish (light mode) */}
-            {!isDark()&&<circle cx="13" cy="13" r="9.4" fill="none" stroke={effS.h} strokeWidth="0.75" opacity="0.22"/>}
-            {/* Rotating ray group — 8 rays, alternating long/short */}
-            <g style={{transformOrigin:"13px 13px",animation:"lumaRotate 22s linear infinite"}}>
-              {Array.from({length:8}).map((_,i)=>{
-                const ang=(i/8)*2*Math.PI;
-                const isLong=i%2===0;
-                const r1=8.5, r2=isLong?12.2:11;
-                const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
-                const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
-                return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={rayCol} strokeWidth={isLong?(isDark()?1.6:1.7):(isDark()?1.1:1.25)} strokeLinecap="round" style={{animation:`${i%2===0?"rayFade1":"rayFade2"} ${3+i*0.18}s ease-in-out infinite`,opacity:isDark()?0.85:1}}/>;
-              })}
-            </g>
-            {/* Core orb */}
-            <g style={{transformOrigin:"13px 13px",animation:"lumaCoreBreath 3.4s ease-in-out infinite"}}>
-              <circle cx="13" cy="13" r="6.5" fill="url(#lumaCore)"/>
-              {/* Crisp inner rim — gives the disc a "set", premium edge (light) */}
-              {!isDark()&&<circle cx="13" cy="13" r="6.5" fill="none" stroke={shadeHex(effS.deep,-0.1)} strokeWidth="0.5" opacity="0.35"/>}
-              {/* Soft gloss */}
-              <circle cx="13" cy="13" r="6.5" fill="url(#lumaGloss)"/>
-            </g>
-              </>);
-            })()}
-          </svg>
-          <span style={{
-            fontFamily:G.serif,
-            fontWeight:700,
-            fontSize:18,
-            lineHeight:1,
-            color:isDark()?shadeHex(effS.h,0.28):effS.deep,
-            letterSpacing:isDark()?0.4:-0.2,
-            textShadow:isDark()?`0 1px 1px rgba(0,0,0,0.35), 0 0 16px ${effS.h}26`:`0 1px 0 rgba(255,255,255,0.9), 0 2px 10px ${effS.h}26`,
-            transition:"color .5s ease, text-shadow .5s ease",
-          }}>Luma</span>
+          {/* luma wordmark — uses the same hooked-l component as the boot
+              screen and intro, so the signature character is consistent
+              everywhere. No sun-in-u dot here: at 18px it would be too
+              small and competes with the icon glyph beside it. The full
+              wordmark with dot appears on the boot/intro screens. */}
+          {isDark()?(
+            <LumaWordmark
+              size={25}
+              color={shadeHex(effS.h,0.50)}
+              showSun={true}
+              style={{
+                transition:"color .5s ease",
+              }}
+            />
+          ):(
+            <LumaWordmark
+              size={25}
+              color={shadeHex(effS.h,-0.55)}
+              showSun={true}
+              style={{
+                transition:"color .5s ease",
+              }}
+            />
+          )}
           {/* VERSION STAMP — hidden by default, revealed by double-tapping
               the Luma title. Diagnostic only: if the stamp doesn't match the
               latest deploy, the device is running cached old code. */}
@@ -14846,9 +16088,9 @@ export default function App(){
             }}
           >v2026-05-28-D</span>
         </div>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:0,position:"relative",gap:12,minHeight:36}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:0,position:"relative",gap:12,minHeight:(isEd||screen==="home")?36:0}}>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontFamily:G.font,fontWeight:isEd?400:500,fontSize:10.5,color:isEd?(isDark()?tk().ink3:"#7C7691"):(isDark()?effS.h:effS.deep),textTransform:"capitalize",letterSpacing:.8,marginBottom:5,textAlign:"left",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",transition:"color .4s ease"}}>
+            <div style={{fontFamily:G.font,fontWeight:isEd?400:500,fontSize:10.5,color:isEd?(isDark()?tk().ink3:"#7C7691"):(isDark()?effS.h:effS.deep),textTransform:"capitalize",letterSpacing:.8,marginBottom:(isEd||screen==="home")?5:0,textAlign:"left",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",transition:"color .4s ease"}}>
               {/* Subtitle line under Luma. In edit mode we show the screen
                   label ("Schema", "Tala", etc.); otherwise empty on every
                   screen — the date used to appear on non-home screens but
@@ -14857,19 +16099,17 @@ export default function App(){
                   header has its own dedicated date display below. */}
               {isEd ? (screen==="home" ? t.schedule : navItems.find(n=>n.key===screen)?.label || "") : ""}
             </div>
-            <div style={{fontFamily:G.serif,fontWeight:isDark()?600:500,fontSize:isDark()?23:26,color:tk().inkSoft,lineHeight:1.05,letterSpacing:-.5,display:"flex",alignItems:"baseline",gap:10,textTransform:"capitalize"}}>
+            <div style={{fontFamily:G.serif,fontWeight:isDark()?600:500,fontSize:isEd?(isDark()?18:20):((screen==="home"||screen==="week")?(isDark()?23:26):(isDark()?20:22)),color:tk().inkSoft,lineHeight:1.05,letterSpacing:-.5,display:"flex",alignItems:"baseline",gap:10,textTransform:"capitalize",transition:"font-size .3s ease"}}>
               {isEd ? (
                 <>
-                  <span style={{textTransform:"none"}}>{lang==="sv"?"Redigerar":"Editing"}</span>
+                  <span style={{textTransform:"none",fontWeight:isDark()?500:500,color:tk().ink2}}>{lang==="sv"?"Redigerar":"Editing"}</span>
                   <span style={{
-                    width:8,height:8,borderRadius:"50%",
-                    background:effS.h,
-                    boxShadow:`0 0 8px ${effS.h}88, 0 0 14px ${effS.h}44`,
-                    animation:"editDot 2.4s ease-in-out infinite",
+                    width:6,height:6,borderRadius:"50%",
+                    background:`${effS.h}`,
+                    opacity:0.5,
                     flexShrink:0,
                     alignSelf:"center",
                   }}/>
-                  <style>{`@keyframes editDot{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}`}</style>
                 </>
               ) : (
                 screen==="home" ? (
@@ -14925,13 +16165,14 @@ export default function App(){
             </button>
           )}
         </div>
+        </>)}
       </div>
       {/* BODY — instant screen-color background match (no transition). Any
           tween between the old and new screen color would read as a muddy
           intermediate tone during the brief moment when the screen wrapper
           above is still fading in. Instant switch = always the correct color
           underneath. */}
-      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",background:isDark()?"transparent":"transparent",transition:"background .5s ease"}}>
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",background:isDark()?"transparent":((!isEd&&(screen==="home"||screen==="week"))?(()=>{const _b=skyAt(now.getHours()+now.getMinutes()/60).hill;const r=Math.round(_b[0]),g=Math.round(_b[1]),bl=Math.round(_b[2]);return `linear-gradient(180deg, rgba(${r},${g},${bl},1) 0%, rgba(${r},${g},${bl},0.55) 15%, rgba(${r},${g},${bl},0) 42%)`;})():"transparent"),transition:"background .5s ease"}}>
         {/* No body-top wash on home: header and schedule share one continuous
             white surface (transparent over the white page wrapper), so any tint
             here would re-introduce a faint tone-line at the boundary. */}
@@ -14949,22 +16190,37 @@ export default function App(){
             willChange:"transform, opacity",
             transform:"translateY(0)",opacity:1,
           }:{
-            flexShrink:0,padding:"6px 22px 12px",
+            flexShrink:0,padding:isEd?"14px 22px 16px":"6px 22px 12px",
           }}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{display:"flex",gap:4,flex:1,background:collapsible?(isDark()?"rgba(22,19,34,0.92)":"rgba(255,255,255,0.92)"):(isDark()?"rgba(255,255,255,0.05)":`linear-gradient(180deg, rgba(255,255,255,0.50), ${effS.h}1A)`),borderRadius:13,padding:4,border:collapsible?(isDark()?"1px solid rgba(255,255,255,0.07)":`1px solid ${effS.h}33`):(isDark()?"1px solid rgba(255,255,255,0.08)":`1px solid ${effS.h}33`),backdropFilter:isDark()?"blur(14px) saturate(1.2)":"blur(10px) saturate(1.1)",WebkitBackdropFilter:isDark()?"blur(14px) saturate(1.2)":"blur(10px) saturate(1.1)",boxShadow:collapsible?(isDark()?"0 6px 18px -8px rgba(0,0,0,0.6)":"0 6px 18px -10px rgba(31,27,46,0.25)"):(isDark()?"inset 0 1px 2px rgba(0,0,0,0.3)":`0 1px 2px ${effS.h}14, inset 0 1px 0 rgba(255,255,255,0.55)`),transition:"background .4s ease"}}>
+          <div style={{display:"flex",gap:4,flex:1,
+            background:collapsible
+              ?(isDark()?"rgba(22,19,34,0.92)":"rgba(255,255,255,0.92)")
+              :(isDark()?"rgba(255,255,255,0.05)":(screen==="home"?`linear-gradient(180deg, rgba(255,255,255,0.50), ${effS.h}1A)`:"#FFFFFF")),
+            borderRadius:14,padding:4,
+            border:isDark()?"1px solid rgba(255,255,255,0.08)":`1px solid ${effS.h}22`,
+            backdropFilter:isDark()?"blur(14px) saturate(1.2)":"none",
+            WebkitBackdropFilter:isDark()?"blur(14px) saturate(1.2)":"none",
+            boxShadow:collapsible
+              ?(isDark()?"0 6px 18px -8px rgba(0,0,0,0.6)":"0 6px 18px -10px rgba(31,27,46,0.25)")
+              :(isDark()?"inset 0 1px 2px rgba(0,0,0,0.3)":`0 4px 14px -8px ${effS.deep}33, inset 0 1px 0 rgba(255,255,255,0.9)`),
+            transition:"background .4s ease, box-shadow .4s ease"}}>
             {screen==="home"&&!isEd&&cfg.schedView!=="card"&&<TabB active={effView==="list"} onClick={()=>setView("list")} color={effS.h} deep={effS.deep}>{t.list}</TabB>}
             {screen==="home"&&!isEd&&cfg.schedView!=="list"&&<TabB active={effView==="card"} onClick={()=>setView("card")} color={effS.h} deep={effS.deep}>{t.card}</TabB>}
-            {/* Screen label on non-home screens — shows current tool when NOT editing */}
+            {/* Screen label on non-home screens — shows current tool when NOT editing.
+                In dark mode the label uses a lifted pastel of the screen
+                accent so it stays readable even when the user picks a very
+                dark colour (navy, deep purple, etc.). A floor luminance check
+                via shadeHex ensures contrast against the dark surface. */}
             {screen!=="home"&&!isEd&&(
-              <div style={{flex:2,padding:"6px 12px",fontFamily:G.font,fontWeight:500,fontSize:11,color:isDark()?effS.h:effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.3}}>
-                <span style={{width:6,height:6,borderRadius:"50%",background:effS.h,boxShadow:`0 0 6px ${effS.h}88`}}/>
+              <div style={{flex:2,padding:"6px 12px",fontFamily:G.font,fontWeight:500,fontSize:11,color:isDark()?shadeHex(effS.h,0.55):effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.3}}>
+                <span style={{width:6,height:6,borderRadius:"50%",background:isDark()?shadeHex(effS.h,0.55):effS.h,boxShadow:`0 0 6px ${isDark()?shadeHex(effS.h,0.55):effS.h}88`}}/>
                 {navItems.find(n=>n.key===screen)?.label}
               </div>
             )}
             {/* In edit mode — show clear context "Du redigerar:" label */}
             {isEd&&(
-              <div style={{flex:2,padding:"6px 12px",fontFamily:G.font,fontWeight:500,fontSize:11,color:isDark()?effS.h:effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.3,minWidth:0}}>
+              <div style={{flex:2,padding:"6px 12px",fontFamily:G.font,fontWeight:500,fontSize:11,color:isDark()?shadeHex(effS.h,0.55):effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.3,minWidth:0}}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,opacity:0.7}}>
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -14997,7 +16253,7 @@ export default function App(){
           `}</style>
           {screen==="home"&&(
           <div style={{flex:1,display:"flex",overflow:"hidden"}}>
-            {sorted.length===0?(
+            {sorted.length===0&&!(isEd&&!ghostsAllOff&&ghostActsList.length>0)?(
               <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 30px 100px",gap:16}}>
                 <style>{`@keyframes empHalo{0%,100%{transform:scale(0.92);opacity:.5}50%{transform:scale(1.08);opacity:.9}}@keyframes empFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes empRot{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
                 <div style={{position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:2}}>
@@ -15073,6 +16329,9 @@ export default function App(){
                 now={now}
                 collapseBarRef={screen==="home"&&!isEd&&cfg.schedView==="both"?tabBarRef:null}
                 topInset={screen==="home"&&!isEd&&cfg.schedView==="both"?54:0}
+                ghostActs={ghostActsList}
+                onGhostAdd={onGhostAdd}
+                onGhostEdit={onGhostEdit}
               />
             )}
           </div>
@@ -15087,35 +16346,42 @@ export default function App(){
           </div>
         </div>
       </div>
-      {/* SUGGESTION PROMPT — shown in the editor whenever the schedule is still
-          EMPTY (acts.length===0). Tapping a suggestion opens the full editor
-          pre-filled; Save adds it. Once the user has any activity it disappears.
-          The one-time `tmplDone` dismiss still hides it for users who actively
-          said "no thanks" on a fresh empty day. */}
-      {(screen==="home"||screen==="week")&&isEd&&acts.length===0&&!tmplHiddenThisSession&&(
+      {/* GHOST SUGGESTIONS INFO BAR — shown in editor mode when ghost
+          suggestions are active (not "all off" yet). Quiet, one-line note
+          that points to the dashed cards in the schedule, with a "don't
+          show again" link to permanently silence them. Once the user
+          dismisses or adds all of them, this disappears naturally. */}
+      {screen==="home"&&isEd&&!ghostsAllOff&&ghostActsList.length>0&&(
         <div style={{position:"absolute",bottom:"calc(168px + env(safe-area-inset-bottom, 0px))",left:"50%",transform:"translateX(-50%)",width:"calc(100% - 28px)",maxWidth:452,zIndex:11}}>
         <div style={{
-          background:isDark()?"linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.04) 100%)":"#FFFFFF",
-          backdropFilter:isDark()?"blur(22px) saturate(1.3)":"none",WebkitBackdropFilter:isDark()?"blur(22px) saturate(1.3)":"none",
-          borderRadius:20,padding:"16px 16px 14px",
-          boxShadow:isDark()?`inset 0 1px 0 rgba(255,255,255,0.12), 0 20px 44px -18px rgba(0,0,0,0.8)`:`0 16px 40px -16px ${effS.h}40, 0 2px 8px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.8)`,
-          border:`1px solid ${isDark()?"rgba(255,255,255,0.1)":effS.hl}`,animation:"setSectionIn 0.4s cubic-bezier(0.34,1.4,0.64,1) both"}}>
-          <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:10,marginBottom:12}}>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:tk().inkSoft,letterSpacing:-.2,lineHeight:1.15}}>{t.tmplTitle}</div>
-              <div style={{fontFamily:G.font,fontWeight:500,fontSize:12,color:tk().ink2,marginTop:3,lineHeight:1.4}}>{t.tmplDesc}</div>
-            </div>
-            <button onClick={()=>setTmplHiddenThisSession(true)} aria-label={t.tmplDismiss} className="lt-press" style={{flexShrink:0,width:30,height:30,borderRadius:9,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink3,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><IconX size={13}/></button>
+          background:isDark()?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.85)",
+          backdropFilter:"blur(20px) saturate(180%)",
+          WebkitBackdropFilter:"blur(20px) saturate(180%)",
+          borderRadius:14,padding:"10px 14px",
+          boxShadow:isDark()?`inset 0 1px 0 rgba(255,255,255,0.1), 0 6px 18px -8px rgba(0,0,0,0.5)`:`0 4px 14px -4px ${effS.h}22, inset 0 1px 0 rgba(255,255,255,0.7)`,
+          border:`1px solid ${isDark()?"rgba(255,255,255,0.08)":effS.hl}`,
+          display:"flex",alignItems:"center",gap:10,
+          animation:"setSectionIn 0.4s cubic-bezier(0.34,1.4,0.64,1) both"}}>
+          <div aria-hidden style={{
+            width:24,height:24,borderRadius:8,flexShrink:0,
+            border:`1.5px dashed ${effS.h}`,opacity:0.7,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            color:effS.deep,
+          }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </div>
-          {/* Category preview chips → open the full picker */}
-          <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}>
-            {ROUTINE_TEMPLATES.map(tpl=>(
-              <span key={tpl.id} style={{display:"inline-flex",alignItems:"center",gap:5,padding:"6px 11px 6px 8px",borderRadius:11,background:isDark()?"rgba(255,255,255,0.05)":`${effS.h}12`,border:`1px solid ${isDark()?"rgba(255,255,255,0.08)":effS.h+"22"}`,fontFamily:G.font,fontWeight:600,fontSize:11.5,color:isDark()?tk().ink2:effS.deep}}>
-                <span style={{fontSize:14}}>{tpl.emoji}</span>{isDark()?(lang==="sv"?(tpl.svDark||tpl.sv):(tpl.enDark||tpl.en)):(lang==="sv"?tpl.sv:tpl.en)}
-              </span>
-            ))}
+          <div style={{flex:1,minWidth:0,fontFamily:G.font,fontWeight:500,fontSize:12.5,color:tk().ink2,lineHeight:1.35,letterSpacing:-.05}}>
+            {lang==="sv"?"Förslag visas streckade. Tryck för att lägga till.":"Suggestions show dashed. Tap to add."}
           </div>
-          <button onClick={()=>setShowTmplPicker(true)} className="lt-press-soft" style={{width:"100%",padding:"13px 0",borderRadius:14,border:"none",background:`linear-gradient(135deg, ${effS.h}, ${effS.deep})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,letterSpacing:.2,cursor:"pointer",boxShadow:`0 10px 24px -8px ${effS.h}88, inset 0 1px 0 rgba(255,255,255,0.3)`}}>{lang==="sv"?"Utforska förslag":"Explore suggestions"}</button>
+          <button onClick={()=>setGhostsAllOff(true)} className="lt-press-soft" style={{
+            flexShrink:0,padding:"6px 10px",borderRadius:9,border:"none",
+            background:"transparent",
+            color:tk().ink3,
+            fontFamily:G.font,fontWeight:600,fontSize:11.5,
+            cursor:"pointer",letterSpacing:-.05,
+            textDecoration:"underline",textDecorationColor:"rgba(31,27,46,0.2)",
+            textUnderlineOffset:3,
+          }}>{lang==="sv"?"Visa inte":"Hide"}</button>
         </div>
         </div>
       )}
@@ -15130,7 +16396,7 @@ export default function App(){
             :`@keyframes addBtnBreathe{0%,100%{border-color:${effS.h}55;box-shadow:0 8px 24px ${effS.h}1F,0 2px 6px ${effS.h}14}50%{border-color:${effS.h}88;box-shadow:0 10px 28px ${effS.h}28,0 2px 6px ${effS.h}1A}}`}</style>
           <button onClick={()=>{setEditAct(null);setShowEd(true);}} className="lt-press-soft" style={{
             width:"100%",padding:"15px 0",borderRadius:18,
-            border:`1.5px dashed ${effS.h}${isDark()?"44":"66"}`,
+            border:`1px solid ${effS.h}${isDark()?"3A":"40"}`,
             background:isDark()?`linear-gradient(180deg, ${effS.h}14 0%, rgba(255,255,255,0.04) 100%)`:`linear-gradient(180deg, #FFFFFF 0%, ${effS.hl}28 100%)`,
             backdropFilter:isDark()?"blur(14px) saturate(1.2)":"none",WebkitBackdropFilter:isDark()?"blur(14px) saturate(1.2)":"none",
             color:isDark()?shadeHex(effS.h,0.45):effS.deep,
@@ -15139,9 +16405,14 @@ export default function App(){
             whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
             animation:isDark()?"addBtnBreatheD 4.5s ease-in-out infinite":"addBtnBreathe 4.5s ease-in-out infinite",
             transition:"background .5s ease, color .5s ease",
-            display:"inline-flex",alignItems:"center",justifyContent:"center",gap:9,
+            display:"inline-flex",alignItems:"center",justifyContent:"center",gap:10,
           }}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            {/* Filled plus pearl — the screen colour, with a soft coloured
+                lift. Reads as a premium primary affordance instead of the
+                old "wireframe" dashed look. */}
+            <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:22,height:22,borderRadius:"50%",background:`linear-gradient(145deg, ${effS.h}, ${effS.deep})`,boxShadow:isDark()?`0 2px 8px ${effS.h}55, inset 0 1px 0 rgba(255,255,255,0.25)`:`0 3px 8px ${effS.h}4D, inset 0 1px 0 rgba(255,255,255,0.35)`,flexShrink:0}}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </span>
             <span>{t.addAct}</span>
           </button>
         </div>
@@ -15161,11 +16432,11 @@ export default function App(){
             </div>
             <div style={{width:32,height:32,borderRadius:"50%",background:`${undoToast.color}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"#fff",flexShrink:0,boxShadow:`0 4px 12px ${undoToast.color}88`}}>✓</div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontFamily:G.font,fontWeight:600,fontSize:14,color:"#fff",lineHeight:1.2}}>Klart!</div>
+              <div style={{fontFamily:G.font,fontWeight:600,fontSize:14,color:"#fff",lineHeight:1.2}}>{t.undoSaved}</div>
               <div style={{fontFamily:G.font,fontSize:12,color:"rgba(255,255,255,0.7)",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{undoToast.name}</div>
             </div>
             <button onClick={handleUndo} className="lt-press" style={{padding:"10px 16px",borderRadius:13,border:"none",background:"#fff",color:G.ink,fontFamily:G.font,fontWeight:700,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",gap:6,flexShrink:0,animation:"undoBtnPulse 2s ease-in-out 1.2s infinite"}}>
-              <span style={{fontSize:14}}>↺</span>Ångra
+              <span style={{fontSize:14}}>↺</span>{t.undoBtn}
             </button>
           </div>
         </div>
@@ -15177,14 +16448,15 @@ export default function App(){
           exercise is running — chrome would break the calm moment. Both reasons
           unmount the nav with the same animation; it comes back on blur/exit. */}
       <div style={{
-        // Bottom nav blends seamlessly with the dark base — no gradient that
-        // would visibly lift the bottom zone. The only chrome is a faint
-        // hairline at the top to separate nav from content.
-        background:isDark()?"#0E0E10":`linear-gradient(180deg, #FFFFFF 0%, #FDFCFB 60%, ${effS.hl}33 100%)`,
-        backdropFilter:isDark()?"none":"none",
-        WebkitBackdropFilter:isDark()?"none":"none",
-        borderTop:isDark()?"1px solid rgba(255,255,255,0.05)":"none",
-        boxShadow:isDark()?"none":"none",
+        // Liquid Glass bottom nav — translucent surface with backdrop blur so
+        // content beneath shines through subtly, like iOS native tab bars.
+        // Dark mode is a touch more opaque (the dark base needs the lift),
+        // light mode lets the warm page glow up into the nav.
+        background:isDark()?"rgba(14,14,16,0.72)":"rgba(255,255,255,0.72)",
+        backdropFilter:"blur(22px) saturate(180%)",
+        WebkitBackdropFilter:"blur(22px) saturate(180%)",
+        borderTop:isDark()?"1px solid rgba(255,255,255,0.05)":"1px solid rgba(31,27,46,0.05)",
+        boxShadow:"none",
         display:"flex",
         padding:"12px 0 calc(10px + env(safe-area-inset-bottom, 0px))",
         flexShrink:0,zIndex:20,position:"relative",
@@ -15319,7 +16591,7 @@ export default function App(){
       {commModal&&<CommModals modal={commModal} onClose={()=>setCommModal(null)} cats={commCats} setCats={setCommCats} lang={lang} t={t} setSel={setCommSel}/>}
       {showSet&&<SettingsModal cfg={cfg} setCfg={setCfg} shareCode={shareCode} onClose={()=>setShowSet(false)} t={t} lang={lang} setLang={setLang} onOpenSupervisor={openSupervisor} onOpenDemo={openDemo} onOpenWelcomeTour={openWelcomeTour} onResetAll={resetAllData} notifsEnabled={notifsEnabled} setNotifsEnabled={setNotifsEnabled} requestNotifPermission={requestNotifPermission} notifSupported={notifSupported}/>}
       {showDemo&&<DemoTour onClose={closeDemo} lang={lang}/>}
-      {showTmplPicker&&<TemplatePicker t={t} lang={lang} onAddActs={addTemplateActs} onEditAct={editTemplateAct} onClose={()=>setShowTmplPicker(false)}/>}
+      {showTmplPicker&&<TemplatePicker t={t} lang={lang} onAddActs={addTemplateActs} onEditAct={editTemplateAct} markAddedRef={tmplMarkRef} onClose={()=>setShowTmplPicker(false)}/>}
       {showModeChoice&&(
         <div style={{position:"fixed",inset:0,zIndex:9600,display:"flex",alignItems:"center",justifyContent:"center",padding:24,
           background:pickedMode==="dark"?"rgba(10,8,16,0.6)":"rgba(180,200,225,0.45)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",transition:"background .55s ease",animation:"ftIn .35s ease"}}>
@@ -15420,40 +16692,8 @@ export default function App(){
           <div onClick={e=>e.stopPropagation()} style={{maxWidth:380,width:"100%",background:G.white,borderRadius:28,padding:"40px 30px 30px",boxShadow:"0 24px 60px rgba(0,0,0,0.25)",border:`1px solid ${G.border}`,position:"relative"}}>
             {/* Luma mark — animated sun, centered above brand name */}
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,marginBottom:26}}>
-              <svg width={64} height={64} viewBox="0 0 26 26" style={{overflow:"visible"}}>
-                <defs>
-                  <radialGradient id="onbCore" cx="35%" cy="30%" r="70%">
-                    <stop offset="0%" stopColor="#FFFFFF"/>
-                    <stop offset="20%" stopColor="#FFFAF0" stopOpacity="0.95"/>
-                    <stop offset="55%" stopColor={SCREENS.home.h}/>
-                    <stop offset="100%" stopColor={SCREENS.home.deep}/>
-                  </radialGradient>
-                  <radialGradient id="onbOuter" cx="50%" cy="50%" r="50%">
-                    <stop offset="40%" stopColor={SCREENS.home.h} stopOpacity="0"/>
-                    <stop offset="70%" stopColor={SCREENS.home.h} stopOpacity="0.18"/>
-                    <stop offset="100%" stopColor={SCREENS.home.h} stopOpacity="0"/>
-                  </radialGradient>
-                </defs>
-                <circle cx="13" cy="13" r="13" fill="url(#onbOuter)"/>
-                <g style={{transformOrigin:"13px 13px",animation:"lumaRotate 22s linear infinite"}}>
-                  {Array.from({length:8}).map((_,i)=>{
-                    const ang=(i/8)*2*Math.PI;
-                    const isLong=i%2===0;
-                    const r1=8.5, r2=isLong?12.2:11;
-                    const x1=13+r1*Math.sin(ang), y1=13-r1*Math.cos(ang);
-                    const x2=13+r2*Math.sin(ang), y2=13-r2*Math.cos(ang);
-                    return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={SCREENS.home.h} strokeWidth={isLong?1.6:1.1} strokeLinecap="round" style={{animation:`${i%2===0?"rayFade1":"rayFade2"} ${3+i*0.18}s ease-in-out infinite`}}/>;
-                  })}
-                </g>
-                <g style={{transformOrigin:"13px 13px",animation:"lumaCoreBreath 3.4s ease-in-out infinite"}}>
-                  <circle cx="13" cy="13" r="6.5" fill="url(#onbCore)"/>
-                  <circle cx="11" cy="11" r="1.5" fill="#FFFFFF" opacity="0.7"/>
-                </g>
-              </svg>
-              <span style={{fontFamily:G.serif,fontWeight:600,fontSize:36,color:G.ink,letterSpacing:0.4,lineHeight:1}}>Luma</span>
-              {/* Accent dot below the wordmark — crisp, clean, matches the
-                  launch splash. Uses the warm Luma sun accent. */}
-              <div style={{width:6,height:6,borderRadius:"50%",background:"#E8A878",marginTop:-6}}/>
+              <LumaIcon size={64} color={G.ink}/>
+              <LumaWordmark size={36} color={G.ink}/>
             </div>
             {/* Soul of the app — one calm sentence. The interactive demo (next)
                 takes care of teaching the user "where to tap". */}
