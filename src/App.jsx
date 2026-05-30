@@ -1664,10 +1664,7 @@ function SkyWordmark({size=30}){
         </radialGradient>
       </defs>
       <text ref={textRef} x={padX} y={baseline} fontFamily="'Nunito','Inter',system-ui,sans-serif" fontWeight={700} fontSize={size} letterSpacing={size*-0.006} fill="#FFFFFF">luma</text>
-      {pearl&&(<g>
-        <circle cx={pearl.cx} cy={pearl.cy} r={pearl.r} fill="url(#skWmPearl)"/>
-        <circle cx={pearl.cx-pearl.r*0.3} cy={pearl.cy-pearl.r*0.34} r={pearl.r*0.34} fill="#FFFFFF" opacity="0.5"/>
-      </g>)}
+      {/* Pearl intentionally omitted on home/week — clean wordmark per design test */}
     </svg>
   );
 }
@@ -1716,11 +1713,11 @@ function SkyHeader({now,lang}){
         <path d={hillPath(146,22,2.1)} fill={_skRgb(_skMix(sk.hill,[0,0,0],0.18))} opacity="0.55"/>
         <path d={hillPath(168,16,0.6)} fill={_skRgb(sk.hill)}/>
       </svg>
-      <div style={{position:"relative",width:"100%",display:"flex",alignItems:"flex-end",justifyContent:"space-between",padding:"0 22px 16px",gap:14,zIndex:2}}>
+      <div style={{position:"relative",width:"100%",display:"flex",alignItems:"baseline",justifyContent:"space-between",padding:"0 22px 16px",gap:14,zIndex:2}}>
         <SkyWordmark size={30}/>
-        <div style={{display:"flex",alignItems:"center",gap:7,paddingBottom:3,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:7,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
           <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{wd}</span>
-          <span style={{width:4,height:4,borderRadius:"50%",background:"rgba(255,255,255,0.7)",flexShrink:0}}/>
+          <span style={{width:4,height:4,borderRadius:"50%",background:"rgba(255,255,255,0.7)",flexShrink:0,alignSelf:"center"}}/>
           <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{dm}</span>
         </div>
       </div>
@@ -13014,10 +13011,10 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
             <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:tk().ink2,letterSpacing:.1,textAlign:"center",lineHeight:1.5,maxWidth:280}}>{lang==="sv"?"Fyll i kortet i redigeraren.":"Fill in the card in the editor."}</div>
           </div>
         ):isEmpty&&isEditor?(
-          <div style={{textAlign:"center",padding:"40px 24px",background:isDark()?`linear-gradient(180deg, rgba(255,255,255,0.05), ${S.h}14)`:`linear-gradient(180deg, #FFFFFF, ${S.hll})`,borderRadius:24,border:`1px dashed ${isDark()?S.h+"55":S.h+"66"}`,boxShadow:isDark()?"0 8px 28px rgba(0,0,0,0.4)":`0 8px 24px ${S.h}14`}}>
+          <div style={{textAlign:"left",padding:"36px 26px",background:isDark()?`linear-gradient(180deg, rgba(255,255,255,0.05), ${S.h}14)`:`linear-gradient(180deg, #FFFFFF, ${S.hll})`,borderRadius:24,border:`1px dashed ${isDark()?S.h+"55":S.h+"66"}`,boxShadow:isDark()?"0 8px 28px rgba(0,0,0,0.4)":`0 8px 24px ${S.h}14`}}>
             <div style={{fontSize:48,marginBottom:14}}>🪪</div>
             <div style={{fontFamily:G.serif,fontWeight:600,fontSize:18,color:tk().ink,marginBottom:6}}>{t.createCardTitle}</div>
-            <div style={{fontFamily:G.font,fontSize:13,color:tk().ink2,lineHeight:1.5,marginBottom:18,maxWidth:300,margin:"0 auto 18px"}}>{t.createCardDesc}</div>
+            <div style={{fontFamily:G.font,fontSize:13,color:tk().ink2,lineHeight:1.5,marginBottom:18,maxWidth:320}}>{t.createCardDesc}</div>
             <button onClick={()=>onOpenEditor()} className="lt-press" style={{padding:"13px 28px",borderRadius:14,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:`0 10px 24px ${S.h}55, inset 0 1px 0 rgba(255,255,255,0.3)`}}>+ {t.editCard}</button>
           </div>
         ):(<>
