@@ -4,7 +4,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // Inter from Google Fonts
   const l1 = document.createElement("link");
   l1.rel = "stylesheet";
-  l1.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&family=Urbanist:wght@400;500;600;700;800&display=swap";
+  l1.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&family=Urbanist:wght@400;500;600;700;800&family=Quicksand:wght@500;600;700&display=swap";
   document.head.appendChild(l1);
   // General Sans from Fontshare
   const l2 = document.createElement("link");
@@ -318,9 +318,9 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // Generate splashes lazily — only those whose media query could match the
   // current device. This avoids burning CPU on splashes that will never load
   // (e.g. don't generate a 430x932 splash on a 320-wide iPhone SE).
-  // For each device size, we generate BOTH a light and a dark splash with
-  // matching prefers-color-scheme media queries — iOS picks the right one
-  // automatically based on the system theme.
+  // For each matching device size we register ONE launch image, locked to the
+  // app's stored theme (see below) — never a separate dark variant — so the
+  // launch image can never disagree with the pre-boot overlay or the app base.
   const dw = window.screen.width, dh = window.screen.height;
   SPLASH_DEVICES.forEach(([cw, ch, dpr]) => {
     // Only generate if this device size could plausibly match (within a tier)
@@ -1522,10 +1522,10 @@ function LumaIcon({size=32,color="#1E1B27",style={}}){
      • showDot            → clearer alias for the same thing (false = plain word)
    Tunables: weight (700), pearlR (radius ÷ font-size, 0.07),
              pearlCY (pearl centre height above baseline ÷ font-size, 0.30). */
-function LumaWordmark({size=42,color="#1F1B2E",showSun=true,showDot,weight=700,pearlR=0.07,pearlCY=0.30,style={}}){
+function LumaWordmark({size=42,color="#1F1B2E",showSun=true,showDot,weight=700,pearlR=0.07,pearlCY=0.07,style={}}){
   const showPearl=(showDot!==undefined?showDot:showSun) && !isDark();
   const textRef=useRef(null);
-  const [m,setM]=useState(null); // { w, cx }
+  const [m,setM]=useState(null); // { w, cx, cy, uh }
   const baseline=size*0.97;      // matches the <text> y below
   useLayoutEffect(()=>{
     const el=textRef.current;
@@ -1534,8 +1534,8 @@ function LumaWordmark({size=42,color="#1F1B2E",showSun=true,showDot,weight=700,p
     const measure=()=>{
       try{
         const w=el.getComputedTextLength();
-        const u=el.getExtentOfChar(1);   // index 1 === "u" — x/width only
-        setM({w,cx:u.x+u.width/2});
+        const u=el.getExtentOfChar(1);   // index 1 === "u" — real glyph box (x/y/w/h)
+        setM({w,cx:u.x+u.width/2,cy:u.y+u.height/2,uh:u.height});
       }catch(e){/* glyph not measurable yet — retried after fonts load */}
     };
     measure();
@@ -1545,7 +1545,10 @@ function LumaWordmark({size=42,color="#1F1B2E",showSun=true,showDot,weight=700,p
   const padX=size*0.05;
   const W=(m?m.w:size*2.55)+padX*2;
   const uid=`lw-${color.slice(1)}-${Math.round(size)}`;
-  const pearl=m?{cx:m.cx,cy:baseline-size*pearlCY,r:size*pearlR}:null;
+  // Vertical: centre the pearl in the REAL "u" glyph box (measured), nudged
+  // down by pearlCY × the u's height so it rests in the hollow of the u —
+  // independent of font metrics, so it lands right at every size.
+  const pearl=m?{cx:m.cx,cy:m.cy+m.uh*pearlCY,r:size*pearlR}:null;
   return(
     <svg width={W} height={size} viewBox={`0 0 ${W} ${size}`}
       style={{overflow:"visible",display:"inline-block",verticalAlign:"middle",...style}}>
@@ -1623,7 +1626,7 @@ function SkyWordmark({size=30}){
   },[size]);
   const padX=size*0.05;
   const W=size*2.7+padX*2;
-  const pearl=u?{cx:u.x+u.w/2, cy:u.y+u.h*0.46, r:Math.max(1.2,u.h*0.058)}:null;
+  const pearl=u?{cx:u.x+u.w/2, cy:u.y+u.h*0.54, r:Math.max(1.2,u.h*0.058)}:null;
   return(
     <svg width={W} height={size} viewBox={`0 0 ${W} ${size}`} style={{overflow:"visible",display:"block",flexShrink:0,filter:"drop-shadow(0 1px 5px rgba(60,45,55,.30))"}}>
       <defs>
@@ -9914,7 +9917,7 @@ function TabB({active,gold,children,onClick,color,deep,flex=1}){
   return(
     <button onClick={onClick} className="lt-press-soft" style={{flex,padding:"9px 0",borderRadius:12,
       border:dk&&lit?"1px solid rgba(255,255,255,0.18)":(lit&&!gold&&!dk?`1px solid ${color}22`:"1px solid transparent"),
-      fontFamily:G.font,fontWeight:lit?700:500,fontSize:12,letterSpacing:.3,cursor:"pointer",position:"relative",overflow:"hidden",
+      fontFamily:G.serif,fontWeight:lit?700:600,fontSize:12,letterSpacing:.3,cursor:"pointer",position:"relative",overflow:"hidden",
       backdropFilter:dk&&lit?"blur(18px) saturate(1.5)":"none",WebkitBackdropFilter:dk&&lit?"blur(18px) saturate(1.5)":"none",
       transition:"transform .22s cubic-bezier(0.34, 1.4, 0.5, 1), background .3s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .3s ease, color .25s ease, border-color .3s ease",
       background:pillBg,
@@ -12457,11 +12460,17 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
             //   numeral (inkSoft display ink), with a quiet date range (ink2)
             //   baseline-aligned beside it. The air around the big numeral is
             //   what reads as "premium" — let it breathe.
-            <div style={dark?{padding:"12px 16px 14px",marginBottom:12,borderRadius:20,background:"linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.035) 100%)",backdropFilter:"blur(22px) saturate(1.6)",WebkitBackdropFilter:"blur(22px) saturate(1.6)",border:"1px solid rgba(255,255,255,0.12)",boxShadow:"0 10px 30px -14px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.20)"}:{padding:"4px 6px 14px"}}>
-              <div style={{fontFamily:G.font,fontSize:11,fontWeight:700,letterSpacing:3,textTransform:"uppercase",color:labelCol,marginBottom:1,transition:"color .5s ease"}}>{lang==="sv"?"Vecka":"Week"}</div>
-              <div style={{display:"flex",alignItems:"baseline",gap:11}}>
-                <span style={dark?{fontFamily:G.serif,fontWeight:800,fontSize:46,lineHeight:0.92,letterSpacing:-1,background:"linear-gradient(180deg, rgba(244,242,252,0.72) 0%, rgba(244,242,252,0.34) 52%, rgba(244,242,252,0.15) 100%)",WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}:{fontFamily:G.serif,fontWeight:800,fontSize:46,lineHeight:0.92,letterSpacing:-1,background:"linear-gradient(180deg, #5E5775 0%, #6E6786 52%, #847D98 100%)",WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}}>{weekNum}</span>
-                <span style={{fontFamily:G.font,fontSize:13.5,fontWeight:500,color:dark?"rgba(163,158,181,0.72)":tk().ink2,transition:"color .5s ease"}}>{dateRange}</span>
+            <div style={dark?{padding:"12px 16px 14px",marginBottom:12,borderRadius:20,position:"relative",overflow:"hidden",background:"linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.035) 100%)",backdropFilter:"blur(22px) saturate(1.6)",WebkitBackdropFilter:"blur(22px) saturate(1.6)",border:"1px solid rgba(255,255,255,0.12)",boxShadow:"0 10px 30px -14px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.20)"}:{padding:"4px 6px 14px",position:"relative"}}>
+              {/* whisper-soft bloom behind the numeral — gentle premium depth */}
+              <div aria-hidden="true" style={{position:"absolute",left:dark?8:-6,top:dark?18:2,width:108,height:108,borderRadius:"50%",filter:"blur(10px)",pointerEvents:"none",zIndex:0,background:dark?"radial-gradient(circle, rgba(255,255,255,0.13), rgba(231,191,160,0.09) 42%, transparent 70%)":"radial-gradient(circle, rgba(255,255,255,0.6), rgba(231,191,160,0.14) 42%, transparent 72%)"}}/>
+              {/* eyebrow with Luma's pearl as a quiet signature */}
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:1,marginLeft:3,position:"relative",zIndex:1}}>
+                <span aria-hidden="true" style={{width:8,height:8,borderRadius:"50%",background:"radial-gradient(circle at 35% 30%, #FFFFFF, #F8D2B2 55%, #E2A266)",boxShadow:"0 1px 4px rgba(224,135,63,0.5)",flexShrink:0}}/>
+                <span style={{fontFamily:"'Quicksand',sans-serif",fontSize:11.5,fontWeight:600,letterSpacing:4,textTransform:"uppercase",color:labelCol,transition:"color .5s ease"}}>{lang==="sv"?"Vecka":"Week"}</span>
+              </div>
+              <div style={{display:"flex",alignItems:"baseline",gap:11,position:"relative",zIndex:1}}>
+                <span style={dark?{fontFamily:G.serif,fontWeight:800,fontSize:46,lineHeight:0.92,letterSpacing:-1.5,fontVariantNumeric:"tabular-nums",background:"linear-gradient(180deg, rgba(244,242,252,0.72) 0%, rgba(244,242,252,0.34) 52%, rgba(244,242,252,0.15) 100%)",WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}:{fontFamily:G.serif,fontWeight:800,fontSize:46,lineHeight:0.92,letterSpacing:-1.5,fontVariantNumeric:"tabular-nums",background:"linear-gradient(180deg, #5E5775 0%, #6E6786 52%, #847D98 100%)",WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}}>{weekNum}</span>
+                <span style={{fontFamily:G.serif,fontSize:14,fontWeight:500,color:dark?"rgba(163,158,181,0.72)":tk().ink2,transition:"color .5s ease"}}>{dateRange}</span>
               </div>
             </div>
           );
@@ -13307,8 +13316,8 @@ function SceneIntro(){
     // then settle into the bowl. The sun also FADES in over the first third
     // of the path (see `appear`), so there's never a hard, boxed edge where
     // it meets the canvas bounds — it simply arrives as light.
-    const P0={x:cx-120, y:icy-70};
-    const P1={x:cx+60,  y:icy-120};    // control — gentle on-canvas crest
+    const P0={x:cx-55, y:icy-45};      // bloom-in point, safely INSIDE the canvas
+    const P1={x:cx+40, y:icy-90};      // control — gentle on-canvas crest
     const P2=seat;
     const bez=(t)=>{ const u=1-t; return {
       x:u*u*P0.x+2*u*t*P1.x+t*t*P2.x,
@@ -13412,7 +13421,7 @@ function SceneIntro(){
         const pos=bez(e);
         const scale=1 - 0.86*easeIn(at);     // 1 -> ~0.14
         const sd=64*scale;
-        const appear=easeOut(Math.min(1, at/0.30));  // fade in over first 1/3 — no boxed edge
+        const appear=easeInOut(Math.min(1, at/0.40));  // gentle bloom-in (slow start) — no hard edge, no pop
 
         // motion trail (sampled previous positions)
         trail.unshift({x:pos.x,y:pos.y,r:sd*0.5});
@@ -13425,13 +13434,14 @@ function SceneIntro(){
           ctx.restore();
         }
 
-        // glow
+        // glow — kept tighter (1.35×) so the soft halo never reaches the
+        // canvas edge and reads as a hard square during the entrance.
         ctx.save();
         ctx.globalAlpha=appear;
-        const gl=ctx.createRadialGradient(pos.x,pos.y,sd*0.2, pos.x,pos.y,sd*1.8);
+        const gl=ctx.createRadialGradient(pos.x,pos.y,sd*0.2, pos.x,pos.y,sd*1.35);
         gl.addColorStop(0,"rgba(255,228,190,0.55)");
         gl.addColorStop(1,"rgba(255,228,190,0)");
-        ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(pos.x,pos.y,sd*1.8,0,7); ctx.fill();
+        ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(pos.x,pos.y,sd*1.35,0,7); ctx.fill();
         ctx.restore();
 
         // rays — rotate + retract as it shrinks
@@ -15817,6 +15827,12 @@ export default function App(){
         input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select {
           font-size: 16px !important;
         }
+        /* Pin the UA colour-scheme to the APP theme (not the device's). Without
+           this, iOS in dark mode renders default form controls — e.g. the range
+           slider's UNFILLED track — dark/black even while Luma is in light mode.
+           Tying it to the html theme class keeps native controls on-theme. */
+        html.lt-theme-light{color-scheme:light;}
+        html.lt-theme-dark{color-scheme:dark;}
         .lt-input:focus {
           outline: none;
           border-color: rgba(31,27,46,0.32);
@@ -16228,14 +16244,14 @@ export default function App(){
                 dark colour (navy, deep purple, etc.). A floor luminance check
                 via shadeHex ensures contrast against the dark surface. */}
             {screen!=="home"&&!isEd&&(
-              <div style={{flex:2,padding:"6px 12px",fontFamily:G.font,fontWeight:500,fontSize:11,color:isDark()?shadeHex(effS.h,0.55):effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.3}}>
+              <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:isDark()?shadeHex(effS.h,0.55):effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.2}}>
                 <span style={{width:6,height:6,borderRadius:"50%",background:isDark()?shadeHex(effS.h,0.55):effS.h,boxShadow:`0 0 6px ${isDark()?shadeHex(effS.h,0.55):effS.h}88`}}/>
                 {navItems.find(n=>n.key===screen)?.label}
               </div>
             )}
             {/* In edit mode — show clear context "Du redigerar:" label */}
             {isEd&&(
-              <div style={{flex:2,padding:"6px 12px",fontFamily:G.font,fontWeight:500,fontSize:11,color:isDark()?shadeHex(effS.h,0.55):effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.3,minWidth:0}}>
+              <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:isDark()?shadeHex(effS.h,0.55):effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.2,minWidth:0}}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,opacity:0.7}}>
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
