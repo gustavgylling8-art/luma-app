@@ -157,10 +157,11 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
         '<style>'
         + '#lumaPreBoot *{backface-visibility:hidden;-webkit-backface-visibility:hidden}'
         + '@keyframes lumaPreBreath{0%,100%{transform:translateZ(0) scale(1)}50%{transform:translateZ(0) scale(1.018)}}'
+        + '@keyframes lumaPreIconIn{0%{opacity:0;transform:translateZ(0) scale(0.94)}100%{opacity:1;transform:translateZ(0) scale(1)}}'
         + '.lpaura{position:absolute;left:50%;top:43%;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle, rgba(232,168,120,0.14) 0%, rgba(232,168,120,0.05) 46%, rgba(232,168,120,0) 70%);transform:translate(-50%,-50%);pointer-events:none;z-index:0}'
         + '</style>'
         + '<div class="lpaura"></div>'
-        + '<div style="position:relative;z-index:2">'
+        + '<div style="position:relative;z-index:2;animation:lumaPreIconIn 0.6s cubic-bezier(0.22,1,0.36,1) both">'
         + '<div style="will-change:transform;animation:lumaPreBreath 4.4s ease-in-out 1.0s infinite">'
         + '<svg width="' + ICON + '" height="' + ICON + '" viewBox="0 0 100 100" style="display:block;overflow:visible;filter:drop-shadow(0 16px 34px rgba(80,70,95,0.20))">'
         + '<defs>'
@@ -264,50 +265,14 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     ag.addColorStop(0.70, "rgba(232,168,120,0)");
     g.fillStyle = ag;
     g.beginPath(); g.arc(aCx, aCy, auraR, 0, Math.PI*2); g.fill();
-    // App icon — rounded-square "lu" mark with the brand pearl. Sized & placed
-    // to EXACTLY match the overlay icon (104px CSS, vertically centred), so the
-    // hand-off from launch image to overlay is invisible — it reads as ONE splash.
-    var markStroke = dark ? "#F4F1FA" : "#1F1B2E";
-    var IS = 104 * dpr;                    // overlay icon is 104px CSS
-    var cx = w/2, cy = h/2;                // true screen centre, matching the overlay
-    var icoX = cx - IS/2, icoY = cy - IS/2;
-    var pxv = function(vx){ return icoX + vx/100*IS; };
-    var pyv = function(vy){ return icoY + vy/100*IS; };
-    var rr = IS * 0.2237;
-    // soft grounding shadow + rounded-square background
-    g.save();
-    g.shadowColor = dark ? "rgba(0,0,0,0.5)" : "rgba(80,70,95,0.20)";
-    g.shadowBlur = IS*0.327; g.shadowOffsetY = IS*0.154;   // == 34px blur / 16px offset at 104px CSS
-    g.beginPath();
-    g.moveTo(icoX+rr, icoY);
-    g.arcTo(icoX+IS, icoY, icoX+IS, icoY+IS, rr);
-    g.arcTo(icoX+IS, icoY+IS, icoX, icoY+IS, rr);
-    g.arcTo(icoX, icoY+IS, icoX, icoY, rr);
-    g.arcTo(icoX, icoY, icoX+IS, icoY, rr);
-    g.closePath();
-    var bgGrad = g.createLinearGradient(icoX, icoY, icoX, icoY+IS);
-    if (dark){ bgGrad.addColorStop(0,"#241F30"); bgGrad.addColorStop(1,"#17131F"); }
-    else { bgGrad.addColorStop(0,"#FFFCF7"); bgGrad.addColorStop(1,"#F3E6D7"); }
-    g.fillStyle = bgGrad; g.fill();
-    g.restore();
-    // "lu" mark — left stroke, soft bowl, short right stroke (no pearl)
-    g.beginPath();
-    g.moveTo(pxv(34.5), pyv(21));
-    g.lineTo(pxv(34.5), pyv(63.5));
-    g.arc(pxv(50), pyv(63.5), 15.5/100*IS, Math.PI, 0, true);
-    g.lineTo(pxv(65.5), pyv(43.3));
-    g.lineWidth = 12.8/100*IS;
-    g.strokeStyle = markStroke;
-    g.lineCap = "round"; g.lineJoin = "round";
-    g.stroke();
-    // Brand pearl resting in the bowl — matches the home-screen icon and the
-    // pre-boot overlay, so the launch image is the COMPLETE logo (no brief
-    // "pearl-less" frame before the pearl appears).
-    var pcx = pxv(50), pcy = pyv(62), pr = 7.0/100*IS;
-    var pg = g.createRadialGradient(pcx - pr*0.24, pcy - pr*0.32, pr*0.1, pcx, pcy, pr);
-    pg.addColorStop(0, "#FFFFFF"); pg.addColorStop(0.30, "#FFF2E6"); pg.addColorStop(0.70, "#F8D2B2"); pg.addColorStop(1, "#EDB78F");
-    g.beginPath(); g.arc(pcx, pcy, pr, 0, Math.PI*2); g.fillStyle = pg; g.fill();
-    g.beginPath(); g.arc(pxv(48), pyv(60), 2.2/100*IS, 0, Math.PI*2); g.fillStyle = "rgba(255,255,255,0.5)"; g.fill();
+    // NOTE: The app icon is intentionally NOT drawn into the launch image.
+    // iOS bakes the launch image at install time and never refreshes it, so a
+    // baked icon can drift out of level with the live overlay's icon across
+    // versions/devices. By leaving the launch image as just the cream wash +
+    // soft aura, there is no sharp element that can ever look "misaligned" —
+    // the icon lives ONLY in the pre-boot overlay, where it fades in softly at
+    // the true screen centre. The cream + aura are continuous between the
+    // launch image and the overlay, so the hand-off reads as one calm surface.
     return c.toDataURL("image/png");
   };
   // Device size table — portrait orientation (iOS expects portrait splashes
@@ -764,12 +729,12 @@ const STORIES0=[
     {id:"p6",emoji:"🌌",photo:null,sv:"\"Sov nu\", viskade kaptenen och drog stjärntäcket över henne. \"Imorgon seglar vi hem igen.\" Och Pärla sov. Godnatt, lilla vän.",en:"\"Sleep now,\" whispered the captain, drawing the starry blanket over her. \"Tomorrow we sail home again.\" And Pearl slept. Goodnight, little one."},
   ]},
   {id:"s_forest",example:true,type:"sequence",sv:"Lina och skogstomten",en:"Lina and the forest gnome",emoji:"🌲",color:"#8FBFA1",pages:[
-    {id:"p1",emoji:"🏡",photo:null,sv:"Det var en gång en liten flicka som hette Lina. Hon bodde i ett rött hus alldeles vid skogen.",en:"Once upon a time there was a little girl named Lina. She lived in a little red house right by the forest."},
-    {id:"p2",emoji:"🌲",photo:null,sv:"En kväll, när solen målade träden gyllene, gick hon in bland granarna för att se vart stigen ledde.",en:"One evening, when the sun painted the trees golden, she walked in among the spruces to see where the path led."},
-    {id:"p3",emoji:"🍂",photo:null,sv:"På en stubbe satt en pytteliten gubbe med grått skägg och röd luva. Det var skogstomten — och han frös.",en:"On a tree stump sat a teeny old man with a grey beard and a red cap. It was the forest gnome — and he was cold."},
-    {id:"p4",emoji:"🧣",photo:null,sv:"\"Här\", sa Lina och la sin varma halsduk om honom. Tomten log så att hela ansiktet skrynklades.",en:"\"Here,\" said Lina, tucking her warm scarf around him. The gnome smiled so much his whole face crinkled."},
-    {id:"p5",emoji:"🍬",photo:null,sv:"Tomten plockade fram en påse skogsgodis och bjöd Lina. De satt och mumsade tillsammans, glada i hela kroppen.",en:"The gnome pulled out a bag of forest candy and shared it with Lina. They sat and munched together, happy all over.",timer:{on:true,type:"monster",min:1,color:"#8FBFA1"}},
-    {id:"p6",emoji:"⭐",photo:null,sv:"\"Kom tillbaka i morgon\", viskade tomten. Och det gjorde Lina. Snipp, snapp, snut — så var sagan slut.",en:"\"Come back tomorrow,\" whispered the gnome. And Lina did. And that's the end of the tale."},
+    {id:"p1",emoji:"🏡",photo:null,sv:"Det var en gång en flicka som hette Lina. Hon bodde i ett litet rött hus vid kanten av en gammal, susande skog.",en:"Once upon a time there was a girl named Lina. She lived in a little red house at the edge of an old, whispering forest."},
+    {id:"p2",emoji:"🌲",photo:null,sv:"En gyllene höstmorgon följde hon den välkända stigen in bland träden för att plocka lingon, som glittrade som rubiner i mossan.",en:"One golden autumn morning she followed the familiar path in among the trees to pick lingonberries, which glittered like rubies in the moss."},
+    {id:"p3",emoji:"🍂",photo:null,sv:"Vid en mossig stubbe satt en pytteliten gubbe med snövitt skägg och röd luva. Det var den gamla skogstomten — och han huttrade av köld.",en:"By a mossy stump sat a teeny old man with a snow-white beard and a red cap. It was the old forest tomte — and he was shivering with cold."},
+    {id:"p4",emoji:"🧣",photo:null,sv:"\"Här, lilla vän\", sa Lina och lindade sin varmaste halsduk om honom. Hela hans skrynkliga ansikte lyste upp i ett leende.",en:"\"Here, little friend,\" said Lina, wrapping her warmest scarf around him. His whole crinkled face lit up in a smile."},
+    {id:"p5",emoji:"🍬",photo:null,sv:"\"Så snäll du är\", sa tomten. Till tack öppnade han en liten näverask med glittrande skogsgodis, och de delade den tillsammans — glada ända in i hjärtat.",en:"\"How kind you are,\" said the tomte. To thank her, he opened a little birch-bark box of glittering forest candy, and they shared it together — happy right down to their hearts.",timer:{on:true,type:"monster",min:1,color:"#8FBFA1"}},
+    {id:"p6",emoji:"⭐",photo:null,sv:"När solen sjönk gav tomten henne ett blänkande litet ljus att lysa hem med. Lina sprang hem till sitt röda hus, varm i hela kroppen. Snipp, snapp, snut — så var sagan slut.",en:"As the sun sank, the tomte gave her a shining little light to guide her home. Lina ran home to her red house, warm all over. Snip, snap, snout — and that's the end of the tale."},
   ]},
   {id:"s_pancake",example:true,type:"sequence",sv:"Vi bakar pannkakor",en:"We make pancakes",emoji:"🥞",color:"#D9B868",pages:[
     {id:"p1",emoji:"🥣",photo:null,sv:"Vispa ihop 2½ dl vetemjöl och ½ tsk salt i en bunke.",en:"Whisk together 2½ dl (1 cup) flour and ½ tsp salt in a bowl."},
@@ -7443,13 +7408,19 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
     if(!scroller) return;
     const vv=window.visualViewport;
     const visibleBottom=vv?vv.offsetTop+vv.height:window.innerHeight;
-    const scRect=scroller.getBoundingClientRect();
     const pRect=panel.getBoundingClientRect();
-    // We want the panel's bottom to land ~16px above the keyboard top.
-    const target=visibleBottom-16;
-    const delta=pRect.bottom-target;
-    if(Math.abs(delta)>3){
-      try{ scroller.scrollBy({top:delta,behavior:"smooth"}); }catch(_){ scroller.scrollTop+=delta; }
+    // Land the panel's bottom (the Save button) a comfortable gap above the
+    // keyboard's form bar — fully visible, not jammed, and crucially NEVER
+    // stranded high with a big gap. We set scrollTop ABSOLUTELY (instant) so
+    // every call (focus + each visualViewport change while the keyboard slides
+    // up) converges to the SAME final position. The old approach used a SMOOTH
+    // scrollBy that re-ran on each viewport event; the in-flight smooth scrolls
+    // compounded and overshot, leaving the button floating too far up.
+    const GAP=28;
+    const delta=pRect.bottom-(visibleBottom-GAP);
+    if(Math.abs(delta)>2){
+      const max=Math.max(0,scroller.scrollHeight-scroller.clientHeight);
+      scroller.scrollTop=Math.max(0,Math.min(max,scroller.scrollTop+delta));
     }
   };
   useEffect(()=>{
@@ -10875,7 +10846,7 @@ function BreathingExercise({onClose,t,lang}){
     );
   }
   return(
-    <div style={{position:"fixed",inset:0,zIndex:9000,backgroundColor:isDark()?"#0E0C16":"#FAFCFD",backgroundImage:isDark()?`radial-gradient(ellipse at 50% 30%, ${BLUE}33 0%, ${BLUE}1A 40%, #15131F 78%, #0C0A14 100%)`:`radial-gradient(ellipse at 50% 30%, ${BLUE}28 0%, ${BLUE}12 40%, #FAFCFD 80%, #FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"calc(env(safe-area-inset-top, 0px) + 30px) 24px calc(env(safe-area-inset-bottom, 0px) + 30px)",overflowY:"auto",animation:"ftIn .25s ease"}}>
+    <div style={{position:"fixed",inset:0,zIndex:9000,backgroundColor:isDark()?"#0E0C16":"#FAFCFD",backgroundImage:isDark()?`radial-gradient(ellipse at 50% 30%, ${BLUE}33 0%, ${BLUE}1A 40%, #15131F 78%, #0C0A14 100%)`:`radial-gradient(ellipse at 50% 30%, ${BLUE}28 0%, ${BLUE}12 40%, #FAFCFD 80%, #FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"calc(env(safe-area-inset-top, 0px) + 30px) 24px calc(env(safe-area-inset-bottom, 0px) + 30px)",overflowY:"hidden",animation:"ftIn .25s ease"}}>
       <style>{`
         @keyframes beAuroraDrift{0%{transform:translate(-15%,-10%) rotate(0deg)}50%{transform:translate(10%,5%) rotate(180deg)}100%{transform:translate(-15%,-10%) rotate(360deg)}}
         @keyframes beAuroraDrift2{0%{transform:translate(15%,10%) rotate(0deg)}50%{transform:translate(-10%,-5%) rotate(-180deg)}100%{transform:translate(15%,10%) rotate(-360deg)}}
@@ -11365,7 +11336,7 @@ function GroundingExercise({onClose,t,lang}){
   }
   const allChecked=checked>=cur.count;
   return(
-    <div style={{position:"fixed",inset:0,zIndex:9000,backgroundColor:isDark()?"#0E0C16":"#FAFCFD",backgroundImage:isDark()?`radial-gradient(ellipse at 50% 30%, ${cur.color}2E 0%, ${cur.color}14 45%, #15131F 80%, #0C0A14 100%)`:`radial-gradient(ellipse at 50% 30%, ${cur.color}1F 0%, ${cur.color}0A 45%, #FAFCFD 85%, #FFFFFF 100%)`,display:"flex",flexDirection:"column",padding:"calc(env(safe-area-inset-top, 0px) + 30px) 24px calc(env(safe-area-inset-bottom, 0px) + 30px)",overflowY:"auto",animation:"ftIn .3s ease",transition:"background-image .8s ease"}}>
+    <div style={{position:"fixed",inset:0,zIndex:9000,backgroundColor:isDark()?"#0E0C16":"#FAFCFD",backgroundImage:isDark()?`radial-gradient(ellipse at 50% 30%, ${cur.color}2E 0%, ${cur.color}14 45%, #15131F 80%, #0C0A14 100%)`:`radial-gradient(ellipse at 50% 30%, ${cur.color}1F 0%, ${cur.color}0A 45%, #FAFCFD 85%, #FFFFFF 100%)`,display:"flex",flexDirection:"column",padding:"calc(env(safe-area-inset-top, 0px) + 30px) 24px calc(env(safe-area-inset-bottom, 0px) + 30px)",overflowY:"hidden",animation:"ftIn .3s ease",transition:"background-image .8s ease"}}>
       <style>{`
         @keyframes geAuroraDrift{0%{transform:translate(-15%,-10%) rotate(0deg)}50%{transform:translate(10%,5%) rotate(180deg)}100%{transform:translate(-15%,-10%) rotate(360deg)}}
         @keyframes geAuroraDrift2{0%{transform:translate(15%,10%) rotate(0deg)}50%{transform:translate(-10%,-5%) rotate(-180deg)}100%{transform:translate(15%,10%) rotate(-360deg)}}
@@ -14869,7 +14840,7 @@ export default function App(){
   // detect any story whose id is a known built-in example id, drop those, and
   // splice in the fresh STORIES0 — while keeping every story the user created
   // themselves (unknown ids). Bumping the version key reruns it once.
-  const[migrStoriesV2,setMigrStoriesV2]=usePersistentState("migr_stories_v11",false);
+  const[migrStoriesV2,setMigrStoriesV2]=usePersistentState("migr_stories_v12",false);
   useEffect(()=>{
     if(migrStoriesV2) return;
     // All ids ever used by built-in examples (old + intermediate + current).
@@ -16543,12 +16514,12 @@ export default function App(){
         borderTop:isDark()?"1px solid rgba(255,255,255,0.05)":"1px solid rgba(31,27,46,0.05)",
         boxShadow:"none",
         display:"flex",
-        padding:"12px 0 calc(10px + env(safe-area-inset-bottom, 0px))",
+        padding:"7px 0 calc(6px + env(safe-area-inset-bottom, 0px))",
         flexShrink:0,zIndex:20,position:"relative",
         maxHeight:navHidden?0:300,
         opacity:navHidden?0:1,
-        paddingTop:navHidden?0:12,
-        paddingBottom:navHidden?0:"calc(10px + env(safe-area-inset-bottom, 0px))",
+        paddingTop:navHidden?0:7,
+        paddingBottom:navHidden?0:"calc(6px + env(safe-area-inset-bottom, 0px))",
         // Horizontal scroll when many tools overflow the width; vertical stays
         // clipped. When hidden (input focus / calm mode) everything is clipped.
         overflowX:navHidden?"hidden":"auto",
@@ -16596,7 +16567,7 @@ export default function App(){
         {/* Top hairline — colored, fades from sides, matches header bottom hairline vocabulary */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:`linear-gradient(90deg, transparent 0%, ${effS.h}25 50%, transparent 100%)`,pointerEvents:"none",transition:"background .5s ease"}}/>
         {navItems.map(({key,icon,label,S})=>{const on=screen===key;const pastel=NAV_PASTEL[key]||S.h;const dkNav=isDark();return(
-          <button key={key} onClick={()=>{setScreen(key);}} className="lt-press" style={{flex:navItems.length>7?"0 0 auto":"1",minWidth:navItems.length>7?64:0,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"10px 2px 4px",position:"relative",zIndex:1}}>
+          <button key={key} onClick={()=>{setScreen(key);}} className="lt-press" style={{flex:navItems.length>7?"0 0 auto":"1",minWidth:navItems.length>7?64:0,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"7px 2px 3px",position:"relative",zIndex:1}}>
             {/* Aurora glow behind active tab — breathes gently. Same vocabulary
                 as the header's aurora, scaled down for the nav. */}
             {on&&(
@@ -16645,8 +16616,10 @@ export default function App(){
               <NavIcon type={icon} active={on} color={on?(dkNav?"#F4F1FA":effS.deep):S.deep} size={22}/>
             </div>
             <span style={{fontFamily:G.font,fontWeight:on?600:400,fontSize:navItems.length>=7?9.5:10.5,color:on?(dkNav?"#F4F1FA":effS.deep):(isDark()?"#8E889E":"#7C7691"),transition:"color .35s ease, font-weight .35s ease",whiteSpace:"nowrap",position:"relative",zIndex:1,letterSpacing:.2,maxWidth:"100%",overflow:"hidden",textOverflow:"clip"}}>{label}</span>
-            {/* Glowing dot indicator — pulses gently in the screen's color */}
-            {on&&(
+            {/* Glowing dot indicator — pulses gently in the screen's color.
+                Light view only; in dark view the glass capsule alone marks the
+                active tab, for a cleaner look. */}
+            {on&&!dkNav&&(
               <div style={{
                 "--dot-c":S.h,
                 width:4,height:4,borderRadius:"50%",
