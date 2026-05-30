@@ -12862,85 +12862,58 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
   const isEmpty=!c.name&&!c.condition&&!c.triggers&&!c.helpful&&contacts.filter(k=>k.name&&k.phone).length===0;
 
   // Card render (reused in normal + show mode)
-  const Card=({big})=>(
+  const Card=({big})=>{
+    const list=contacts.filter(k=>k.name&&k.phone);
+    const lblStyle={fontFamily:G.font,fontSize:big?11:9.5,fontWeight:600,color:tk().ink3,letterSpacing:0.8,textTransform:"uppercase",marginBottom:3};
+    const bodyStyle={fontFamily:G.font,fontSize:big?15.5:12.5,color:tk().ink,lineHeight:1.45};
+    const divider=`1px solid ${isDark()?"rgba(255,255,255,0.08)":"rgba(31,27,46,0.06)"}`;
+    return(
     <div style={{
-      position:"relative",
-      background:isDark()?`linear-gradient(180deg, #211E33 0%, #1A1726 100%)`:`linear-gradient(180deg, #FFFFFF 0%, ${S.hll} 100%)`,
-      borderRadius:big?32:28,overflow:"hidden",
-      boxShadow:big
-        ?(isDark()?`0 30px 80px rgba(0,0,0,0.7), 0 8px 24px ${S.h}1F, inset 0 1px 0 rgba(255,255,255,0.08)`:`0 30px 80px ${S.h}3A, 0 8px 24px ${S.h}1F, inset 0 1px 0 rgba(255,255,255,0.8)`)
-        :(isDark()?`0 20px 56px rgba(0,0,0,0.65), 0 5px 14px ${S.h}1A, inset 0 1px 0 rgba(255,255,255,0.07)`:`0 20px 56px ${S.h}2E, 0 5px 14px ${S.h}1A, inset 0 1px 0 rgba(255,255,255,0.8)`),
-      border:`1px solid ${isDark()?S.h+"30":S.h+"30"}`,
-      animation:big?"none":"idCardIn 0.6s cubic-bezier(0.32, 0.72, 0, 1) both"
+      background:isDark()?"linear-gradient(180deg,#211E33 0%,#1A1726 100%)":"#FFFFFF",
+      borderRadius:big?24:20,
+      padding:big?"26px 24px 24px":"20px 18px 18px",
+      boxShadow:isDark()?"0 18px 44px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)":"0 16px 40px rgba(31,27,46,0.10), 0 2px 8px rgba(31,27,46,0.04)",
+      border:divider,
+      animation:big?"none":"idCardIn 0.6s cubic-bezier(0.32, 0.72, 0, 1) both",
     }}>
-      {/* Top ribbon with glow */}
-      <div style={{height:big?10:8,background:`linear-gradient(90deg,${S.deep},${S.h} 35%,${S.soft} 65%,${S.h})`,boxShadow:`0 2px 12px ${S.h}55`}}/>
-      <div style={{padding:big?"28px 28px 0":"22px 22px 0",display:"flex",alignItems:"center",gap:big?20:16}}>
-        <div style={{
-          width:big?104:86,height:big?104:86,borderRadius:big?28:24,
-          background:c.photo?"#000":`linear-gradient(140deg,${S.h}3A,${S.h}5C)`,
-          border:`1px solid ${S.h}45`,overflow:"hidden",position:"relative",
-          display:"flex",alignItems:"center",justifyContent:"center",fontSize:big?56:46,flexShrink:0,
-          boxShadow:`0 8px 20px ${S.h}33, inset 0 1px 0 rgba(255,255,255,0.5)`,
-        }}>
-          {c.photo?<><img src={c.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",inset:0,background:`linear-gradient(180deg, transparent 60%, ${S.h}26 100%)`,pointerEvents:"none"}}/></>:"🙂"}
+      {/* Header — avatar + name + age */}
+      <div style={{display:"flex",alignItems:"center",gap:big?16:13,marginBottom:big?16:14,paddingBottom:big?16:14,borderBottom:divider}}>
+        <div style={{width:big?64:50,height:big?64:50,borderRadius:"50%",background:c.photo?"#000":`linear-gradient(140deg,${S.h}3A,${S.h}5C)`,overflow:"hidden",position:"relative",display:"flex",alignItems:"center",justifyContent:"center",fontSize:big?30:24,boxShadow:`0 4px 12px ${S.h}33`,flexShrink:0,border:`1px solid ${S.h}45`}}>
+          {c.photo?<img src={c.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:"🙂"}
         </div>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{display:"inline-flex",alignItems:"center",padding:big?"4px 11px":"3px 9px",borderRadius:9,background:`${S.h}14`,border:`1px solid ${S.h}28`,marginBottom:7}}>
-            <span style={{fontFamily:G.font,fontWeight:700,fontSize:big?10.5:9.5,color:isDark()?S.h:S.deep,letterSpacing:1.4,textTransform:"uppercase"}}>{t.helloMyNameIs}</span>
-          </div>
-          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:big?30:24,color:tk().ink,lineHeight:1.1,letterSpacing:-.4,wordBreak:"break-word"}}>{c.name||"—"}</div>
-          {c.age&&<div style={{fontFamily:G.font,fontWeight:500,fontSize:big?15:13,color:tk().ink2,marginTop:3}}>{c.age} {t.yearsOld}</div>}
+        <div style={{minWidth:0,flex:1}}>
+          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:big?22:17,color:tk().ink,letterSpacing:-0.2,lineHeight:1.15,wordBreak:"break-word"}}>{c.name||"—"}</div>
+          {c.age&&<div style={{fontFamily:G.font,fontSize:big?13:11,color:tk().ink2,marginTop:2,letterSpacing:0.2}}>{c.age} {t.yearsOld}</div>}
         </div>
       </div>
-      <div style={{padding:big?"22px 28px 28px":"18px 22px 22px"}}>
-        {c.condition&&(<>
-          <div style={{display:"flex",alignItems:"center",gap:7,marginTop:14,marginBottom:6}}>
-            <span style={{width:5,height:5,borderRadius:"50%",background:S.h,flexShrink:0}}/>
-            <div style={{fontFamily:G.font,fontWeight:700,fontSize:big?11:10,color:isDark()?S.h:S.deep,letterSpacing:1.6,textTransform:"uppercase"}}>{t.aboutMe}</div>
-          </div>
-          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:big?18:16,color:tk().ink,lineHeight:1.4,letterSpacing:-.1}}>{c.condition}</div>
-        </>)}
-        {c.triggers&&(<>
-          <div style={{display:"flex",alignItems:"center",gap:7,marginTop:18,marginBottom:6}}>
-            <span style={{width:5,height:5,borderRadius:"50%",background:S.h,flexShrink:0}}/>
-            <div style={{fontFamily:G.font,fontWeight:700,fontSize:big?11:10,color:isDark()?S.h:S.deep,letterSpacing:1.6,textTransform:"uppercase"}}>{t.myTriggers}</div>
-          </div>
-          <div style={{fontFamily:G.font,fontWeight:500,fontSize:big?16:14,color:tk().ink,lineHeight:1.4,background:isDark()?`linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025))`:`linear-gradient(180deg, #FFFFFF, ${S.hll})`,borderRadius:big?14:12,padding:big?"12px 15px":"10px 13px",border:`1px solid ${isDark()?"rgba(255,255,255,0.08)":S.hl}`,boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.05)":"inset 0 1px 0 rgba(255,255,255,0.7)"}}>{c.triggers}</div>
-        </>)}
-        {c.helpful&&(<>
-          <div style={{display:"flex",alignItems:"center",gap:7,marginTop:14,marginBottom:6}}>
-            <span style={{width:5,height:5,borderRadius:"50%",background:SCREENS.emotion.h,flexShrink:0}}/>
-            <div style={{fontFamily:G.font,fontWeight:700,fontSize:big?11:10,color:isDark()?S.h:S.deep,letterSpacing:1.6,textTransform:"uppercase"}}>{t.whatHelps}</div>
-          </div>
-          <div style={{fontFamily:G.font,fontWeight:500,fontSize:big?16:14,color:tk().ink,lineHeight:1.4,background:isDark()?`linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025))`:`linear-gradient(180deg, #FFFFFF, ${SCREENS.emotion.hll})`,borderRadius:big?14:12,padding:big?"12px 15px":"10px 13px",border:`1px solid ${isDark()?"rgba(255,255,255,0.08)":SCREENS.emotion.hl}`,boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.05)":"inset 0 1px 0 rgba(255,255,255,0.7)"}}>{c.helpful}</div>
-        </>)}
-        {contacts.filter(k=>k.name&&k.phone).length>0&&(<>
-          <div style={{display:"flex",alignItems:"center",gap:7,marginTop:18,marginBottom:8}}>
-            <span style={{width:5,height:5,borderRadius:"50%",background:S.h,flexShrink:0}}/>
-            <div style={{fontFamily:G.font,fontWeight:700,fontSize:big?11:10,color:isDark()?S.h:S.deep,letterSpacing:1.6,textTransform:"uppercase"}}>{t.emergencyContacts}</div>
-          </div>
-          <div style={{display:"flex",flexDirection:"column",gap:big?10:8}}>
-            {contacts.filter(k=>k.name&&k.phone).map(k=>(
-              <a key={k.id} href={`tel:${k.phone.replace(/\s/g,"")}`} style={{textDecoration:"none",display:"flex",alignItems:"center",gap:12,padding:big?"15px 16px":"13px 14px",borderRadius:big?16:14,background:`linear-gradient(135deg,${S.h},${S.h}DC)`,boxShadow:`0 8px 20px ${S.h}55, inset 0 1px 0 rgba(255,255,255,0.25)`,color:"#fff"}}>
-                <div style={{width:big?44:38,height:big?44:38,borderRadius:"50%",background:"rgba(255,255,255,0.22)",border:"1px solid rgba(255,255,255,0.25)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <svg width={big?22:18} height={big?22:18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M22 16.92 v3 a2 2 0 0 1 -2.18 2 a19.79 19.79 0 0 1 -8.63 -3.07 a19.5 19.5 0 0 1 -6 -6 a19.79 19.79 0 0 1 -3.07 -8.67 A2 2 0 0 1 4.11 2 h3 a2 2 0 0 1 2 1.72 a12.84 12.84 0 0 0 0.7 2.81 a2 2 0 0 1 -0.45 2.11 L8.09 9.91 a16 16 0 0 0 6 6 l1.27 -1.27 a2 2 0 0 1 2.11 -0.45 a12.84 12.84 0 0 0 2.81 0.7 A2 2 0 0 1 22 16.92 z"/>
-                  </svg>
-                </div>
+      {/* About / what helps / what's hard */}
+      {c.condition&&<div style={{marginBottom:big?13:11}}><div style={lblStyle}>{t.aboutMe}</div><div style={bodyStyle}>{c.condition}</div></div>}
+      {c.helpful&&<div style={{marginBottom:big?13:11}}><div style={lblStyle}>{t.whatHelps}</div><div style={bodyStyle}>{c.helpful}</div></div>}
+      {c.triggers&&<div style={{marginBottom:big?13:11}}><div style={lblStyle}>{t.myTriggers}</div><div style={bodyStyle}>{c.triggers}</div></div>}
+      {/* Emergency contacts */}
+      {list.length>0&&(
+        <div style={{paddingTop:big?15:13,borderTop:divider}}>
+          <div style={{...lblStyle,marginBottom:big?9:7}}>{t.emergencyContacts}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:big?8:6}}>
+            {list.map((k,i)=>(
+              <a key={k.id} href={`tel:${k.phone.replace(/\s/g,"")}`} style={{textDecoration:"none",display:"flex",alignItems:"center",gap:big?12:10,padding:big?"11px 13px":"8px 10px",borderRadius:big?15:12,background:i===0?`${S.h}1F`:(isDark()?"rgba(255,255,255,0.04)":"rgba(31,27,46,0.03)"),border:`1px solid ${i===0?`${S.h}4D`:(isDark()?"rgba(255,255,255,0.06)":"rgba(31,27,46,0.05)")}`}}>
+                <div style={{width:big?34:28,height:big?34:28,borderRadius:"50%",background:isDark()?"#2A2740":"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:G.serif,fontWeight:600,fontSize:big?15:13,color:tk().ink,flexShrink:0,border:`1px solid ${isDark()?"rgba(255,255,255,0.08)":"rgba(31,27,46,0.06)"}`}}>{(k.name.trim()[0]||"·").toUpperCase()}</div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontFamily:G.serif,fontWeight:600,fontSize:big?17:15,letterSpacing:-.1}}>{k.name}{k.relation?` · ${k.relation}`:""}</div>
-                  <div style={{fontFamily:G.font,fontWeight:500,fontSize:big?15:13,opacity:.92,marginTop:2,fontVariantNumeric:"tabular-nums"}}>{k.phone}</div>
+                  <div style={{fontFamily:G.font,fontSize:big?14:11.5,fontWeight:600,color:tk().ink,letterSpacing:0.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{k.name}{k.relation?` \u00b7 ${k.relation}`:""}</div>
+                  <div style={{fontFamily:G.font,fontSize:big?12.5:10.5,color:tk().ink2,fontVariantNumeric:"tabular-nums",marginTop:1}}>{k.phone}</div>
                 </div>
-                <svg width={big?18:15} height={big?18:15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{opacity:.85,flexShrink:0}}><polyline points="9 18 15 12 9 6"/></svg>
+                <div style={{width:big?34:28,height:big?34:28,borderRadius:"50%",background:i===0?S.h:(isDark()?"rgba(255,255,255,0.10)":"rgba(31,27,46,0.06)"),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:i===0?`0 4px 12px ${S.h}55`:"none"}}>
+                  <svg width={big?15:12} height={big?15:12} viewBox="0 0 24 24" fill="none" stroke={i===0?"#FFFFFF":(isDark()?"#C9C4DA":"#7C7691")} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                </div>
               </a>
             ))}
           </div>
-        </>)}
-      </div>
-      <div style={{height:big?6:5,background:`linear-gradient(90deg,${S.h},${S.soft},${S.h})`,opacity:.5}}/>
+        </div>
+      )}
     </div>
-  );
+    );
+  };
+
 
   // Show mode — fullscreen, no chrome, optimised for handing phone to a stranger
   if(showMode){
@@ -12966,9 +12939,9 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
           </button>
         )}
         {isEmpty&&!isEditor?(
-          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"center",padding:"72px 30px 60px",gap:16}}>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"72px 30px 60px",gap:16}}>
             <style>{`@keyframes idcEmptyHalo{0%,100%{transform:scale(0.92);opacity:.5}50%{transform:scale(1.08);opacity:.9}}@keyframes idcEmptyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}`}</style>
-            <div style={{position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",marginBottom:2}}>
+            <div style={{position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",alignSelf:"center",marginBottom:2}}>
               <div style={{position:"absolute",width:130,height:130,borderRadius:"50%",background:`radial-gradient(circle, ${S.h}30 0%, transparent 70%)`,animation:"idcEmptyHalo 4.4s ease-in-out infinite"}}/>
               <div style={{position:"relative",width:96,height:96,borderRadius:30,background:`linear-gradient(140deg, ${S.h}2E, ${S.h}4E)`,border:`1px solid ${S.h}45`,boxShadow:`0 12px 30px ${S.h}3A, inset 0 1px 0 rgba(255,255,255,0.5)`,display:"flex",alignItems:"center",justifyContent:"center",animation:"idcEmptyFloat 5s ease-in-out infinite"}}>
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={S.deep} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -12979,8 +12952,8 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
                 </svg>
               </div>
             </div>
-            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:tk().inkSoft,letterSpacing:-.4,lineHeight:1.1,textAlign:"left"}}>{t.emptyCardTitle}</div>
-            <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:tk().ink2,letterSpacing:.1,textAlign:"left",lineHeight:1.5,maxWidth:280}}>{lang==="sv"?"Fyll i kortet i redigeraren.":"Fill in the card in the editor."}</div>
+            <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:tk().inkSoft,letterSpacing:-.4,lineHeight:1.1,textAlign:"center"}}>{t.emptyCardTitle}</div>
+            <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:tk().ink2,letterSpacing:.1,textAlign:"center",lineHeight:1.5,maxWidth:280}}>{lang==="sv"?"Fyll i kortet i redigeraren.":"Fill in the card in the editor."}</div>
           </div>
         ):isEmpty&&isEditor?(
           <div style={{textAlign:"left",padding:"36px 26px",background:isDark()?`linear-gradient(180deg, rgba(255,255,255,0.05), ${S.h}14)`:`linear-gradient(180deg, #FFFFFF, ${S.hll})`,borderRadius:24,border:`1px dashed ${isDark()?S.h+"55":S.h+"66"}`,boxShadow:isDark()?"0 8px 28px rgba(0,0,0,0.4)":`0 8px 24px ${S.h}14`}}>
