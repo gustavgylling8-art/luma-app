@@ -12860,6 +12860,16 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
   const c=cfg.idCard||{};
   const contacts=c.contacts||[];
   const isEmpty=!c.name&&!c.condition&&!c.triggers&&!c.helpful&&contacts.filter(k=>k.name&&k.phone).length===0;
+  // Keep the card view pinned to the top so the avatar/name never slip
+  // up behind the floating "Mitt kort" bar when the content is scrollable.
+  const scrollRef=useRef(null);
+  useEffect(()=>{
+    const reset=()=>{if(scrollRef.current)scrollRef.current.scrollTop=0;};
+    reset();
+    const r=requestAnimationFrame(reset);
+    const t1=setTimeout(reset,80);
+    return()=>{cancelAnimationFrame(r);clearTimeout(t1);};
+  },[isEditor,showMode]);
 
   // Card render (reused in normal + show mode)
   const Card=({big})=>{
@@ -12867,6 +12877,7 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
     const lblStyle={fontFamily:G.font,fontSize:big?11:9.5,fontWeight:600,color:tk().ink3,letterSpacing:0.8,textTransform:"uppercase",marginBottom:3};
     const bodyStyle={fontFamily:G.font,fontSize:big?15.5:12.5,color:tk().ink,lineHeight:1.45};
     const divider=`1px solid ${isDark()?"rgba(255,255,255,0.08)":"rgba(31,27,46,0.06)"}`;
+    const hasBody=!!(c.condition||c.helpful||c.triggers||list.length>0);
     return(
     <div style={{
       background:isDark()?"linear-gradient(180deg,#211E33 0%,#1A1726 100%)":"#FFFFFF",
@@ -12877,7 +12888,7 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
       animation:big?"none":"idCardIn 0.6s cubic-bezier(0.32, 0.72, 0, 1) both",
     }}>
       {/* Header — avatar + name + age */}
-      <div style={{display:"flex",alignItems:"center",gap:big?16:13,marginBottom:big?16:14,paddingBottom:big?16:14,borderBottom:divider}}>
+      <div style={{display:"flex",alignItems:"center",gap:big?16:13,marginBottom:hasBody?(big?16:14):0,paddingBottom:hasBody?(big?16:14):0,borderBottom:hasBody?divider:"none"}}>
         <div style={{width:big?64:50,height:big?64:50,borderRadius:"50%",background:c.photo?"#000":`linear-gradient(140deg,${S.h}3A,${S.h}5C)`,overflow:"hidden",position:"relative",display:"flex",alignItems:"center",justifyContent:"center",fontSize:big?30:24,boxShadow:`0 4px 12px ${S.h}33`,flexShrink:0,border:`1px solid ${S.h}45`}}>
           {c.photo?<img src={c.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:"🙂"}
         </div>
@@ -12929,17 +12940,11 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
   }
 
   return(
-    <div style={{flex:1,overflowY:"auto",background:"transparent"}}>
+    <div ref={scrollRef} style={{flex:1,overflowY:"auto",overscrollBehavior:"contain",background:"transparent"}}>
       <style>{`@keyframes idCardIn{0%{opacity:0;transform:translateY(12px) scale(0.985)}100%{opacity:1;transform:translateY(0) scale(1)}}@keyframes idCardBtnIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}`}</style>
-      <div style={{padding:"22px 18px 120px"}}>
-        {isEditor&&(
-          <button onClick={()=>onOpenEditor()} className="lt-press-soft" style={{width:"100%",padding:"13px 0",borderRadius:14,border:`1px solid ${S.h}`,background:S.hl,color:S.deep,fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",marginBottom:16,display:"inline-flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <IconPencil size={15}/>
-            <span>{t.editCard}</span>
-          </button>
-        )}
-        {isEmpty&&!isEditor?(
-          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"72px 30px 60px",gap:16}}>
+      <div style={{padding:"72px 18px 40px"}}>
+        {isEmpty?(
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 30px 60px",gap:16}}>
             <style>{`@keyframes idcEmptyHalo{0%,100%{transform:scale(0.92);opacity:.5}50%{transform:scale(1.08);opacity:.9}}@keyframes idcEmptyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}`}</style>
             <div style={{position:"relative",display:"inline-flex",alignItems:"center",justifyContent:"center",alignSelf:"center",marginBottom:2}}>
               <div style={{position:"absolute",width:130,height:130,borderRadius:"50%",background:`radial-gradient(circle, ${S.h}30 0%, transparent 70%)`,animation:"idcEmptyHalo 4.4s ease-in-out infinite"}}/>
@@ -12953,14 +12958,12 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor}){
               </div>
             </div>
             <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:tk().inkSoft,letterSpacing:-.4,lineHeight:1.1,textAlign:"center"}}>{t.emptyCardTitle}</div>
-            <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:tk().ink2,letterSpacing:.1,textAlign:"center",lineHeight:1.5,maxWidth:280}}>{lang==="sv"?"Fyll i kortet i redigeraren.":"Fill in the card in the editor."}</div>
-          </div>
-        ):isEmpty&&isEditor?(
-          <div style={{textAlign:"left",padding:"36px 26px",background:isDark()?`linear-gradient(180deg, rgba(255,255,255,0.05), ${S.h}14)`:`linear-gradient(180deg, #FFFFFF, ${S.hll})`,borderRadius:24,border:`1px dashed ${isDark()?S.h+"55":S.h+"66"}`,boxShadow:isDark()?"0 8px 28px rgba(0,0,0,0.4)":`0 8px 24px ${S.h}14`}}>
-            <div style={{fontSize:48,marginBottom:14}}>🪪</div>
-            <div style={{fontFamily:G.serif,fontWeight:600,fontSize:18,color:tk().ink,marginBottom:6}}>{t.createCardTitle}</div>
-            <div style={{fontFamily:G.font,fontSize:13,color:tk().ink2,lineHeight:1.5,marginBottom:18,maxWidth:320}}>{t.createCardDesc}</div>
-            <button onClick={()=>onOpenEditor()} className="lt-press" style={{padding:"13px 28px",borderRadius:14,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:`0 10px 24px ${S.h}55, inset 0 1px 0 rgba(255,255,255,0.3)`}}>+ {t.editCard}</button>
+            <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:tk().ink2,letterSpacing:.1,textAlign:"center",lineHeight:1.5,maxWidth:280}}>{isEditor?t.createCardDesc:(lang==="sv"?"Be den som hjälper dig att fylla i kortet.":"Ask someone who helps you to fill in the card.")}</div>
+            {isEditor&&(
+              <button onClick={()=>onOpenEditor()} className="lt-press" style={{marginTop:6,padding:"13px 28px",borderRadius:14,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:`0 10px 24px ${S.h}55, inset 0 1px 0 rgba(255,255,255,0.3)`,display:"inline-flex",alignItems:"center",gap:8}}>
+                <IconPencil size={15}/><span>{t.editCard}</span>
+              </button>
+            )}
           </div>
         ):(<>
           <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:tk().ink3,letterSpacing:1,textTransform:"uppercase",textAlign:"left",marginBottom:10}}>{t.idHint}</div>
@@ -13061,7 +13064,7 @@ function IdCardEditor({cfg,setCfg,onClose,t}){
         <SLabel>{t.myAge}</SLabel>
         <input value={c.age} onChange={e=>setC(x=>({...x,age:e.target.value}))} className="lt-input" style={INPT()} placeholder="t.ex. 9" inputMode="numeric"/>
         <SLabel>{t.aboutMe}</SLabel>
-        <textarea value={c.condition} onChange={e=>setC(x=>({...x,condition:e.target.value}))} className="lt-input" style={{...INPT(),minHeight:64,resize:"vertical"}} placeholder="t.ex. Jag har autism och kan behöva extra tid"/>
+        <textarea value={c.condition} onChange={e=>setC(x=>({...x,condition:e.target.value}))} className="lt-input" style={{...INPT(),minHeight:64,resize:"vertical"}} placeholder="t.ex. Jag pratar inte alltid. Jag tänker mycket."/>
         <SLabel>{t.myTriggers}</SLabel>
         <textarea value={c.triggers} onChange={e=>setC(x=>({...x,triggers:e.target.value}))} className="lt-input" style={{...INPT(),minHeight:64,resize:"vertical"}} placeholder="t.ex. Höga ljud, mycket folk"/>
         <SLabel>{t.whatHelps}</SLabel>
@@ -16220,7 +16223,7 @@ export default function App(){
             willChange:"transform, opacity",
             transform:"translateY(0)",opacity:1,
           }:{
-            flexShrink:0,padding:isEd?"14px 22px 16px":"6px 22px 12px",
+            flexShrink:0,padding:isEd?"14px 22px 16px":"6px 22px 12px",position:"relative",zIndex:5,
           }}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
           <div style={{display:"flex",gap:4,flex:1,
