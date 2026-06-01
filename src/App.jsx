@@ -154,7 +154,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       var pre = document.createElement("div");
       pre.id = "lumaPreBoot";
       pre.setAttribute("aria-hidden", "true");
-      pre.style.cssText = "position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;background:"+bg+";opacity:1;pointer-events:none;overflow:hidden";
+      pre.style.cssText = "position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;background:"+bg+";opacity:1;pointer-events:none;overflow:hidden";
       var markStroke = "#1F1B2E";
       var icoBgA = "#FFFCF7";
       var icoBgB = "#F3E6D7";
@@ -164,20 +164,36 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
         + '#lumaPreBoot *{backface-visibility:hidden;-webkit-backface-visibility:hidden}'
         + '@keyframes lumaPreBreath{0%,100%{transform:translateZ(0) scale(1)}50%{transform:translateZ(0) scale(1.018)}}'
         + '@keyframes lumaPreIconIn{0%{opacity:0;transform:translateZ(0) scale(0.94)}100%{opacity:1;transform:translateZ(0) scale(1)}}'
-        + '.lpaura{position:absolute;left:50%;top:43%;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle, rgba(232,168,120,0.14) 0%, rgba(232,168,120,0.05) 46%, rgba(232,168,120,0) 70%);transform:translate(-50%,-50%);pointer-events:none;z-index:0}'
+        + '@keyframes lumaPreAura{0%,100%{opacity:.65;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}'
+        // pearl free-falls a short distance into the u (accelerating, gravity-like) with a tiny settle
+        + '@keyframes lumaPrePearlDrop{0%{transform:translateY(-22px)}80%{transform:translateY(0)}89%{transform:translateY(-2px)}100%{transform:translateY(0)}}'
+        // the glint: a single crisp warm flash. Fired (not on a timer) the moment the app is ready,
+        // so it is ALWAYS the last thing seen before hand-off, whatever the load time.
+        + '@keyframes lumaPreGlint{0%{opacity:0;transform:scale(.6)}18%{opacity:1;transform:scale(1.5)}100%{opacity:0;transform:scale(1.95)}}'
+        // calm resting pulse on the glow — loops while the app loads, however long that takes
+        + '@keyframes lumaPrePulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.78;transform:scale(1.1)}}'
+        + '.lpaura{position:absolute;left:50%;top:41%;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle, rgba(232,168,120,0.16) 0%, rgba(232,168,120,0.06) 46%, rgba(232,168,120,0) 70%);transform:translate(-50%,-50%);pointer-events:none;z-index:0;animation:lumaPreAura 5s ease-in-out 0.3s infinite}'
+        + '.lpglint{transform-origin:50px 62px;opacity:0}'
+        + '.lpglint.go{animation:lumaPreGlint 0.5s ease-out 1 both}'
         + '</style>'
         + '<div class="lpaura"></div>'
-        + '<div style="position:relative;z-index:2;animation:lumaPreIconIn 0.6s cubic-bezier(0.22,1,0.36,1) both">'
+        + '<div style="position:relative;z-index:2;margin-top:-9vh;animation:lumaPreIconIn 0.6s cubic-bezier(0.22,1,0.36,1) both">'
         + '<div style="will-change:transform;animation:lumaPreBreath 4.4s ease-in-out 1.0s infinite">'
         + '<svg width="' + ICON + '" height="' + ICON + '" viewBox="0 0 100 100" style="display:block;overflow:visible;filter:drop-shadow(0 16px 34px rgba(80,70,95,0.20))">'
         + '<defs>'
         + '<linearGradient id="lumaPreIcoBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + icoBgA + '"/><stop offset="100%" stop-color="' + icoBgB + '"/></linearGradient>'
         + '<radialGradient id="lumaPrePearl" cx="38%" cy="32%" r="74%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="30%" stop-color="#FFF2E6"/><stop offset="70%" stop-color="#F8D2B2"/><stop offset="100%" stop-color="#EDB78F"/></radialGradient>'
+        + '<radialGradient id="lumaPreGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFC79E" stop-opacity="0.9"/><stop offset="55%" stop-color="#FFB888" stop-opacity="0.35"/><stop offset="100%" stop-color="#FFB888" stop-opacity="0"/></radialGradient>'
+        + '<radialGradient id="lumaPreFlash" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/><stop offset="55%" stop-color="#FFF0DC" stop-opacity="0.5"/><stop offset="100%" stop-color="#FFF0DC" stop-opacity="0"/></radialGradient>'
         + '</defs>'
         + '<rect x="0" y="0" width="100" height="100" rx="22.37" fill="url(#lumaPreIcoBg)"/>'
         + '<path d="M34.5 21 L34.5 63.5 A15.5 15.5 0 0 0 65.5 63.5 L65.5 43.3" fill="none" stroke="' + markStroke + '" stroke-width="12.8" stroke-linecap="round"/>'
+        + '<circle cx="50" cy="62" r="12" fill="url(#lumaPreGlow)" style="transform-origin:50px 62px;animation:lumaPrePulse 4.6s ease-in-out 1.6s infinite"/>'
+        + '<circle id="lumaPreGlintEl" class="lpglint" cx="50" cy="62" r="13" fill="url(#lumaPreFlash)"/>'
+        + '<g style="transform-origin:50px 62px;animation:lumaPrePearlDrop 0.8s cubic-bezier(0.45,0,0.9,0.55) 0s 1 both">'
         + '<circle cx="50" cy="62" r="7" fill="url(#lumaPrePearl)"/>'
         + '<circle cx="48" cy="60" r="2.2" fill="#FFFFFF" opacity="0.5"/>'
+        + '</g>'
         + '</svg>'
         + '</div>'
         + '</div>';
@@ -188,37 +204,49 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       // once (minShow), and (2) React has signalled it's mounted and painted
       // (window.__lumaReady). Then it fades out once, gracefully — no second
       // overlay, no competing timers, no animation restart.
+      // ── Adaptive hand-off: the glint is the closing gesture ─────────────
+      // The pearl drops & settles, then a calm pulse fills however long the
+      // app takes to load. The moment the app is ready (and the drop has been
+      // seen), we FIRE the glint and fade out timed to its peak — so the glint
+      // is ALWAYS the last thing the user sees before the app appears, whether
+      // loading took 0.4s or 4s. No fixed glint delay; it adapts to load time.
       var bornAt = performance.now();
-      var minShow = 1100;          // clean fade-in is seen, then we move on
-      var fadeMs = 650;
+      var minShow = 1450;          // ensures the fall + settle is seen before we can close
+      var fadeMs = 520;
       var removed = false;
-      var fadeOut = function(){
+      var finish = function(){
         if (removed) return; removed = true;
         var el = document.getElementById("lumaPreBoot");
         if (!el) return;
-        // Freeze every inner animation and clear will-change the instant we
-        // begin to leave. Running keyframe loops + a simultaneous opacity
-        // transition + live compositor layers is what caused the hitch on
-        // mobile; once everything inside is static, the opacity fade is glass.
-        var kids = el.querySelectorAll("*");
-        for (var i=0;i<kids.length;i++){
-          kids[i].style.animation = "none";
-          kids[i].style.willChange = "auto";
-        }
-        // next frame: apply the fade (ensures the freeze has committed first)
-        requestAnimationFrame(function(){
+        var glint = document.getElementById("lumaPreGlintEl");
+        // Fire the glint now. We fade the splash out as the glint reaches its
+        // bright peak (~0.2s into a 0.5s flash), so the last frame the user
+        // sees is the glint igniting — then the app is revealed underneath.
+        var startFade = function(){
+          // freeze the looping/idle animations so only the opacity fade runs
+          var kids = el.querySelectorAll("*");
+          for (var i=0;i<kids.length;i++){
+            if (kids[i] !== glint) { kids[i].style.animation = "none"; }
+            kids[i].style.willChange = "auto";
+          }
           el.style.transition = "opacity " + fadeMs + "ms ease";
           el.style.opacity = "0";
           setTimeout(function(){ el.parentNode && el.parentNode.removeChild(el); }, fadeMs + 60);
-        });
+        };
+        if (glint) {
+          glint.classList.add("go");
+          // begin the fade just after the glint peaks, so it's the final beat
+          setTimeout(startFade, 230);
+        } else {
+          startFade();
+        }
       };
       var tryFinish = function(){
         var waited = performance.now() - bornAt;
         var ready = (typeof window !== "undefined") && window.__lumaReady;
-        if (ready && waited >= minShow) { fadeOut(); return; }
-        // poll until both conditions met, capped so we never hang on splash
-        if (waited < 6000) { setTimeout(tryFinish, 60); }
-        else fadeOut();   // safety: never trap the user on the splash
+        if (ready && waited >= minShow) { finish(); return; }
+        if (waited < 8000) { setTimeout(tryFinish, 60); }
+        else finish();   // safety: never trap the user on the splash
       };
       setTimeout(tryFinish, minShow);
     };
@@ -257,17 +285,16 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     // can only ever be the light one once the PWA is reinstalled.
     g.fillStyle = "#FBFDFE";
     g.fillRect(0, 0, w, h);
-    // Soft aura — IDENTICAL to the pre-boot overlay's .lpaura (a 340px CSS
-    // circle centred at 50%/43%), so the static launch image and the live
-    // overlay are pixel-aligned: no second, differently-sized splash.
-    // The overlay is a full-screen fixed layer centred at 50% of the screen
-    // (iOS standalone keeps the web view full-screen with the status bar drawn
-    // on top), so the launch image's icon sits at the SAME 50% — no offset.
-    var auraR = 170 * dpr;                          // 340px CSS diameter
-    var aCx = w/2, aCy = h * 0.43;
+    // Soft aura — IDENTICAL to the pre-boot overlay's .lpaura (a 360px CSS
+    // circle). The overlay raises the icon (margin-top:-9vh) and sits its aura
+    // at top:41%, so the baked launch image places its aura at the SAME 41% —
+    // the static launch image and the live overlay stay pixel-aligned, no
+    // second, differently-placed splash.
+    var auraR = 180 * dpr;                          // 360px CSS diameter
+    var aCx = w/2, aCy = h * 0.41;
     var ag = g.createRadialGradient(aCx, aCy, 0, aCx, aCy, auraR);
-    ag.addColorStop(0, "rgba(232,168,120,0.14)");
-    ag.addColorStop(0.46, "rgba(232,168,120,0.05)");
+    ag.addColorStop(0, "rgba(232,168,120,0.16)");
+    ag.addColorStop(0.46, "rgba(232,168,120,0.06)");
     ag.addColorStop(0.70, "rgba(232,168,120,0)");
     g.fillStyle = ag;
     g.beginPath(); g.arc(aCx, aCy, auraR, 0, Math.PI*2); g.fill();
