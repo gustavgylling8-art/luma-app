@@ -798,28 +798,30 @@ const ROUTINE_TEMPLATES=[
     {time:"07:00",endTime:"08:30",sv:"Morgonrutin",en:"Morning routine",emoji:"🌅",color:ACT_C[4],steps:[
       {emoji:"⏰",sv:"Vakna",en:"Wake up"},
       {emoji:"👕",sv:"Klä på sig",en:"Get dressed"},
-      {emoji:"🥣",sv:"Frukost",en:"Breakfast",timerMin:15},
-      {emoji:"🪥",sv:"Borsta tänderna",en:"Brush teeth",timerMin:2},
+      {emoji:"🥣",sv:"Frukost",en:"Breakfast",timerMin:15,timerType:"sector"},
+      {emoji:"🪥",sv:"Borsta tänderna",en:"Brush teeth",timerMin:2,timerType:"ring"},
       {emoji:"🎒",sv:"Packa väskan",en:"Pack the bag"},
       {emoji:"👟",sv:"Skor & jacka",en:"Shoes & jacket"},
     ]},
   ]},
-  {id:"school",emoji:"🎒",sv:"Skola & jobb",en:"School & work",svDark:"Vardag",enDark:"Weekday",acts:[
-    {time:"08:30",endTime:"15:30",sv:"Skola",en:"School",svDark:"Jobb",enDark:"Work",emoji:"🎒",color:ACT_C[3],steps:[
-      {emoji:"🚶",sv:"Gå till skolan",en:"Walk to school",svDark:"Iväg till jobbet",enDark:"Head to work"},
-      {emoji:"📚",sv:"Lektioner",en:"Lessons",svDark:"Arbeta",enDark:"Work"},
+  {id:"school",emoji:"💼",sv:"Jobb",en:"Work",svDark:"Jobb",enDark:"Work",acts:[
+    {time:"08:30",endTime:"16:30",sv:"Jobb",en:"Work",svDark:"Jobb",enDark:"Work",emoji:"💼",color:"#8AAFD2",steps:[
+      {emoji:"🚆",sv:"Ta sig till jobbet",en:"Get to work"},
+      {emoji:"☕",sv:"Kom igång / morgonkaffe",en:"Settle in / coffee"},
+      {emoji:"💻",sv:"Fokusarbete",en:"Focus work",timerMin:50,timerType:"ring"},
+      {emoji:"😌",sv:"Kort paus",en:"Short break",timerMin:10,timerType:"wave"},
       {emoji:"🥪",sv:"Lunch",en:"Lunch"},
-      {emoji:"✏️",sv:"Eftermiddag",en:"Afternoon"},
-      {emoji:"🏠",sv:"Gå hem",en:"Walk home",svDark:"Hem igen",enDark:"Head home"},
+      {emoji:"📋",sv:"Möten & uppgifter",en:"Meetings & tasks"},
+      {emoji:"🏠",sv:"Åk hem",en:"Head home"},
     ]},
-    {time:"16:00",endTime:"16:45",sv:"Läxor",en:"Homework",svDark:"Återhämtning",enDark:"Wind down",emoji:"📝",color:ACT_C[1],timer:{on:true,type:"ring",min:25,color:ACT_C[1]},steps:[]},
+    {time:"17:00",endTime:"17:30",sv:"Varva ner",en:"Wind down",svDark:"Återhämtning",enDark:"Wind down",emoji:"🌿",color:ACT_C[1],timer:{on:true,type:"sun",min:20,color:ACT_C[1]},steps:[]},
   ]},
   {id:"training",emoji:"🤸",sv:"Träning",en:"Exercise",acts:[
     {time:"16:00",endTime:"17:50",sv:"Träning",en:"Exercise",emoji:"🤸",color:ACT_C[8],steps:[
       {emoji:"👕",sv:"Byt om till träningskläder",en:"Change into sports clothes"},
-      {emoji:"🤸",sv:"Värm upp",en:"Warm up",timerMin:5},
+      {emoji:"🤸",sv:"Värm upp",en:"Warm up",timerMin:5,timerType:"dots"},
       {emoji:"⚽",sv:"Träna",en:"Train"},
-      {emoji:"🧘",sv:"Stretcha",en:"Stretch",timerMin:5},
+      {emoji:"🧘",sv:"Stretcha",en:"Stretch",timerMin:5,timerType:"wave"},
       {emoji:"🚿",sv:"Duscha",en:"Shower"},
       {emoji:"💧",sv:"Drick & ät något",en:"Drink & snack"},
     ]},
@@ -829,9 +831,9 @@ const ROUTINE_TEMPLATES=[
     {time:"19:00",endTime:"21:00",sv:"Kvällsrutin",en:"Evening routine",emoji:"🌙",color:"#8E92D2",timer:{on:true,type:"sun",min:30,color:"#8E92D2"},steps:[
       {emoji:"🧹",sv:"Plocka undan",en:"Tidy up"},
       {emoji:"🛁",sv:"Bad",en:"Bath",svDark:"Dusch",enDark:"Shower"},
-      {emoji:"🪥",sv:"Borsta tänderna",en:"Brush teeth",timerMin:2},
+      {emoji:"🪥",sv:"Borsta tänderna",en:"Brush teeth",timerMin:2,timerType:"ring"},
       {emoji:"🩱",sv:"Pyjamas",en:"Pyjamas"},
-      {emoji:"📖",sv:"Läs en bok",en:"Read a book",timerMin:15},
+      {emoji:"📖",sv:"Läs en bok",en:"Read a book",timerMin:15,timerType:"sun"},
       {emoji:"🌙",sv:"Sova",en:"Sleep"},
     ]},
   ]},
@@ -1568,8 +1570,8 @@ function LumaVector({size=42,color="#1F1B2E",sun=true,style={}}){
           <stop offset="100%" stopColor="#EFA374"/>
         </radialGradient>
         <radialGradient id={`${uid}-glow`} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#FFC79E" stopOpacity="0.80"/>
-          <stop offset="42%" stopColor="#FFB888" stopOpacity="0.34"/>
+          <stop offset="0%" stopColor="#FFC79E" stopOpacity="0.95"/>
+          <stop offset="46%" stopColor="#FFB888" stopOpacity="0.48"/>
           <stop offset="100%" stopColor="#FFB888" stopOpacity="0"/>
         </radialGradient>
       </defs>
@@ -1583,7 +1585,7 @@ function LumaVector({size=42,color="#1F1B2E",sun=true,style={}}){
       </g>
       {sun&&(
         <g>
-          <circle cx="331" cy="484" r="100" fill={`url(#${uid}-glow)`}/>
+          <circle cx="331" cy="484" r="112" fill={`url(#${uid}-glow)`}/>
           <circle cx="331" cy="484" r="41" fill={`url(#${uid}-sun)`}/>
           <ellipse cx="316" cy="466" rx="12" ry="9" fill="#FFFFFF" opacity="0.5"/>
         </g>
@@ -1652,12 +1654,12 @@ const SKY_STARS=Array.from({length:42},(_,i)=>({x:20+((i*73)%760),y:8+((i*39)%11
 // White "luma" + a small, light pearl floating in the u. Pearl placement is
 // read from the real glyph (getExtentOfChar) so it sits perfectly regardless
 // of device font metrics — matching the approved preview exactly.
-function SkyWordmark({size=30}){
-  return <LumaVector size={size} color="#FFFFFF" sun={false}
+function SkyWordmark({size=30,sun=false}){
+  return <LumaVector size={size} color="#FFFFFF" sun={sun}
     style={{display:"block",flexShrink:0,filter:"drop-shadow(0 1px 5px rgba(60,45,55,.30))"}}/>;
 }
 
-function SkyHeader({now,lang,inFlow=false}){
+function SkyHeader({now,lang,inFlow=false,sun=false}){
   const h=now.getHours()+now.getMinutes()/60;
   const sk=skyAt(h);
   const sunUp = h>5.2 && h<19.6;
@@ -1684,12 +1686,12 @@ function SkyHeader({now,lang,inFlow=false}){
   const dm=now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{day:"numeric",month:"long"});
   return(
     <div style={{position:"relative",overflow:"hidden",zIndex:2,display:"flex",alignItems:"flex-end",
-      marginTop:inFlow?0:"calc(-20px - env(safe-area-inset-top, 0px))",
+      marginTop:inFlow?"-20px":"calc(-20px - env(safe-area-inset-top, 0px))",
       paddingTop:0,
-      marginLeft:-22,marginRight:-22,marginBottom:inFlow?-26:-6,
-      paddingBottom:inFlow?24:0,
-      minHeight:inFlow?"140px":"calc(112px + env(safe-area-inset-top, 0px))"}}>
-      <svg viewBox="0 0 800 236" preserveAspectRatio="xMidYMax slice" style={{position:"absolute",inset:0,width:"100%",height:"100%",display:"block",...(inFlow?{WebkitMaskImage:"linear-gradient(180deg, #000 0%, #000 34%, rgba(0,0,0,0.82) 50%, rgba(0,0,0,0.5) 66%, rgba(0,0,0,0.22) 82%, transparent 100%)",maskImage:"linear-gradient(180deg, #000 0%, #000 34%, rgba(0,0,0,0.82) 50%, rgba(0,0,0,0.5) 66%, rgba(0,0,0,0.22) 82%, transparent 100%)"}:{})}}>
+      marginLeft:-22,marginRight:-22,marginBottom:-6,
+      paddingBottom:0,
+      minHeight:"calc(112px + env(safe-area-inset-top, 0px))"}}>
+      <svg viewBox="0 0 800 236" preserveAspectRatio="xMidYMax slice" style={{position:"absolute",inset:0,width:"100%",height:"100%",display:"block",...(inFlow?{WebkitMaskImage:"linear-gradient(180deg, #000 0%, #000 56%, rgba(0,0,0,0.85) 68%, rgba(0,0,0,0.5) 80%, rgba(0,0,0,0.2) 91%, transparent 100%)",maskImage:"linear-gradient(180deg, #000 0%, #000 56%, rgba(0,0,0,0.85) 68%, rgba(0,0,0,0.5) 80%, rgba(0,0,0,0.2) 91%, transparent 100%)"}:{})}}>
         <defs>
           <linearGradient id="skHdrGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={_skRgb(sk.top)}/>
@@ -1700,11 +1702,11 @@ function SkyHeader({now,lang,inFlow=false}){
         <rect x="0" y="0" width="800" height="236" fill="url(#skHdrGrad)"/>
         <g>{SKY_STARS.map((s,i)=><circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#FFFDF4" opacity={Number((starOp*(0.5+0.5*s.ph)).toFixed(2))}/>)}</g>
         {halo}{rays}{body}{moon}
-        <path d={hillPath(146,22,2.1)} fill={_skRgb(_skMix(sk.hill,[0,0,0],0.18))} opacity={inFlow?0.32:0.55}/>
-        <path d={hillPath(168,16,0.6)} fill={_skRgb(sk.hill)} opacity={inFlow?0.6:1}/>
+        <path d={hillPath(146,22,2.1)} fill={_skRgb(_skMix(sk.hill,[0,0,0],0.18))} opacity={0.55}/>
+        <path d={hillPath(168,16,0.6)} fill={_skRgb(sk.hill)} opacity={1}/>
       </svg>
-      <div style={{position:"relative",width:"100%",display:"flex",alignItems:"baseline",justifyContent:"space-between",padding:inFlow?"0 22px 22px":"0 22px 16px",gap:14,zIndex:2}}>
-        <div style={{transform:"translateY(5px)"}}><SkyWordmark size={30}/></div>
+      <div style={{position:"relative",width:"100%",display:"flex",alignItems:"baseline",justifyContent:"space-between",padding:"0 22px 16px",gap:14,zIndex:2}}>
+        <div style={{transform:inFlow?"translateY(-1px)":"translateY(5px)"}}><SkyWordmark size={30} sun={sun}/></div>
         {!inFlow&&(
         <div style={{display:"flex",alignItems:"baseline",gap:7,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
           <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{wd}</span>
@@ -4799,7 +4801,7 @@ function ActivityDetail({item,stepsDone,readOnly,onClose,onCheck,onStepTimer,t})
                         border:`1px solid ${item.color}${isDark()?"44":"33"}`,
                         color:isDark()?shadeHex(item.color,0.45):shadeHex(item.color,-0.35),
                         transition:"transform .2s ease"}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+                      <TimerIcon type={s.timerType||item.timer?.type||"sector"} size={15} color="currentColor"/>
                       <span style={{fontFamily:G.font,fontWeight:700,fontSize:12.5,fontVariantNumeric:"tabular-nums"}}>{s.timerMin} {t.min}</span>
                     </span>
                   ):null}
@@ -5599,7 +5601,9 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
                 : <>
                     {/* Per-step timer toggle */}
                     <button onClick={()=>{if(typeof navigator!=="undefined"&&navigator.vibrate)navigator.vibrate(10);setSteps(ss=>ss.map(x=>x.id===s.id?{...x,timerMin:x.timerMin?0:10}:x));}} aria-label={lang==="sv"?"Timer på steget":"Timer on step"} className="lt-press" style={{flexShrink:0,display:"inline-flex",alignItems:"center",gap:5,padding:s.timerMin?"5px 9px 5px 7px":"6px",borderRadius:9,border:`1px solid ${s.timerMin?(color&&color!=="#FFFFFF"&&color!=="#1F1B2E"?color:S.h)+"55":(isDark()?edPal().cardBorder:G.border)}`,background:s.timerMin?(color&&color!=="#FFFFFF"&&color!=="#1F1B2E"?color:S.h)+(isDark()?"24":"16"):"transparent",color:s.timerMin?(isDark()?shadeHex(color&&color!=="#FFFFFF"&&color!=="#1F1B2E"?color:S.h,0.4):shadeHex(color&&color!=="#FFFFFF"&&color!=="#1F1B2E"?color:S.h,-0.35)):edPal().text3,cursor:"pointer",transition:"all .25s ease"}}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+                      {s.timerMin
+                        ? <TimerIcon type={s.timerType||timerType||"sector"} size={14} color="currentColor"/>
+                        : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>}
                       {s.timerMin?<span style={{fontFamily:G.font,fontWeight:700,fontSize:12,fontVariantNumeric:"tabular-nums"}}>{s.timerMin}m</span>:null}
                     </button>
                     <button onClick={()=>setSteps(ss=>ss.filter(x=>x.id!==s.id))} aria-label={lang==="sv"?"Ta bort steg":"Remove step"} style={{background:"none",border:"none",color:edPal().text3,cursor:"pointer",padding:6,display:"inline-flex",alignItems:"center",justifyContent:"center"}}><IconX size={13}/></button>
@@ -9575,9 +9579,9 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone,onActiveColor}){
             const tColor=item.timer.color||"#E89B89";
             return(
               <div style={{display:"flex",justifyContent:"center",marginTop:16,pointerEvents:"none",position:"relative"}}>
-                <span style={{display:"inline-flex",alignItems:"center",gap:6,padding:"6px 13px 6px 11px",borderRadius:999,background:isDark()?`${tColor}24`:`linear-gradient(180deg, #FFFFFF, ${tColor}12)`,border:`1px solid ${tColor}2E`,boxShadow:isDark()?"none":`inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 6px ${tColor}14`,fontFamily:G.font,fontWeight:600,fontSize:11.5,color:isDark()?shadeHex(tColor,0.4):readable(tColor),letterSpacing:.3,whiteSpace:"nowrap"}}>
+                <span style={{display:"inline-flex",alignItems:"center",gap:6,padding:"6px 13px 6px 11px",borderRadius:999,background:isDark()?`${tColor}24`:`linear-gradient(180deg, #FFFFFF, ${tColor}12)`,border:`1px solid ${tColor}2E`,boxShadow:isDark()?"none":`inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 6px ${tColor}14`,fontFamily:G.font,fontWeight:600,fontSize:11.5,color:isDark()?shadeHex(tColor,0.4):onCardColor(tColor),letterSpacing:.3,whiteSpace:"nowrap"}}>
                   <style>{`@keyframes cvTmrTick{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-12deg)}}`}</style>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isDark()?shadeHex(tColor,0.4):readable(tColor)} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isDark()?shadeHex(tColor,0.4):onCardColor(tColor)} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
                     <circle cx="12" cy="13" r="8"/>
                     <line x1="9" y1="2" x2="15" y2="2"/>
                     <line x1="12" y1="13" x2="12" y2="8" style={{transformOrigin:"12px 13px",animation:"cvTmrTick 2.4s ease-in-out infinite"}}/>
@@ -12715,16 +12719,27 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
         {/* ── In-flow header: the sky banner + Vecka/Redigera row live INSIDE the
             scroll so the whole week page scrolls as one continuous surface (like
             a web page) — nothing stays pinned, no hard edge cuts the content. */}
-        {!dark&&!isEd&&(
+        {!isEd&&(
           <div style={{marginLeft:-14,marginRight:-14,overflow:"hidden"}} onClick={()=>setHeaderTapCount&&setHeaderTapCount(c=>c+1)}>
-            <div style={{padding:"0 22px",marginTop:-4}}><SkyHeader now={now} lang={lang} inFlow={true}/></div>
+            {dark ? (
+              /* DARK: a Home-style dark header inside the scroll — same luma
+                 placement & glass colour as dark Home, but it scrolls away
+                 with the page instead of staying pinned. */
+              <div style={{padding:"calc(16px + env(safe-area-inset-top, 0px)) 22px 6px"}}>
+                <div style={{display:"flex",flexDirection:"row",alignItems:"center",gap:13,marginBottom:10,position:"relative",zIndex:2}}>
+                  <LumaWordmark size={25} color={shadeHex(effS?.h||"#9683C2",0.80)} showSun={false} style={{transition:"color .5s ease"}}/>
+                </div>
+              </div>
+            ) : (
+              <div style={{padding:"16px 22px 6px"}}><SkyHeader now={now} lang={lang} inFlow={true} sun={false}/></div>
+            )}
             {/* Vecka / Redigera row — uses the shared glass SlideTabRow so it
                 matches Home and stays transparent against the sky. */}
             <div style={{display:"flex",alignItems:"center",gap:8,padding:"11px 22px 12px"}}>
               {(()=>{
                 const leadingLabel = !isEd ? (
-                  <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:"rgba(255,255,255,0.95)",textShadow:"0 1px 4px rgba(60,45,75,0.45)",display:"flex",alignItems:"center",gap:7,letterSpacing:.2,position:"relative",zIndex:2}}>
-                    <span style={{width:6,height:6,borderRadius:"50%",background:"#FFFFFF",boxShadow:`0 0 6px rgba(255,255,255,0.7)`}}/>
+                  <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:dark?"rgba(255,255,255,0.85)":"rgba(255,255,255,0.95)",textShadow:dark?"none":"0 1px 4px rgba(60,45,75,0.45)",display:"flex",alignItems:"center",gap:7,letterSpacing:.2,position:"relative",zIndex:2}}>
+                    <span style={{width:6,height:6,borderRadius:"50%",background:dark?(effS?.h||"#9683C2"):"#FFFFFF",boxShadow:dark?"none":`0 0 6px rgba(255,255,255,0.7)`}}/>
                     {lang==="sv"?"Vecka":"Week"}
                   </div>
                 ) : (
@@ -12734,7 +12749,7 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
                   </div>
                 );
                 const segments=[{key:"edit",label:isEd?t.editorClose:t.editorOpen,active:isEd,onClick:()=>setIsEd&&setIsEd(e=>!e),flex:1}];
-                return <SlideTabRow segments={segments} leadingLabel={leadingLabel} goldKey="edit" color={effS?.h||"#9683C2"} deep={effS?.deep||"#6E5E9E"} onSky={!isEd} padY={8}/>;
+                return <SlideTabRow segments={segments} leadingLabel={leadingLabel} goldKey="edit" color={effS?.h||"#9683C2"} deep={effS?.deep||"#6E5E9E"} onSky={!isEd&&!dark} padY={8}/>;
               })()}
             </div>
           </div>
@@ -13609,6 +13624,11 @@ function SupervisorDemo({onClose,onOpenClient,lang}){
    ACTIVITY START ALERT — notification when activity begins
 ═══════════════════════════════════════════════════ */
 function ActivityStartAlert({activity,onDismiss,onOpen,t,lang}){
+  // Play the celebratory chime + haptic when this alert appears, so an
+  // activity starting has the same audible cue as a timer finishing. The
+  // backgrounded case is covered by the OS notification (silent:false); this
+  // covers the app-is-open case, which was previously silent.
+  useEffect(()=>{ try{ chime(); }catch(_){} },[]);
   return(
     <div onClick={onDismiss} style={{position:"fixed",inset:0,zIndex:99000,background:"rgba(31,27,46,0.45)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",padding:24,animation:"asaBackdrop 0.35s ease both"}}>
       <style>{`
@@ -15265,7 +15285,7 @@ export default function App(){
           time:a.time, endTime:a.endTime,
           name:pick(a),
           emoji:a.emoji, color:a.color,
-          steps:(a.steps||[]).map((s)=>({emoji:s.emoji,text:pick(s),...(s.timerMin?{timerMin:s.timerMin}:{})})),
+          steps:(a.steps||[]).map((s)=>({emoji:s.emoji,text:pick(s),...(s.timerMin?{timerMin:s.timerMin}:{}),...(s.timerType?{timerType:s.timerType}:{})})),
           timer:a.timer||null,
         });
       });
@@ -15291,7 +15311,7 @@ export default function App(){
         time:g.time, endTime:g.endTime,
         name:g.name, emoji:g.emoji, color:g.color,
         done:false, stepsDone:{},
-        steps:(g.steps||[]).map(s=>({id:uid(),emoji:s.emoji,text:s.text,...(s.timerMin?{timerMin:s.timerMin}:{})})),
+        steps:(g.steps||[]).map(s=>({id:uid(),emoji:s.emoji,text:s.text,...(s.timerMin?{timerMin:s.timerMin}:{}),...(s.timerType?{timerType:s.timerType}:{})})),
         timer:g.timer?{...g.timer}:{on:false,type:"sector",min:10,color:g.color},
       };
       return [...prev,newAct].sort((x,y)=>hm(x.time)-hm(y.time));
@@ -15317,7 +15337,7 @@ export default function App(){
       time:g.time, endTime:g.endTime,
       name:g.name, emoji:g.emoji, color:g.color,
       done:false, stepsDone:{},
-      steps:(g.steps||[]).map(s=>({id:uid(),emoji:s.emoji,text:s.text,...(s.timerMin?{timerMin:s.timerMin}:{})})),
+      steps:(g.steps||[]).map(s=>({id:uid(),emoji:s.emoji,text:s.text,...(s.timerMin?{timerMin:s.timerMin}:{}),...(s.timerType?{timerType:s.timerType}:{})})),
       timer:g.timer?{...g.timer}:{on:false,type:"sector",min:10,color:g.color},
       repeat:{type:"none"},
     };
@@ -15336,7 +15356,7 @@ export default function App(){
       name:pick(a),
       emoji:a.emoji, color:a.color,
       done:false, stepsDone:{},
-      steps:(a.steps||[]).map((s)=>({id:uid(),emoji:s.emoji,text:pick(s),...(s.timerMin?{timerMin:s.timerMin}:{})})),
+      steps:(a.steps||[]).map((s)=>({id:uid(),emoji:s.emoji,text:pick(s),...(s.timerMin?{timerMin:s.timerMin}:{}),...(s.timerType?{timerType:s.timerType}:{})})),
       timer:a.timer?{...a.timer}:{on:false,type:"sector",min:10,color:a.color},
     }));
     setActs(prev=>[...prev,...newActs].sort((x,y)=>hm(x.time)-hm(y.time)));
@@ -15366,7 +15386,7 @@ export default function App(){
       name:pick(a),
       emoji:a.emoji, color:a.color,
       done:false, stepsDone:{},
-      steps:(a.steps||[]).map((s)=>({id:uid(),emoji:s.emoji,text:pick(s),...(s.timerMin?{timerMin:s.timerMin}:{})})),
+      steps:(a.steps||[]).map((s)=>({id:uid(),emoji:s.emoji,text:pick(s),...(s.timerMin?{timerMin:s.timerMin}:{}),...(s.timerType?{timerType:s.timerType}:{})})),
       timer:a.timer?{...a.timer}:{on:false,type:"sector",min:10,color:a.color},
       repeat:{type:"none"},
     };
@@ -16327,7 +16347,7 @@ export default function App(){
           hairline at the bottom. Everything transitions over .5s when the
           screen color changes, and the auroras breathe gently over time. */}
       <div onClick={()=>setHeaderTapCount(c=>c+1)} className="lt-app-header" style={{
-        display: (screen==="week"&&!isEd&&!isDark())?"none":undefined,
+        display: (screen==="week"&&!isEd)?"none":undefined,
         // Per-screen header: each tool has its own fullness and glow shape (see
         // HEADER_CHAR) so every header is unique, while sharing one calm design
         // language. The screen's own hue colours it; calm/Lugn is the fullest.
@@ -16451,7 +16471,7 @@ export default function App(){
               SkyWordmark is the same logo without the sun. */}
           <LumaWordmark
             size={25}
-            color={isDark()?shadeHex(effS.h,0.50):shadeHex(effS.h,-0.55)}
+            color={isDark()?shadeHex(effS.h,0.80):shadeHex(effS.h,-0.55)}
             showSun={isEd}
             style={{transition:"color .5s ease"}}
           />
@@ -16581,7 +16601,7 @@ export default function App(){
             schedule's scroll handler (writes transform/opacity to tabBarRef) —
             no React state, no re-render, no reflow, so it's perfectly smooth.
             Otherwise it's a normal always-visible in-flow bar. */}
-        {!(screen==="week"&&!isEd&&!isDark())&&(()=>{
+        {!(screen==="week"&&!isEd)&&(()=>{
           const collapsible = screen==="home" && !isEd && cfg.schedView==="both";
           return(
           <div ref={collapsible?tabBarRef:null} style={collapsible?{
@@ -16623,7 +16643,7 @@ export default function App(){
             }
             // Redigera / Stäng — present on all screens. It's the gold pill when editing.
             segments.push({key:"edit",label:isEd?t.editorClose:t.editorOpen,active:isEd,onClick:()=>setIsEd(e=>!e),flex:1});
-            return <SlideTabRow segments={segments} leadingLabel={leadingLabel} goldKey="edit" color={effS.h} deep={effS.deep} floating={collapsible} onSky={screen==="home"&&!isEd&&effView!=="card"}/>;
+            return <SlideTabRow segments={segments} leadingLabel={leadingLabel} goldKey="edit" color={effS.h} deep={effS.deep} floating={collapsible} onSky={screen==="home"&&!isEd}/>;
           })()}
           </div>
           </div>
@@ -16907,7 +16927,7 @@ export default function App(){
         }}/>}
         {/* Top hairline — colored, fades from sides, matches header bottom hairline vocabulary */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:`linear-gradient(90deg, transparent 0%, ${effS.h}25 50%, transparent 100%)`,pointerEvents:"none",transition:"background .5s ease"}}/>
-        {navItems.map(({key,icon,label,S})=>{const on=screen===key;const pastel=NAV_PASTEL[key]||S.h;const dkNav=isDark();return(
+        {navItems.map(({key,icon,label,S})=>{const on=screen===key;const pastel=NAV_PASTEL[key]||S.h;const dkNav=isDark();const navHue=(dkNav&&on)?effS.h:pastel;return(
           <button key={key} onClick={()=>{if(screen!==key)fx.navHaptic();setScreen(key);}} className="lt-press" style={{flex:navItems.length>7?"0 0 auto":"1",minWidth:navItems.length>7?64:0,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"7px 2px 3px",position:"relative",zIndex:1}}>
             {/* Aurora glow behind active tab — breathes gently. Same vocabulary
                 as the header's aurora, scaled down for the nav. */}
@@ -16919,7 +16939,7 @@ export default function App(){
                 width:64,height:50,
                 borderRadius:"50%",
                 background:dkNav
-                  ?"radial-gradient(ellipse at center, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 45%, transparent 70%)"
+                  ?`radial-gradient(ellipse at center, ${navHue}3D 0%, ${navHue}12 45%, transparent 70%)`
                   :`radial-gradient(ellipse at center, ${pastel}4D 0%, ${pastel}1A 42%, ${pastel}00 70%)`,
                 pointerEvents:"none",
                 animation:"navAuroraBreath 4.2s ease-in-out infinite",
@@ -16937,9 +16957,9 @@ export default function App(){
                 width:46,height:30,
                 borderRadius:15,
                 background:dkNav
-                  ?"linear-gradient(180deg, rgba(255,255,255,0.17) 0%, rgba(255,255,255,0.06) 100%)"
+                  ?`linear-gradient(180deg, ${navHue}33 0%, ${navHue}14 100%)`
                   :`linear-gradient(180deg, ${pastel}3D 0%, ${pastel}1F 100%)`,
-                border:dkNav?"1px solid rgba(255,255,255,0.22)":`1px solid ${pastel}4D`,
+                border:dkNav?`1px solid ${navHue}40`:`1px solid ${pastel}4D`,
                 boxShadow:dkNav
                   ?"inset 0 1px 0 rgba(255,255,255,0.30), 0 6px 16px -8px rgba(0,0,0,0.55)"
                   :`inset 0 1px 0 rgba(255,255,255,0.6), 0 2px 8px ${pastel}2E`,
@@ -16954,9 +16974,9 @@ export default function App(){
             )}
             {/* Icon — sits slightly higher and tints to the screen's deep color when active */}
             <div style={{position:"relative",zIndex:1,height:24,display:"flex",alignItems:"center",justifyContent:"center",transform:on?"scale(1.12) translateY(-1px)":"scale(1)",transition:"transform .45s cubic-bezier(0.34, 1.56, 0.64, 1)"}}>
-              <NavIcon type={icon} active={on} color={on?(dkNav?"#F4F1FA":effS.deep):S.deep} size={22}/>
+              <NavIcon type={icon} active={on} color={on?(dkNav?shadeHex(effS.h,0.78):effS.deep):S.deep} size={22}/>
             </div>
-            <span style={{fontFamily:G.font,fontWeight:on?600:400,fontSize:navItems.length>=7?9.5:10.5,color:on?(dkNav?"#F4F1FA":effS.deep):(isDark()?"#8E889E":"#7C7691"),transition:"color .35s ease, font-weight .35s ease",whiteSpace:"nowrap",position:"relative",zIndex:1,letterSpacing:.2,maxWidth:"100%",overflow:"hidden",textOverflow:"clip"}}>{label}</span>
+            <span style={{fontFamily:G.font,fontWeight:on?600:400,fontSize:navItems.length>=7?9.5:10.5,color:on?(dkNav?shadeHex(effS.h,0.78):effS.deep):(isDark()?"#8E889E":"#7C7691"),transition:"color .35s ease, font-weight .35s ease",whiteSpace:"nowrap",position:"relative",zIndex:1,letterSpacing:.2,maxWidth:"100%",overflow:"hidden",textOverflow:"clip"}}>{label}</span>
             {/* Glowing dot indicator — pulses gently in the screen's color.
                 Light view only; in dark view the glass capsule alone marks the
                 active tab, for a cleaner look. */}
@@ -16989,7 +17009,7 @@ export default function App(){
             readOnly={!isToday}
             onClose={()=>setDetail(null)}
             onCheck={isToday?handleCheck:undefined}
-            onStepTimer={(step)=>launchTimer({type:item.timer?.type||"sector",totalSec:(step.timerMin||10)*60,color:item.color&&item.color!=="#FFFFFF"&&item.color!=="#1F1B2E"?item.color:"#8AAFD2",activity:{name:step.text,emoji:step.emoji}})}
+            onStepTimer={(step)=>launchTimer({type:step.timerType||item.timer?.type||"sector",totalSec:(step.timerMin||10)*60,color:item.color&&item.color!=="#FFFFFF"&&item.color!=="#1F1B2E"?item.color:"#8AAFD2",activity:{name:step.text,emoji:step.emoji}})}
             t={t}
           />
         );
