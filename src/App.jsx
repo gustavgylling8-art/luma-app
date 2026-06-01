@@ -12735,7 +12735,7 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
             )}
             {/* Vecka / Redigera row — uses the shared glass SlideTabRow so it
                 matches Home and stays transparent against the sky. */}
-            <div style={{display:"flex",alignItems:"center",gap:8,padding:"11px 22px 12px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 22px 12px"}}>
               {(()=>{
                 const leadingLabel = !isEd ? (
                   <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:dark?"rgba(255,255,255,0.85)":"rgba(255,255,255,0.95)",textShadow:dark?"none":"0 1px 4px rgba(60,45,75,0.45)",display:"flex",alignItems:"center",gap:7,letterSpacing:.2,position:"relative",zIndex:2}}>
