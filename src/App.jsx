@@ -4,7 +4,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // Inter from Google Fonts
   const l1 = document.createElement("link");
   l1.rel = "stylesheet";
-  l1.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&family=Urbanist:wght@400;500;600;700;800&family=Quicksand:wght@500;600;700&display=swap";
+  l1.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800;900&family=Urbanist:wght@400;500;600;700;800&family=Quicksand:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap";
   document.head.appendChild(l1);
   // General Sans from Fontshare
   const l2 = document.createElement("link");
@@ -69,7 +69,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   //    soft cup (the u), with the warm brand pearl resting in the bowl, on a
   //    warm cream rounded square. Geometry measured to match the brand sheet.
   //    Replaces the previous sun mark.
-  const MARK_NAVY = "#1E1B27";
+  const MARK_NAVY = "#1F1B2E";
   const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
     <defs>
       <radialGradient id="bg" cx="50%" cy="38%" r="80%">
@@ -79,15 +79,21 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       </radialGradient>
       <radialGradient id="pearl" cx="38%" cy="32%" r="72%">
         <stop offset="0%" stop-color="#FFFFFF"/>
-        <stop offset="16%" stop-color="#FFEEDA"/>
-        <stop offset="60%" stop-color="#E9A877"/>
-        <stop offset="100%" stop-color="#C8743F"/>
+        <stop offset="30%" stop-color="#FFF2E6"/>
+        <stop offset="70%" stop-color="#F8D2B2"/>
+        <stop offset="100%" stop-color="#EDB78F"/>
+      </radialGradient>
+      <radialGradient id="pearlGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#F4A861" stop-opacity="0.55"/>
+        <stop offset="45%" stop-color="#F0985A" stop-opacity="0.22"/>
+        <stop offset="100%" stop-color="#F4A861" stop-opacity="0"/>
       </radialGradient>
     </defs>
     <rect width="512" height="512" rx="114" fill="url(#bg)"/>
     <path d="M176.6 107.5 L176.6 325.1 A79.4 79.4 0 0 0 335.4 325.1 L335.4 221.7" fill="none" stroke="${MARK_NAVY}" stroke-width="65.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="256" cy="317.4" r="92" fill="url(#pearlGlow)"/>
     <circle cx="256" cy="317.4" r="35.8" fill="url(#pearl)"/>
-    <circle cx="245.8" cy="307.2" r="11.3" fill="#FFFFFF" opacity="0.45"/>
+    <circle cx="245.8" cy="307.2" r="11.3" fill="#FFFFFF" opacity="0.5"/>
   </svg>`;
   const iconUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(ICON_SVG)));
 
@@ -380,12 +386,13 @@ const G = {
   // users while losing the heavy "shouting" feel at full ink strength.
   inkSoft:"#524D6B",
   white:"#FFFFFF", cream:"#FCFBFE", border:"#EEEAF5", border2:"#E0DBEF",
-  font:"'Inter',system-ui,sans-serif",
-  // Nunito — humanist sans with softly rounded terminals. Rhymes with Luma's
-  // round visual language (12-20px radii everywhere, circular sun logo, soft
-  // toggles). Stays warm without becoming juvenile when used at weight 500+.
-  // Loaded via @import at the App root (see global <style> block).
-  serif:"'Nunito','Inter',system-ui,sans-serif",
+  font:"'Urbanist','Nunito',system-ui,sans-serif",
+  // Plus Jakarta Sans — modern humanist sans with gently rounded forms and a
+  // premium, refined feel. Slightly softer and more characterful than Inter,
+  // less juvenile than a fully rounded display face. Used for all headings;
+  // pair with Inter (G.font) for body. Heading weights use 700–800 for presence.
+  // Loaded via the Google Fonts <link> at the top of the file.
+  serif:"'Plus Jakarta Sans','Nunito','Inter',system-ui,sans-serif",
 };
 
 /* ═══ Editor theme (ED) ═══
@@ -1162,7 +1169,49 @@ const fmtT=(s,langOrT)=>{
 };
 const clockLeft=(at,m)=>{const n=new Date(),e=(n.getHours()*60+n.getMinutes()-hm(at))*60+n.getSeconds();return e<0?m*60:Math.max(0,m*60-e);};
 
-function chime(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[[523,0],[659,.2],[784,.38],[1047,.56]].forEach(([f,d])=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;o.type="sine";g.gain.setValueAtTime(0,ctx.currentTime+d);g.gain.linearRampToValueAtTime(.13,ctx.currentTime+d+.07);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d+.7);o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+.8);});}catch(_){}}
+function chime(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[[523,0],[659,.2],[784,.38],[1047,.56]].forEach(([f,d])=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;o.type="sine";g.gain.setValueAtTime(0,ctx.currentTime+d);g.gain.linearRampToValueAtTime(.13,ctx.currentTime+d+.07);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d+.7);o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+.8);});}catch(_){}try{if(navigator.vibrate)navigator.vibrate([18,60,24,60,30]);}catch(_){}}
+
+/* ═══ Sound & haptics ═══════════════════════════════════════════════════════
+   Final policy (always on — not user-configurable):
+     • SOUND  — only when a timer finishes (chime) and on activity notifications.
+                Nowhere else; a calm tool shouldn't chirp on every tap.
+     • HAPTICS — the tactile layer everywhere it helps: timer-finish (paired with
+                the sound), choosing/saving a feeling, tapping speak-aloud in Tala,
+                and other natural moments. Tuned, patterned taps for a premium feel.
+   NOTE: iOS Safari/PWA does not support navigator.vibrate, so haptics are felt on
+   Android but not iPhone — a hard platform limit, not a bug. */
+// Shared AudioContext — iOS only lets it run after a user gesture; we resume it
+// lazily on first use so the very first tone isn't swallowed.
+let _ac=null;
+function _ctx(){try{_ac=_ac||new(window.AudioContext||window.webkitAudioContext)();if(_ac.state==="suspended")_ac.resume();return _ac;}catch(_){return null;}}
+// Best-effort haptic. Silently no-ops where unsupported (iOS). Accepts a number
+// or a [vibrate,pause,vibrate,…] pattern for richer, premium-feeling cues.
+function _buzz(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(_){}}
+// Public feedback events. Per the policy above these are HAPTIC-ONLY (no tone);
+// sound lives in chime() for timer-finish and in the notification path.
+// Each pattern is tuned to feel intentional and refined rather than buzzy.
+const fx={
+  navHaptic(){ _buzz(7); },                 // page switch — feather tap
+  select(){ _buzz([10,30,16]); },           // choose a feeling — soft double
+  check(){ _buzz([8,26,14]); },             // tick a step — light confirm
+  save(){ _buzz([12,40,18,40,22]); },       // saved — a gentle rising triple
+  speak(){ _buzz([14,50,20]); },            // Tala speaks — two-stage pulse
+  soft(){ _buzz(6); },                      // gentle / breathing cue
+  done(){ _buzz([18,60,24,60,30]); },       // timer finished — celebratory swell (paired with chime)
+};
+// iOS unlock: a WebAudio context created/needed before any user gesture stays
+// "suspended", so the FIRST tone (e.g. the save confirmation) is swallowed.
+// Prime + resume it on the very first touch/pointer/key so every later fx.*()
+// and chime() actually sounds. Runs once, then removes itself.
+if(typeof window!=="undefined"){
+  const _unlock=()=>{try{const c=_ctx();if(c&&c.state==="suspended")c.resume();
+    // play an inaudible blip to fully "warm up" the output node on iOS
+    const o=c.createOscillator(),g=c.createGain();g.gain.value=0.0001;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+0.02);}catch(_){}
+    window.removeEventListener("touchstart",_unlock);window.removeEventListener("pointerdown",_unlock);window.removeEventListener("keydown",_unlock);};
+  window.addEventListener("touchstart",_unlock,{passive:true});
+  window.addEventListener("pointerdown",_unlock,{passive:true});
+  window.addEventListener("keydown",_unlock);
+}
 
 function useTimer(initSec,autoRun=false){
   // Drift-free timer. The previous version counted ticks with a setInterval
@@ -1498,6 +1547,51 @@ function LumaIcon({size=32,color="#1E1B27",style={}}){
   );
 }
 
+/* ═══ LumaVector — the brand "luma" wordmark drawn as exact monoline
+   vector paths (no font dependency): thick rounded strokes, the asymmetric u
+   with a curved-foot l, single-storey a, and the warm sun centred between the
+   u's stems. `sun` toggles the pearl. This is the approved new logo. */
+function LumaVector({size=42,color="#1F1B2E",sun=true,style={}}){
+  const VBW=1326, VBH=545;            // viewBox "-30 115 1326 545"
+  const W=size*(VBW/VBH);
+  const idRef=useRef(null);
+  if(!idRef.current) idRef.current="lv"+Math.random().toString(36).slice(2,8);
+  const uid=idRef.current;
+  return(
+    <svg width={W} height={size} viewBox="-30 115 1326 545"
+      style={{overflow:"visible",display:"inline-block",verticalAlign:"middle",...style}}>
+      <defs>
+        <radialGradient id={`${uid}-sun`} cx="36%" cy="30%" r="74%">
+          <stop offset="0%" stopColor="#FFFDF8"/>
+          <stop offset="28%" stopColor="#FFE7CE"/>
+          <stop offset="64%" stopColor="#FFC79E"/>
+          <stop offset="100%" stopColor="#EFA374"/>
+        </radialGradient>
+        <radialGradient id={`${uid}-glow`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#FFC79E" stopOpacity="0.80"/>
+          <stop offset="42%" stopColor="#FFB888" stopOpacity="0.34"/>
+          <stop offset="100%" stopColor="#FFB888" stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      <g fill="none" stroke={color} strokeWidth="74" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M60 205 L60 500 A70 70 0 0 0 130 570"/>
+        <path d="M236 344 L236 475 A95 95 0 0 0 426 475 L426 408"/>
+        <path d="M546 570 L546 426 A82 82 0 0 1 710 426 A82 82 0 0 1 874 426 L874 570"/>
+        <path d="M710 426 L710 570"/>
+        <path d="M1093 344 A113 113 0 1 1 1093 570 A113 113 0 1 1 1093 344 Z"/>
+        <path d="M1206 344 L1206 570"/>
+      </g>
+      {sun&&(
+        <g>
+          <circle cx="331" cy="484" r="100" fill={`url(#${uid}-glow)`}/>
+          <circle cx="331" cy="484" r="41" fill={`url(#${uid}-sun)`}/>
+          <ellipse cx="316" cy="466" rx="12" ry="9" fill="#FFFFFF" opacity="0.5"/>
+        </g>
+      )}
+    </svg>
+  );
+}
+
 /* ═══ LumaWordmark — the "luma" wordmark as a self-contained SVG, with the
    warm brand "pearl" sitting inside the bowl of the "u" (the same motif that
    lives in the app icon). Used in boot screens, intro/outro, headers, large
@@ -1513,55 +1607,9 @@ function LumaIcon({size=32,color="#1E1B27",style={}}){
      • showDot            → clearer alias for the same thing (false = plain word)
    Tunables: weight (700), pearlR (radius ÷ font-size, 0.07),
              pearlCY (pearl centre height above baseline ÷ font-size, 0.30). */
-function LumaWordmark({size=42,color="#1F1B2E",showSun=true,showDot,weight=700,pearlR=0.07,pearlCY=0.07,style={}}){
-  const showPearl=(showDot!==undefined?showDot:showSun) && !isDark();
-  const textRef=useRef(null);
-  const [m,setM]=useState(null); // { w, cx, cy, uh }
-  const baseline=size*0.97;      // matches the <text> y below
-  useLayoutEffect(()=>{
-    const el=textRef.current;
-    if(!el) return;
-    let raf=0;
-    const measure=()=>{
-      try{
-        const w=el.getComputedTextLength();
-        const u=el.getExtentOfChar(1);   // index 1 === "u" — real glyph box (x/y/w/h)
-        setM({w,cx:u.x+u.width/2,cy:u.y+u.height/2,uh:u.height});
-      }catch(e){/* glyph not measurable yet — retried after fonts load */}
-    };
-    measure();
-    if(document.fonts&&document.fonts.ready){document.fonts.ready.then(()=>{raf=requestAnimationFrame(measure);});}
-    return()=>{if(raf) cancelAnimationFrame(raf);};
-  },[size,weight]);
-  const padX=size*0.05;
-  const W=(m?m.w:size*2.55)+padX*2;
-  const uid=`lw-${color.slice(1)}-${Math.round(size)}`;
-  // Vertical: centre the pearl in the REAL "u" glyph box (measured), nudged
-  // down by pearlCY × the u's height so it rests in the hollow of the u —
-  // independent of font metrics, so it lands right at every size.
-  const pearl=m?{cx:m.cx,cy:m.cy+m.uh*pearlCY,r:size*pearlR}:null;
-  return(
-    <svg width={W} height={size} viewBox={`0 0 ${W} ${size}`}
-      style={{overflow:"visible",display:"inline-block",verticalAlign:"middle",...style}}>
-      <defs>
-        <radialGradient id={`${uid}-pearl`} cx="34%" cy="28%" r="78%">
-          <stop offset="0%" stopColor="#FFFFFF"/>
-          <stop offset="18%" stopColor="#FFFAF0"/>
-          <stop offset="52%" stopColor="#E8A878"/>
-          <stop offset="100%" stopColor="#C97548"/>
-        </radialGradient>
-      </defs>
-      <text ref={textRef} x={padX} y={baseline}
-        fontFamily="'Nunito','Inter',system-ui,sans-serif"
-        fontWeight={weight} fontSize={size} letterSpacing={size*-0.005} fill={color}>luma</text>
-      {showPearl&&pearl&&(
-        <g>
-          <circle cx={pearl.cx} cy={pearl.cy} r={pearl.r} fill={`url(#${uid}-pearl)`}/>
-          <circle cx={pearl.cx-pearl.r*0.28} cy={pearl.cy-pearl.r*0.34} r={pearl.r*0.26} fill="#FFFFFF" opacity="0.42"/>
-        </g>
-      )}
-    </svg>
-  );
+function LumaWordmark({size=42,color="#1F1B2E",showSun=true,showDot,style={}}){
+  const sun=(showDot!==undefined?showDot:showSun);
+  return <LumaVector size={size} color={color} sun={sun} style={style}/>;
 }
 
 /* ═══ Dynamic time-of-day SKY HEADER (home + week, light theme) ═══════════
@@ -1605,36 +1653,11 @@ const SKY_STARS=Array.from({length:42},(_,i)=>({x:20+((i*73)%760),y:8+((i*39)%11
 // read from the real glyph (getExtentOfChar) so it sits perfectly regardless
 // of device font metrics — matching the approved preview exactly.
 function SkyWordmark({size=30}){
-  const textRef=useRef(null);
-  const [u,setU]=useState(null);
-  const baseline=size*0.97;
-  useLayoutEffect(()=>{
-    const el=textRef.current; if(!el) return; let raf=0;
-    const measure=()=>{ try{ const e=el.getExtentOfChar(1); setU({x:e.x,y:e.y,w:e.width,h:e.height}); }catch(_){ } };
-    measure();
-    if(document.fonts&&document.fonts.ready){document.fonts.ready.then(()=>{raf=requestAnimationFrame(measure);});}
-    return()=>{ if(raf) cancelAnimationFrame(raf); };
-  },[size]);
-  const padX=size*0.05;
-  const W=size*2.7+padX*2;
-  const pearl=u?{cx:u.x+u.w/2, cy:u.y+u.h*0.54, r:Math.max(1.2,u.h*0.058)}:null;
-  return(
-    <svg width={W} height={size} viewBox={`0 0 ${W} ${size}`} style={{overflow:"visible",display:"block",flexShrink:0,filter:"drop-shadow(0 1px 5px rgba(60,45,55,.30))"}}>
-      <defs>
-        <radialGradient id="skWmPearl" cx="38%" cy="32%" r="74%">
-          <stop offset="0%" stopColor="#FFFFFF"/>
-          <stop offset="30%" stopColor="#FFF2E6"/>
-          <stop offset="70%" stopColor="#F8D2B2"/>
-          <stop offset="100%" stopColor="#EDB78F"/>
-        </radialGradient>
-      </defs>
-      <text ref={textRef} x={padX} y={baseline} fontFamily="'Nunito','Inter',system-ui,sans-serif" fontWeight={700} fontSize={size} letterSpacing={size*-0.006} fill="#FFFFFF">luma</text>
-      {/* Pearl intentionally omitted on home/week — clean wordmark per design test */}
-    </svg>
-  );
+  return <LumaVector size={size} color="#FFFFFF" sun={false}
+    style={{display:"block",flexShrink:0,filter:"drop-shadow(0 1px 5px rgba(60,45,55,.30))"}}/>;
 }
 
-function SkyHeader({now,lang}){
+function SkyHeader({now,lang,inFlow=false}){
   const h=now.getHours()+now.getMinutes()/60;
   const sk=skyAt(h);
   const sunUp = h>5.2 && h<19.6;
@@ -1661,10 +1684,12 @@ function SkyHeader({now,lang}){
   const dm=now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{day:"numeric",month:"long"});
   return(
     <div style={{position:"relative",overflow:"hidden",zIndex:2,display:"flex",alignItems:"flex-end",
-      marginTop:"calc(-20px - env(safe-area-inset-top, 0px))",
-      marginLeft:-22,marginRight:-22,marginBottom:-6,
-      minHeight:"calc(112px + env(safe-area-inset-top, 0px))"}}>
-      <svg viewBox="0 0 800 236" preserveAspectRatio="xMidYMax slice" style={{position:"absolute",inset:0,width:"100%",height:"100%",display:"block"}}>
+      marginTop:inFlow?0:"calc(-20px - env(safe-area-inset-top, 0px))",
+      paddingTop:0,
+      marginLeft:-22,marginRight:-22,marginBottom:inFlow?-26:-6,
+      paddingBottom:inFlow?24:0,
+      minHeight:inFlow?"140px":"calc(112px + env(safe-area-inset-top, 0px))"}}>
+      <svg viewBox="0 0 800 236" preserveAspectRatio="xMidYMax slice" style={{position:"absolute",inset:0,width:"100%",height:"100%",display:"block",...(inFlow?{WebkitMaskImage:"linear-gradient(180deg, #000 0%, #000 34%, rgba(0,0,0,0.82) 50%, rgba(0,0,0,0.5) 66%, rgba(0,0,0,0.22) 82%, transparent 100%)",maskImage:"linear-gradient(180deg, #000 0%, #000 34%, rgba(0,0,0,0.82) 50%, rgba(0,0,0,0.5) 66%, rgba(0,0,0,0.22) 82%, transparent 100%)"}:{})}}>
         <defs>
           <linearGradient id="skHdrGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={_skRgb(sk.top)}/>
@@ -1675,16 +1700,18 @@ function SkyHeader({now,lang}){
         <rect x="0" y="0" width="800" height="236" fill="url(#skHdrGrad)"/>
         <g>{SKY_STARS.map((s,i)=><circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#FFFDF4" opacity={Number((starOp*(0.5+0.5*s.ph)).toFixed(2))}/>)}</g>
         {halo}{rays}{body}{moon}
-        <path d={hillPath(146,22,2.1)} fill={_skRgb(_skMix(sk.hill,[0,0,0],0.18))} opacity="0.55"/>
-        <path d={hillPath(168,16,0.6)} fill={_skRgb(sk.hill)}/>
+        <path d={hillPath(146,22,2.1)} fill={_skRgb(_skMix(sk.hill,[0,0,0],0.18))} opacity={inFlow?0.32:0.55}/>
+        <path d={hillPath(168,16,0.6)} fill={_skRgb(sk.hill)} opacity={inFlow?0.6:1}/>
       </svg>
-      <div style={{position:"relative",width:"100%",display:"flex",alignItems:"baseline",justifyContent:"space-between",padding:"0 22px 16px",gap:14,zIndex:2}}>
-        <SkyWordmark size={30}/>
+      <div style={{position:"relative",width:"100%",display:"flex",alignItems:"baseline",justifyContent:"space-between",padding:inFlow?"0 22px 22px":"0 22px 16px",gap:14,zIndex:2}}>
+        <div style={{transform:"translateY(5px)"}}><SkyWordmark size={30}/></div>
+        {!inFlow&&(
         <div style={{display:"flex",alignItems:"baseline",gap:7,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
           <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{wd}</span>
           <span style={{width:4,height:4,borderRadius:"50%",background:"rgba(255,255,255,0.7)",flexShrink:0,alignSelf:"center"}}/>
           <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{dm}</span>
         </div>
+        )}
       </div>
     </div>
   );
@@ -1735,7 +1762,7 @@ function LumaSymbol({size=40,color="#9DC4D8"}){
 }
 
 /* ═══ SECTOR TIME TIMER (numbers CCW from top — like a real Time Timer) ═══ */
-function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
+function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false}){
   const c=useTimer(totalSec,autoRun);
   if(c.done) return <DoneBadge color={color} t={t}/>;
   const cx=size/2, cy=size/2, R=size/2-size*0.15;
@@ -1817,14 +1844,14 @@ function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
           </svg>
         </div>
       </div>
-      <div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
+      {!hideLabel&&(<div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>)}
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
 }
 
 /* ═══ RING (Minee-style donut) ═══ */
-function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
+function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false}){
   const c=useTimer(totalSec,autoRun);
   // Smoothly eased pct so the ring glides between 1-second ticks instead of
   // stepping. A rAF loop nudges a local value toward the real c.pct each frame.
@@ -1895,7 +1922,7 @@ function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
             <circle cx={(exO+exI)/2} cy={(eyO+eyI)/2} r={bandW/2} fill={deep}/>
           </>)}
         </svg>
-        <div style={{fontFamily:G.serif,fontWeight:700,fontSize:size*0.12,color:"#F4F1FA",letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
+        {!hideLabel&&(<div style={{fontFamily:G.serif,fontWeight:700,fontSize:size*0.12,color:"#F4F1FA",letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>)}
         {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
       </div>
     );
@@ -1948,14 +1975,14 @@ function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
           )}
         </svg>
       </div>
-      <div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
+      {!hideLabel&&(<div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>)}
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
 }
 
 /* ═══ DOTS / Timstock 2.0 — premium horizontal LED row, color from user ═══ */
-function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMode="pearl",mode:modeProp,setMode:setModeProp}){
+function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMode="pearl",mode:modeProp,setMode:setModeProp,hideLabel=false}){
   const c=useTimer(totalSec,autoRun);
   // Two looks of the SAME timer: "pearl" (calm) and "candle" (playful). The
   // mode only changes the visuals — the timer (c) keeps running unaffected, so
@@ -2183,17 +2210,17 @@ function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMod
         </div>
       )}
 
-      {/* Lamp legend */}
-      <div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:isDark()?"rgba(244,241,250,0.6)":G.ink3,letterSpacing:.8,textTransform:"uppercase"}}>{lampLabel}</div>
+      {/* Lamp legend — hidden in preview */}
+      {!hideLabel&&<div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:isDark()?"rgba(244,241,250,0.6)":G.ink3,letterSpacing:.8,textTransform:"uppercase"}}>{lampLabel}</div>}
       {/* Time remaining */}
-      <div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
+      {!hideLabel&&(<div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>)}
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
 }
 
 /* ═══ WAVE ═══ */
-function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,aesthetic="C"}){
+function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,aesthetic="C",hideLabel=false}){
   const c=useTimer(totalSec,autoRun);
   const W=size, H=Math.round(size*0.65);
   // Water surface level. The wave path is drawn with its TOP CREST at
@@ -2398,7 +2425,7 @@ function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,aesthe
           <rect x={W*0.13} y="6" width={W*0.06} height={H-12} rx={W*0.03} fill="rgba(255,255,255,0.26)" opacity="0.6" style={{filter:"blur(3px)"}}/>
         </svg>
         <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <span style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.14,color:c.pctSmooth>0.45?"#fff":shadeHex(color,dk?0.35:-0.15),textShadow:c.pctSmooth>0.45?`0 2px ${Math.round(8+c.pctSmooth*10)}px rgba(0,0,0,${(0.2+c.pctSmooth*0.2).toFixed(2)})`:"none",fontVariantNumeric:"tabular-nums",transition:"color .6s cubic-bezier(0.32, 0.72, 0, 1), text-shadow .6s cubic-bezier(0.32, 0.72, 0, 1)",willChange:"contents"}}>{c.label}</span>
+          {!hideLabel&&<span style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.14,color:c.pctSmooth>0.45?"#fff":shadeHex(color,dk?0.35:-0.15),textShadow:c.pctSmooth>0.45?`0 2px ${Math.round(8+c.pctSmooth*10)}px rgba(0,0,0,${(0.2+c.pctSmooth*0.2).toFixed(2)})`:"none",fontVariantNumeric:"tabular-nums",transition:"color .6s cubic-bezier(0.32, 0.72, 0, 1), text-shadow .6s cubic-bezier(0.32, 0.72, 0, 1)",willChange:"contents"}}>{c.label}</span>}
         </div>
       </div>
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
@@ -2411,7 +2438,7 @@ function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,aesthe
    Just sky + sun + horizon + water + gentle reflection.
    All motion via CSS keyframes on GPU; React state updates only at timer ticks.
 ═══ */
-function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
+function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false}){
   const c=useTimer(totalSec,autoRun);
   // CRITICAL — ALL hooks MUST come before any conditional return.
   // Earlier the early return `if(c.done) return <DoneBadge/>` sat BETWEEN
@@ -3052,7 +3079,7 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
         {/* Time label — placed in the lower portion of the water area so it
             doesn't sit on top of the sun. Horizon is at H*0.55, so 80% of H
             puts the time clearly below the horizon in the calm sea region. */}
-        <text
+        {!hideLabel&&<text
           x={W/2} y={H*0.80}
           textAnchor="middle"
           dominantBaseline="central"
@@ -3066,7 +3093,7 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
             transition:"fill 1s linear",
             filter:"drop-shadow(0 2px 10px rgba(0,0,0,0.45))",
           }}
-        >{c.label}</text>
+        >{c.label}</text>}
       </svg>
       </div>
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
@@ -3075,7 +3102,7 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
 }
 
 /* ═══ LAVA ═══ */
-function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
+function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false}){
   const c=useTimer(totalSec,autoRun);
   const W=Math.round(size*0.52), H=size;
   // Lava surface position. Map pct=1 to a small air gap (4% from top) instead
@@ -3215,7 +3242,7 @@ function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
         <rect x={W*.27} y={H*.01} width={W*.46} height={H*.06} rx={4} fill="#C4BFDB"/>
         <rect x={W*.27} y={H*.92} width={W*.46} height={H*.06} rx={4} fill="#C4BFDB"/>
       </svg>
-      <div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.085,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
+      {!hideLabel&&(<div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.085,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>)}
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
@@ -3226,7 +3253,7 @@ function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
    one as it passes. When all the candy is gone, time is up and it's full & happy.
    Body takes the chosen timer colour; candies are a cheerful fixed palette. */
 const MON_CANDY=["#F48FB1","#FFD86B","#8FD9C0","#FF9E7A","#B8A1E3","#7EC8E3","#F7A8C4","#FFC04D"];
-function MonsterTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
+function MonsterTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false}){
   const c=useTimer(totalSec,autoRun);
   const W=size, H=Math.round(size*0.62);
   const VB=200, VBH=124;
@@ -3415,7 +3442,7 @@ function MonsterTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true}){
           </g>
         </svg>
       </div>
-      <div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
+      {!hideLabel&&<div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>}
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
@@ -3436,10 +3463,14 @@ function TimerComp({type,totalSec,color,t,autoRun=false,size=240,showCtrl=true,d
     const id=setInterval(()=>setCycleKey(k=>k+1),7000);
     return()=>clearInterval(id);
   },[preview]);
-  const previewSec=8;
+  // Preview duration: 8s reads well for the continuous timers (wave/sun/lava/
+  // monster). The dots timer, though, draws one lamp per time-unit, so 8s would
+  // show a single lamp — not recognisably a "dot timer". Give it a longer
+  // duration so a row of several lamps is shown (and they visibly extinguish).
+  const previewSec=type==="dots"?360:8;     // 360s → 6 lamps × 1 min
   const effSec=preview?previewSec:totalSec;
   const effAutoRun=preview?true:autoRun;
-  return <Comp key={preview?`prev-${cycleKey}`:undefined} totalSec={effSec} color={color} t={t} autoRun={effAutoRun} size={size} showCtrl={showCtrl} dotMode={dotMode} mode={mode} setMode={setMode}/>;
+  return <Comp key={preview?`prev-${cycleKey}`:undefined} totalSec={effSec} color={color} t={t} autoRun={effAutoRun} size={size} showCtrl={showCtrl} dotMode={dotMode} mode={mode} setMode={setMode} hideLabel={preview}/>;
 }
 
 function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
@@ -4681,9 +4712,9 @@ function ActivityDetail({item,stepsDone,readOnly,onClose,onCheck,onStepTimer,t})
     const becomingDone=!local[id];
     const n={...local,[id]:!local[id]};
     setLocal(n);
-    // A gentle tactile tick when a step is checked off — a small, satisfying
-    // reward for progress (not when un-checking).
-    if(becomingDone && typeof navigator!=="undefined" && navigator.vibrate) navigator.vibrate(12);
+    // A gentle tactile tick + soft tone when a step is checked off — a small,
+    // satisfying reward for progress (not when un-checking).
+    if(becomingDone) fx.check();
     onCheck&&onCheck(item.id,n);
   };
   return(
@@ -6005,10 +6036,6 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
           </div>
         </div>
 
-        {/* ── Notifications ── A simple opt-in. Tapping "on" requests system
-            permission (must come from this tap). Reminds when an activity
-            starts. On iOS this works only when Luma is installed to the home
-            screen (standalone PWA). */}
         {notifSupported&&(
         <div style={{background:tk().white,borderRadius:16,padding:"14px 18px",marginBottom:18,border:`1px solid ${tk().border}`,boxShadow:"0 2px 6px rgba(31,27,46,0.04)",animation:"setSectionIn 0.5s 0.095s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
@@ -6506,7 +6533,7 @@ function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
       if(typeof requestAnimationFrame!=="undefined") requestAnimationFrame(()=>requestAnimationFrame(say));
       else setTimeout(say,24);
     }
-    if(typeof navigator!=="undefined"&&navigator.vibrate)navigator.vibrate(10);
+    fx.speak();
     setSpoken(card.id);
     setTimeout(()=>setSpoken(null),1600);
   };
@@ -7350,6 +7377,13 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
   const[editingEmo,setEditingEmo]=useState(null); // null | "new" | emotion-being-edited
   const[confirmReset,setConfirmReset]=useState(false);
   const S=scrPal("emotion");
+  // Hide the bottom nav for as long as a feeling is selected (the focused
+  // detail view), not merely while the "why" field has focus. Driving it off
+  // `sel` means switching feelings — which briefly blurs/refocuses the field —
+  // no longer makes the nav flicker up and back down. The onBlur/onFocus
+  // handlers below still exist for keyboard-avoidance scrolling, but they no
+  // longer toggle nav visibility on their own.
+  useEffect(()=>{ onInputFocusChange?.(sel!=null); },[sel,onInputFocusChange]);
   // Safety net: if user navigates away mid-focus (without onBlur firing) make
   // sure the nav comes back. Cleans up on unmount.
   useEffect(()=>{
@@ -7407,18 +7441,22 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
     const scroller=panel.closest('[data-emotion-scroll]');
     if(!scroller) return;
     const vv=window.visualViewport;
+    const vh=vv?vv.height:window.innerHeight;          // visible height (above keyboard)
     const visibleBottom=vv?vv.offsetTop+vv.height:window.innerHeight;
     const pRect=panel.getBoundingClientRect();
-    // Land the panel's bottom (the Save button) a comfortable gap above the
-    // keyboard's form bar — fully visible, not jammed, and crucially NEVER
-    // stranded high with a big gap. We set scrollTop ABSOLUTELY (instant) so
-    // every call (focus + each visualViewport change while the keyboard slides
-    // up) converges to the SAME final position. The old approach used a SMOOTH
-    // scrollBy that re-ran on each viewport event; the in-flight smooth scrolls
-    // compounded and overshot, leaving the button floating too far up.
-    const GAP=28;
+    // Device-adaptive breathing gap between the Save button and the keyboard.
+    // Instead of a fixed pixel value (which is too big on a small phone and too
+    // small on a large one), scale it to the ACTUAL visible viewport height of
+    // THIS device — vv.height already excludes the keyboard, so it reflects the
+    // real space we have to work with. Clamp so it never gets silly on tiny or
+    // huge screens. ~5.5% of the visible area feels balanced across sizes.
+    const GAP=Math.round(Math.min(64,Math.max(16,vh*0.055)));
     const delta=pRect.bottom-(visibleBottom-GAP);
-    if(Math.abs(delta)>2){
+    // Only ever scroll UP (delta>0) — i.e. when the Save button is actually
+    // hidden behind / too close to the keyboard. Never pull the panel further
+    // up when it already fits, which used to shove the emoji row off-screen at
+    // the top. A negative delta means there's already room, so leave it be.
+    if(delta>2){
       const max=Math.max(0,scroller.scrollHeight-scroller.clientHeight);
       scroller.scrollTop=Math.max(0,Math.min(max,scroller.scrollTop+delta));
     }
@@ -7714,6 +7752,7 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
     }
     setHist(h=>[e,...h].slice(0,20));
     setSaved(true);
+    fx.save();
     // Quietly reset the view to the top behind the overlay.
     const scroller=inlinePanelRef.current?.closest('[data-emotion-scroll]');
     setTimeout(()=>{try{ scroller?.scrollTo({top:0,behavior:"smooth"}); }catch(_){}},120);
@@ -7749,7 +7788,8 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
               value={reason}
               onChange={e=>setReason(e.target.value)}
               onFocus={()=>{
-                onInputFocusChange?.(true);
+                // Nav visibility is driven by `sel` (see effect above), not by
+                // field focus — so switching feelings doesn't flash the nav.
                 // Reposition so the Save button lands just above the keyboard's
                 // form bar. iOS raises the keyboard in stages, so fixed timeouts
                 // alone often fire before the viewport has settled (leaving the
@@ -7765,7 +7805,7 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
                   vvCleanup.current=()=>{ vv.removeEventListener("resize",run); vv.removeEventListener("scroll",run); };
                 }
               }}
-              onBlur={()=>{ onInputFocusChange?.(false); vvCleanup.current?.(); vvCleanup.current=null; }}
+              onBlur={()=>{ vvCleanup.current?.(); vvCleanup.current=null; }}
               className="lt-input"
               style={{...INPT(),borderColor:`${sel.color}44`,background:isDark()?`${sel.color}1A`:`${sel.color}08`}}
               placeholder=""
@@ -8460,6 +8500,10 @@ function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange}){
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[color]);
   const start=()=>{onLaunchTimer({type,totalSec:min*60,color});};
+  // Bottom-sheet for picking the timer style. The full grid of types used to
+  // sit inline and made the page busy; tucking it behind a compact "Ändra" row
+  // keeps the common flow (pick minutes → start) clean and calm.
+  const[typeSheet,setTypeSheet]=useState(false);
 
   // Editor view — configure which timer types are allowed + defaults
   if(isEditor){
@@ -8562,13 +8606,45 @@ function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange}){
     <>
       <div style={{flex:1,overflowY:"auto",padding:"24px 18px 28px",display:"flex",flexDirection:"column",gap:24,background:"transparent"}}>
         <style>{`@keyframes tmSectionIn{0%{opacity:0;transform:translateY(10px) scale(0.98)}100%{opacity:1;transform:translateY(0) scale(1)}}`}</style>
-        {/* Preview + start — compact, at the top */}
-        <div style={{background:isDark()?"linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.035) 100%)":tk().white,backdropFilter:isDark()?"blur(20px) saturate(1.3)":"none",WebkitBackdropFilter:isDark()?"blur(20px) saturate(1.3)":"none",borderRadius:26,padding:"24px 22px 22px",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.1), 0 16px 36px -18px rgba(0,0,0,0.7)":"0 12px 32px rgba(31,27,46,0.06), 0 2px 6px rgba(31,27,46,0.04)",display:"flex",flexDirection:"column",alignItems:"center",gap:16,border:`1px solid ${isDark()?"rgba(255,255,255,0.1)":"rgba(31,27,46,0.04)"}`,animation:"tmSectionIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) 0s both"}}>
-          <div style={{pointerEvents:"none"}}><TimerComp type={type} color={color} t={t} totalSec={min*60} autoRun={false} size={150} showCtrl={false} preview={true}/></div>
-          <div style={{fontFamily:G.font,fontWeight:500,fontSize:13,color:tk().ink2,letterSpacing:.2}}>{min} {t.min} · {tlbl(type,t)}</div>
-          <button onClick={start} className="lt-press" style={{width:"100%",maxWidth:300,padding:"16px 0",borderRadius:18,border:isDark()?"1px solid rgba(255,255,255,0.18)":"none",background:isDark()?"rgba(255,255,255,0.1)":`linear-gradient(135deg,${color},${color}D8)`,backdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",WebkitBackdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",color:isDark()?"#F4F1FA":"#fff",fontFamily:G.font,fontWeight:600,fontSize:15,letterSpacing:.3,cursor:"pointer",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.22), 0 6px 16px -8px rgba(0,0,0,0.6)":`0 14px 30px ${color}45, 0 3px 8px ${color}28`,display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2 L11 7 L3 12 Z"/></svg>
-            {t.startTimer}
+        {/* Preview + start — HERO. The timer is the hero on a soft tinted
+            gradient canvas (in the timer's own colour) with a glowing orb
+            behind it. The frosted type pill sits top-right. */}
+        <div style={{position:"relative",background:isDark()?`linear-gradient(165deg, ${shadeHex(color,-0.55)} 0%, #1A1726 55%, #15131F 100%)`:`linear-gradient(165deg, ${color}28 0%, #FFFFFF 64%)`,borderRadius:30,padding:"26px 22px 24px",boxShadow:isDark()?`inset 0 1px 0 rgba(255,255,255,0.08), 0 18px 44px -20px rgba(0,0,0,0.7)`:`0 18px 44px ${color}24, 0 2px 8px rgba(31,27,46,0.04)`,display:"flex",flexDirection:"column",alignItems:"center",gap:16,border:`1px solid ${isDark()?"rgba(255,255,255,0.08)":`${color}1F`}`,animation:"tmSectionIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) 0s both"}}>
+          {/* decorative glow orb top-right — clipped to the card's rounded corner via its own wrapper */}
+          <div style={{position:"absolute",inset:0,borderRadius:30,overflow:"hidden",pointerEvents:"none"}}>
+            <div style={{position:"absolute",top:-50,right:-50,width:180,height:180,borderRadius:"50%",background:`radial-gradient(circle, ${color}${isDark()?"33":"3A"} 0%, transparent 70%)`}}/>
+          </div>
+          {allowed.length>1&&(
+            <button onClick={()=>setTypeSheet(true)} className="lt-press-soft" aria-label={t.timerType} style={{
+              position:"absolute",top:14,right:14,zIndex:3,display:"inline-flex",alignItems:"center",gap:7,
+              padding:"8px 12px 8px 13px",borderRadius:22,cursor:"pointer",
+              background:isDark()?"rgba(40,38,58,0.72)":"rgba(255,255,255,0.82)",
+              backdropFilter:"blur(10px) saturate(1.4)",WebkitBackdropFilter:"blur(10px) saturate(1.4)",
+              border:`1px solid ${isDark()?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.9)"}`,
+              boxShadow:isDark()?"0 4px 14px rgba(0,0,0,0.4)":"0 4px 14px rgba(31,27,46,0.12)",
+              fontFamily:G.font,fontWeight:600,fontSize:12.5,color:isDark()?"#E4E0F0":tk().inkSoft,letterSpacing:.1,
+            }}>
+              <TimerIcon type={type} size={15} color={isDark()?shadeHex(color,0.42):color}/>
+              <span>{tlbl(type,t)}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isDark()?shadeHex(color,0.42):color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          )}
+          {/* glow halo behind the timer (kept BEHIND via z-0, never over it).
+              Height adapts to each timer's natural shape so square faces
+              (sector/ring/sun/lava/monster) get room and the wide, short ones
+              (wave/dots) don't leave a big gap before the Start button. */}
+          {(()=>{
+            const previewH = type==="wave" ? 130 : type==="dots" ? 140 : 200;
+            return(
+          <div style={{position:"relative",height:previewH,width:"100%",marginTop:6,marginBottom:6,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,zIndex:1}}>
+            <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:200,height:200,borderRadius:"50%",pointerEvents:"none",zIndex:0,background:`radial-gradient(circle, ${isDark()?`${color}26`:"rgba(255,255,255,0.85)"} 0%, transparent 66%)`}}/>
+            <div style={{pointerEvents:"none",position:"relative",zIndex:1,display:"flex",alignItems:"center",justifyContent:"center"}}><TimerComp type={type} color={color} t={t} totalSec={min*60} autoRun={false} size={150} showCtrl={false} preview={true}/></div>
+          </div>
+            );
+          })()}
+          <button onClick={start} className="lt-press" style={{position:"relative",zIndex:1,width:"100%",maxWidth:320,padding:"17px 0",borderRadius:18,border:isDark()?"1px solid rgba(255,255,255,0.18)":"none",background:isDark()?"rgba(255,255,255,0.1)":`linear-gradient(135deg,${color},${shadeHex(color,-0.18)})`,backdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",WebkitBackdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",color:isDark()?"#F4F1FA":"#fff",fontFamily:G.font,fontWeight:700,fontSize:16,letterSpacing:.3,cursor:"pointer",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.22), 0 6px 16px -8px rgba(0,0,0,0.6)":`0 16px 34px ${color}55, 0 3px 8px ${color}30, inset 0 1px 0 rgba(255,255,255,0.3)`,display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
+            <svg width="15" height="15" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2 L11 7 L3 12 Z"/></svg>
+            <span>{t.startTimer} · {min} {t.min}</span>
           </button>
         </div>
         {/* Minutes */}
@@ -8599,37 +8675,8 @@ function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange}){
             })}
           </div>
         </div>
-        {/* Type */}
-        {allowed.length>1&&(
-          <div style={{animation:"tmSectionIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) 0.16s both"}}>
-            <SLabel>{t.timerType}</SLabel>
-            <div style={{display:"grid",gridTemplateColumns:`repeat(${Math.min(allowed.length,3)},1fr)`,gap:10}}>
-              {allowed.map(k=>{
-                const selected=type===k;
-                return(
-                  <button
-                    key={k}
-                    onClick={()=>setType(k)}
-                    className="lt-press-soft"
-                    style={{
-                      padding:"18px 8px 14px",borderRadius:18,border:"1px solid",
-                      fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",
-                      transition:"border-color .25s ease, background .25s ease, color .25s ease, box-shadow .3s ease",
-                      borderColor:selected?color:(isDark()?"rgba(255,255,255,0.12)":"rgba(31,27,46,0.08)"),
-                      background:selected?(isDark()?`${color}26`:`${color}10`):(isDark()?"rgba(255,255,255,0.05)":tk().white),
-                      backdropFilter:isDark()&&!selected?"blur(10px)":"none",WebkitBackdropFilter:isDark()&&!selected?"blur(10px)":"none",
-                      color:selected?(isDark()?shadeHex(color,0.35):color):(isDark()?"#C9C3D6":tk().ink2),
-                      boxShadow:selected?`0 12px 28px ${color}25, 0 2px 6px ${color}18`:(isDark()?"inset 0 1px 0 rgba(255,255,255,0.05)":`0 1px 3px rgba(31,27,46,0.04)`),
-                      display:"flex",flexDirection:"column",alignItems:"center",gap:8,
-                    }}>
-                    <TimerIcon type={k} size={26} color={selected?(isDark()?shadeHex(color,0.35):color):(isDark()?"#C9C3D6":tk().ink2)}/>
-                    <span style={{letterSpacing:.2}}>{tlbl(k,t)}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Type is now changed via the frosted pill in the preview's top-right
+            corner (above), which opens the type sheet. No inline row needed. */}
         {/* Color */}
         <div>
           <SLabel>{t.timerColor}</SLabel>
@@ -8638,6 +8685,86 @@ function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange}){
           </div>
         </div>
       </div>
+
+      {/* ── Timer-type picker sheet ──────────────────────────────────────────
+          Built on the app's own Overlay+Sheet, which already handles scroll,
+          height (measured from visualViewport) and body-scroll-locking — the
+          same machinery every other modal uses. Reusing it means the list
+          scrolls cleanly to the bottom instead of rubber-banding. */}
+      {typeSheet&&(()=>{
+        const TYPE_DESC={
+          sector:{sv:"En klocka där färgen försvinner med tiden",en:"A clock whose colour disappears over time"},
+          ring:{sv:"En ring där färgen försvinner med tiden",en:"A ring whose colour disappears over time"},
+          dots:{sv:"Lamporna slocknar en i taget",en:"The lamps go out one by one"},
+          wave:{sv:"Vattnet sjunker sakta",en:"The water slowly sinks"},
+          sun:{sv:"Solen sjunker mot havet",en:"The sun sinks toward the sea"},
+          lava:{sv:"Ett timglas av lavalampa",en:"An hourglass made of lava lamp"},
+          monster:{sv:"Monstret äter sig fram",en:"The monster eats its way along"},
+        };
+        return(
+        <Overlay onClose={()=>setTypeSheet(false)}>
+          <Sheet scroll dark={isDark()} accent={color}>
+            {/* Colour wash that mirrors the timer tool's chosen colour — a clean
+                vertical fade, tinted at the top and dissolving to nothing, so the
+                menu feels part of the same coloured world as the timer page
+                without ever going murky. Sits behind the content. */}
+            <div aria-hidden="true" style={{position:"absolute",top:isDark()?-26:-54,left:-22,right:-22,height:340,pointerEvents:"none",zIndex:0,borderTopLeftRadius:28,borderTopRightRadius:28,background:isDark()?`linear-gradient(180deg, ${color}3A 0%, ${color}18 40%, transparent 100%)`:`linear-gradient(180deg, ${color}3E 0%, ${color}1A 42%, transparent 100%)`}}/>
+            <div style={{position:"relative",zIndex:1}}>
+            <div style={{height:isDark()?44:18}}/>
+            <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:20}}>
+              <div>
+                <div style={{fontFamily:G.serif,fontWeight:isDark()?600:700,fontSize:25,color:tk().inkSoft,letterSpacing:-.4,lineHeight:1.1}}>{t.timerType}</div>
+                <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:tk().ink3,marginTop:3}}>{lang==="sv"?"Välj hur tiden visas":"Choose how time is shown"}</div>
+              </div>
+              <button onClick={()=>setTypeSheet(false)} aria-label={t.close} className="lt-press-soft" style={{width:36,height:36,borderRadius:18,border:`1px solid ${tk().border}`,background:isDark()?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.7)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",color:tk().ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:isDark()?"none":"0 2px 6px rgba(31,27,46,0.06)"}}><IconX size={13}/></button>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:11}}>
+              {allowed.map((k,i)=>{
+                const selected=type===k;
+                const d=TYPE_DESC[k];
+                return(
+                  <button key={k} onClick={()=>{setType(k);fx.select();setTypeSheet(false);}} className="lt-press-soft" style={{
+                    display:"flex",alignItems:"center",gap:14,width:"100%",textAlign:"left",cursor:"pointer",
+                    padding:"14px 15px",borderRadius:22,
+                    border:`1.5px solid ${selected?color:(isDark()?"rgba(255,255,255,0.1)":"rgba(255,255,255,0.85)")}`,
+                    // Liquid-glass rows: frosted translucent fill + soft inner
+                    // highlight, so each card reads like a pane of glass over the
+                    // sheet's tinted wash — the airy iOS look.
+                    background:selected
+                      ?(isDark()?`${color}26`:`${color}1A`)
+                      :(isDark()?"rgba(255,255,255,0.06)":"rgba(255,255,255,0.72)"),
+                    boxShadow:selected
+                      ?`0 12px 30px ${color}33, inset 0 1px 0 rgba(255,255,255,0.5)`
+                      :(isDark()?"inset 0 1px 0 rgba(255,255,255,0.06)":"0 4px 14px rgba(31,27,46,0.05), inset 0 1px 0 rgba(255,255,255,0.7)"),
+                    transition:"all .26s cubic-bezier(0.32, 0.72, 0, 1)",
+                  }}>
+                    <span style={{width:56,height:56,borderRadius:17,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",
+                      background:selected?(isDark()?`${color}33`:`${color}22`):(isDark()?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.85)"),
+                      border:`1px solid ${selected?`${color}44`:(isDark()?"rgba(255,255,255,0.1)":"rgba(255,255,255,0.9)")}`,
+                      boxShadow:`inset 0 1px 0 rgba(255,255,255,${isDark()?"0.12":"0.6"})`,transition:"all .26s ease"}}>
+                      <TimerIcon type={k} size={29} color={selected?(isDark()?shadeHex(color,0.42):color):tk().ink2}/>
+                    </span>
+                    <span style={{flex:1,minWidth:0}}>
+                      <span style={{display:"block",fontFamily:G.serif,fontWeight:isDark()?600:700,fontSize:17,color:selected?(isDark()?shadeHex(color,0.45):color):tk().inkSoft,letterSpacing:-.2,lineHeight:1.15}}>{tlbl(k,t)}</span>
+                      {d&&<span style={{display:"block",fontFamily:G.font,fontWeight:400,fontSize:12.5,color:tk().ink3,marginTop:2,lineHeight:1.3}}>{lang==="sv"?d.sv:d.en}</span>}
+                    </span>
+                    {selected?(
+                      <span style={{flexShrink:0,width:28,height:28,borderRadius:14,background:color,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 12px ${color}66, inset 0 1px 0 rgba(255,255,255,0.4)`}}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                      </span>
+                    ):(
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={tk().ink3} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,opacity:0.45}}><path d="M9 18l6-6-6-6"/></svg>
+                    )}
+                  </button>
+                );
+              })}
+              <div style={{height:8}}/>
+            </div>
+            </div>
+          </Sheet>
+        </Overlay>
+        );
+      })()}
     </>
   );
 }
@@ -9635,6 +9762,7 @@ function Overlay({children,onClose,tall,level=0}){
         position:"absolute",top:0,left:0,right:0,bottom:0,
         width:"100%",maxWidth:480,margin:"0 auto",
         overflow:"hidden",
+        willChange:"transform",WebkitBackfaceVisibility:"hidden",
         animation:animDone?"none":"shtIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) both",
       }:{
         position:"relative",
@@ -9642,6 +9770,7 @@ function Overlay({children,onClose,tall,level=0}){
         height:Math.floor(vv.h*0.92),
         minHeight:"60vh",
         overflow:"hidden",
+        willChange:"transform",WebkitBackfaceVisibility:"hidden",
         animation:animDone?"none":"shtIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) both",
       }}>
         {children}
@@ -9671,12 +9800,12 @@ function Sheet({children,scroll,tall,dark,accent}){
         :"calc(env(safe-area-inset-top, 0px) + 26px) 20px max(28px, env(safe-area-inset-bottom, 12px))",
       overflowY:"auto",overflowX:"hidden",overscrollBehavior:"contain",overflowAnchor:"none",
       boxShadow:tall?"none":(night?"0 -24px 60px rgba(0,0,0,0.5)":"0 -24px 60px rgba(60,90,140,0.16)"),
-      // Soft entrance — gentle rise + fade, mirrors iOS sheet feel. Bezier
-      // is iOS's standard "ease-out-quart" which decelerates smoothly into
-      // place without overshoot (overshoot would feel cartoonish on editors).
-      animation:"ltSheetRise .42s cubic-bezier(0.22, 1, 0.36, 1) both",
+      // Entrance: just a soft fade. The parent Overlay already glides the sheet
+      // up, and stacking a second translate here made the open feel jittery —
+      // one clean motion reads far more iOS.
+      animation:"ltSheetFade .34s ease both",WebkitBackfaceVisibility:"hidden",
     }}>
-      <style>{`@keyframes ltSheetRise{0%{transform:translateY(18px);opacity:0}100%{transform:translateY(0);opacity:1}}`}</style>
+      <style>{`@keyframes ltSheetFade{0%{opacity:0}100%{opacity:1}}`}</style>
       {night&&<div style={{position:"absolute",inset:0,pointerEvents:"none",opacity:0.8,backgroundImage:`radial-gradient(1px 1px at 16% 7%,rgba(255,255,255,0.5),transparent),radial-gradient(1.3px 1.3px at 68% 5%,rgba(255,255,255,0.38),transparent),radial-gradient(1px 1px at 85% 12%,rgba(255,255,255,0.42),transparent),radial-gradient(1px 1px at 34% 15%,rgba(255,255,255,0.3),transparent),radial-gradient(1.2px 1.2px at 9% 20%,rgba(255,255,255,0.28),transparent),radial-gradient(1px 1px at 54% 18%,rgba(255,255,255,0.24),transparent),radial-gradient(1px 1px at 78% 23%,rgba(255,255,255,0.2),transparent)`,backgroundRepeat:"no-repeat"}}/>}
       <div style={{position:"relative",zIndex:1}}>{children}</div>
     </div>);
@@ -9699,9 +9828,9 @@ function Sheet({children,scroll,tall,dark,accent}){
     overscrollBehavior:"contain",
     overflowAnchor:"none",
     boxShadow:tall?"none":"0 -24px 60px rgba(31,27,46,0.18)",
-    animation:"ltSheetRise .42s cubic-bezier(0.22, 1, 0.36, 1) both",
+    animation:"ltSheetFade .34s ease both",WebkitBackfaceVisibility:"hidden",
   }}>
-    <style>{`@keyframes ltSheetRise{0%{transform:translateY(18px);opacity:0}100%{transform:translateY(0);opacity:1}}`}</style>
+    <style>{`@keyframes ltSheetFade{0%{opacity:0}100%{opacity:1}}`}</style>
     <div style={{position:"relative",zIndex:1}}>{children}</div>
   </div>);
 }
@@ -9900,38 +10029,157 @@ const saveBtnStyle=(accent,extra={})=>{
 function TabB({active,gold,children,onClick,color,deep,flex=1}){
   const dk=isDark();
   const lit=active||gold;
-  // Chosen design: calm white "floating" pill (iOS segmented-control feel) with
-  // a subtle glass sheen. Light → white pill, accent only in the text colour, so
-  // it stays restful. Dark → refined frosted-glass pill. The pill lifts gently
-  // rather than shouting in full accent colour.
+  // Active pill = frosted glass (the "A" look the user picked): a translucent
+  // pane that lifts the colour behind it, with a soft sheen. On activation the
+  // pill blooms in with a GPU-driven spring (transform/opacity only — never
+  // layout — so it stays buttery on iOS). Light mode keeps the airy frosted
+  // white; dark keeps its refined glass.
   const pillBg = gold
     ? (dk?"linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.09))":"linear-gradient(160deg,#39334D,#2A2539)")
     : active
-    ? (dk?"linear-gradient(180deg, rgba(255,255,255,0.17), rgba(255,255,255,0.10))":"linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 60%, #FCFDFE 100%)")
+    ? (dk?"rgba(255,255,255,0.16)":"rgba(255,255,255,0.72)")
     : "transparent";
   const pillShadow = lit
     ? (dk
-        ? `inset 0 1px 0 rgba(255,255,255,0.30), 0 6px 16px -8px rgba(0,0,0,0.55)`
+        ? `inset 0 1px 0 rgba(255,255,255,0.28), 0 6px 18px -8px rgba(0,0,0,0.55)`
         : (gold
             ? `0 5px 16px -6px rgba(31,27,46,0.4), inset 0 1px 0 rgba(255,255,255,0.14)`
-            : `0 4px 12px -3px ${deep}3D, 0 1px 3px rgba(31,27,46,0.07), inset 0 1px 0 rgba(255,255,255,0.9)`))
+            : `0 6px 18px -5px ${deep}3A, 0 1px 3px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 0 rgba(31,27,46,0.03)`))
     : "none";
+  // Glassy but CLEAR (not frosted): the lit pill is translucent so the tinted
+  // track shows through, but we skip backdrop-blur in light mode so it reads as
+  // clear glass rather than the matte frosted look. Dark mode keeps a light blur.
+  const glass = dk&&lit?"blur(18px) saturate(1.5)":"none";
   const txt = dk
     ? (lit?"#FFFFFF":"#9E98AE")
     : (gold?"#FFFFFF":active?deep:G.ink2);
   return(
     <button onClick={onClick} className="lt-press-soft" style={{flex,padding:"9px 0",borderRadius:12,
-      border:dk&&lit?"1px solid rgba(255,255,255,0.18)":(lit&&!gold&&!dk?`1px solid ${color}22`:"1px solid transparent"),
+      border:lit&&!gold?(dk?"1px solid rgba(255,255,255,0.18)":`1px solid ${color}1E`):"1px solid transparent",
       fontFamily:G.serif,fontWeight:lit?700:600,fontSize:12,letterSpacing:.3,cursor:"pointer",position:"relative",overflow:"hidden",
-      backdropFilter:dk&&lit?"blur(18px) saturate(1.5)":"none",WebkitBackdropFilter:dk&&lit?"blur(18px) saturate(1.5)":"none",
-      transition:"transform .22s cubic-bezier(0.34, 1.4, 0.5, 1), background .3s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .3s ease, color .25s ease, border-color .3s ease",
+      backdropFilter:glass,WebkitBackdropFilter:glass,
+      transition:"background .34s cubic-bezier(0.32, 0.72, 0, 1), box-shadow .34s ease, color .26s ease, border-color .34s ease",
       background:pillBg,
       color:txt,
+      WebkitBackfaceVisibility:"hidden",
       boxShadow:pillShadow}}>
-      {/* Subtle top sheen on the lit pill — the V3 glass touch */}
-      {lit&&<span style={{position:"absolute",top:0,left:0,right:0,height:"46%",background:dk?"linear-gradient(180deg,rgba(255,255,255,0.16),transparent)":"linear-gradient(180deg,rgba(255,255,255,0.6),transparent)",pointerEvents:"none",borderRadius:"12px 12px 22px 22px"}}/>}
-      <span style={{position:"relative",zIndex:1}}>{children}</span>
+      {/* Glass bloom: the pill's fill scales in with a soft spring on activation,
+          GPU-only (transform+opacity), so the lit state arrives with a gentle
+          settle rather than a hard cut. Sits behind the label. */}
+      {lit&&<span key={gold?"g":"a"} style={{position:"absolute",inset:0,borderRadius:11,pointerEvents:"none",
+        background:dk?"transparent":"linear-gradient(180deg,rgba(255,255,255,0.5) 0%,transparent 55%)",
+        transformOrigin:"center",animation:"tabPillBloom .5s cubic-bezier(0.34, 1.5, 0.5, 1) both"}}/>}
+      <span style={{position:"relative",zIndex:1,display:"inline-flex"}}>{children}</span>
     </button>
+  );
+}
+
+/* ═══ SlideTabRow — segmented control with ONE pill that GLIDES between tabs ═══
+   Used only by the home/week schedule row. A single translucent pill is
+   positioned absolutely and animated via left/width with a soft, damped
+   spring so it slides smoothly from tab to tab (the premium feel). Buttons
+   themselves are transparent; the pill is the only moving part.
+   `segments`     : [{key,label,active,onClick}]  interactive tabs
+   `leadingLabel` : optional non-interactive node shown left (label / "Du redigerar")
+   `goldKey`      : if set, that segment renders as the gold (edit) pill        */
+function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,padY=9}){
+  const dk=isDark();
+  const rowRef=useRef(null);
+  const btnRefs=useRef({});
+  const [pill,setPill]=useState(null); // {left,width}
+  const activeKey=(segments.find(s=>s.active)||{}).key;
+
+  const measure=()=>{
+    const row=rowRef.current; const el=activeKey!=null?btnRefs.current[activeKey]:null;
+    if(!row||!el){ setPill(null); return; }
+    const rRect=row.getBoundingClientRect(); const bRect=el.getBoundingClientRect();
+    setPill({left:bRect.left-rRect.left, width:bRect.width});
+  };
+  // Measure SYNCHRONOUSLY in useLayoutEffect (before the browser paints) so the
+  // pill is already in the right place on the very first frame after the active
+  // tab changes. The previous version deferred this with a double rAF to keep
+  // the editor "opening instantly", but that left a gap: when you tap Redigera
+  // on Home/Schema, the gold "Stäng" pill wasn't drawn yet (and on iOS a
+  // position:absolute layer doesn't repaint until a scroll/compositor event), so
+  // the active button's white text sat over the row's translucent background and
+  // the field looked like it took on the background colour until you scrolled.
+  // A single getBoundingClientRect of the active button here is cheap — the
+  // layout is computed for paint anyway — and because we only change the pill's
+  // `transform`/`width`, the CSS transition still animates the glide between
+  // tabs smoothly. The rAF pass below stays as a refinement for late font/layout
+  // shifts (e.g. webfonts finishing loading).
+  useLayoutEffect(()=>{
+    measure();
+    let r1=requestAnimationFrame(()=>{ requestAnimationFrame(measure); });
+    return ()=>cancelAnimationFrame(r1);
+    /* eslint-disable-next-line */
+  },[activeKey,segments.length,goldKey]);
+  useEffect(()=>{
+    const r=()=>measure(); window.addEventListener("resize",r);
+    if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(()=>measure()); }
+    return ()=>window.removeEventListener("resize",r);
+    /* eslint-disable-next-line */
+  },[]);
+
+  const gold = goldKey!=null && activeKey===goldKey;
+  const pillBg = gold
+    ? (dk?"linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.10))":"linear-gradient(160deg,#39334D,#2A2539)")
+    : (dk?"rgba(255,255,255,0.14)":(onSky?"rgba(255,255,255,0.55)":"rgba(255,255,255,0.92)"));
+  const pillShadow = gold
+    ? (dk?`inset 0 1px 0 rgba(255,255,255,0.28), 0 6px 18px -8px rgba(0,0,0,0.55)`:`0 5px 16px -6px rgba(31,27,46,0.4), inset 0 1px 0 rgba(255,255,255,0.14)`)
+    : (dk?`inset 0 1px 0 rgba(255,255,255,0.26), 0 6px 18px -8px rgba(0,0,0,0.5)`:`0 6px 18px -5px ${deep}3A, 0 1px 3px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.92), inset 0 -1px 0 rgba(31,27,46,0.03)`);
+
+  // When the row is NOT floating over the live sky (`onSky` false) — i.e. in
+  // edit mode and on the tool screens — use a SOLID track instead of a
+  // translucent one with backdrop-filter. A frosted/translucent bar samples
+  // whatever is painted behind it, so over the lilac header it looked lilac and
+  // turned white as white activity cards scrolled up behind it — the "edit
+  // field changes colour when I scroll" bug. A solid cream surface keeps the
+  // colour constant no matter what's behind. The onSky/dark cases (where the
+  // translucency is the intended liquid-glass-over-sky look) are unchanged.
+  return(
+    <div ref={rowRef} style={{display:"flex",alignItems:"center",gap:4,flex:1,position:"relative",
+      background:dk?(floating?"rgba(22,19,34,0.7)":"rgba(255,255,255,0.05)"):(onSky?(floating?"rgba(255,255,255,0.18)":"rgba(255,255,255,0.10)"):G.cream),
+      borderRadius:14,padding:4,
+      border:dk?"1px solid rgba(255,255,255,0.08)":(onSky?`1px solid rgba(255,255,255,0.28)`:`1px solid ${color}1E`),
+      backdropFilter:dk?"blur(14px) saturate(1.2)":(onSky?"blur(8px) saturate(1.2)":"none"),WebkitBackdropFilter:dk?"blur(14px) saturate(1.2)":(onSky?"blur(8px) saturate(1.2)":"none"),
+      boxShadow:dk?(floating?"0 6px 18px -8px rgba(0,0,0,0.6)":"inset 0 1px 2px rgba(0,0,0,0.3)"):(onSky?`0 4px 14px -10px ${deep}33`:`0 4px 14px -8px ${deep}33, inset 0 1px 0 rgba(255,255,255,0.9)`),
+      transition:"background .4s ease, box-shadow .4s ease"}}>
+      {/* The single gliding pill — moved via GPU transform (translateX) so it
+          stays smooth even while the rest of the screen re-renders. */}
+      {pill&&(
+        <span aria-hidden style={{position:"absolute",top:4,bottom:4,left:0,
+          width:pill.width,borderRadius:11,zIndex:1,
+          transform:`translate3d(${pill.left}px,0,0)`,
+          background:pillBg,boxShadow:pillShadow,
+          border:gold?"1px solid transparent":(dk?"1px solid rgba(255,255,255,0.18)":`1px solid ${color}1E`),
+          backdropFilter:onSky&&!dk&&!gold?"blur(16px) saturate(1.5)":"none",WebkitBackdropFilter:onSky&&!dk&&!gold?"blur(16px) saturate(1.5)":"none",
+          WebkitBackfaceVisibility:"hidden",willChange:"transform,width",pointerEvents:"none",
+          transition:"transform .46s cubic-bezier(0.34, 1.42, 0.5, 1), width .46s cubic-bezier(0.34, 1.42, 0.5, 1), background .3s ease, box-shadow .3s ease"}}>
+          {!gold&&!dk&&<span style={{position:"absolute",inset:0,borderRadius:11,background:"linear-gradient(180deg,rgba(255,255,255,0.45) 0%,transparent 55%)",pointerEvents:"none"}}/>}
+        </span>
+      )}
+      {leadingLabel}
+      {segments.map(s=>{
+        const isGold=goldKey!=null&&s.key===goldKey&&s.active;
+        // Track is near-transparent, so inactive text sits over the sky. Use a
+        // lighter tone with a soft shadow so it stays legible against both the
+        // dark evening sky and the lighter daytime sky. Active text is dark
+        // because it sits on the solid pill.
+        const txt=dk?(s.active?"#FFFFFF":"rgba(255,255,255,0.82)"):(isGold?"#FFFFFF":s.active?deep:(onSky?"rgba(255,255,255,0.7)":G.ink2));
+        const txtShadow=s.active?"none":(dk?"0 1px 3px rgba(0,0,0,0.4)":(onSky?"0 1px 4px rgba(60,45,75,0.45)":"none"));
+        return(
+          <button key={s.key} ref={el=>{btnRefs.current[s.key]=el;}} onClick={s.onClick} className="lt-press-soft"
+            style={{flex:s.flex||1,padding:padY+"px 0",borderRadius:12,border:"1px solid transparent",textShadow:txtShadow,
+              fontFamily:G.serif,fontWeight:s.active?700:600,fontSize:12,letterSpacing:.3,cursor:"pointer",
+              position:"relative",zIndex:2,background:"transparent",color:txt,
+              WebkitTapHighlightColor:"transparent",WebkitBackfaceVisibility:"hidden",
+              transition:"color .26s ease, font-weight .2s ease"}}>
+            <span style={{position:"relative",zIndex:1,display:"inline-flex"}}>{s.label}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -9939,6 +10187,10 @@ function TabB({active,gold,children,onClick,color,deep,flex=1}){
 function StoryViewer({story,lang,t,onClose}){
   const[idx,setIdx]=useState(0);
   const[showTimer,setShowTimer]=useState(false);
+  // Which page's timer the FIRST-THEN view is showing (independent of `idx`,
+  // whose change-effect below force-closes showTimer — using idx here made the
+  // FT timer open and instantly close again, so the timer "jumped out").
+  const[ftTimerPage,setFtTimerPage]=useState(null);
   // Track page-turn direction so the new page slides in from the matching side.
   // "next" → new page enters from the right; "prev" → enters from the left.
   // First page mount uses "next" so it glides in gently from below.
@@ -9963,9 +10215,10 @@ function StoryViewer({story,lang,t,onClose}){
     const firstPage=story.pages[0], thenPage=story.pages[1];
     const firstHasTimer=firstPage?.timer?.on;
     const thenHasTimer=thenPage?.timer?.on;
+    const ftTimer=ftTimerPage===0?firstPage?.timer:ftTimerPage===1?thenPage?.timer:null;
     return(
       <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${story.color}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${story.color}12 0%,#FFFFFF 70%)`,display:"flex",flexDirection:"column",userSelect:"none",animation:"ftIn .25s ease"}}>
-        {showTimer&&hasTimer&&<FullTimer type={pt.type} totalSec={pt.min*60} color={pt.color} t={t} autoRun={true} onClose={()=>setShowTimer(false)}/>}
+        {ftTimer&&ftTimer.on&&<FullTimer type={ftTimer.type} totalSec={ftTimer.min*60} color={ftTimer.color} t={t} autoRun={true} onClose={()=>setFtTimerPage(null)}/>}
         <style>{`@keyframes ftArrow{0%{transform:translateX(0)}50%{transform:translateX(8px)}100%{transform:translateX(0)}}`}</style>
         <div style={{padding:"calc(env(safe-area-inset-top, 0px) + 14px) 22px 0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
           <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
@@ -9984,12 +10237,17 @@ function StoryViewer({story,lang,t,onClose}){
           {/* FIRST */}
           <div style={{flex:1,background:tk().white,borderRadius:26,padding:"18px 12px 22px",boxShadow:`0 16px 40px ${story.color}26`,border:`1px solid ${story.color}30`,textAlign:"center"}}>
             <div style={{fontFamily:G.font,fontWeight:700,fontSize:11,color:story.color,letterSpacing:2.5,textTransform:"uppercase",marginBottom:12}}>{story.firstLabel?.trim()||t.first||"Först"}</div>
-            <div style={{width:"100%",aspectRatio:"1",borderRadius:20,background:firstPage?.photo?"#000":`linear-gradient(140deg,${story.color}1A,${story.color}3A)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:72,marginBottom:12,overflow:"hidden"}}>
+            <div onClick={firstHasTimer?()=>{setFtTimerPage(0);}:undefined} role={firstHasTimer?"button":undefined} aria-label={firstHasTimer?(t.startTimer||"Starta"):undefined} className={firstHasTimer?"lt-press":undefined} style={{position:"relative",width:"100%",aspectRatio:"1",borderRadius:20,background:firstPage?.photo?"#000":`linear-gradient(140deg,${story.color}1A,${story.color}3A)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:72,marginBottom:12,overflow:"hidden",cursor:firstHasTimer?"pointer":"default"}}>
               {firstPage?.photo?<img src={firstPage.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:firstPage?.emoji}
+              {firstHasTimer&&(
+                <div style={{position:"absolute",right:8,bottom:8,width:34,height:34,borderRadius:17,background:firstPage.timer.color,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 12px ${firstPage.timer.color}66, inset 0 1px 0 rgba(255,255,255,0.3)`,pointerEvents:"none"}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+              )}
             </div>
             <div style={{fontFamily:G.serif,fontWeight:600,fontSize:17,color:tk().ink,lineHeight:1.2,letterSpacing:-.2}}>{lsText(firstPage,lang)}</div>
             {firstHasTimer&&(
-              <button onClick={()=>{setIdx(0);setShowTimer(true);}} className="lt-press-soft" style={{
+              <button onClick={()=>{setFtTimerPage(0);}} className="lt-press-soft" style={{
                 marginTop:12,display:"inline-flex",alignItems:"center",gap:6,
                 padding:"8px 12px",borderRadius:12,
                 background:`${firstPage.timer.color}10`,
@@ -10020,12 +10278,17 @@ function StoryViewer({story,lang,t,onClose}){
           {/* THEN */}
           <div style={{flex:1,background:tk().white,borderRadius:26,padding:"18px 12px 22px",boxShadow:`0 16px 40px ${story.color}26`,border:`1px solid ${story.color}30`,textAlign:"center"}}>
             <div style={{fontFamily:G.font,fontWeight:700,fontSize:11,color:story.color,letterSpacing:2.5,textTransform:"uppercase",marginBottom:12}}>{story.thenLabel?.trim()||t.then||"Sedan"}</div>
-            <div style={{width:"100%",aspectRatio:"1",borderRadius:20,background:thenPage?.photo?"#000":`linear-gradient(140deg,${story.color}1A,${story.color}3A)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:72,marginBottom:12,overflow:"hidden"}}>
+            <div onClick={thenHasTimer?()=>{setFtTimerPage(1);}:undefined} role={thenHasTimer?"button":undefined} aria-label={thenHasTimer?(t.startTimer||"Starta"):undefined} className={thenHasTimer?"lt-press":undefined} style={{position:"relative",width:"100%",aspectRatio:"1",borderRadius:20,background:thenPage?.photo?"#000":`linear-gradient(140deg,${story.color}1A,${story.color}3A)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:72,marginBottom:12,overflow:"hidden",cursor:thenHasTimer?"pointer":"default"}}>
               {thenPage?.photo?<img src={thenPage.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:thenPage?.emoji}
+              {thenHasTimer&&(
+                <div style={{position:"absolute",right:8,bottom:8,width:34,height:34,borderRadius:17,background:thenPage.timer.color,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 4px 12px ${thenPage.timer.color}66, inset 0 1px 0 rgba(255,255,255,0.3)`,pointerEvents:"none"}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+              )}
             </div>
             <div style={{fontFamily:G.serif,fontWeight:600,fontSize:17,color:tk().ink,lineHeight:1.2,letterSpacing:-.2}}>{lsText(thenPage,lang)}</div>
             {thenHasTimer&&(
-              <button onClick={()=>{setIdx(1);setShowTimer(true);}} className="lt-press-soft" style={{
+              <button onClick={()=>{setFtTimerPage(1);}} className="lt-press-soft" style={{
                 marginTop:12,display:"inline-flex",alignItems:"center",gap:6,
                 padding:"8px 12px",borderRadius:12,
                 background:`${thenPage.timer.color}10`,
@@ -12209,7 +12472,7 @@ function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActi
    visual weight. Today prominent, past tones down,
    future waits quietly. Edit mode = tap to edit.
 ═══════════════════════════════════════════════════ */
-function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,headerTapCount}){
+function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEdit,onAdd,headerTapCount,setHeaderTapCount}){
   // ════════════════════════════════════════════════════════════════════════
   //  WEEKSCREEN — OVERVIEW (rhythm chart)
   //  ════════════════════════════════════════════════════════════════════════
@@ -12403,12 +12666,11 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
 
   return(
     <div style={{
-      flex:1,minHeight:0,height:"100%",display:"flex",flexDirection:"column",
-      // Transparent — the App root's tinted `effS.hb` (which already follows
-      // dawn/midday/dusk for the week screen) fills the entire surface as one
-      // uniform colour. No second gradient here means no visible seam between
-      // header and body — they're the same layer of paint.
-      background:dark?"#0E0E10":"transparent",
+      flex:1,minHeight:0,height:"100%",display:"flex",flexDirection:"column",overflow:"hidden",
+      // Week page = one continuous surface. The dynamic sky tone (same time-of-day
+      // model the sky banner uses) fills behind everything and melts down into the
+      // pale base, so as the whole page scrolls there's never a flat seam.
+      background:dark?"#0E0E10":(isEd?"transparent":(()=>{const _sk=skyAt(now.getHours()+now.getMinutes()/60);const t=_sk.top,m=_sk.mid,b=_sk.bot;const tr=Math.round(t[0]),tg=Math.round(t[1]),tb=Math.round(t[2]);const mr=Math.round(m[0]),mg=Math.round(m[1]),mb=Math.round(m[2]);const br=Math.round(b[0]),bg=Math.round(b[1]),bb=Math.round(b[2]);return `linear-gradient(180deg, rgb(${tr},${tg},${tb}) 0%, rgb(${mr},${mg},${mb}) 12%, rgb(${br},${bg},${bb}) 22%, rgba(${br},${bg},${bb},0.6) 30%, rgba(${br},${bg},${bb},0.34) 38%, rgba(${br},${bg},${bb},0.16) 46%, rgba(${br},${bg},${bb},0.06) 54%, #F6F4FA 66%)`;})()),
     }}>
       <style>{`
         @keyframes weekColIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
@@ -12449,7 +12711,34 @@ function WeekScreen({acts,dailyState,isEd,t,lang,now,cfg,onTap,onEdit,onAdd,head
           at the top, which felt heavy. Putting it inside the scroll body lets
           it scroll out of view gracefully when the user scrolls down to the
           day list — the rhythm chart then sits at the top, getting more room. */}
-      <div ref={scrollBodyRef} style={{flex:1,minHeight:0,overflowY:"auto",padding:"6px 14px 24px",WebkitOverflowScrolling:"touch"}}>
+      <div ref={scrollBodyRef} style={{flex:1,minHeight:0,overflowY:"auto",overflowX:"hidden",overscrollBehaviorX:"none",overscrollBehaviorY:"contain",WebkitOverflowScrolling:"touch",padding:"0 14px 24px"}}>
+        {/* ── In-flow header: the sky banner + Vecka/Redigera row live INSIDE the
+            scroll so the whole week page scrolls as one continuous surface (like
+            a web page) — nothing stays pinned, no hard edge cuts the content. */}
+        {!dark&&!isEd&&(
+          <div style={{marginLeft:-14,marginRight:-14,overflow:"hidden"}} onClick={()=>setHeaderTapCount&&setHeaderTapCount(c=>c+1)}>
+            <div style={{padding:"0 22px",marginTop:-4}}><SkyHeader now={now} lang={lang} inFlow={true}/></div>
+            {/* Vecka / Redigera row — uses the shared glass SlideTabRow so it
+                matches Home and stays transparent against the sky. */}
+            <div style={{display:"flex",alignItems:"center",gap:8,padding:"11px 22px 12px"}}>
+              {(()=>{
+                const leadingLabel = !isEd ? (
+                  <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:"rgba(255,255,255,0.95)",textShadow:"0 1px 4px rgba(60,45,75,0.45)",display:"flex",alignItems:"center",gap:7,letterSpacing:.2,position:"relative",zIndex:2}}>
+                    <span style={{width:6,height:6,borderRadius:"50%",background:"#FFFFFF",boxShadow:`0 0 6px rgba(255,255,255,0.7)`}}/>
+                    {lang==="sv"?"Vecka":"Week"}
+                  </div>
+                ) : (
+                  <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:effS?.deep||"#6E5E9E",display:"flex",alignItems:"center",gap:7,letterSpacing:.2,minWidth:0,position:"relative",zIndex:2}}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,opacity:0.7}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lang==="sv"?"Du redigerar":"Editing"}</span>
+                  </div>
+                );
+                const segments=[{key:"edit",label:isEd?t.editorClose:t.editorOpen,active:isEd,onClick:()=>setIsEd&&setIsEd(e=>!e),flex:1}];
+                return <SlideTabRow segments={segments} leadingLabel={leadingLabel} goldKey="edit" color={effS?.h||"#9683C2"} deep={effS?.deep||"#6E5E9E"} onSky={!isEd} padY={8}/>;
+              })()}
+            </div>
+          </div>
+        )}
 
         {(()=>{
           // Premium, calm contrast with the live sky. Against a dark or cool
@@ -12868,6 +13157,7 @@ function IdCardLargeView({cfg,t,onClose}){
   const bodyStyle={fontFamily:G.font,fontSize:15.5,color:tk().ink,lineHeight:1.45};
   const divider=`1px solid ${isDark()?"rgba(255,255,255,0.08)":"rgba(31,27,46,0.06)"}`;
   const hasBody=!!(c.condition||c.helpful||c.triggers||list.length>0);
+
   return(
     <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${S.h}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${S.hb} 0%,#FFFFFF 55%, ${S.hll} 100%)`,display:"flex",flexDirection:"column",padding:"calc(env(safe-area-inset-top, 0px) + 18px) 16px calc(env(safe-area-inset-bottom, 0px) + 18px)",animation:"ftIn .25s ease",overflowY:"auto"}}>
       <button onClick={onClose} aria-label={t.close} style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 14px)",right:18,width:42,height:42,borderRadius:21,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:sh.sm,zIndex:2}}><IconX size={14}/></button>
@@ -12909,6 +13199,7 @@ function IdCardLargeView({cfg,t,onClose}){
           </div>
         </div>
       </div>
+      {/* Savable image overlay removed — a screenshot does the job more reliably. */}
     </div>
   );
 }
@@ -14265,7 +14556,7 @@ function DemoTour({onClose,lang}){
     {C:SceneChecklist, bg:"linear-gradient(165deg,#F4F9F4 0%,#FFFFFF 100%)",     heading:en?"Step by step":"Steg för steg",                                 sub:en?"One thing at a time.":"En sak i taget.",                                                                          dur:6500},
     {C:SceneEmotion,   bg:"linear-gradient(165deg,#FAF5F6 0%,#FFFFFF 100%)",     heading:en?"How does it feel today?":"Hur känns det idag?",                sub:en?"Put it into words.":"Sätt ord på det.",                                                                           dur:6500},
     {C:SceneCalm,      bg:"linear-gradient(165deg,#EAF3F7 0%,#FFFFFF 100%)",     heading:en?"When it gets to be too much":"När det blir mycket",            sub:en?"Tools that help you land.":"Verktyg som hjälper dig landa.",                                                       dur:8000},
-    {C:SceneIdCard,    bg:"linear-gradient(165deg,#FCF3F3 0%,#FFFFFF 100%)",     heading:en?"My card":"Mitt kort",                                          sub:en?"The important things about me.":"Det viktiga om mig.",                                                            leftText:true, dur:6500},
+    {C:SceneIdCard,    bg:"linear-gradient(165deg,#FCF3F3 0%,#FFFFFF 100%)",     heading:en?"My card":"Mitt kort",                                          sub:en?"The important things about me.":"Det viktiga om mig.",                                                            dur:6500},
     {C:SceneTalk,      bg:"linear-gradient(165deg,#F4F9FD 0%,#FFFFFF 100%)",     heading:en?"Pictures instead of words":"Bilder istället för ord",          sub:en?"Tap — the app speaks for you.":"Tryck — appen pratar för dig.",                                                   dur:6500},
     {C:SceneOutro,     bg:"linear-gradient(180deg,#FCFAFE 0%,#FFFFFF 100%)",     heading:"",                                                                sub:"",                                                                                                                   dur:99999},
   ];
@@ -14792,7 +15083,7 @@ export default function App(){
     let sb=document.head.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     if(!sb){sb=document.createElement("meta");sb.setAttribute("name","apple-mobile-web-app-status-bar-style");document.head.appendChild(sb);}
     sb.setAttribute("content",APP_THEME==="dark"?"black":"default");
-  },[APP_THEME]);
+  },[cfg.theme]);
   const[resetKey,setResetKey]=useState(0);
   // Track the previously-rendered screen so the entrance fade only plays on a
   // real screen change. Without this, unrelated re-renders (toggling edit mode,
@@ -15598,28 +15889,33 @@ export default function App(){
         // hue shift: peach → soft rose, sky-blue → cool mint, lila → rose.
         ? (effView==="card"&&!isEd&&cardColor
           ? "#FFFFFF"
-          : (()=>{
+          : isEd
+          ? // EDIT MODE — keep the original calm radial-light background so the
+            // editor view reads cleanly (the sky gradient is for the relaxed,
+            // non-edit reading view only, exactly like the week view).
+            (()=>{
               const h=now.getHours()+now.getMinutes()/60;
-              // Complement hue — a step toward pink/lila for dawn/dusk, or
-              // a touch toward cream for midday. Each chosen to feel like
-              // the natural counter-light at that time of day.
               let comp;
-              if(h<5)        comp="#D8B4D4";   // pre-dawn → cool pink
-              else if(h<12)  comp="#E6B3D0";   // morning → blush pink
-              else if(h<17)  comp="#D4DCE8";   // midday → cool silver
-              else           comp="#E0BFCA";   // evening → warm rose
+              if(h<5)        comp="#D8B4D4";
+              else if(h<12)  comp="#E6B3D0";
+              else if(h<17)  comp="#D4DCE8";
+              else           comp="#E0BFCA";
               return [
-                // (1) Main sunlight from upper-left
                 `radial-gradient(60% 50% at 8% -4%, ${effS.h}30 0%, ${effS.h}18 24%, transparent 60%)`,
-                // (2) Secondary diffusion below the source
                 `radial-gradient(70% 55% at 28% 12%, ${effS.h}1C 0%, ${effS.h}0C 30%, transparent 65%)`,
-                // (3) Atmospheric complement on the far side
                 `radial-gradient(85% 60% at 110% 30%, ${comp}1A 0%, ${comp}08 35%, transparent 70%)`,
-                // (4) Diffuse base wash — gives every corner a hint
                 `radial-gradient(120% 80% at 50% 100%, ${effS.h}06 0%, transparent 70%)`,
-                // (5) Pure white base
                 "#FFFFFF",
               ].join(", ");
+            })()
+          : (()=>{
+              // NON-EDIT list view — slow-fading sky gradient like the week view.
+              const _sk=skyAt(now.getHours()+now.getMinutes()/60);
+              const tt=_sk.top,mm=_sk.mid,bb2=_sk.bot;
+              const tr=Math.round(tt[0]),tg=Math.round(tt[1]),tb=Math.round(tt[2]);
+              const mr=Math.round(mm[0]),mg=Math.round(mm[1]),mb=Math.round(mm[2]);
+              const br=Math.round(bb2[0]),bg=Math.round(bb2[1]),bb=Math.round(bb2[2]);
+              return `linear-gradient(180deg, rgb(${tr},${tg},${tb}) 0%, rgb(${mr},${mg},${mb}) 12%, rgb(${br},${bg},${bb}) 22%, rgba(${br},${bg},${bb},0.6) 30%, rgba(${br},${bg},${bb},0.34) 38%, rgba(${br},${bg},${bb},0.16) 46%, rgba(${br},${bg},${bb},0.06) 54%, #F6F4FA 66%)`;
             })())
         : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background 1.2s ease"}}>
       {/* BOOT OVERLAY — the Luma sun (matching the welcome guide), gently
@@ -15952,12 +16248,21 @@ export default function App(){
            gentle scale settle. Both share the iOS deceleration curve for unity. */
         @keyframes ovlIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes shtIn {
-          0%   { transform: translateY(102%) scale(0.985); }
-          100% { transform: none; }
+          0%   { transform: translateY(102%); }
+          100% { transform: translateY(0); }
         }
         @keyframes shtFade {
           0%   { opacity: 0; }
           100% { opacity: 1; }
+        }
+        /* Tab pill bloom — the lit segmented-control pill settles in with a
+           gentle, damped spring. GPU-only (opacity + transform) so it never
+           triggers layout and stays smooth on iOS. The slight overshoot on
+           scale gives the "soft landing" feel without looking bouncy. */
+        @keyframes tabPillBloom {
+          0%   { opacity: 0; transform: scale(0.82); }
+          55%  { opacity: 1; transform: scale(1.03); }
+          100% { opacity: 1; transform: scale(1); }
         }
         /* ───────── Webfont loading ─────────
            Nunito from Google Fonts. Variable weight for clean rendering
@@ -16022,6 +16327,7 @@ export default function App(){
           hairline at the bottom. Everything transitions over .5s when the
           screen color changes, and the auroras breathe gently over time. */}
       <div onClick={()=>setHeaderTapCount(c=>c+1)} className="lt-app-header" style={{
+        display: (screen==="week"&&!isEd&&!isDark())?"none":undefined,
         // Per-screen header: each tool has its own fullness and glow shape (see
         // HEADER_CHAR) so every header is unique, while sharing one calm design
         // language. The screen's own hue colours it; calm/Lugn is the fullest.
@@ -16039,6 +16345,12 @@ export default function App(){
         cursor:"pointer",
         boxShadow:"none",
         borderBottom:"none",
+        // 1px overlap onto the content below: at fractional zoom levels the
+        // boundary between this fixed header and the scrolling body could land
+        // between physical pixels, letting a hairline of the lighter backdrop
+        // show through. Overlapping by 1px (compensated by marginBottom) removes
+        // the seam without changing the visible layout.
+        marginBottom:-1,
         zIndex:2,
         opacity:modalOpenCount>0?0:1,
         pointerEvents:modalOpenCount>0?"none":"auto",
@@ -16114,6 +16426,7 @@ export default function App(){
         {((screen==="home"||screen==="week")&&!isEd&&!isDark()) ? (
           <SkyHeader now={now} lang={lang}/>
         ) : (<>
+        {(isEd||screen==="home"||screen==="week") && (
         <div style={{
           display:"flex",
           flexDirection:"row",
@@ -16129,30 +16442,19 @@ export default function App(){
             @keyframes rayFade1{0%,100%{opacity:.85}50%{opacity:.58}}
             @keyframes rayFade2{0%,100%{opacity:.58}50%{opacity:.85}}
           `}</style>
-          {/* luma wordmark — uses the same hooked-l component as the boot
-              screen and intro, so the signature character is consistent
-              everywhere. No sun-in-u dot here: at 18px it would be too
-              small and competes with the icon glyph beside it. The full
-              wordmark with dot appears on the boot/intro screens. */}
-          {isDark()?(
-            <LumaWordmark
-              size={25}
-              color={shadeHex(effS.h,0.50)}
-              showSun={true}
-              style={{
-                transition:"color .5s ease",
-              }}
-            />
-          ):(
-            <LumaWordmark
-              size={25}
-              color={shadeHex(effS.h,-0.55)}
-              showSun={screen==="home"||screen==="week"}
-              style={{
-                transition:"color .5s ease",
-              }}
-            />
-          )}
+          {/* luma wordmark (new vector logo). Sun-in-u rule:
+                • editor views (isEd)      → wordmark WITH the orange sun
+                • home/schema & week       → wordmark WITHOUT the sun
+                • all other screens        → no wordmark (this whole block is
+                                             gated by the wrapper condition above)
+              Home/week in the LIGHT theme render the sky header instead, whose
+              SkyWordmark is the same logo without the sun. */}
+          <LumaWordmark
+            size={25}
+            color={isDark()?shadeHex(effS.h,0.50):shadeHex(effS.h,-0.55)}
+            showSun={isEd}
+            style={{transition:"color .5s ease"}}
+          />
           {/* VERSION STAMP — hidden by default, revealed by double-tapping
               the Luma title. Diagnostic only: if the stamp doesn't match the
               latest deploy, the device is running cached old code. */}
@@ -16183,6 +16485,7 @@ export default function App(){
             }}
           >v2026-05-30-A</span>
         </div>
+        )}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:0,position:"relative",gap:12,minHeight:(isEd||screen==="home")?36:0}}>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontFamily:G.font,fontWeight:isEd?400:500,fontSize:10.5,color:isEd?(isDark()?tk().ink3:"#7C7691"):(isDark()?effS.h:effS.deep),textTransform:"capitalize",letterSpacing:.8,marginBottom:(isEd||screen==="home")?5:0,textAlign:"left",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",transition:"color .4s ease"}}>
@@ -16192,21 +16495,23 @@ export default function App(){
                   it was redundant (Vecka shows the dates in the pill row,
                   every other tool doesn't need a date at all). The home
                   header has its own dedicated date display below. */}
-              {isEd ? (screen==="home" ? t.schedule : navItems.find(n=>n.key===screen)?.label || "") : ""}
+              {isEd ? "" : ""}
             </div>
             <div style={{fontFamily:G.serif,fontWeight:isDark()?600:500,fontSize:isEd?(isDark()?18:20):((screen==="home"||screen==="week")?(isDark()?23:26):(isDark()?20:22)),color:tk().inkSoft,lineHeight:1.05,letterSpacing:-.5,display:"flex",alignItems:"baseline",gap:10,textTransform:"capitalize",transition:"font-size .3s ease"}}>
-              {isEd ? (
-                <>
-                  <span style={{textTransform:"none",fontWeight:isDark()?500:500,color:tk().ink2}}>{lang==="sv"?"Redigerar":"Editing"}</span>
-                  <span style={{
-                    width:6,height:6,borderRadius:"50%",
-                    background:`${effS.h}`,
-                    opacity:0.5,
-                    flexShrink:0,
-                    alignSelf:"center",
-                  }}/>
-                </>
-              ) : (
+              {isEd ? (()=>{
+                const toolName=screen==="home"?t.schedule:(navItems.find(n=>n.key===screen)?.label||"");
+                const editWord=lang==="sv"?"Redigera":"Edit";
+                // "Redigera • Tala" — the chosen header style: the action word
+                // de-emphasised, a small brand-coloured pip, then the tool name
+                // as the hero in the heading weight.
+                return(
+                  <div style={{display:"flex",alignItems:"baseline",gap:10}}>
+                    <span style={{textTransform:"none",fontWeight:500,color:tk().ink2}}>{editWord}</span>
+                    <span style={{width:6,height:6,borderRadius:"50%",background:`${effS.h}`,opacity:0.55,flexShrink:0,alignSelf:"center"}}/>
+                    <span style={{textTransform:"none",fontWeight:isDark()?600:700,color:tk().inkSoft}}>{toolName}</span>
+                  </div>
+                );
+              })() : (
                 screen==="home" ? (
                   <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start"}}>
                     <div style={{fontFamily:G.font,fontWeight:isDark()?600:600,fontSize:isDark()?12:15.5,letterSpacing:isDark()?.8:.1,textTransform:isDark()?"uppercase":"none",display:"flex",alignItems:"center",gap:0}}>
@@ -16267,7 +16572,7 @@ export default function App(){
           intermediate tone during the brief moment when the screen wrapper
           above is still fading in. Instant switch = always the correct color
           underneath. */}
-      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",background:isDark()?"transparent":((!isEd&&(screen==="home"||screen==="week"))?(()=>{const _b=skyAt(now.getHours()+now.getMinutes()/60).hill;const r=Math.round(_b[0]),g=Math.round(_b[1]),bl=Math.round(_b[2]);return `linear-gradient(180deg, rgba(${r},${g},${bl},1) 0%, rgba(${r},${g},${bl},0.55) 15%, rgba(${r},${g},${bl},0) 42%)`;})():"transparent"),transition:"background .5s ease"}}>
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative",background:isDark()?"transparent":((!isEd&&screen==="home")?(()=>{const _b=skyAt(now.getHours()+now.getMinutes()/60).hill;const r=Math.round(_b[0]),g=Math.round(_b[1]),bl=Math.round(_b[2]);return `linear-gradient(180deg, rgba(${r},${g},${bl},1) 0%, rgba(${r},${g},${bl},0.55) 15%, rgba(${r},${g},${bl},0) 42%)`;})():"transparent"),transition:"background .5s ease"}}>
         {/* No body-top wash on home: header and schedule share one continuous
             white surface (transparent over the white page wrapper), so any tint
             here would re-introduce a faint tone-line at the boundary. */}
@@ -16276,7 +16581,7 @@ export default function App(){
             schedule's scroll handler (writes transform/opacity to tabBarRef) —
             no React state, no re-render, no reflow, so it's perfectly smooth.
             Otherwise it's a normal always-visible in-flow bar. */}
-        {(()=>{
+        {!(screen==="week"&&!isEd&&!isDark())&&(()=>{
           const collapsible = screen==="home" && !isEd && cfg.schedView==="both";
           return(
           <div ref={collapsible?tabBarRef:null} style={collapsible?{
@@ -16288,46 +16593,38 @@ export default function App(){
             flexShrink:0,padding:isEd?"14px 22px 16px":"6px 22px 12px",position:"relative",zIndex:5,
           }}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <div style={{display:"flex",gap:4,flex:1,
-            background:collapsible
-              ?(isDark()?"rgba(22,19,34,0.92)":"rgba(255,255,255,0.92)")
-              :(isDark()?"rgba(255,255,255,0.05)":(screen==="home"?`linear-gradient(180deg, rgba(255,255,255,0.50), ${effS.h}1A)`:"#FFFFFF")),
-            borderRadius:14,padding:4,
-            border:isDark()?"1px solid rgba(255,255,255,0.08)":`1px solid ${effS.h}22`,
-            backdropFilter:isDark()?"blur(14px) saturate(1.2)":"none",
-            WebkitBackdropFilter:isDark()?"blur(14px) saturate(1.2)":"none",
-            boxShadow:collapsible
-              ?(isDark()?"0 6px 18px -8px rgba(0,0,0,0.6)":"0 6px 18px -10px rgba(31,27,46,0.25)")
-              :(isDark()?"inset 0 1px 2px rgba(0,0,0,0.3)":`0 4px 14px -8px ${effS.deep}33, inset 0 1px 0 rgba(255,255,255,0.9)`),
-            transition:"background .4s ease, box-shadow .4s ease"}}>
-            {screen==="home"&&!isEd&&cfg.schedView!=="card"&&<TabB active={effView==="list"} onClick={()=>setView("list")} color={effS.h} deep={effS.deep}>{t.list}</TabB>}
-            {screen==="home"&&!isEd&&cfg.schedView!=="list"&&<TabB active={effView==="card"} onClick={()=>setView("card")} color={effS.h} deep={effS.deep}>{t.card}</TabB>}
-            {/* Screen label on non-home screens — shows current tool when NOT editing.
-                In dark mode the label uses a lifted pastel of the screen
-                accent so it stays readable even when the user picks a very
-                dark colour (navy, deep purple, etc.). A floor luminance check
-                via shadeHex ensures contrast against the dark surface. */}
-            {screen!=="home"&&!isEd&&(
-              <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:isDark()?shadeHex(effS.h,0.55):effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.2}}>
-                <span style={{width:6,height:6,borderRadius:"50%",background:isDark()?shadeHex(effS.h,0.55):effS.h,boxShadow:`0 0 6px ${isDark()?shadeHex(effS.h,0.55):effS.h}88`}}/>
-                {navItems.find(n=>n.key===screen)?.label}
-              </div>
-            )}
-            {/* In edit mode — show clear context "Du redigerar:" label */}
-            {isEd&&(
-              <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:isDark()?shadeHex(effS.h,0.55):effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.2,minWidth:0}}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,opacity:0.7}}>
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                  {lang==="sv"?"Du redigerar":"Editing"}
-                </span>
-              </div>
-            )}
-            {/* Redigera / Stäng tab — available on all screens, not just home */}
-            <TabB active={isEd} gold={isEd} onClick={()=>setIsEd(e=>!e)} color={effS.h} deep={effS.deep} flex={isEd?1:1}>{isEd?t.editorClose:t.editorOpen}</TabB>
-          </div>
+          {(()=>{
+            // Build the segmented row as a sliding-pill control. Segments vary by
+            // context; the single pill glides to whichever segment is active.
+            const segments=[];
+            let leadingLabel=null;
+            if(screen==="home"&&!isEd){
+              if(cfg.schedView!=="card") segments.push({key:"list",label:t.list,active:effView==="list"&&!isEd,onClick:()=>setView("list")});
+              if(cfg.schedView!=="list") segments.push({key:"card",label:t.card,active:effView==="card"&&!isEd,onClick:()=>setView("card")});
+            }
+            if(screen!=="home"&&!isEd){
+              leadingLabel=(
+                <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:isDark()?shadeHex(effS.h,0.55):effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.2,position:"relative",zIndex:2}}>
+                  <span style={{width:6,height:6,borderRadius:"50%",background:isDark()?shadeHex(effS.h,0.55):effS.h,boxShadow:`0 0 6px ${isDark()?shadeHex(effS.h,0.55):effS.h}88`}}/>
+                  {navItems.find(n=>n.key===screen)?.label}
+                </div>
+              );
+            }
+            if(isEd){
+              leadingLabel=(
+                <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:isDark()?shadeHex(effS.h,0.55):effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.2,minWidth:0,position:"relative",zIndex:2}}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,opacity:0.7}}>
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                  <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lang==="sv"?"Du redigerar":"Editing"}</span>
+                </div>
+              );
+            }
+            // Redigera / Stäng — present on all screens. It's the gold pill when editing.
+            segments.push({key:"edit",label:isEd?t.editorClose:t.editorOpen,active:isEd,onClick:()=>setIsEd(e=>!e),flex:1});
+            return <SlideTabRow segments={segments} leadingLabel={leadingLabel} goldKey="edit" color={effS.h} deep={effS.deep} floating={collapsible} onSky={screen==="home"&&!isEd&&effView!=="card"}/>;
+          })()}
           </div>
           </div>
           );
@@ -16431,7 +16728,7 @@ export default function App(){
             )}
           </div>
         )}
-        {screen==="week"&&<WeekScreen acts={acts} dailyState={dailyState} isEd={isEd} t={t} lang={lang} now={now} cfg={cfg} onTap={openDetail} onEdit={item=>{setEditAct(item);setShowEd(true);}} onAdd={()=>{setEditAct(null);setShowEd(true);}} headerTapCount={headerTapCount}/>}
+        {screen==="week"&&<WeekScreen acts={acts} dailyState={dailyState} isEd={isEd} setIsEd={setIsEd} effS={effS} t={t} lang={lang} now={now} cfg={cfg} onTap={openDetail} onEdit={item=>{setEditAct(item);setShowEd(true);}} onAdd={()=>{setEditAct(null);setShowEd(true);}} headerTapCount={headerTapCount} setHeaderTapCount={setHeaderTapCount}/>}
         {screen==="timer"&&<TimerScreen t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} lang={lang} onLaunchTimer={launchTimer} onColorChange={setLiveTimerColor}/>}
         {screen==="stories"&&<StoryScreen lang={lang} t={t} isEditor={isEd} stories={stories} setStories={setStories} onOpenStory={setStoryViewer} onOpenEditor={setStoryEditor}/>}
         {screen==="emotion"&&<EmotionScreen lang={lang} t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} onInputFocusChange={setInputFocused} onOpenEmoEditor={setEmoEditor}/>}
@@ -16492,7 +16789,12 @@ export default function App(){
           <button onClick={()=>{setEditAct(null);setShowEd(true);}} className="lt-press-soft" style={{
             width:"100%",padding:"15px 0",borderRadius:18,
             border:`1px solid ${effS.h}${isDark()?"3A":"40"}`,
-            background:isDark()?`linear-gradient(180deg, ${effS.h}14 0%, rgba(255,255,255,0.04) 100%)`:`linear-gradient(180deg, #FFFFFF 0%, ${effS.hl}28 100%)`,
+            // Light mode: a solid white→soft-tint gradient. The bottom stop was
+            // previously `${effS.hl}28` (~16% opacity), which let the schedule
+            // behind the floating button show through and read as transparent;
+            // using the opaque tint keeps the gentle gradient look but makes the
+            // button a solid surface.
+            background:isDark()?`linear-gradient(180deg, ${effS.h}14 0%, rgba(255,255,255,0.04) 100%)`:`linear-gradient(180deg, #FFFFFF 0%, ${effS.hl} 100%)`,
             backdropFilter:isDark()?"blur(14px) saturate(1.2)":"none",WebkitBackdropFilter:isDark()?"blur(14px) saturate(1.2)":"none",
             color:isDark()?shadeHex(effS.h,0.45):effS.deep,
             fontFamily:G.font,fontWeight:600,fontSize:15,letterSpacing:.2,
@@ -16606,7 +16908,7 @@ export default function App(){
         {/* Top hairline — colored, fades from sides, matches header bottom hairline vocabulary */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:`linear-gradient(90deg, transparent 0%, ${effS.h}25 50%, transparent 100%)`,pointerEvents:"none",transition:"background .5s ease"}}/>
         {navItems.map(({key,icon,label,S})=>{const on=screen===key;const pastel=NAV_PASTEL[key]||S.h;const dkNav=isDark();return(
-          <button key={key} onClick={()=>{setScreen(key);}} className="lt-press" style={{flex:navItems.length>7?"0 0 auto":"1",minWidth:navItems.length>7?64:0,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"7px 2px 3px",position:"relative",zIndex:1}}>
+          <button key={key} onClick={()=>{if(screen!==key)fx.navHaptic();setScreen(key);}} className="lt-press" style={{flex:navItems.length>7?"0 0 auto":"1",minWidth:navItems.length>7?64:0,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"7px 2px 3px",position:"relative",zIndex:1}}>
             {/* Aurora glow behind active tab — breathes gently. Same vocabulary
                 as the header's aurora, scaled down for the nav. */}
             {on&&(
