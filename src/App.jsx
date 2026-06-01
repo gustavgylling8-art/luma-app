@@ -119,20 +119,25 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       if (parsed && parsed.theme === "dark") storedTheme = "dark";
     }
   } catch (_) {}
-  const manifestBg = storedTheme === "dark" ? "#0E0E10" : "#FBFDFE";
+  // The SPLASH is always light cream (#FBFDFE). The pre-React background MUST
+  // match the splash, not the app theme — otherwise, in dark mode, the edges
+  // get painted #0E0E10 between the launch image and the (light) splash, which
+  // reads as a light→dark→light flash before the splash appears. So we paint
+  // the boot surface light here for EVERYONE; React re-paints to the real dark
+  // base only after it mounts, by which time the light splash is already on
+  // top and about to hand off — so the dark base is never seen bare.
+  const bootBg = "#FBFDFE";
 
   // PAINT THE EDGES IMMEDIATELY — before React mounts.
   // Why: the safe-area zones (notch, home-indicator, and the slim 1–2px strip
   // iOS reserves on the left/right edges of devices with rounded corners) are
-  // painted from `html`/`body` background, NOT from the React tree. If we wait
-  // for React's first commit, those edges flash the browser default (white)
-  // for a few frames in dark mode → reads as "bright frame on the sides of
-  // the screen". Setting html.style.background here ensures the very first
-  // pixel iOS paints already matches the theme.
+  // painted from `html`/`body` background, NOT from the React tree. We paint
+  // them the SPLASH colour (light cream) so the very first pixel iOS paints
+  // already matches the splash — no flash of any other colour, in any theme.
   try {
-    document.documentElement.style.background = manifestBg;
+    document.documentElement.style.background = bootBg;
     document.documentElement.classList.add(storedTheme === "dark" ? "lt-theme-dark" : "lt-theme-light");
-    if (document.body) document.body.style.background = manifestBg;
+    if (document.body) document.body.style.background = bootBg;
   } catch (_) {}
   // PRE-REACT BOOT OVERLAY — paints the Luma sun the very moment our JS runs.
   // Why: iOS caches the launch splash PNG aggressively. Even after we update
@@ -257,7 +262,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     name: "Luma", short_name: "Luma",
     description: "A schedule. A rhythm. A safety.",
     start_url: ".", scope: ".", display: "standalone", orientation: "any",
-    background_color: manifestBg, theme_color: manifestBg,
+    background_color: "#FBFDFE", theme_color: "#FBFDFE",
     icons: [
       { src: iconUrl, sizes: "192x192", type: "image/svg+xml", purpose: "any" },
       { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "any" },
@@ -15130,6 +15135,15 @@ export default function App(){
     let sb=document.head.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
     if(!sb){sb=document.createElement("meta");sb.setAttribute("name","apple-mobile-web-app-status-bar-style");document.head.appendChild(sb);}
     sb.setAttribute("content",APP_THEME==="dark"?"black":"default");
+    // Now that React has mounted (the light splash has handed off), repaint the
+    // html/body edges to the REAL theme base. During boot these were held light
+    // to match the always-light splash; switching them here — after mount —
+    // gives dark mode its correct dark safe-area edges with no boot flash.
+    var realBg = APP_THEME==="dark" ? "#0E0E10" : "#FBFDFE";
+    try {
+      document.documentElement.style.background = realBg;
+      if (document.body) document.body.style.background = realBg;
+    } catch (_) {}
   },[cfg.theme]);
   const[resetKey,setResetKey]=useState(0);
   // Track the previously-rendered screen so the entrance fade only plays on a
