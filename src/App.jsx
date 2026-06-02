@@ -234,8 +234,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
         + '</g>'
         + '</svg>'
         + '</div>'
-        + '</div>'
-        + '<div style="position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;font-family:-apple-system,sans-serif;font-size:10px;font-weight:600;letter-spacing:1px;color:rgba(31,27,46,0.22)">v14</div>';
+        + '</div>';
       document.body.appendChild(pre);
       // ── Single, smooth hand-off ────────────────────────────────────────
       // The pre-boot splash is the ONE AND ONLY splash. It removes itself the
@@ -459,6 +458,17 @@ const G = {
   // pair with Inter (G.font) for body. Heading weights use 700–800 for presence.
   // Loaded via the Google Fonts <link> at the top of the file.
   serif:"'Plus Jakarta Sans','Nunito','Inter',system-ui,sans-serif",
+  // Motion tokens — the three curves the app already uses, named once so every
+  // future animation reaches for the same physics (and so we can tune motion
+  // app-wide from one place). enter = decelerate (things arriving), exit =
+  // accelerate (things leaving), spring = gentle overshoot (playful settles).
+  ease:{
+    enter:"cubic-bezier(0.22, 1, 0.36, 1)",
+    exit:"cubic-bezier(0.5, 0, 0.75, 0)",
+    spring:"cubic-bezier(0.34, 1.56, 0.64, 1)",
+    smooth:"cubic-bezier(0.32, 0.72, 0, 1)",
+  },
+  dur:{ fast:120, base:220, slow:420 },
 };
 
 /* ═══ Editor theme (ED) ═══
@@ -1239,6 +1249,7 @@ const clockLeft=(at,m)=>{const n=new Date(),e=(n.getHours()*60+n.getMinutes()-hm
 
 function chime(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[[523,0],[659,.2],[784,.38],[1047,.56]].forEach(([f,d])=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;o.type="sine";g.gain.setValueAtTime(0,ctx.currentTime+d);g.gain.linearRampToValueAtTime(.13,ctx.currentTime+d+.07);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d+.7);o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+.8);});}catch(_){}try{if(navigator.vibrate)navigator.vibrate([18,60,24,60,30]);}catch(_){}}
 
+
 /* ═══ Sound & haptics ═══════════════════════════════════════════════════════
    Final policy (always on — not user-configurable):
      • SOUND  — only when a timer finishes (chime) and on activity notifications.
@@ -1254,7 +1265,11 @@ let _ac=null;
 function _ctx(){try{_ac=_ac||new(window.AudioContext||window.webkitAudioContext)();if(_ac.state==="suspended")_ac.resume();return _ac;}catch(_){return null;}}
 // Best-effort haptic. Silently no-ops where unsupported (iOS). Accepts a number
 // or a [vibrate,pause,vibrate,…] pattern for richer, premium-feeling cues.
-function _buzz(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(_){}}
+// A single global switch (setHapticsEnabled) can mute every fx.* cue at once —
+// e.g. for a settings toggle or to honour a user's reduced-feedback preference.
+let _hapticsOn=true;
+function setHapticsEnabled(on){ _hapticsOn=!!on; }
+function _buzz(ms){if(!_hapticsOn)return;try{if(navigator.vibrate)navigator.vibrate(ms);}catch(_){}}
 // Public feedback events. Per the policy above these are HAPTIC-ONLY (no tone);
 // sound lives in chime() for timer-finish and in the notification path.
 // Each pattern is tuned to feel intentional and refined rather than buzzy.
@@ -1619,7 +1634,7 @@ function LumaIcon({size=32,color="#1E1B27",style={}}){
    vector paths (no font dependency): thick rounded strokes, the asymmetric u
    with a curved-foot l, single-storey a, and the warm sun centred between the
    u's stems. `sun` toggles the pearl. This is the approved new logo. */
-function LumaVector({size=42,color="#1F1B2E",sun=true,style={}}){
+function LumaVector({size=42,color="#1F1B2E",sun=true,pearlScale=1,style={}}){
   const VBW=1326, VBH=545;            // viewBox "-30 115 1326 545"
   const W=size*(VBW/VBH);
   const idRef=useRef(null);
@@ -1641,19 +1656,23 @@ function LumaVector({size=42,color="#1F1B2E",sun=true,style={}}){
           <stop offset="100%" stopColor="#FFB888" stopOpacity="0"/>
         </radialGradient>
       </defs>
-      <g transform="translate(0 570) scale(1 0.9) translate(0 -570)" fill="none" stroke={color} strokeWidth="74" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M60 205 L60 500 A70 70 0 0 0 130 570"/>
-        <path d="M236 344 L236 475 A95 95 0 0 0 426 475 L426 408"/>
-        <path d="M546 570 L546 426 A82 82 0 0 1 710 426 A82 82 0 0 1 874 426 L874 570"/>
-        <path d="M710 426 L710 570"/>
-        <path d="M1093 344 A113 113 0 1 1 1093 570 A113 113 0 1 1 1093 344 Z"/>
-        <path d="M1206 344 L1206 570"/>
+      <g transform="translate(0 570) scale(1 0.9) translate(0 -570)" fill="none" stroke={color} strokeWidth="58" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M60 260 L60 500 A70 70 0 0 0 130 570"/>
+        <path transform="translate(-16 0)" d="M236 385 L236 475 A95 95 0 0 0 426 475 L426 435"/>
+        <g transform="translate(-42 0)"><g transform="translate(710 0) scale(0.9 1) translate(-710 0)">
+          <path d="M546 570 L546 466 A82 82 0 0 1 710 466 A82 82 0 0 1 874 466 L874 570"/>
+          <path d="M710 466 L710 570"/>
+        </g></g>
+        <g transform="translate(-100 0)"><g transform="translate(1150 570) scale(0.86) translate(-1150 -570)"><g transform="translate(1150 0) scale(0.9 1) translate(-1150 0)">
+          <path d="M1093 344 A113 113 0 1 1 1093 570 A113 113 0 1 1 1093 344 Z"/>
+          <path d="M1206 344 L1206 570"/>
+        </g></g></g>
       </g>
       {sun&&(
-        <g>
-          <circle cx="331" cy="491" r="112" fill={`url(#${uid}-glow)`}/>
-          <circle cx="331" cy="491" r="41" fill={`url(#${uid}-sun)`}/>
-          <ellipse cx="316" cy="475" rx="12" ry="9" fill="#FFFFFF" opacity="0.5"/>
+        <g transform={`translate(315 478) scale(${pearlScale}) translate(-315 -478)`}>
+          <circle cx="315" cy="478" r="112" fill={`url(#${uid}-glow)`}/>
+          <circle cx="315" cy="478" r="41" fill={`url(#${uid}-sun)`}/>
+          <ellipse cx="300" cy="462" rx="12" ry="9" fill="#FFFFFF" opacity="0.5"/>
         </g>
       )}
     </svg>
@@ -1675,9 +1694,9 @@ function LumaVector({size=42,color="#1F1B2E",sun=true,style={}}){
      • showDot            → clearer alias for the same thing (false = plain word)
    Tunables: weight (700), pearlR (radius ÷ font-size, 0.07),
              pearlCY (pearl centre height above baseline ÷ font-size, 0.30). */
-function LumaWordmark({size=42,color="#1F1B2E",showSun=true,showDot,style={}}){
+function LumaWordmark({size=42,color="#1F1B2E",showSun=true,showDot,pearlScale=1,style={}}){
   const sun=(showDot!==undefined?showDot:showSun);
-  return <LumaVector size={size} color={color} sun={sun} style={style}/>;
+  return <LumaVector size={size} color={color} sun={sun} pearlScale={pearlScale} style={style}/>;
 }
 
 /* ═══ Dynamic time-of-day SKY HEADER (home + week, light theme) ═══════════
@@ -1771,10 +1790,10 @@ function SkyHeader({now,lang,inFlow=false,sun=false}){
         <path d={hillPath(146,22,2.1)} fill={_skRgb(_skMix(sk.hill,[0,0,0],0.18))} opacity={0.55}/>
         <path d={hillPath(168,16,0.6)} fill={_skRgb(sk.hill)} opacity={1}/>
       </svg>
-      <div style={{position:"relative",width:"100%",display:"flex",alignItems:"baseline",justifyContent:"space-between",padding:"0 22px 16px",gap:14,zIndex:2}}>
-        <div style={{transform:inFlow?"translateY(-1px)":"translateY(5px)"}}><SkyWordmark size={30} sun={sun}/></div>
+      <div style={{position:"relative",width:"100%",display:"flex",alignItems:"flex-end",justifyContent:"space-between",padding:"0 22px 16px",gap:14,zIndex:2}}>
+        <div style={{alignSelf:"flex-end",transform:"translateY(3px)"}}><SkyWordmark size={34} sun={sun}/></div>
         {!inFlow&&(
-        <div style={{display:"flex",alignItems:"baseline",gap:7,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:7,transform:"translateY(4px)",filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
           <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{wd}</span>
           <span style={{width:4,height:4,borderRadius:"50%",background:"rgba(255,255,255,0.7)",flexShrink:0,alignSelf:"center"}}/>
           <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{dm}</span>
@@ -6044,7 +6063,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
 
         {/* ── PINNED HEADER ── */}
         <div style={{flexShrink:0,padding:"calc(env(safe-area-inset-top, 0px) + 12px) 22px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",background:"transparent",borderBottom:`1px solid ${isDark()?"rgba(255,255,255,0.07)":"rgba(31,27,46,0.06)"}`,gap:12}}>
-          <div style={{fontFamily:G.font,fontWeight:500,fontSize:13,color:tk().ink3,letterSpacing:.8,textTransform:"uppercase"}}>{t.settings}</div>
+          <div style={{fontFamily:G.serif,fontWeight:500,fontSize:13,color:tk().ink3,letterSpacing:.8,textTransform:"uppercase"}}>{t.settings}</div>
           <button onClick={save} aria-label={t.close} className="lt-press-soft" style={{width:34,height:34,padding:0,borderRadius:17,border:`1px solid ${isDark()?"rgba(255,255,255,0.14)":tk().border}`,background:isDark()?"rgba(255,255,255,0.08)":"linear-gradient(180deg, #FFFFFF 0%, rgba(31,27,46,0.03) 100%)",backdropFilter:isDark()?"blur(12px)":"none",WebkitBackdropFilter:isDark()?"blur(12px)":"none",color:isDark()?"#F4F1FA":tk().ink2,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.18)":"0 2px 6px rgba(31,27,46,0.05), inset 0 1px 0 rgba(255,255,255,0.7)"}}>
             <IconX size={13}/>
           </button>
@@ -6053,12 +6072,12 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
         {/* ── SCROLLABLE MIDDLE ── */}
         <div data-modal-scroll style={{flex:1,minHeight:0,overflowY:"auto",overflowX:"hidden",overscrollBehavior:"contain",overflowAnchor:"none",padding:"22px 22px 28px"}}>
         <div style={{fontFamily:G.serif,fontWeight:500,fontSize:28,color:tk().inkSoft,marginBottom:8,letterSpacing:-.5,lineHeight:1.05,animation:"setSectionIn 0.5s cubic-bezier(0.32, 0.72, 0, 1) both"}}>{t.settings}</div>
-        <div style={{fontFamily:G.font,fontWeight:400,fontSize:13,color:tk().ink2,marginBottom:24,lineHeight:1.45,animation:"setSectionIn 0.5s 0.05s cubic-bezier(0.32, 0.72, 0, 1) both"}}>{lang==="sv"?"Anpassa hur appen ser ut och fungerar.":"Customize how the app looks and works."}</div>
+        <div style={{fontFamily:G.serif,fontWeight:400,fontSize:13,color:tk().ink2,marginBottom:24,lineHeight:1.45,animation:"setSectionIn 0.5s 0.05s cubic-bezier(0.32, 0.72, 0, 1) both"}}>{lang==="sv"?"Anpassa hur appen ser ut och fungerar.":"Customize how the app looks and works."}</div>
 
         {/* ── Language toggle ── small row, no full Section */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,background:tk().white,borderRadius:16,padding:"14px 18px",marginBottom:18,border:`1px solid ${tk().border}`,boxShadow:"0 2px 6px rgba(31,27,46,0.04)",animation:"setSectionIn 0.5s 0.08s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
           <div style={{display:"flex",alignItems:"center",gap:11}}>
-            <div style={{width:32,height:32,borderRadius:10,flexShrink:0,background:`linear-gradient(140deg, ${SCREENS.home.h}1F, ${SCREENS.home.h}38)`,border:`1px solid ${SCREENS.home.h}40`,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.55), 0 2px 6px ${SCREENS.home.h}22`,display:"flex",alignItems:"center",justifyContent:"center",color:SCREENS.home.h,fontSize:13,fontFamily:G.font,fontWeight:700,letterSpacing:.5}}>Aa</div>
+            <div style={{width:32,height:32,borderRadius:10,flexShrink:0,background:`linear-gradient(140deg, ${SCREENS.home.h}1F, ${SCREENS.home.h}38)`,border:`1px solid ${SCREENS.home.h}40`,boxShadow:`inset 0 1px 0 rgba(255,255,255,0.55), 0 2px 6px ${SCREENS.home.h}22`,display:"flex",alignItems:"center",justifyContent:"center",color:SCREENS.home.h,fontSize:13,fontFamily:G.serif,fontWeight:700,letterSpacing:.5}}>Aa</div>
             <div style={{fontFamily:G.serif,fontWeight:500,fontSize:15,color:tk().inkSoft,letterSpacing:-.1,lineHeight:1.1}}>{lang==="sv"?"Språk":"Language"}</div>
           </div>
           <div style={{display:"flex",gap:6,background:tk().cream,borderRadius:11,padding:3}}>
@@ -6070,7 +6089,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
                   border:"none",
                   background:on?(isDark()?"rgba(255,255,255,0.15)":tk().white):"transparent",
                   color:on?(isDark()?"#FFFFFF":SCREENS.home.deep):tk().ink2,
-                  fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",letterSpacing:.2,
+                  fontFamily:G.serif,fontWeight:600,fontSize:12,cursor:"pointer",letterSpacing:.2,
                   boxShadow:on?(isDark()?"inset 0 1px 0 rgba(255,255,255,0.3)":`0 1px 3px rgba(31,27,46,0.08)`):"none",
                   transition:"all .2s ease",
                 }}>{label}</button>
@@ -6097,7 +6116,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
                   padding:"7px 13px",borderRadius:9,border:"none",
                   background:on?(isDark()?"rgba(255,255,255,0.15)":tk().white):"transparent",
                   color:on?(isDark()?"#FFFFFF":"#6E5E9E"):tk().ink2,
-                  fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",letterSpacing:.2,
+                  fontFamily:G.serif,fontWeight:600,fontSize:12,cursor:"pointer",letterSpacing:.2,
                   boxShadow:on?(isDark()?"inset 0 1px 0 rgba(255,255,255,0.3)":`0 1px 3px rgba(31,27,46,0.08)`):"none",
                   transition:"all .2s ease",
                 }}>{label}</button>
@@ -6115,7 +6134,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
               </div>
               <div style={{minWidth:0}}>
                 <div style={{fontFamily:G.serif,fontWeight:500,fontSize:15,color:tk().inkSoft,letterSpacing:-.1,lineHeight:1.1}}>{lang==="sv"?"Påminnelser":"Reminders"}</div>
-                <div style={{fontFamily:G.font,fontWeight:400,fontSize:11.5,color:tk().ink3,marginTop:2,lineHeight:1.35}}>{lang==="sv"?"En notis när en aktivitet börjar.":"A notification when an activity starts."}</div>
+                <div style={{fontFamily:G.serif,fontWeight:400,fontSize:11.5,color:tk().ink3,marginTop:2,lineHeight:1.35}}>{lang==="sv"?"En notis när en aktivitet börjar.":"A notification when an activity starts."}</div>
               </div>
             </div>
             <button onClick={async()=>{
@@ -6144,11 +6163,11 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
         >
           <SLabel>{t.cardStyle}</SLabel>
           <div style={{display:"flex",gap:7,marginBottom:18}}>
-            {[["normal",t.styleNormal],["compact",t.styleCompact],["big",t.styleBig]].map(([k,lb])=><button key={k} onClick={()=>setCs(k)} style={{flex:1,padding:"12px 0",borderRadius:13,border:`1px solid ${cs===k?(isDark()?"rgba(255,255,255,0.22)":S.h):tk().border}`,background:cs===k?(isDark()?"rgba(255,255,255,0.13)":S.h):"transparent",color:cs===k?(isDark()?"#FFFFFF":"#fff"):tk().ink2,fontFamily:G.font,fontWeight:600,cursor:"pointer",fontSize:13,transition:"all .25s ease",boxShadow:cs===k&&isDark()?"inset 0 1px 0 rgba(255,255,255,0.25)":"none"}}>{lb}</button>)}
+            {[["normal",t.styleNormal],["compact",t.styleCompact],["big",t.styleBig]].map(([k,lb])=><button key={k} onClick={()=>setCs(k)} style={{flex:1,padding:"12px 0",borderRadius:13,border:`1px solid ${cs===k?(isDark()?"rgba(255,255,255,0.22)":S.h):tk().border}`,background:cs===k?(isDark()?"rgba(255,255,255,0.13)":S.h):"transparent",color:cs===k?(isDark()?"#FFFFFF":"#fff"):tk().ink2,fontFamily:G.serif,fontWeight:600,cursor:"pointer",fontSize:13,transition:"all .25s ease",boxShadow:cs===k&&isDark()?"inset 0 1px 0 rgba(255,255,255,0.25)":"none"}}>{lb}</button>)}
           </div>
           <SLabel>{t.schedView}</SLabel>
           <div style={{display:"flex",gap:7}}>
-            {[["both",t.viewBoth],["list",t.viewList],["card",t.viewCard]].map(([k,lb])=><button key={k} onClick={()=>setSv(k)} style={{flex:1,padding:"10px 4px",borderRadius:13,border:`1px solid ${sv===k?(isDark()?"rgba(255,255,255,0.22)":S.h):tk().border}`,background:sv===k?(isDark()?"rgba(255,255,255,0.13)":S.h):"transparent",color:sv===k?(isDark()?"#FFFFFF":"#fff"):tk().ink2,fontFamily:G.font,fontWeight:600,cursor:"pointer",fontSize:11,transition:"all .25s ease",boxShadow:sv===k&&isDark()?"inset 0 1px 0 rgba(255,255,255,0.25)":"none"}}>{lb}</button>)}
+            {[["both",t.viewBoth],["list",t.viewList],["card",t.viewCard]].map(([k,lb])=><button key={k} onClick={()=>setSv(k)} style={{flex:1,padding:"10px 4px",borderRadius:13,border:`1px solid ${sv===k?(isDark()?"rgba(255,255,255,0.22)":S.h):tk().border}`,background:sv===k?(isDark()?"rgba(255,255,255,0.13)":S.h):"transparent",color:sv===k?(isDark()?"#FFFFFF":"#fff"):tk().ink2,fontFamily:G.serif,fontWeight:600,cursor:"pointer",fontSize:11,transition:"all .25s ease",boxShadow:sv===k&&isDark()?"inset 0 1px 0 rgba(255,255,255,0.25)":"none"}}>{lb}</button>)}
           </div>
         </Section>
 
@@ -6167,8 +6186,8 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
               <Toggle on={banner} onChange={()=>setBanner(b=>!b)} color={S.h}/>
             </div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontFamily:G.font,fontWeight:600,fontSize:TYPO.body.size,color:tk().ink,letterSpacing:TYPO.body.tracking,opacity:banner?1:0.55,transition:"opacity .3s ease"}}>{t.bannerLabel}</div>
-              <div style={{fontFamily:G.font,fontWeight:TYPO.small.weight,fontSize:TYPO.small.size,color:tk().ink2,marginTop:SPACE.xs/2,lineHeight:1.45,letterSpacing:TYPO.small.tracking,opacity:banner?1:0.65,transition:"opacity .3s ease"}}>{t.bannerHint}</div>
+              <div style={{fontFamily:G.serif,fontWeight:600,fontSize:TYPO.body.size,color:tk().ink,letterSpacing:TYPO.body.tracking,opacity:banner?1:0.55,transition:"opacity .3s ease"}}>{t.bannerLabel}</div>
+              <div style={{fontFamily:G.serif,fontWeight:TYPO.small.weight,fontSize:TYPO.small.size,color:tk().ink2,marginTop:SPACE.xs/2,lineHeight:1.45,letterSpacing:TYPO.small.tracking,opacity:banner?1:0.65,transition:"opacity .3s ease"}}>{t.bannerHint}</div>
             </div>
           </div>
 
@@ -6178,11 +6197,11 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
               <Toggle on={sig} onChange={()=>setSig(s=>!s)} color={sigC}/>
             </div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontFamily:G.font,fontWeight:600,fontSize:TYPO.body.size,color:tk().ink,letterSpacing:TYPO.body.tracking,opacity:sig?1:0.55,transition:"opacity .3s ease"}}>{t.sigvardOn}</div>
-              <div style={{fontFamily:G.font,fontWeight:TYPO.small.weight,fontSize:TYPO.small.size,color:tk().ink2,marginTop:SPACE.xs/2,lineHeight:1.45,letterSpacing:TYPO.small.tracking,opacity:sig?1:0.65,transition:"opacity .3s ease"}}>{t.sigvardColorHint}</div>
+              <div style={{fontFamily:G.serif,fontWeight:600,fontSize:TYPO.body.size,color:tk().ink,letterSpacing:TYPO.body.tracking,opacity:sig?1:0.55,transition:"opacity .3s ease"}}>{t.sigvardOn}</div>
+              <div style={{fontFamily:G.serif,fontWeight:TYPO.small.weight,fontSize:TYPO.small.size,color:tk().ink2,marginTop:SPACE.xs/2,lineHeight:1.45,letterSpacing:TYPO.small.tracking,opacity:sig?1:0.65,transition:"opacity .3s ease"}}>{t.sigvardColorHint}</div>
               {sig&&(
                 <div style={{marginTop:SPACE.md,padding:SPACE.md,background:tk().white,borderRadius:SPACE.sm+2,border:`1px solid ${S.hl}`,animation:"adSection 0.35s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
-                  <div style={{fontFamily:G.font,fontWeight:TYPO.caption.weight,fontSize:TYPO.caption.size,color:tk().ink3,letterSpacing:TYPO.caption.tracking,textTransform:"uppercase",marginBottom:SPACE.sm}}>{t.sigvardColor}</div>
+                  <div style={{fontFamily:G.serif,fontWeight:TYPO.caption.weight,fontSize:TYPO.caption.size,color:tk().ink3,letterSpacing:TYPO.caption.tracking,textTransform:"uppercase",marginBottom:SPACE.sm}}>{t.sigvardColor}</div>
                   <div style={{display:"flex",flexWrap:"wrap",gap:SPACE.sm,alignItems:"center"}}>
                     {/* AUTO — white-pulse mode, no fixed color identity */}
                     <button onClick={()=>setSigC("auto")} className="lt-press" aria-label="Auto" style={{
@@ -6194,7 +6213,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
                         :`0 2px 8px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.5)`,
                       cursor:"pointer",
                       display:"flex",alignItems:"center",justifyContent:"center",
-                      fontFamily:G.font,fontSize:8,fontWeight:700,color:tk().ink2,letterSpacing:.5,
+                      fontFamily:G.serif,fontSize:8,fontWeight:700,color:tk().ink2,letterSpacing:.5,
                       transition:"transform .2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .2s ease",
                       transform:sigC==="auto"?"scale(1.06)":"scale(1)",
                       animation:sigC==="auto"?"sigAutoPulse 2.2s ease-in-out infinite":"none",
@@ -6228,11 +6247,11 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
               <Toggle on={nowLn} onChange={()=>setNowLn(n=>!n)} color={nowLnC||sigC}/>
             </div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontFamily:G.font,fontWeight:600,fontSize:TYPO.body.size,color:tk().ink,letterSpacing:TYPO.body.tracking,opacity:nowLn?1:0.55,transition:"opacity .3s ease"}}>{t.nowLineLabel}</div>
-              <div style={{fontFamily:G.font,fontWeight:TYPO.small.weight,fontSize:TYPO.small.size,color:tk().ink2,marginTop:SPACE.xs/2,lineHeight:1.45,letterSpacing:TYPO.small.tracking,opacity:nowLn?1:0.65,transition:"opacity .3s ease"}}>{t.nowLineHint}</div>
+              <div style={{fontFamily:G.serif,fontWeight:600,fontSize:TYPO.body.size,color:tk().ink,letterSpacing:TYPO.body.tracking,opacity:nowLn?1:0.55,transition:"opacity .3s ease"}}>{t.nowLineLabel}</div>
+              <div style={{fontFamily:G.serif,fontWeight:TYPO.small.weight,fontSize:TYPO.small.size,color:tk().ink2,marginTop:SPACE.xs/2,lineHeight:1.45,letterSpacing:TYPO.small.tracking,opacity:nowLn?1:0.65,transition:"opacity .3s ease"}}>{t.nowLineHint}</div>
               {nowLn&&(
                 <div style={{marginTop:SPACE.md,padding:SPACE.md,background:tk().white,borderRadius:SPACE.sm+2,border:`1px solid ${S.hl}`,animation:"adSection 0.35s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
-                  <div style={{fontFamily:G.font,fontWeight:TYPO.caption.weight,fontSize:TYPO.caption.size,color:tk().ink3,letterSpacing:TYPO.caption.tracking,textTransform:"uppercase",marginBottom:SPACE.sm}}>{t.nowLineColor}</div>
+                  <div style={{fontFamily:G.serif,fontWeight:TYPO.caption.weight,fontSize:TYPO.caption.size,color:tk().ink3,letterSpacing:TYPO.caption.tracking,textTransform:"uppercase",marginBottom:SPACE.sm}}>{t.nowLineColor}</div>
                   <div style={{display:"flex",flexWrap:"wrap",gap:SPACE.sm,alignItems:"center"}}>
                     {/* "Same as lamp" — empty value, follows sigvardColor */}
                     <button onClick={()=>setNowLnC("")} className="lt-press" aria-label={t.nowLineSameAsSig} style={{
@@ -6244,7 +6263,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
                         :`0 2px 8px rgba(31,27,46,0.06)`,
                       cursor:"pointer",
                       display:"flex",alignItems:"center",justifyContent:"center",
-                      fontFamily:G.font,fontSize:7.5,fontWeight:700,color:tk().ink2,letterSpacing:.3,
+                      fontFamily:G.serif,fontSize:7.5,fontWeight:700,color:tk().ink2,letterSpacing:.3,
                       transition:"transform .2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .2s ease",
                       transform:nowLnC===""?"scale(1.06)":"scale(1)",
                     }}>{lang==="sv"?"LAMP":"LAMP"}</button>
@@ -6258,7 +6277,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
                         :`0 2px 8px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.5)`,
                       cursor:"pointer",
                       display:"flex",alignItems:"center",justifyContent:"center",
-                      fontFamily:G.font,fontSize:8,fontWeight:700,color:tk().ink2,letterSpacing:.5,
+                      fontFamily:G.serif,fontSize:8,fontWeight:700,color:tk().ink2,letterSpacing:.5,
                       transition:"transform .2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .2s ease",
                       transform:nowLnC==="auto"?"scale(1.06)":"scale(1)",
                       animation:nowLnC==="auto"?"sigAutoPulse 2.2s ease-in-out infinite":"none",
@@ -6281,10 +6300,10 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
                     })}
                   </div>
                   {nowLnC===""&&(
-                    <div style={{fontFamily:G.font,fontSize:TYPO.caption.size,color:tk().ink3,marginTop:SPACE.sm,letterSpacing:TYPO.caption.tracking,fontStyle:"italic"}}>{t.nowLineSameAsSig}</div>
+                    <div style={{fontFamily:G.serif,fontSize:TYPO.caption.size,color:tk().ink3,marginTop:SPACE.sm,letterSpacing:TYPO.caption.tracking,fontStyle:"italic"}}>{t.nowLineSameAsSig}</div>
                   )}
                   {nowLnC==="auto"&&(
-                    <div style={{fontFamily:G.font,fontSize:TYPO.caption.size,color:tk().ink3,marginTop:SPACE.sm,letterSpacing:TYPO.caption.tracking,fontStyle:"italic"}}>{lang==="sv"?"Vit linje med mjuk pulsering":"White line with soft pulsing"}</div>
+                    <div style={{fontFamily:G.serif,fontSize:TYPO.caption.size,color:tk().ink3,marginTop:SPACE.sm,letterSpacing:TYPO.caption.tracking,fontStyle:"italic"}}>{lang==="sv"?"Vit linje med mjuk pulsering":"White line with soft pulsing"}</div>
                   )}
                 </div>
               )}
@@ -6309,8 +6328,8 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
                 <div key={jsDay} style={{borderBottom:idx===6?"none":`1px solid ${tk().border}`,background:isOpen?tk().white:"transparent",transition:"background .3s ease"}}>
                   <div onClick={()=>setExpDay(isOpen?null:jsDay)} className="lt-press-soft" style={{display:"flex",alignItems:"center",gap:14,padding:"12px 14px",cursor:"pointer"}}>
                     <div style={{width:28,height:28,borderRadius:14,background:color,border:`1px solid ${color==="#FFFFFF"||color==="#F5F2EE"?"rgba(31,27,46,0.18)":"rgba(31,27,46,0.08)"}`,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.5)",flexShrink:0,transition:"transform .25s cubic-bezier(0.34, 1.56, 0.64, 1)",transform:isOpen?"scale(1.08)":"scale(1)"}}/>
-                    <span style={{flex:1,fontFamily:G.font,fontWeight:500,fontSize:14,color:tk().ink,letterSpacing:.1}}>{dayLabel(jsDay)}</span>
-                    <span style={{fontFamily:G.font,fontSize:11,color:"#7C7691",transition:"transform .3s ease",transform:isOpen?"rotate(180deg)":"rotate(0deg)",display:"inline-block"}}>⌄</span>
+                    <span style={{flex:1,fontFamily:G.serif,fontWeight:500,fontSize:14,color:tk().ink,letterSpacing:.1}}>{dayLabel(jsDay)}</span>
+                    <span style={{fontFamily:G.serif,fontSize:11,color:"#7C7691",transition:"transform .3s ease",transform:isOpen?"rotate(180deg)":"rotate(0deg)",display:"inline-block"}}>⌄</span>
                   </div>
                   {isOpen&&(
                     <div style={{padding:"4px 14px 14px",animation:"adSection 0.35s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
@@ -6329,7 +6348,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
               );
             })}
           </div>
-          <button onClick={()=>{setWc([...SIGVARD0]);setExpDay(null);}} className="lt-press" style={{marginTop:12,padding:"8px 14px",borderRadius:11,border:`1px solid ${tk().border}`,background:"transparent",color:tk().ink2,fontFamily:G.font,fontWeight:500,fontSize:12,cursor:"pointer",letterSpacing:.2}}>{t.resetColors}</button>
+          <button onClick={()=>{setWc([...SIGVARD0]);setExpDay(null);}} className="lt-press" style={{marginTop:12,padding:"8px 14px",borderRadius:11,border:`1px solid ${tk().border}`,background:"transparent",color:tk().ink2,fontFamily:G.serif,fontWeight:500,fontSize:12,cursor:"pointer",letterSpacing:.2}}>{t.resetColors}</button>
         </Section>
         <Section
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L4 7 L4 17 L12 22 L20 17 L20 7 Z"/><path d="M12 12 L4 7 M12 12 L20 7 M12 12 L12 22"/></svg>}
@@ -6344,7 +6363,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
               <div style={{width:34,height:34,borderRadius:11,background:`linear-gradient(140deg, ${tool.s.h}${isDark()?"26":"1F"}, ${tool.s.h}${isDark()?"3A":"33"})`,border:`1px solid ${tool.s.h}${isDark()?"3D":"30"}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.08)":`inset 0 1px 0 rgba(255,255,255,0.5)`}}>
                 <NavIcon type={tool.t} active={true} color={isDark()?tool.s.h:tool.s.deep} size={20}/>
               </div>
-              <span style={{fontFamily:G.font,fontWeight:500,color:tk().ink,fontSize:14,letterSpacing:.1,flex:1}}>{tool.l}</span>
+              <span style={{fontFamily:G.serif,fontWeight:500,color:tk().ink,fontSize:14,letterSpacing:.1,flex:1}}>{tool.l}</span>
             </div>
           ))}
         </Section>
@@ -6358,11 +6377,11 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
           >
             <SLabel>{t.allowedTimers}</SLabel>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:14}}>
-              {TTYPES.map(k=>{const on=tc.allowedTypes.includes(k);return <button key={k} onClick={()=>setTc(x=>({...x,allowedTypes:on?x.allowedTypes.filter(a=>a!==k):[...x.allowedTypes,k]}))} style={{padding:"14px 4px 10px",borderRadius:13,border:"1px solid",fontFamily:G.font,fontWeight:600,fontSize:11,cursor:"pointer",borderColor:on?(isDark()?"rgba(255,255,255,0.16)":SCREENS.timer.h):tk().border,background:on?(isDark()?"rgba(255,255,255,0.07)":SCREENS.timer.hl):"transparent",color:on?(isDark()?"#E9E5F2":SCREENS.timer.deep):tk().ink2,display:"flex",flexDirection:"column",alignItems:"center",gap:6,transition:"all .2s"}}><TimerIcon type={k} size={20} color={on?(isDark()?"#C9C3DA":SCREENS.timer.deep):tk().ink2}/><div>{tlbl(k,t)}</div></button>;})}
+              {TTYPES.map(k=>{const on=tc.allowedTypes.includes(k);return <button key={k} onClick={()=>setTc(x=>({...x,allowedTypes:on?x.allowedTypes.filter(a=>a!==k):[...x.allowedTypes,k]}))} style={{padding:"14px 4px 10px",borderRadius:13,border:"1px solid",fontFamily:G.serif,fontWeight:600,fontSize:11,cursor:"pointer",borderColor:on?(isDark()?"rgba(255,255,255,0.16)":SCREENS.timer.h):tk().border,background:on?(isDark()?"rgba(255,255,255,0.07)":SCREENS.timer.hl):"transparent",color:on?(isDark()?"#E9E5F2":SCREENS.timer.deep):tk().ink2,display:"flex",flexDirection:"column",alignItems:"center",gap:6,transition:"all .2s"}}><TimerIcon type={k} size={20} color={on?(isDark()?"#C9C3DA":SCREENS.timer.deep):tk().ink2}/><div>{tlbl(k,t)}</div></button>;})}
             </div>
             <SLabel>{t.defaultTimer}</SLabel>
             <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
-              {tc.allowedTypes.map(k=><button key={k} onClick={()=>setTc(x=>({...x,defaultType:k}))} style={{padding:"7px 12px 7px 10px",borderRadius:11,border:"1px solid",fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",borderColor:tc.defaultType===k?(isDark()?"rgba(255,255,255,0.22)":SCREENS.timer.h):tk().border,background:tc.defaultType===k?(isDark()?"rgba(255,255,255,0.13)":SCREENS.timer.h):"transparent",color:tc.defaultType===k?(isDark()?"#FFFFFF":"#fff"):tk().ink2,display:"flex",alignItems:"center",gap:6,transition:"all .2s",boxShadow:tc.defaultType===k&&isDark()?"inset 0 1px 0 rgba(255,255,255,0.25)":"none"}}><TimerIcon type={k} size={14} color={tc.defaultType===k?(isDark()?SCREENS.timer.h:"#fff"):tk().ink2}/>{tlbl(k,t)}</button>)}
+              {tc.allowedTypes.map(k=><button key={k} onClick={()=>setTc(x=>({...x,defaultType:k}))} style={{padding:"7px 12px 7px 10px",borderRadius:11,border:"1px solid",fontFamily:G.serif,fontWeight:600,fontSize:12,cursor:"pointer",borderColor:tc.defaultType===k?(isDark()?"rgba(255,255,255,0.22)":SCREENS.timer.h):tk().border,background:tc.defaultType===k?(isDark()?"rgba(255,255,255,0.13)":SCREENS.timer.h):"transparent",color:tc.defaultType===k?(isDark()?"#FFFFFF":"#fff"):tk().ink2,display:"flex",alignItems:"center",gap:6,transition:"all .2s",boxShadow:tc.defaultType===k&&isDark()?"inset 0 1px 0 rgba(255,255,255,0.25)":"none"}}><TimerIcon type={k} size={14} color={tc.defaultType===k?(isDark()?SCREENS.timer.h:"#fff"):tk().ink2}/>{tlbl(k,t)}</button>)}
             </div>
           </Section>
         )}
@@ -6375,7 +6394,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
             dark={isDark()}
           >
             <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-              {EMOS.map(e=>{const on=vEmos.includes(e.id);return <button key={e.id} onClick={()=>setVEmos(v=>on?v.filter(i=>i!==e.id):[...v,e.id])} style={{padding:"10px 12px",borderRadius:14,border:`1px solid ${on?(isDark()?e.color+"40":e.color):tk().border}`,background:on?(isDark()?e.color+"14":`${e.color}15`):"transparent",cursor:"pointer",display:"flex",alignItems:"center",gap:7,fontFamily:G.font,fontWeight:600,fontSize:12,color:on?(isDark()?"#E9E5F2":e.color):tk().ink3}}><span style={{fontSize:18}}>{e.emoji}</span>{lang==="sv"?e.sv:e.en}</button>;})}
+              {EMOS.map(e=>{const on=vEmos.includes(e.id);return <button key={e.id} onClick={()=>setVEmos(v=>on?v.filter(i=>i!==e.id):[...v,e.id])} style={{padding:"10px 12px",borderRadius:14,border:`1px solid ${on?(isDark()?e.color+"40":e.color):tk().border}`,background:on?(isDark()?e.color+"14":`${e.color}15`):"transparent",cursor:"pointer",display:"flex",alignItems:"center",gap:7,fontFamily:G.serif,fontWeight:600,fontSize:12,color:on?(isDark()?"#E9E5F2":e.color):tk().ink3}}><span style={{fontSize:18}}>{e.emoji}</span>{lang==="sv"?e.sv:e.en}</button>;})}
             </div>
           </Section>
         )}
@@ -6388,8 +6407,8 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
         >
           {[[false,t.sameDevice,t.sameDeviceDesc],[true,t.syncMode,t.syncModeDesc]].map(([v,title,desc])=>(
             <div key={String(v)} onClick={()=>setSm(v)} style={{borderRadius:14,border:`1px solid ${sm===v?S.h:tk().border}`,background:sm===v?S.hll:"transparent",padding:"13px 16px",marginBottom:10,cursor:"pointer",transition:"all .25s ease"}}>
-              <div style={{fontFamily:G.font,fontWeight:700,fontSize:14,color:sm===v?S.h:tk().ink,marginBottom:2}}>{title}</div>
-              <div style={{fontFamily:G.font,fontSize:12,color:tk().ink2}}>{desc}</div>
+              <div style={{fontFamily:G.serif,fontWeight:700,fontSize:14,color:sm===v?S.h:tk().ink,marginBottom:2}}>{title}</div>
+              <div style={{fontFamily:G.serif,fontSize:12,color:tk().ink2}}>{desc}</div>
             </div>
           ))}
           {sm&&(
@@ -6408,17 +6427,17 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
                   )}
                 </button>
               </div>
-              <div style={{fontFamily:G.font,fontSize:12,color:tk().ink2,marginBottom:14}}>{t.codeHint}</div>
+              <div style={{fontFamily:G.serif,fontSize:12,color:tk().ink2,marginBottom:14}}>{t.codeHint}</div>
               <SLabel>{t.enterCode}</SLabel>
               <div style={{display:"flex",gap:7}}>
                 <input value={code} onChange={e=>setCode(e.target.value.toUpperCase())} maxLength={4} placeholder="AB3X" className="lt-input" style={{...INPT(),marginBottom:0,textAlign:"center",fontFamily:G.serif,fontWeight:600,fontSize:20,letterSpacing:4,flex:1}}/>
-                <button onClick={conn} style={{padding:"0 16px",borderRadius:12,border:"none",background:SCREENS.emotion.h,color:"#fff",fontFamily:G.font,fontWeight:700,cursor:"pointer"}}>{t.connect}</button>
+                <button onClick={conn} style={{padding:"0 16px",borderRadius:12,border:"none",background:SCREENS.emotion.h,color:"#fff",fontFamily:G.serif,fontWeight:700,cursor:"pointer"}}>{t.connect}</button>
               </div>
-              {err&&<div style={{color:"#EF4444",fontFamily:G.font,fontSize:12,marginTop:6}}>{err}</div>}
+              {err&&<div style={{color:"#EF4444",fontFamily:G.serif,fontSize:12,marginTop:6}}>{err}</div>}
             </div>
           )}
         </Section>
-        <button onClick={save} className="lt-press saveBtn" style={{marginTop:8,width:"100%",padding:"16px 0",borderRadius:16,border:isDark()?"1px solid rgba(255,255,255,0.18)":"none",background:isDark()?"rgba(255,255,255,0.1)":`linear-gradient(135deg, ${S.h}, ${S.h}DC)`,backdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",WebkitBackdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",color:isDark()?"#F4F1FA":"#fff",fontFamily:G.font,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.22), 0 6px 16px -8px rgba(0,0,0,0.6)":`0 12px 28px ${S.h}45, 0 3px 8px ${S.h}28`,display:"flex",alignItems:"center",justifyContent:"center",gap:8,letterSpacing:.3}}>
+        <button onClick={save} className="lt-press saveBtn" style={{marginTop:8,width:"100%",padding:"16px 0",borderRadius:16,border:isDark()?"1px solid rgba(255,255,255,0.18)":"none",background:isDark()?"rgba(255,255,255,0.1)":`linear-gradient(135deg, ${S.h}, ${S.h}DC)`,backdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",WebkitBackdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",color:isDark()?"#F4F1FA":"#fff",fontFamily:G.serif,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.22), 0 6px 16px -8px rgba(0,0,0,0.6)":`0 12px 28px ${S.h}45, 0 3px 8px ${S.h}28`,display:"flex",alignItems:"center",justifyContent:"center",gap:8,letterSpacing:.3}}>
           <svg className="saveTick" width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
             <path d="M2.5 7.2 L5.8 10.5 L11.5 3.5"/>
           </svg>
@@ -6429,15 +6448,15 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
         {onOpenDemo&&(
           <div style={{marginTop:32,paddingTop:24,borderTop:`1px solid ${tk().border}`}}>
             <SLabel>{lang==="sv"?"Guide":"Guide"}</SLabel>
-            <div style={{fontFamily:G.font,fontSize:12,color:tk().ink2,marginBottom:10,lineHeight:1.4}}>
+            <div style={{fontFamily:G.serif,fontSize:12,color:tk().ink2,marginBottom:10,lineHeight:1.4}}>
               {lang==="sv"?"En filmisk rundtur av Lumas verktyg. ~60 sekunder.":"A cinematic tour of Luma's features. ~60 seconds."}
             </div>
-            <button onClick={onOpenDemo} style={{width:"100%",padding:"13px 0",borderRadius:13,border:"none",background:"linear-gradient(135deg,#1F1B2E,#3A3450)",color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:"0 8px 18px rgba(31,27,46,0.18)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <button onClick={onOpenDemo} style={{width:"100%",padding:"13px 0",borderRadius:13,border:"none",background:"linear-gradient(135deg,#1F1B2E,#3A3450)",color:"#fff",fontFamily:G.serif,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:"0 8px 18px rgba(31,27,46,0.18)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
               ▶ {lang==="sv"?"Visa guide":"Play guide"}
             </button>
             {/* Replay welcome → demo as if first-run, without wiping any data */}
             {onOpenWelcomeTour&&(
-              <button onClick={onOpenWelcomeTour} className="lt-press-soft" style={{width:"100%",marginTop:8,padding:"11px 0",borderRadius:12,border:`1px solid ${tk().border}`,background:"transparent",color:tk().ink2,fontFamily:G.font,fontWeight:500,fontSize:13,cursor:"pointer",letterSpacing:.2,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <button onClick={onOpenWelcomeTour} className="lt-press-soft" style={{width:"100%",marginTop:8,padding:"11px 0",borderRadius:12,border:`1px solid ${tk().border}`,background:"transparent",color:tk().ink2,fontFamily:G.serif,fontWeight:500,fontSize:13,cursor:"pointer",letterSpacing:.2,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M3 12 a9 9 0 1 0 3 -6.7 L3 8"/>
                   <polyline points="3 3 3 8 8 8"/>
@@ -6451,10 +6470,10 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
         {onOpenSupervisor&&(
           <div style={{marginTop:32,paddingTop:24,borderTop:`1px solid ${tk().border}`}}>
             <SLabel>{lang==="sv"?"Stödperson":"Caregiver"}</SLabel>
-            <div style={{fontFamily:G.font,fontSize:12,color:tk().ink2,marginBottom:10,lineHeight:1.4}}>
+            <div style={{fontFamily:G.serif,fontSize:12,color:tk().ink2,marginBottom:10,lineHeight:1.4}}>
               {lang==="sv"?"Förhandstitt på webbverktyget där pedagoger hanterar flera klienter på distans.":"Preview of the web tool where caregivers manage multiple clients remotely."}
             </div>
-            <button onClick={onOpenSupervisor} style={{width:"100%",padding:"13px 0",borderRadius:13,border:"none",background:`linear-gradient(135deg,${S.h},${S.deep})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:sh.c(S.h),display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
+            <button onClick={onOpenSupervisor} style={{width:"100%",padding:"13px 0",borderRadius:13,border:"none",background:`linear-gradient(135deg,${S.h},${S.deep})`,color:"#fff",fontFamily:G.serif,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:sh.c(S.h),display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M17 21 v-2 a4 4 0 0 0 -4 -4 H5 a4 4 0 0 0 -4 4 v2"/>
                 <circle cx="9" cy="7" r="4"/>
@@ -6462,7 +6481,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
                 <path d="M16 3.13 a4 4 0 0 1 0 7.75"/>
               </svg>
               {lang==="sv"?"Öppna stödpersonsvy":"Open caregiver view"}
-              <span style={{fontFamily:G.font,fontWeight:600,fontSize:10,padding:"2px 7px",borderRadius:5,background:"rgba(255,255,255,0.25)",letterSpacing:1}}>DEMO</span>
+              <span style={{fontFamily:G.serif,fontWeight:600,fontSize:10,padding:"2px 7px",borderRadius:5,background:"rgba(255,255,255,0.25)",letterSpacing:1}}>DEMO</span>
             </button>
           </div>
         )}
@@ -6470,25 +6489,25 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
         {/* Backup — export / import all data as a file (privacy-safe, on-device) */}
         <div style={{marginTop:32,paddingTop:24,borderTop:`1px solid ${tk().border}`}}>
           <SLabel>{t.backupSection}</SLabel>
-          <div style={{fontFamily:G.font,fontSize:12,color:tk().ink2,marginBottom:12,lineHeight:1.45}}>{t.backupDesc}</div>
+          <div style={{fontFamily:G.serif,fontSize:12,color:tk().ink2,marginBottom:12,lineHeight:1.45}}>{t.backupDesc}</div>
           <input ref={fileRef} type="file" accept="application/json,.json" onChange={onFilePicked} style={{display:"none"}}/>
           <div style={{display:"flex",gap:8}}>
-            <button onClick={doExport} className="lt-press-soft" style={{flex:1,padding:"12px 0",borderRadius:12,border:`1px solid ${isDark()?"rgba(255,255,255,0.12)":S.hl}`,background:isDark()?"rgba(255,255,255,0.06)":S.hll,color:isDark()?"#E9E5F2":S.deep,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+            <button onClick={doExport} className="lt-press-soft" style={{flex:1,padding:"12px 0",borderRadius:12,border:`1px solid ${isDark()?"rgba(255,255,255,0.12)":S.hl}`,background:isDark()?"rgba(255,255,255,0.06)":S.hll,color:isDark()?"#E9E5F2":S.deep,fontFamily:G.serif,fontWeight:600,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
               {t.exportBtn}
             </button>
-            <button onClick={()=>fileRef.current&&fileRef.current.click()} className="lt-press-soft" style={{flex:1,padding:"12px 0",borderRadius:12,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink2,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+            <button onClick={()=>fileRef.current&&fileRef.current.click()} className="lt-press-soft" style={{flex:1,padding:"12px 0",borderRadius:12,border:`1px solid ${tk().border}`,background:tk().white,color:tk().ink2,fontFamily:G.serif,fontWeight:600,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 9l5-5 5 5"/><path d="M12 4v12"/></svg>
               {t.importBtn}
             </button>
           </div>
-          {bkMsg&&<div style={{fontFamily:G.font,fontSize:12,fontWeight:600,color:isDark()?"#E9E5F2":S.deep,marginTop:9,textAlign:"center"}}>{bkMsg}</div>}
+          {bkMsg&&<div style={{fontFamily:G.serif,fontSize:12,fontWeight:600,color:isDark()?"#E9E5F2":S.deep,marginTop:9,textAlign:"center"}}>{bkMsg}</div>}
           {pendingImport&&(
             <div style={{background:isDark()?"rgba(255,255,255,0.05)":S.hll,borderRadius:14,padding:"14px 16px",border:`1px solid ${isDark()?"rgba(255,255,255,0.1)":S.hl}`,marginTop:12,animation:"setSectionIn 0.3s cubic-bezier(0.34, 1.4, 0.64, 1) both"}}>
-              <div style={{fontFamily:G.font,fontSize:12.5,color:tk().ink,lineHeight:1.45,marginBottom:12}}>{t.importConfirm}</div>
+              <div style={{fontFamily:G.serif,fontSize:12.5,color:tk().ink,lineHeight:1.45,marginBottom:12}}>{t.importConfirm}</div>
               <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>setPendingImport(null)} className="lt-press-soft" style={{flex:1,padding:"11px 0",borderRadius:11,border:`1px solid ${isDark()?"rgba(255,255,255,0.14)":tk().border}`,background:isDark()?"rgba(255,255,255,0.08)":tk().white,color:isDark()?"#F4F1FA":tk().ink2,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer"}}>{t.cancel}</button>
-                <button onClick={applyImport} className="lt-press" style={{flex:1,padding:"11px 0",borderRadius:11,border:isDark()?"1px solid rgba(255,255,255,0.18)":"none",background:isDark()?"rgba(255,255,255,0.1)":`linear-gradient(135deg, ${S.h}, ${S.h}DC)`,color:isDark()?"#F4F1FA":"#fff",fontFamily:G.font,fontWeight:700,fontSize:13,cursor:"pointer",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.22)":"none"}}>{t.importBtn}</button>
+                <button onClick={()=>setPendingImport(null)} className="lt-press-soft" style={{flex:1,padding:"11px 0",borderRadius:11,border:`1px solid ${isDark()?"rgba(255,255,255,0.14)":tk().border}`,background:isDark()?"rgba(255,255,255,0.08)":tk().white,color:isDark()?"#F4F1FA":tk().ink2,fontFamily:G.serif,fontWeight:600,fontSize:13,cursor:"pointer"}}>{t.cancel}</button>
+                <button onClick={applyImport} className="lt-press" style={{flex:1,padding:"11px 0",borderRadius:11,border:isDark()?"1px solid rgba(255,255,255,0.18)":"none",background:isDark()?"rgba(255,255,255,0.1)":`linear-gradient(135deg, ${S.h}, ${S.h}DC)`,color:isDark()?"#F4F1FA":"#fff",fontFamily:G.serif,fontWeight:700,fontSize:13,cursor:"pointer",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.22)":"none"}}>{t.importBtn}</button>
               </div>
             </div>
           )}
@@ -6497,9 +6516,9 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
         {/* Reset all data — destructive action at the bottom */}
         <div style={{marginTop:32,paddingTop:24,borderTop:`1px solid ${tk().border}`}}>
           <SLabel>{t.resetSection}</SLabel>
-          <div style={{fontFamily:G.font,fontSize:12,color:tk().ink2,marginBottom:10,lineHeight:1.4}}>{t.resetDataDesc}</div>
+          <div style={{fontFamily:G.serif,fontSize:12,color:tk().ink2,marginBottom:10,lineHeight:1.4}}>{t.resetDataDesc}</div>
           {!confirmReset?(
-            <button onClick={()=>setConfirmReset(true)} className="lt-press-soft" style={{width:"100%",padding:"12px 0",borderRadius:12,border:`1px solid ${isDark()?"rgba(239,68,68,0.3)":"#EF444433"}`,background:isDark()?"rgba(239,68,68,0.12)":"#FEF2F2",color:isDark()?"#F0918D":"#EF4444",fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <button onClick={()=>setConfirmReset(true)} className="lt-press-soft" style={{width:"100%",padding:"12px 0",borderRadius:12,border:`1px solid ${isDark()?"rgba(239,68,68,0.3)":"#EF444433"}`,background:isDark()?"rgba(239,68,68,0.12)":"#FEF2F2",color:isDark()?"#F0918D":"#EF4444",fontFamily:G.serif,fontWeight:600,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 6 h18"/>
                 <path d="M8 6 V4 a2 2 0 0 1 2-2 h4 a2 2 0 0 1 2 2 v2"/>
@@ -6517,11 +6536,11 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
                   <line x1="12" y1="9" x2="12" y2="13"/>
                   <line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
-                <div style={{fontFamily:G.font,fontSize:12.5,color:isDark()?"#E6B0AD":"#991B1B",lineHeight:1.45,fontWeight:500}}>{t.resetDataConfirm}</div>
+                <div style={{fontFamily:G.serif,fontSize:12.5,color:isDark()?"#E6B0AD":"#991B1B",lineHeight:1.45,fontWeight:500}}>{t.resetDataConfirm}</div>
               </div>
               <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>setConfirmReset(false)} className="lt-press-soft" style={{flex:1,padding:"11px 0",borderRadius:11,border:`1px solid ${isDark()?"rgba(255,255,255,0.14)":tk().border}`,background:isDark()?"rgba(255,255,255,0.08)":"#FFFFFF",color:isDark()?"#F4F1FA":tk().ink2,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.14)":"inset 0 1px 0 rgba(255,255,255,0.7)"}}>{t.cancel}</button>
-                <button onClick={doResetData} className="lt-press" style={{flex:1.4,padding:"11px 0",borderRadius:11,border:"none",background:"linear-gradient(135deg, #EF4444, #DC2626)",color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:13,cursor:"pointer",boxShadow:"0 6px 16px rgba(239,68,68,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                <button onClick={()=>setConfirmReset(false)} className="lt-press-soft" style={{flex:1,padding:"11px 0",borderRadius:11,border:`1px solid ${isDark()?"rgba(255,255,255,0.14)":tk().border}`,background:isDark()?"rgba(255,255,255,0.08)":"#FFFFFF",color:isDark()?"#F4F1FA":tk().ink2,fontFamily:G.serif,fontWeight:600,fontSize:13,cursor:"pointer",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.14)":"inset 0 1px 0 rgba(255,255,255,0.7)"}}>{t.cancel}</button>
+                <button onClick={doResetData} className="lt-press" style={{flex:1.4,padding:"11px 0",borderRadius:11,border:"none",background:"linear-gradient(135deg, #EF4444, #DC2626)",color:"#fff",fontFamily:G.serif,fontWeight:700,fontSize:13,cursor:"pointer",boxShadow:"0 6px 16px rgba(239,68,68,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 6 h18"/><path d="M8 6 V4 a2 2 0 0 1 2-2 h4 a2 2 0 0 1 2 2 v2"/><path d="M19 6 l-1 14 a2 2 0 0 1 -2 2 H8 a2 2 0 0 1 -2 -2 L5 6"/>
                   </svg>
@@ -10152,7 +10171,7 @@ function TabB({active,gold,children,onClick,color,deep,flex=1}){
    `segments`     : [{key,label,active,onClick}]  interactive tabs
    `leadingLabel` : optional non-interactive node shown left (label / "Du redigerar")
    `goldKey`      : if set, that segment renders as the gold (edit) pill        */
-function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,padY=9}){
+function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,padY=9,bare=false}){
   const dk=isDark();
   const rowRef=useRef(null);
   const btnRefs=useRef({});
@@ -10194,10 +10213,10 @@ function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,pa
   const gold = goldKey!=null && activeKey===goldKey;
   const pillBg = gold
     ? (dk?"linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.10))":"linear-gradient(160deg,#39334D,#2A2539)")
-    : (dk?"rgba(255,255,255,0.14)":(onSky?"rgba(255,255,255,0.55)":"rgba(255,255,255,0.92)"));
+    : (dk?"rgba(255,255,255,0.14)":(onSky?"rgba(255,255,255,0.80)":"rgba(255,255,255,0.92)"));
   const pillShadow = gold
     ? (dk?`inset 0 1px 0 rgba(255,255,255,0.28), 0 6px 18px -8px rgba(0,0,0,0.55)`:`0 5px 16px -6px rgba(31,27,46,0.4), inset 0 1px 0 rgba(255,255,255,0.14)`)
-    : (dk?`inset 0 1px 0 rgba(255,255,255,0.26), 0 6px 18px -8px rgba(0,0,0,0.5)`:`0 6px 18px -5px ${deep}3A, 0 1px 3px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.92), inset 0 -1px 0 rgba(31,27,46,0.03)`);
+    : (dk?`inset 0 1px 0 rgba(255,255,255,0.26), 0 6px 18px -8px rgba(0,0,0,0.5)`:(onSky?`0 6px 18px -6px ${deep}55, 0 1px 3px rgba(31,27,46,0.10), inset 0 1px 0 rgba(255,255,255,0.85)`:`0 6px 18px -5px ${deep}3A, 0 1px 3px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.92), inset 0 -1px 0 rgba(31,27,46,0.03)`));
 
   // When the row is NOT floating over the live sky (`onSky` false) — i.e. in
   // edit mode and on the tool screens — use a SOLID track instead of a
@@ -10209,15 +10228,15 @@ function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,pa
   // translucency is the intended liquid-glass-over-sky look) are unchanged.
   return(
     <div ref={rowRef} style={{display:"flex",alignItems:"center",gap:4,flex:1,position:"relative",
-      background:dk?(floating?"rgba(22,19,34,0.7)":"rgba(255,255,255,0.05)"):(onSky?(floating?"rgba(255,255,255,0.18)":"rgba(255,255,255,0.10)"):G.cream),
+      background:bare?"transparent":(dk?(floating?"rgba(22,19,34,0.7)":"rgba(255,255,255,0.05)"):(onSky?(floating?"rgba(255,255,255,0.26)":"rgba(255,255,255,0.10)"):G.cream)),
       borderRadius:14,padding:4,
-      border:dk?"1px solid rgba(255,255,255,0.08)":(onSky?`1px solid rgba(255,255,255,0.28)`:`1px solid ${color}1E`),
-      backdropFilter:dk?"blur(14px) saturate(1.2)":(onSky?"blur(8px) saturate(1.2)":"none"),WebkitBackdropFilter:dk?"blur(14px) saturate(1.2)":(onSky?"blur(8px) saturate(1.2)":"none"),
-      boxShadow:dk?(floating?"0 6px 18px -8px rgba(0,0,0,0.6)":"inset 0 1px 2px rgba(0,0,0,0.3)"):(onSky?`0 4px 14px -10px ${deep}33`:`0 4px 14px -8px ${deep}33, inset 0 1px 0 rgba(255,255,255,0.9)`),
+      border:bare?"1px solid transparent":(dk?"1px solid rgba(255,255,255,0.08)":(onSky?`1px solid rgba(255,255,255,${floating?0.55:0.28})`:`1px solid ${color}1E`)),
+      backdropFilter:bare?"none":(dk?"blur(14px) saturate(1.2)":(onSky?"blur(12px) saturate(1.3)":"none")),WebkitBackdropFilter:bare?"none":(dk?"blur(14px) saturate(1.2)":(onSky?"blur(12px) saturate(1.3)":"none")),
+      boxShadow:bare?"none":(dk?(floating?"0 6px 18px -8px rgba(0,0,0,0.6)":"inset 0 1px 2px rgba(0,0,0,0.3)"):(onSky?(floating?`0 8px 22px -10px ${deep}55, inset 0 1px 0 rgba(255,255,255,0.6)`:`0 4px 14px -10px ${deep}33`):`0 4px 14px -8px ${deep}33, inset 0 1px 0 rgba(255,255,255,0.9)`)),
       transition:"background .4s ease, box-shadow .4s ease"}}>
       {/* The single gliding pill — moved via GPU transform (translateX) so it
           stays smooth even while the rest of the screen re-renders. */}
-      {pill&&(
+      {pill&&!bare&&(
         <span aria-hidden style={{position:"absolute",top:4,bottom:4,left:0,
           width:pill.width,borderRadius:11,zIndex:1,
           transform:`translate3d(${pill.left}px,0,0)`,
@@ -10239,13 +10258,18 @@ function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,pa
         const txt=dk?(s.active?"#FFFFFF":"rgba(255,255,255,0.82)"):(isGold?"#FFFFFF":s.active?deep:(onSky?"rgba(255,255,255,0.7)":G.ink2));
         const txtShadow=s.active?"none":(dk?"0 1px 3px rgba(0,0,0,0.4)":(onSky?"0 1px 4px rgba(60,45,75,0.45)":"none"));
         return(
-          <button key={s.key} ref={el=>{btnRefs.current[s.key]=el;}} onClick={s.onClick} className="lt-press-soft"
+          <button key={s.key} ref={el=>{btnRefs.current[s.key]=el;}} onClick={s.onClick} className={s.node?"":"lt-press-soft"}
             style={{flex:s.flex||1,padding:padY+"px 0",borderRadius:12,border:"1px solid transparent",textShadow:txtShadow,
-              fontFamily:G.serif,fontWeight:s.active?700:600,fontSize:12,letterSpacing:.3,cursor:"pointer",
+              fontFamily:G.serif,fontWeight:s.active?700:600,fontSize:12,letterSpacing:.3,cursor:s.node?"default":"pointer",
+              display:"flex",alignItems:"center",justifyContent:s.align==="left"?"flex-start":"center",
               position:"relative",zIndex:2,background:"transparent",color:txt,
               WebkitTapHighlightColor:"transparent",WebkitBackfaceVisibility:"hidden",
               transition:"color .26s ease, font-weight .2s ease"}}>
-            <span style={{position:"relative",zIndex:1,display:"inline-flex"}}>{s.label}</span>
+            {s.node
+              ? s.node
+              : s.icon
+              ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{position:"relative",zIndex:1,display:"block",filter:txtShadow!=="none"?"drop-shadow(0 1px 3px rgba(60,45,75,0.4))":"none"}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              : <span style={{position:"relative",zIndex:1,display:"inline-flex"}}>{s.label}</span>}
           </button>
         );
       })}
@@ -12799,25 +12823,6 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
             ) : (
               <div style={{padding:"16px 22px 6px"}}><SkyHeader now={now} lang={lang} inFlow={true} sun={false}/></div>
             )}
-            {/* Vecka / Redigera row — uses the shared glass SlideTabRow so it
-                matches Home and stays transparent against the sky. */}
-            <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 22px 12px"}}>
-              {(()=>{
-                const leadingLabel = !isEd ? (
-                  <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:dark?"rgba(255,255,255,0.85)":"rgba(255,255,255,0.95)",textShadow:dark?"none":"0 1px 4px rgba(60,45,75,0.45)",display:"flex",alignItems:"center",gap:7,letterSpacing:.2,position:"relative",zIndex:2}}>
-                    <span style={{width:6,height:6,borderRadius:"50%",background:dark?(effS?.h||"#9683C2"):"#FFFFFF",boxShadow:dark?"none":`0 0 6px rgba(255,255,255,0.7)`}}/>
-                    {lang==="sv"?"Vecka":"Week"}
-                  </div>
-                ) : (
-                  <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:effS?.deep||"#6E5E9E",display:"flex",alignItems:"center",gap:7,letterSpacing:.2,minWidth:0,position:"relative",zIndex:2}}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,opacity:0.7}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lang==="sv"?"Du redigerar":"Editing"}</span>
-                  </div>
-                );
-                const segments=[{key:"edit",label:isEd?t.editorClose:t.editorOpen,active:isEd,onClick:()=>setIsEd&&setIsEd(e=>!e),flex:1}];
-                return <SlideTabRow segments={segments} leadingLabel={leadingLabel} goldKey="edit" color={effS?.h||"#9683C2"} deep={effS?.deep||"#6E5E9E"} onSky={!isEd&&!dark} padY={8}/>;
-              })()}
-            </div>
           </div>
         )}
 
@@ -12848,15 +12853,28 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
             //   numeral (inkSoft display ink), with a quiet date range (ink2)
             //   baseline-aligned beside it. The air around the big numeral is
             //   what reads as "premium" — let it breathe.
-            <div style={dark?{padding:"12px 16px 14px",marginBottom:12,borderRadius:20,position:"relative",overflow:"hidden",background:"linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.035) 100%)",backdropFilter:"blur(22px) saturate(1.6)",WebkitBackdropFilter:"blur(22px) saturate(1.6)",border:"1px solid rgba(255,255,255,0.12)",boxShadow:"0 10px 30px -14px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.20)"}:{padding:"4px 6px 14px",position:"relative"}}>
+            <div style={dark?{padding:"12px 16px 14px",marginBottom:12,borderRadius:20,position:"relative",overflow:"hidden",background:"linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.035) 100%)",backdropFilter:"blur(22px) saturate(1.6)",WebkitBackdropFilter:"blur(22px) saturate(1.6)",border:"1px solid rgba(255,255,255,0.12)",boxShadow:"0 10px 30px -14px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.20)"}:{padding:"0 8px 12px",position:"relative"}}>
               {/* whisper-soft bloom behind the numeral — gentle premium depth */}
               <div aria-hidden="true" style={{position:"absolute",left:dark?8:-6,top:dark?18:2,width:108,height:108,borderRadius:"50%",filter:"blur(10px)",pointerEvents:"none",zIndex:0,background:dark?"radial-gradient(circle, rgba(255,255,255,0.13), rgba(231,191,160,0.09) 42%, transparent 70%)":"radial-gradient(circle, rgba(255,255,255,0.6), rgba(231,191,160,0.14) 42%, transparent 72%)"}}/>
-              {/* eyebrow with Luma's pearl as a quiet signature */}
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:1,marginLeft:3,position:"relative",zIndex:1}}>
-                <span aria-hidden="true" style={{width:8,height:8,borderRadius:"50%",background:"radial-gradient(circle at 35% 30%, #FFFFFF, #F8D2B2 55%, #E2A266)",boxShadow:"0 1px 4px rgba(224,135,63,0.5)",flexShrink:0}}/>
-                <span style={{fontFamily:"'Quicksand',sans-serif",fontSize:11.5,fontWeight:600,letterSpacing:4,textTransform:"uppercase",color:labelCol,transition:"color .5s ease"}}>{lang==="sv"?"Vecka":"Week"}</span>
+              {/* eyebrow + edit on ONE line, vertically centered together.
+                  VECKA sits hard-left; the pen sits in segment 3 of a 3-equal
+                  SlideTabRow (same math as Home) so it lands at Home's x. Both
+                  share this single flex row, so they're in horizontal harmony. */}
+              <div style={{display:"flex",alignItems:"center",marginBottom:2,minHeight:34,paddingTop:15,position:"relative",zIndex:1}}>
+                <div style={{display:"flex",alignItems:"center",gap:9,flex:1,minWidth:0,paddingLeft:4}}>
+                  <span aria-hidden="true" style={{width:7,height:7,borderRadius:"50%",background:"radial-gradient(circle at 35% 30%, #FFFFFF, #F8D2B2 55%, #E2A266)",boxShadow:"0 1px 4px rgba(224,135,63,0.5)",flexShrink:0}}/>
+                  <span style={{fontFamily:G.serif,fontSize:14,fontWeight:600,letterSpacing:.3,color:labelCol,transition:"color .5s ease",whiteSpace:"nowrap"}}>{lang==="sv"?"Vecka":"Week"}</span>
+                </div>
+                <button onClick={()=>setIsEd&&setIsEd(e=>!e)} className="lt-press"
+                  aria-label={isEd?t.editorClose:t.editorOpen}
+                  style={{border:"none",background:"transparent",cursor:"pointer",padding:"6px 0",marginRight:56,display:"flex",alignItems:"center",justifyContent:"center",
+                    color:dark?"rgba(255,255,255,0.9)":"rgba(255,255,255,0.95)",WebkitTapHighlightColor:"transparent"}}>
+                  {isEd
+                    ? <span style={{fontFamily:G.serif,fontWeight:600,fontSize:13,letterSpacing:.3,textShadow:dark?"none":"0 1px 4px rgba(60,45,75,0.45)"}}>{t.editorClose}</span>
+                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"block",filter:dark?"none":"drop-shadow(0 1px 3px rgba(60,45,75,0.4))"}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
+                </button>
               </div>
-              <div style={{display:"flex",alignItems:"baseline",gap:11,position:"relative",zIndex:1}}>
+              <div style={{display:"flex",alignItems:"baseline",gap:11,position:"relative",zIndex:1,marginLeft:16}}>
                 <span style={dark?{fontFamily:G.serif,fontWeight:800,fontSize:46,lineHeight:0.92,letterSpacing:-1.5,fontVariantNumeric:"tabular-nums",background:"linear-gradient(180deg, rgba(244,242,252,0.72) 0%, rgba(244,242,252,0.34) 52%, rgba(244,242,252,0.15) 100%)",WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}:{fontFamily:G.serif,fontWeight:800,fontSize:46,lineHeight:0.92,letterSpacing:-1.5,fontVariantNumeric:"tabular-nums",background:"linear-gradient(180deg, #5E5775 0%, #6E6786 52%, #847D98 100%)",WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}}>{weekNum}</span>
                 <span style={{fontFamily:G.serif,fontSize:14,fontWeight:500,color:dark?"rgba(163,158,181,0.72)":tk().ink2,transition:"color .5s ease"}}>{dateRange}</span>
               </div>
@@ -13952,9 +13970,9 @@ function SceneIntro(){
         @keyframes dIWordIn{0%{opacity:0;transform:translateY(12px);filter:blur(4px)}100%{opacity:1;transform:translateY(0);filter:blur(0)}}
       `}</style>
       <canvas ref={canvasRef} style={{width:300,height:300,display:"block"}}/>
-      <div style={{height:60,marginTop:-18,opacity:done?1:0,
+      <div style={{height:70,marginTop:-18,opacity:done?1:0,
         animation:done?"dIWordIn 1.05s cubic-bezier(0.22,1,0.36,1) both":"none"}}>
-        <LumaWordmark size={52} color="#1F1B2E" showSun={false}/>
+        <div style={{transform:"translateX(10px)"}}><LumaWordmark size={62} color="#1F1B2E" showSun={false}/></div>
       </div>
     </div>
   );
@@ -14757,8 +14775,8 @@ function DemoTour({onClose,lang}){
           <div key={`txt${idx}`} style={{flexShrink:0,padding:"0 28px",textAlign:scene.leftText?"left":"center",maxWidth:540,margin:"0 auto",width:"100%",boxSizing:"border-box",display:"flex",flexDirection:"column",alignItems:scene.leftText?"flex-start":"center"}}>
             {/* Small decorative accent line */}
             <div style={{width:28,height:3,borderRadius:2,background:`linear-gradient(90deg, ${effSceneCol}, ${effSceneCol}66)`,marginBottom:14,animation:"dTextIn 0.9s 0.15s cubic-bezier(0.22,1,0.36,1) both"}}/>
-            <h1 style={{fontFamily:G.serif,fontSize:27,fontWeight:600,color:G.inkSoft,marginBottom:scene.sub?9:0,marginTop:0,letterSpacing:-0.4,lineHeight:1.12,animation:"dTextIn 0.9s 0.25s cubic-bezier(0.22,1,0.36,1) both"}}>{scene.heading}</h1>
-            {scene.sub&&<p style={{fontFamily:G.font,fontSize:14.5,color:G.ink2,lineHeight:1.55,letterSpacing:0.1,margin:0,maxWidth:380,animation:"dTextIn 0.9s 0.45s cubic-bezier(0.22,1,0.36,1) both"}}>{scene.sub}</p>}
+            <h1 style={{fontFamily:G.serif,fontSize:idx===0?22:27,fontWeight:600,color:G.inkSoft,marginBottom:scene.sub?9:0,marginTop:0,letterSpacing:-0.4,lineHeight:1.12,animation:"dTextIn 0.9s 0.25s cubic-bezier(0.22,1,0.36,1) both"}}>{scene.heading}</h1>
+            {scene.sub&&<p style={{fontFamily:G.font,fontSize:idx===0?13:14.5,color:G.ink2,lineHeight:1.55,letterSpacing:0.1,margin:0,maxWidth:380,animation:"dTextIn 0.9s 0.45s cubic-bezier(0.22,1,0.36,1) both"}}>{scene.sub}</p>}
           </div>
         )}
       </div>
@@ -16555,9 +16573,10 @@ export default function App(){
               Home/week in the LIGHT theme render the sky header instead, whose
               SkyWordmark is the same logo without the sun. */}
           <LumaWordmark
-            size={25}
+            size={28}
             color={isDark()?shadeHex(effS.h,0.80):shadeHex(effS.h,-0.55)}
             showSun={isEd}
+            pearlScale={1.18}
             style={{transition:"color .5s ease"}}
           />
           {/* VERSION STAMP — hidden by default, revealed by double-tapping
@@ -16727,7 +16746,7 @@ export default function App(){
               );
             }
             // Redigera / Stäng — present on all screens. It's the gold pill when editing.
-            segments.push({key:"edit",label:isEd?t.editorClose:t.editorOpen,active:isEd,onClick:()=>setIsEd(e=>!e),flex:1});
+            segments.push({key:"edit",label:isEd?t.editorClose:t.editorOpen,active:isEd,icon:!isEd,onClick:()=>setIsEd(e=>!e),flex:1});
             return <SlideTabRow segments={segments} leadingLabel={leadingLabel} goldKey="edit" color={effS.h} deep={effS.deep} floating={collapsible} onSky={screen==="home"&&!isEd}/>;
           })()}
           </div>
