@@ -12865,10 +12865,10 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
                   <span aria-hidden="true" style={{width:7,height:7,borderRadius:"50%",background:"radial-gradient(circle at 35% 30%, #FFFFFF, #F8D2B2 55%, #E2A266)",boxShadow:"0 1px 4px rgba(224,135,63,0.5)",flexShrink:0}}/>
                   <span style={{fontFamily:G.serif,fontSize:14,fontWeight:600,letterSpacing:.3,color:labelCol,transition:"color .5s ease",whiteSpace:"nowrap"}}>{lang==="sv"?"Vecka":"Week"}</span>
                 </div>
-                <button onClick={()=>setIsEd&&setIsEd(e=>!e)} className="lt-press"
+                <button onClick={()=>setIsEd&&setIsEd(e=>!e)} className={isEd?"lt-press":"lt-edit-pen"}
                   aria-label={isEd?t.editorClose:t.editorOpen}
                   style={{border:"none",background:"transparent",cursor:"pointer",padding:"6px 0",marginRight:56,display:"flex",alignItems:"center",justifyContent:"center",
-                    color:dark?"rgba(255,255,255,0.9)":"rgba(255,255,255,0.95)",WebkitTapHighlightColor:"transparent"}}>
+                    color:dark?"rgba(255,255,255,0.96)":"rgba(255,255,255,0.98)",WebkitTapHighlightColor:"transparent"}}>
                   {isEd
                     ? <span style={{fontFamily:G.serif,fontWeight:600,fontSize:13,letterSpacing:.3,textShadow:dark?"none":"0 1px 4px rgba(60,45,75,0.45)"}}>{t.editorClose}</span>
                     : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"block",filter:dark?"none":"drop-shadow(0 1px 3px rgba(60,45,75,0.4))"}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
@@ -16230,6 +16230,11 @@ export default function App(){
         .lt-press-soft:active { transform: scale(0.985); }
         .lt-press-tight { transition: transform .22s cubic-bezier(0.32, 0.72, 0, 1); }
         .lt-press-tight:active { transform: scale(0.94); }
+        /* Week edit pen — softly dimmed at rest; on press it brightens to full
+           strength and gives a gentle squeeze, so the tap clearly registers. */
+        .lt-edit-pen { opacity: .62; transition: opacity .28s ease, transform .24s cubic-bezier(0.32, 0.72, 0, 1); }
+        .lt-edit-pen:hover { opacity: .8; }
+        .lt-edit-pen:active { opacity: 1; transform: scale(0.9); }
         /* ─── SAVE SUCCESS — calm premium iOS confirmation ─────────────────
            When the user taps Save, the button quietly transforms to confirm
            the action. No bouncing, no rings, no fireworks — just a stillsam
