@@ -1,6 +1,31 @@
 import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from "react";
 
 (() => {
+  // ── ABSOLUTE FIRST: lock the boot surface to the splash colour ───────────
+  // This must run before anything else the bundle does. In a dark-mode PWA the
+  // system can paint the document canvas dark for the few frames between the
+  // launch image and our splash injecting — the light→dark→light blink. We
+  // force a light canvas + light color-scheme immediately, with !important, so
+  // no system/stylesheet dark can ever show before the (always-light) splash.
+  try {
+    var _bootCS = document.createElement("meta");
+    _bootCS.setAttribute("name", "color-scheme");
+    _bootCS.setAttribute("content", "light");
+    document.head.appendChild(_bootCS);
+    var _r = document.documentElement;
+    _r.style.setProperty("background", "#FBFDFE", "important");
+    _r.style.setProperty("color-scheme", "light", "important");
+    _r.classList.remove("lt-theme-dark");
+    _r.classList.add("lt-theme-light");
+    if (document.body) document.body.style.setProperty("background", "#FBFDFE", "important");
+    // also catch the body the moment it exists, in case it isn't ready yet
+    if (!document.body && document.addEventListener) {
+      document.addEventListener("DOMContentLoaded", function(){
+        try { document.body.style.setProperty("background", "#FBFDFE", "important"); } catch(_){}
+      }, {once:true});
+    }
+  } catch (_) {}
+
   // Inter from Google Fonts
   const l1 = document.createElement("link");
   l1.rel = "stylesheet";
@@ -134,10 +159,17 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // painted from `html`/`body` background, NOT from the React tree. We paint
   // them the SPLASH colour (light cream) so the very first pixel iOS paints
   // already matches the splash — no flash of any other colour, in any theme.
+  // CRITICAL: we apply lt-theme-LIGHT at boot for EVERYONE — never lt-theme-dark
+  // here. The stylesheet rule `html.lt-theme-dark{background:#0E0E10;color-scheme:dark}`
+  // would otherwise force the boot canvas dark the instant React injects its
+  // <style>, flashing dark behind the always-light splash (the light→dark→light
+  // blink). React adds lt-theme-dark only after it mounts — i.e. after the
+  // light splash has handed off — so the dark base is never seen during boot.
   try {
-    document.documentElement.style.background = bootBg;
-    document.documentElement.classList.add(storedTheme === "dark" ? "lt-theme-dark" : "lt-theme-light");
-    if (document.body) document.body.style.background = bootBg;
+    document.documentElement.style.setProperty("background", bootBg, "important");
+    document.documentElement.classList.remove("lt-theme-dark");
+    document.documentElement.classList.add("lt-theme-light");
+    if (document.body) document.body.style.setProperty("background", bootBg, "important");
   } catch (_) {}
   // PRE-REACT BOOT OVERLAY — paints the Luma sun the very moment our JS runs.
   // Why: iOS caches the launch splash PNG aggressively. Even after we update
@@ -201,7 +233,8 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
         + '</g>'
         + '</svg>'
         + '</div>'
-        + '</div>';
+        + '</div>'
+        + '<div style="position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;font-family:-apple-system,sans-serif;font-size:10px;font-weight:600;letter-spacing:1px;color:rgba(31,27,46,0.22)">v14</div>';
       document.body.appendChild(pre);
       // ── Single, smooth hand-off ────────────────────────────────────────
       // The pre-boot splash is the ONE AND ONLY splash. It removes itself the
@@ -15118,32 +15151,42 @@ export default function App(){
   // as a visible frame around the app.
   useLayoutEffect(()=>{
     if(typeof document==="undefined") return;
-    const el=document.documentElement;
-    el.classList.toggle("lt-theme-dark",APP_THEME==="dark");
-    el.classList.toggle("lt-theme-light",APP_THEME!=="dark");
-    // Also keep the PWA theme-color meta in sync so iOS paints the status-bar
-    // area in the matching tone, AND swap the status-bar-style so iOS draws
-    // the right kind of bar. NEVER use "black-translucent": in standalone PWA
-    // it extends the web view under the status bar, which (1) offsets touch
-    // hit-testing so taps land above the target, and (2) bleeds the underlying
-    // view through at the rounded edges (bright side line in dark mode). Use
-    // solid "black" for dark (matches #0E0E10, white text) and "default" for
-    // light. Both keep the web view in its normal bounds.
-    let m=document.head.querySelector('meta[name="theme-color"]');
-    if(!m){m=document.createElement("meta");m.setAttribute("name","theme-color");document.head.appendChild(m);}
-    m.setAttribute("content",APP_THEME==="dark"?"#0E0E10":"#FBFDFE");
-    let sb=document.head.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
-    if(!sb){sb=document.createElement("meta");sb.setAttribute("name","apple-mobile-web-app-status-bar-style");document.head.appendChild(sb);}
-    sb.setAttribute("content",APP_THEME==="dark"?"black":"default");
-    // Now that React has mounted (the light splash has handed off), repaint the
-    // html/body edges to the REAL theme base. During boot these were held light
-    // to match the always-light splash; switching them here — after mount —
-    // gives dark mode its correct dark safe-area edges with no boot flash.
-    var realBg = APP_THEME==="dark" ? "#0E0E10" : "#FBFDFE";
-    try {
-      document.documentElement.style.background = realBg;
-      if (document.body) document.body.style.background = realBg;
-    } catch (_) {}
+    const wantDark = APP_THEME==="dark";
+    const applyTheme=(dark)=>{
+      const el=document.documentElement;
+      el.classList.toggle("lt-theme-dark",dark);
+      el.classList.toggle("lt-theme-light",!dark);
+      let m=document.head.querySelector('meta[name="theme-color"]');
+      if(!m){m=document.createElement("meta");m.setAttribute("name","theme-color");document.head.appendChild(m);}
+      m.setAttribute("content",dark?"#0E0E10":"#FBFDFE");
+      let sb=document.head.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+      if(!sb){sb=document.createElement("meta");sb.setAttribute("name","apple-mobile-web-app-status-bar-style");document.head.appendChild(sb);}
+      sb.setAttribute("content",dark?"black":"default");
+      const rbg=dark?"#0E0E10":"#FBFDFE";
+      try{
+        document.documentElement.style.setProperty("background",rbg,"important");
+        document.documentElement.style.setProperty("color-scheme",dark?"dark":"light","important");
+        var csMeta=document.head.querySelector('meta[name="color-scheme"]');
+        if(csMeta) csMeta.setAttribute("content",dark?"dark":"light");
+        if(document.body) document.body.style.setProperty("background",rbg,"important");
+      }catch(_){}
+    };
+    // If the app is LIGHT, apply immediately — there is no dark surface to flash.
+    if(!wantDark){ applyTheme(false); return; }
+    // If the app is DARK, we MUST NOT touch <html> until the always-light splash
+    // is gone — applying lt-theme-dark (which forces html/body to #0E0E10 and
+    // color-scheme:dark) behind the light splash is exactly what produced the
+    // light→dark→light flash. So: keep html LIGHT, and only switch to dark once
+    // the splash element has been removed from the DOM.
+    if(!document.getElementById("lumaPreBoot")){ applyTheme(true); return; }
+    let cancelled=false;
+    const waitForSplashGone=()=>{
+      if(cancelled) return;
+      if(!document.getElementById("lumaPreBoot")){ applyTheme(true); }
+      else { setTimeout(waitForSplashGone, 50); }
+    };
+    waitForSplashGone();
+    return ()=>{ cancelled=true; };
   },[cfg.theme]);
   const[resetKey,setResetKey]=useState(0);
   // Track the previously-rendered screen so the entrance fade only plays on a
