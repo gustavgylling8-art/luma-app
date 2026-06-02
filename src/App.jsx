@@ -202,8 +202,9 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
         + '@keyframes lumaPreBreath{0%,100%{transform:translateZ(0) scale(1)}50%{transform:translateZ(0) scale(1.018)}}'
         + '@keyframes lumaPreIconIn{0%{opacity:0;transform:translateZ(0) scale(0.94)}100%{opacity:1;transform:translateZ(0) scale(1)}}'
         + '@keyframes lumaPreAura{0%,100%{opacity:.65;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}'
-        // pearl free-falls a short distance into the u (accelerating, gravity-like) with a tiny settle
-        + '@keyframes lumaPrePearlDrop{0%{transform:translateY(-22px)}80%{transform:translateY(0)}89%{transform:translateY(-2px)}100%{transform:translateY(0)}}'
+        // pearl free-falls fast into the u (accelerating, gravity-like) and lands
+        // with a clear elastic settle bounce — variant B.
+        + '@keyframes lumaPrePearlDrop{0%{transform:translateY(-24px)}70%{transform:translateY(0)}80%{transform:translateY(-4px)}90%{transform:translateY(0)}95%{transform:translateY(-1.5px)}100%{transform:translateY(0)}}'
         // the glint: a single crisp warm flash. Fired (not on a timer) the moment the app is ready,
         // so it is ALWAYS the last thing seen before hand-off, whatever the load time.
         + '@keyframes lumaPreGlint{0%{opacity:0;transform:scale(.6)}18%{opacity:1;transform:scale(1.5)}100%{opacity:0;transform:scale(1.95)}}'
@@ -227,7 +228,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
         + '<path d="M34.5 21 L34.5 63.5 A15.5 15.5 0 0 0 65.5 63.5 L65.5 43.3" fill="none" stroke="' + markStroke + '" stroke-width="12.8" stroke-linecap="round"/>'
         + '<circle cx="50" cy="62" r="12" fill="url(#lumaPreGlow)" style="transform-origin:50px 62px;animation:lumaPrePulse 4.6s ease-in-out 1.6s infinite"/>'
         + '<circle id="lumaPreGlintEl" class="lpglint" cx="50" cy="62" r="13" fill="url(#lumaPreFlash)"/>'
-        + '<g style="transform-origin:50px 62px;animation:lumaPrePearlDrop 0.8s cubic-bezier(0.45,0,0.9,0.55) 0s 1 both">'
+        + '<g style="transform-origin:50px 62px;animation:lumaPrePearlDrop 0.62s cubic-bezier(0.5,0,0.75,0) 0s 1 both">'
         + '<circle cx="50" cy="62" r="7" fill="url(#lumaPrePearl)"/>'
         + '<circle cx="48" cy="60" r="2.2" fill="#FFFFFF" opacity="0.5"/>'
         + '</g>'
@@ -1640,7 +1641,7 @@ function LumaVector({size=42,color="#1F1B2E",sun=true,style={}}){
           <stop offset="100%" stopColor="#FFB888" stopOpacity="0"/>
         </radialGradient>
       </defs>
-      <g fill="none" stroke={color} strokeWidth="74" strokeLinecap="round" strokeLinejoin="round">
+      <g transform="translate(0 570) scale(1 0.9) translate(0 -570)" fill="none" stroke={color} strokeWidth="74" strokeLinecap="round" strokeLinejoin="round">
         <path d="M60 205 L60 500 A70 70 0 0 0 130 570"/>
         <path d="M236 344 L236 475 A95 95 0 0 0 426 475 L426 408"/>
         <path d="M546 570 L546 426 A82 82 0 0 1 710 426 A82 82 0 0 1 874 426 L874 570"/>
@@ -1650,9 +1651,9 @@ function LumaVector({size=42,color="#1F1B2E",sun=true,style={}}){
       </g>
       {sun&&(
         <g>
-          <circle cx="331" cy="484" r="112" fill={`url(#${uid}-glow)`}/>
-          <circle cx="331" cy="484" r="41" fill={`url(#${uid}-sun)`}/>
-          <ellipse cx="316" cy="466" rx="12" ry="9" fill="#FFFFFF" opacity="0.5"/>
+          <circle cx="331" cy="491" r="112" fill={`url(#${uid}-glow)`}/>
+          <circle cx="331" cy="491" r="41" fill={`url(#${uid}-sun)`}/>
+          <ellipse cx="316" cy="475" rx="12" ry="9" fill="#FFFFFF" opacity="0.5"/>
         </g>
       )}
     </svg>
