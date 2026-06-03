@@ -1736,6 +1736,60 @@ function skyAt(h){
 const _skSunCol=e=>_skMix(_skHx('#F4923C'),_skHx('#FFD982'),_skSmooth(e));
 const SKY_STARS=Array.from({length:42},(_,i)=>({x:20+((i*73)%760),y:8+((i*39)%112),r:0.6+((i*7)%10)/10*1.4,ph:((i*53)%100)/100}));
 
+// ── DARK-MODE STARFIELD ──────────────────────────────────────────────────
+// A whisper of night sky for the dark theme. Deterministic scatter in 0–100%
+// space, weighted to the upper field so stars fade out before the content
+// area (they read as sky behind the header, not dots over the cards). Each
+// is a perfectly round dot (no SVG distortion), kept tiny and very low-alpha
+// — mature and calm, never "decorative". Only the two sky screens (home/week)
+// show them, mirroring the light theme where only those carry the full sky.
+// Each star carries a `thr` (threshold): it only appears once the night
+// factor passes it. So midday shows almost none, dusk lights a few, deep
+// night reveals the whole field — the sky fills in as the day winds down.
+const NIGHT_STARS=Array.from({length:30},(_,i)=>({
+  x:((i*61803)%1000)/10,          // 0–100 %
+  y:((i*38497)%560)/10,           // 0–56 % (upper field)
+  r:0.7+((i*7)%10)/10*1.0,        // 0.7–1.7 px radius
+  o:0.10+((i*13)%10)/10*0.16,     // 0.10–0.26 base opacity
+  d:((i*97)%70)/10,               // 0–7 s twinkle delay/period offset
+  thr:((i*29)%100)/100,           // 0–1 — appears when nightFactor ≥ thr
+}));
+// 0 at midday → 1 in the dead of night, with soft dawn/dusk ramps. Drives how
+// many stars show and how bright they are, so the night sky breathes with the
+// clock instead of being a fixed decoration.
+function nightFactor(h){
+  if(h>=21||h<4.5) return 1;                 // deep night — full field
+  if(h>=17.5)      return (h-17.5)/3.5;      // dusk ramp 17:30→21:00
+  if(h<7.5)        return (7.5-h)/3;          // dawn ramp 4:30→07:30
+  return 0.10;                               // daytime — barely a whisper
+}
+// Faint, GPU-cheap night atmosphere rendered behind all dark-mode content.
+// The accent glow itself lives in the page background (see App); this layer
+// only adds the starfield, so it stays a clean, separable concern.
+function DarkAtmosphere({sky=false,hour=22}){
+  if(!sky) return null;
+  const nf=nightFactor(hour);
+  // Brightness scales with night: 25% floor at the faintest, full at night.
+  const bright=0.25+0.75*nf;
+  return(
+    <div aria-hidden style={{position:"absolute",inset:0,zIndex:0,pointerEvents:"none",overflow:"hidden",transition:"opacity 1.2s ease"}}>
+      <style>{`@keyframes nsTw{0%,100%{opacity:var(--nso)}50%{opacity:calc(var(--nso) * 0.42)}}`}</style>
+      {NIGHT_STARS.filter(s=>nf>=s.thr).map((s,i)=>{
+        const op=Number((s.o*bright).toFixed(3));
+        return(
+        <span key={i} style={{
+          position:"absolute",left:`${s.x}%`,top:`${s.y}%`,
+          width:s.r*2,height:s.r*2,borderRadius:"50%",
+          background:"#FBF7EC","--nso":op,opacity:op,
+          boxShadow:`0 0 ${(s.r*2).toFixed(1)}px rgba(251,247,236,0.45)`,
+          animation:`nsTw ${(6.5+s.d).toFixed(1)}s ease-in-out ${s.d.toFixed(1)}s infinite`,
+        }}/>
+        );
+      })}
+    </div>
+  );
+}
+
 // White "luma" + a small, light pearl floating in the u. Pearl placement is
 // read from the real glyph (getExtentOfChar) so it sits perfectly regardless
 // of device font metrics — matching the approved preview exactly.
@@ -1744,7 +1798,7 @@ function SkyWordmark({size=30,sun=false}){
     style={{display:"block",flexShrink:0,filter:"drop-shadow(0 1px 5px rgba(60,45,55,.30))"}}/>;
 }
 
-function SkyHeader({now,lang,inFlow=false,sun=false}){
+function SkyHeader({now,lang,inFlow=false,sun=false,showWord=true,showDate=true}){
   const h=now.getHours()+now.getMinutes()/60;
   const sk=skyAt(h);
   const sunUp = h>5.2 && h<19.6;
@@ -1791,8 +1845,8 @@ function SkyHeader({now,lang,inFlow=false,sun=false}){
         <path d={hillPath(168,16,0.6)} fill={_skRgb(sk.hill)} opacity={1}/>
       </svg>
       <div style={{position:"relative",width:"100%",display:"flex",alignItems:"flex-end",justifyContent:"space-between",padding:"0 22px 16px",gap:14,zIndex:2}}>
-        <div style={{alignSelf:"flex-end",transform:"translateY(3px)"}}><SkyWordmark size={34} sun={sun}/></div>
-        {!inFlow&&(
+        {showWord&&<div style={{alignSelf:"flex-end",transform:"translateY(3px)"}}><SkyWordmark size={34} sun={sun}/></div>}
+        {!inFlow&&showDate&&(
         <div style={{display:"flex",alignItems:"baseline",gap:7,transform:"translateY(4px)",filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
           <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{wd}</span>
           <span style={{width:4,height:4,borderRadius:"50%",background:"rgba(255,255,255,0.7)",flexShrink:0,alignSelf:"center"}}/>
@@ -10171,7 +10225,7 @@ function TabB({active,gold,children,onClick,color,deep,flex=1}){
    `segments`     : [{key,label,active,onClick}]  interactive tabs
    `leadingLabel` : optional non-interactive node shown left (label / "Du redigerar")
    `goldKey`      : if set, that segment renders as the gold (edit) pill        */
-function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,padY=9,bare=false}){
+function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,padY=9,bare=false,inkColor=null,inkShadow=null,trackBg=null,trackBorder=null,trackShadow=null}){
   const dk=isDark();
   const rowRef=useRef(null);
   const btnRefs=useRef({});
@@ -10228,11 +10282,11 @@ function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,pa
   // translucency is the intended liquid-glass-over-sky look) are unchanged.
   return(
     <div ref={rowRef} style={{display:"flex",alignItems:"center",gap:4,flex:1,position:"relative",
-      background:bare?"transparent":(dk?(floating?"rgba(22,19,34,0.7)":"rgba(255,255,255,0.05)"):(onSky?(floating?"rgba(255,255,255,0.26)":"rgba(255,255,255,0.10)"):G.cream)),
+      background:trackBg!=null?trackBg:(bare?"transparent":(dk?(floating?"rgba(22,19,34,0.7)":"rgba(255,255,255,0.05)"):(onSky?(floating?"rgba(255,255,255,0.26)":"rgba(255,255,255,0.10)"):G.cream))),
       borderRadius:14,padding:4,
-      border:bare?"1px solid transparent":(dk?"1px solid rgba(255,255,255,0.08)":(onSky?`1px solid rgba(255,255,255,${floating?0.55:0.28})`:`1px solid ${color}1E`)),
-      backdropFilter:bare?"none":(dk?"blur(14px) saturate(1.2)":(onSky?"blur(12px) saturate(1.3)":"none")),WebkitBackdropFilter:bare?"none":(dk?"blur(14px) saturate(1.2)":(onSky?"blur(12px) saturate(1.3)":"none")),
-      boxShadow:bare?"none":(dk?(floating?"0 6px 18px -8px rgba(0,0,0,0.6)":"inset 0 1px 2px rgba(0,0,0,0.3)"):(onSky?(floating?`0 8px 22px -10px ${deep}55, inset 0 1px 0 rgba(255,255,255,0.6)`:`0 4px 14px -10px ${deep}33`):`0 4px 14px -8px ${deep}33, inset 0 1px 0 rgba(255,255,255,0.9)`)),
+      border:trackBorder!=null?`1px solid ${trackBorder}`:(bare?"1px solid transparent":(dk?"1px solid rgba(255,255,255,0.08)":(onSky?`1px solid rgba(255,255,255,${floating?0.55:0.28})`:`1px solid ${color}1E`))),
+      backdropFilter:trackBg!=null?"blur(12px) saturate(1.25)":(bare?"none":(dk?"blur(14px) saturate(1.2)":(onSky?"blur(12px) saturate(1.3)":"none"))),WebkitBackdropFilter:trackBg!=null?"blur(12px) saturate(1.25)":(bare?"none":(dk?"blur(14px) saturate(1.2)":(onSky?"blur(12px) saturate(1.3)":"none"))),
+      boxShadow:trackShadow!=null?trackShadow:(bare?"none":(dk?(floating?"0 6px 18px -8px rgba(0,0,0,0.6)":"inset 0 1px 2px rgba(0,0,0,0.3)"):(onSky?(floating?`0 8px 22px -10px ${deep}55, inset 0 1px 0 rgba(255,255,255,0.6)`:`0 4px 14px -10px ${deep}33`):`0 4px 14px -8px ${deep}33, inset 0 1px 0 rgba(255,255,255,0.9)`))),
       transition:"background .4s ease, box-shadow .4s ease"}}>
       {/* The single gliding pill — moved via GPU transform (translateX) so it
           stays smooth even while the rest of the screen re-renders. */}
@@ -10255,8 +10309,8 @@ function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,pa
         // lighter tone with a soft shadow so it stays legible against both the
         // dark evening sky and the lighter daytime sky. Active text is dark
         // because it sits on the solid pill.
-        const txt=dk?(s.active?"#FFFFFF":"rgba(255,255,255,0.82)"):(isGold?"#FFFFFF":s.active?deep:(onSky?"rgba(255,255,255,0.7)":G.ink2));
-        const txtShadow=s.active?"none":(dk?"0 1px 3px rgba(0,0,0,0.4)":(onSky?"0 1px 4px rgba(60,45,75,0.45)":"none"));
+        const txt=dk?(s.active?"#FFFFFF":(inkColor||"rgba(255,255,255,0.82)")):(isGold?"#FFFFFF":s.active?deep:(inkColor||(onSky?"rgba(255,255,255,0.7)":G.ink2)));
+        const txtShadow=s.active?"none":(inkShadow!=null?inkShadow:(dk?"0 1px 3px rgba(0,0,0,0.4)":(onSky?"0 1px 4px rgba(60,45,75,0.45)":"none")));
         return(
           <button key={s.key} ref={el=>{btnRefs.current[s.key]=el;}} onClick={s.onClick} className={s.node?"":"lt-press-soft"}
             style={{flex:s.flex||1,padding:padY+"px 0",borderRadius:12,border:"1px solid transparent",textShadow:txtShadow,
@@ -12671,19 +12725,22 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
   // chosen palette is celebrated. Weekend & past stay quiet.
   const colBg="transparent";
   // Function: returns the today-wash gradient for the given weekday hex.
+  // Dark now that the page carries colour: a richer top in the day's own hue,
+  // a faint cool sheen near the crown, falling to a quiet base — reads as a
+  // softly-lit glass capsule rather than a flat tint.
   const colBgTodayFor=(wdc)=>dark
-    ?`linear-gradient(180deg, ${wdc}1A 0%, ${wdc}07 100%)`
-    :`linear-gradient(180deg, ${wdc}10 0%, ${wdc}04 100%)`;
+    ?`linear-gradient(180deg, ${wdc}3A 0%, ${wdc}1C 46%, ${wdc}0C 100%)`
+    :`linear-gradient(180deg, ${wdc}24 0%, ${wdc}08 100%)`;
   const colBgWeekend="transparent";
   const colBgEmpty="transparent";
   const colBgPeek=dark?"linear-gradient(180deg, rgba(138,175,210,0.10) 0%, rgba(138,175,210,0.04) 100%)":"linear-gradient(180deg, rgba(138,175,210,0.07) 0%, rgba(138,175,210,0.02) 100%)";
   // No hard ring on today anymore — the coloured wash + dot above is the signal.
   const colBorderToday="1px solid transparent";
   const colBorderPeek=dark?"1px solid rgba(138,175,210,0.35)":"1px solid rgba(138,175,210,0.30)";
-  const zoneDividerColor=dark?"rgba(255,255,255,0.04)":"rgba(31,27,46,0.03)";
-  const cardBg=dark?"rgba(255,255,255,0.05)":"#FFFFFF";
-  const cardBorder=dark?"rgba(255,255,255,0.09)":"rgba(31,27,46,0.05)";
-  const cardShadow=dark?"0 8px 26px -10px rgba(0,0,0,0.5)":"0 8px 26px -10px rgba(31,27,46,0.12)";
+  const zoneDividerColor=dark?"rgba(255,255,255,0.05)":"rgba(31,27,46,0.05)";
+  const cardBg=dark?"linear-gradient(180deg, rgba(255,255,255,0.075) 0%, rgba(255,255,255,0.035) 55%, rgba(255,255,255,0.022) 100%)":"#FFFFFF";
+  const cardBorder=dark?"rgba(255,255,255,0.10)":"rgba(31,27,46,0.05)";
+  const cardShadow=dark?"0 22px 46px -22px rgba(0,0,0,0.66), inset 0 1px 0 rgba(255,255,255,0.07)":"0 8px 26px -10px rgba(31,27,46,0.12)";
 
   // ─── Card grid layout — today wider ────────────────────────────────────
   // 28px zone-labels column + 7 day columns. Today is 1.45fr, others 1fr.
@@ -12724,6 +12781,27 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
     scrollToPanel();
   };
 
+  // ─── Kill the top rubber-band ───────────────────────────────────────────
+  // The week page is an inner `-webkit-overflow-scrolling:touch` scroller. On
+  // iOS that elastically bounces at the very top even with
+  // overscroll-behavior:none, dragging the whole sky scene down and exposing
+  // empty space above it (it looked broken). We block the gesture directly:
+  // while the scroller is already at the top AND the finger moves DOWN, we
+  // preventDefault the touchmove via a NON-passive listener so there's simply
+  // no over-pull. Normal up/down scrolling and the natural bottom are untouched.
+  useEffect(()=>{
+    const el=scrollBodyRef.current; if(!el) return;
+    let sy=0;
+    const onStart=e=>{ sy=e.touches[0]?.clientY??0; };
+    const onMove=e=>{
+      const y=e.touches[0]?.clientY??0;
+      if(el.scrollTop<=0 && y>sy) e.preventDefault();
+    };
+    el.addEventListener("touchstart",onStart,{passive:true});
+    el.addEventListener("touchmove",onMove,{passive:false});
+    return ()=>{ el.removeEventListener("touchstart",onStart); el.removeEventListener("touchmove",onMove); };
+  },[]);
+
   // ─── Build segment color list per zone (with "+N" overflow) ────────────
   const MAX_SEG_PER_ZONE=6;
   const segmentsFor=(zoneActs)=>{
@@ -12761,10 +12839,10 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
   return(
     <div style={{
       flex:1,minHeight:0,height:"100%",display:"flex",flexDirection:"column",overflow:"hidden",
-      // Week page = one continuous surface. The dynamic sky tone (same time-of-day
-      // model the sky banner uses) fills behind everything and melts down into the
-      // pale base, so as the whole page scrolls there's never a flat seam.
-      background:dark?"#0E0E10":(isEd?"transparent":(()=>{const _sk=skyAt(now.getHours()+now.getMinutes()/60);const t=_sk.top,m=_sk.mid,b=_sk.bot;const tr=Math.round(t[0]),tg=Math.round(t[1]),tb=Math.round(t[2]);const mr=Math.round(m[0]),mg=Math.round(m[1]),mb=Math.round(m[2]);const br=Math.round(b[0]),bg=Math.round(b[1]),bb=Math.round(b[2]);return `linear-gradient(180deg, rgb(${tr},${tg},${tb}) 0%, rgb(${mr},${mg},${mb}) 12%, rgb(${br},${bg},${bb}) 22%, rgba(${br},${bg},${bb},0.6) 30%, rgba(${br},${bg},${bb},0.34) 38%, rgba(${br},${bg},${bb},0.16) 46%, rgba(${br},${bg},${bb},0.06) 54%, #F6F4FA 66%)`;})()),
+      // Week page is transparent so the App-root's dynamic time-of-day sky
+      // gradient (light) / dark base + stars (dark) shows through as one
+      // continuous full-screen surface behind the shared header + button.
+      background:"transparent",
     }}>
       <style>{`
         @keyframes weekColIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
@@ -12805,79 +12883,55 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
           at the top, which felt heavy. Putting it inside the scroll body lets
           it scroll out of view gracefully when the user scrolls down to the
           day list — the rhythm chart then sits at the top, getting more room. */}
-      <div ref={scrollBodyRef} style={{flex:1,minHeight:0,overflowY:"auto",overflowX:"hidden",overscrollBehaviorX:"none",overscrollBehaviorY:"contain",WebkitOverflowScrolling:"touch",padding:"0 14px 24px"}}>
+      <div ref={scrollBodyRef} style={{flex:1,minHeight:0,overflowY:"auto",overflowX:"hidden",overscrollBehaviorX:"none",overscrollBehaviorY:"none",WebkitOverflowScrolling:"touch",padding:"0 14px 24px"}}>
         {/* ── In-flow header: the sky banner + Vecka/Redigera row live INSIDE the
             scroll so the whole week page scrolls as one continuous surface (like
             a web page) — nothing stays pinned, no hard edge cuts the content. */}
-        {!isEd&&(
-          <div style={{marginLeft:-14,marginRight:-14,overflow:"hidden"}} onClick={()=>setHeaderTapCount&&setHeaderTapCount(c=>c+1)}>
-            {dark ? (
-              /* DARK: a Home-style dark header inside the scroll — same luma
-                 placement & glass colour as dark Home, but it scrolls away
-                 with the page instead of staying pinned. */
-              <div style={{padding:"calc(16px + env(safe-area-inset-top, 0px)) 22px 6px"}}>
-                <div style={{display:"flex",flexDirection:"row",alignItems:"center",gap:13,marginBottom:10,position:"relative",zIndex:2}}>
-                  <LumaWordmark size={25} color={shadeHex(effS?.h||"#9683C2",0.80)} showSun={false} style={{transition:"color .5s ease"}}/>
-                </div>
-              </div>
-            ) : (
-              <div style={{padding:"16px 22px 6px"}}><SkyHeader now={now} lang={lang} inFlow={true} sun={false}/></div>
-            )}
-          </div>
-        )}
-
         {(()=>{
-          // Premium, calm contrast with the live sky. Against a dark or cool
-          // sky we use a soft warm champagne/peach; against a light warm sky a
-          // muted dusty rose-taupe. Never a loud saturated accent.
-          const _sk=skyAt(now.getHours()+now.getMinutes()/60);
-          const lum=(_sk.hill[0]*0.299+_sk.hill[1]*0.587+_sk.hill[2]*0.114)/255;
-          const labelCol = isDark()
-            ? "rgba(255,255,255,0.55)"
-            : (lum<0.55
-                ? "#E7BFA0"            // dark/dusky sky -> soft champagne peach
-                : "#8A7F8E");          // light sky -> muted dusty mauve-taupe
-          // ── Date range for this week (Mon→Sun). Handles weeks that straddle
-          //    two months ("29 maj – 4 juni") as well as same-month weeks
-          //    ("25–31 maj"). Long month names read calmer/more premium than
-          //    the abbreviated forms (which add inconsistent periods in sv).
+          // ── Date range (Mon→Sun); long month names read calmer than abbrevs. ──
           const _wkMon=weekDays[0].date, _wkSun=weekDays[6].date;
           const _wkLoc=lang==="sv"?"sv-SE":"en-GB";
           const _wkMonth=(d)=>d.toLocaleDateString(_wkLoc,{month:"long"});
           const dateRange=_wkMon.getMonth()===_wkSun.getMonth()
             ? `${_wkMon.getDate()}–${_wkSun.getDate()} ${_wkMonth(_wkSun)}`
             : `${_wkMon.getDate()} ${_wkMonth(_wkMon)} – ${_wkSun.getDate()} ${_wkMonth(_wkSun)}`;
+          const accent=effS?.h||"#9683C2";
+          const deep=effS?.deep||"#6E5E9E";
+          // ── Dynamic ink — always legible against the LIVE sky behind the header.
+          //    Bright/day sky → deep ink; dark/dusk/night sky → soft warm white.
+          //    Driven by the luminance of the sky's mid band (where the text sits). ──
+          // Beautiful, time-responsive ink — never flat black/white.
+          //  · Light mode: a deep, rich tone of the LIVE hue (deep plum at dusk,
+          //    navy at midday, warm umber at dawn) over the bright sky backdrop.
+          //  · Dark mode (premium): the number is a luminous near-white PEARL with
+          //    just a whisper of the live hue — crisp and high-contrast against the
+          //    near-black night; the date is a quieter, muted tint a clear step
+          //    down, for a calm, mature hierarchy.
+          const dynInk = dark ? shadeHex(accent, 0.82) : shadeHex(accent, -0.52);
+          const dynSoft= dark ? shadeHex(accent, 0.52) : shadeHex(accent, -0.26);
+          const dynSh  = dark ? "0 1px 12px rgba(0,0,0,0.5)" : "0 1px 2px rgba(255,255,255,0.6)";
+          // Dark mode: a premium liquid-glass treatment (think iOS) — the glyphs
+          // are filled with a refractive, top-lit gradient of the LIVE hue that
+          // keeps real colour in its core (so it reads luminous, never flat grey
+          // or stark white) and carries a soft hue glow for depth on the night.
+          const _numStyle = dark
+            ? {backgroundImage:`linear-gradient(162deg, ${shadeHex(accent,0.92)} 0%, ${shadeHex(accent,0.58)} 42%, ${shadeHex(accent,0.36)} 74%, ${shadeHex(accent,0.56)} 100%)`,WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent",filter:`drop-shadow(0 2px 12px ${shadeHex(accent,0.42)}3D)`}
+            : {color:dynInk,textShadow:dynSh};
+          const _dateStyle = dark
+            ? {backgroundImage:`linear-gradient(162deg, ${shadeHex(accent,0.70)} 0%, ${shadeHex(accent,0.44)} 100%)`,WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}
+            : {color:dynSoft,textShadow:dynSh};
           return (
-            // ── Editorial "hero" week header ──
-            //   eyebrow label (adaptive labelCol) sits above a large serif
-            //   numeral (inkSoft display ink), with a quiet date range (ink2)
-            //   baseline-aligned beside it. The air around the big numeral is
-            //   what reads as "premium" — let it breathe.
-            <div style={dark?{padding:"12px 16px 14px",marginBottom:12,borderRadius:20,position:"relative",overflow:"hidden",background:"linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.035) 100%)",backdropFilter:"blur(22px) saturate(1.6)",WebkitBackdropFilter:"blur(22px) saturate(1.6)",border:"1px solid rgba(255,255,255,0.12)",boxShadow:"0 10px 30px -14px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.20)"}:{padding:"0 8px 12px",position:"relative"}}>
-              {/* whisper-soft bloom behind the numeral — gentle premium depth */}
-              <div aria-hidden="true" style={{position:"absolute",left:dark?8:-6,top:dark?18:2,width:108,height:108,borderRadius:"50%",filter:"blur(10px)",pointerEvents:"none",zIndex:0,background:dark?"radial-gradient(circle, rgba(255,255,255,0.13), rgba(231,191,160,0.09) 42%, transparent 70%)":"radial-gradient(circle, rgba(255,255,255,0.6), rgba(231,191,160,0.14) 42%, transparent 72%)"}}/>
-              {/* eyebrow + edit on ONE line, vertically centered together.
-                  VECKA sits hard-left; the pen sits in segment 3 of a 3-equal
-                  SlideTabRow (same math as Home) so it lands at Home's x. Both
-                  share this single flex row, so they're in horizontal harmony. */}
-              <div style={{display:"flex",alignItems:"center",marginBottom:2,minHeight:34,paddingTop:15,position:"relative",zIndex:1}}>
-                <div style={{display:"flex",alignItems:"center",gap:9,flex:1,minWidth:0,paddingLeft:4}}>
-                  <span aria-hidden="true" style={{width:7,height:7,borderRadius:"50%",background:"radial-gradient(circle at 35% 30%, #FFFFFF, #F8D2B2 55%, #E2A266)",boxShadow:"0 1px 4px rgba(224,135,63,0.5)",flexShrink:0}}/>
-                  <span style={{fontFamily:G.serif,fontSize:14,fontWeight:600,letterSpacing:.3,color:labelCol,transition:"color .5s ease",whiteSpace:"nowrap"}}>{lang==="sv"?"Vecka":"Week"}</span>
-                </div>
-                <button onClick={()=>setIsEd&&setIsEd(e=>!e)} className={isEd?"lt-press":"lt-edit-pen"}
-                  aria-label={isEd?t.editorClose:t.editorOpen}
-                  style={{border:"none",background:"transparent",cursor:"pointer",padding:"6px 0",marginRight:56,display:"flex",alignItems:"center",justifyContent:"center",
-                    color:dark?"rgba(255,255,255,0.96)":"rgba(255,255,255,0.98)",WebkitTapHighlightColor:"transparent"}}>
-                  {isEd
-                    ? <span style={{fontFamily:G.serif,fontWeight:600,fontSize:13,letterSpacing:.3,textShadow:dark?"none":"0 1px 4px rgba(60,45,75,0.45)"}}>{t.editorClose}</span>
-                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:"block",filter:dark?"none":"drop-shadow(0 1px 3px rgba(60,45,75,0.4))"}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
-                </button>
-              </div>
-              <div style={{display:"flex",alignItems:"baseline",gap:11,position:"relative",zIndex:1,marginLeft:16}}>
-                <span style={dark?{fontFamily:G.serif,fontWeight:800,fontSize:46,lineHeight:0.92,letterSpacing:-1.5,fontVariantNumeric:"tabular-nums",background:"linear-gradient(180deg, rgba(244,242,252,0.72) 0%, rgba(244,242,252,0.34) 52%, rgba(244,242,252,0.15) 100%)",WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}:{fontFamily:G.serif,fontWeight:800,fontSize:46,lineHeight:0.92,letterSpacing:-1.5,fontVariantNumeric:"tabular-nums",background:"linear-gradient(180deg, #5E5775 0%, #6E6786 52%, #847D98 100%)",WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}}>{weekNum}</span>
-                <span style={{fontFamily:G.serif,fontSize:14,fontWeight:500,color:dark?"rgba(163,158,181,0.72)":tk().ink2,transition:"color .5s ease"}}>{dateRange}</span>
-              </div>
+            // Week number + range — sits directly under the shared "• Vecka"
+            // button, left-aligned, over the dynamic sky. Light: deep hue ink;
+            // dark: liquid-glass gradient glyphs (see above).
+            <div style={{display:"flex",alignItems:"baseline",gap:8,padding:"4px 22px 12px 24px"}}>
+              <span style={{position:"relative",display:"inline-flex"}}>
+                {dark&&(
+                  <span aria-hidden="true" style={{position:"absolute",left:"50%",top:"50%",width:108,height:88,transform:"translate(-50%,-50%)",borderRadius:"50%",filter:"blur(24px)",pointerEvents:"none",zIndex:-1,background:`radial-gradient(circle, ${shadeHex(accent,0.5)}2E, transparent 72%)`}}/>
+                )}
+                <span style={{fontFamily:G.serif,fontWeight:800,fontSize:38,lineHeight:0.95,letterSpacing:-1.2,fontVariantNumeric:"tabular-nums",transition:"color .5s ease",..._numStyle}}>{weekNum}</span>
+              </span>
+              <span style={{fontFamily:G.serif,fontSize:13,fontWeight:500,transition:"color .5s ease",..._dateStyle}}>{dateRange}</span>
             </div>
           );
         })()}
@@ -12889,6 +12943,8 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
           padding:"16px 14px 18px",
           boxShadow:cardShadow,
           border:`1px solid ${cardBorder}`,
+          backdropFilter:dark?"blur(22px) saturate(1.2)":"none",
+          WebkitBackdropFilter:dark?"blur(22px) saturate(1.2)":"none",
           position:"relative",
         }}>
 
@@ -12956,10 +13012,12 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
                     or one you tap) gets a larger glowing dot; the others stay
                     small and quiet, and past days fade back. */}
                 <div aria-hidden style={{
-                  width:hot?5:4,height:hot?5:4,borderRadius:"50%",
-                  background:hot?`linear-gradient(140deg, ${wdc}, ${shadeHex(wdc,-0.20)})`:wdc,
-                  opacity:(isPast&&!hot)?0.4:(hot?1:0.7),
-                  boxShadow:hot?(dark?`0 0 6px ${wdc}80`:`0 1px 3px ${wdc}66`):"none",
+                  width:hot?6:5,height:hot?6:5,borderRadius:"50%",
+                  background:`linear-gradient(140deg, ${shadeHex(wdc,0.18)}, ${shadeHex(wdc,-0.22)})`,
+                  opacity:(isPast&&!hot)?0.42:(hot?1:0.9),
+                  boxShadow:dark
+                    ?(hot?`0 0 7px ${wdc}88, inset 0 1px 0 rgba(255,255,255,0.28)`:"inset 0 1px 0 rgba(255,255,255,0.18)")
+                    :(hot?`0 1px 3px ${wdc}77, 0 0 0 1.5px rgba(255,255,255,0.95), inset 0 1px 0 rgba(255,255,255,0.6)`:"0 1px 2px rgba(31,27,46,0.20), 0 0 0 1.25px rgba(255,255,255,0.85), inset 0 1px 0 rgba(255,255,255,0.5)"),
                   transition:"opacity .3s ease, background .3s ease, width .25s ease, height .25s ease",
                 }}/>
               </div>
@@ -12968,7 +13026,7 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
           </div>
 
           {/* ── Grid: zone labels + 7 day columns ── */}
-          <div style={{display:"grid",gridTemplateColumns:gridCols,gap:5,height:232,position:"relative"}}>
+          <div style={{display:"grid",gridTemplateColumns:gridCols,gap:5,height:400,position:"relative"}}>
 
             {/* Zone labels (left column) — bespoke hand-drawn SVG icons with
                 individual gentle animations. Sun radiates with rotating rays
@@ -13031,9 +13089,15 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
               const bg=isPeeked?colBgPeek:isToday?colBgTodayFor(wdcCol):isEmpty?colBgEmpty:isWeekend?colBgWeekend:colBg;
               // Borders are pre-built CSS strings now; just use them directly.
               const border=isToday?colBorderToday:isPeeked?colBorderPeek:"1px solid transparent";
-              // Polish C — no shadow on today; the wash + dot above + bold
-              // numeral are signal enough. Cleaner reading.
-              const shadow="none";
+              // Hybrid premium — today reads as a soft OPAQUE capsule (not
+              // glass): a crisp lit top edge (inset highlight) + a gentle
+              // colour-tinted lift shadow below, in the day's own colour. Keeps
+              // full readability on the white card; no blur, no perf cost.
+              const shadow=isToday
+                ?(dark
+                  ?`inset 0 1px 0 rgba(255,255,255,0.12), 0 14px 28px -14px ${wdcCol}80`
+                  :`inset 0 1px 0 rgba(255,255,255,0.95), 0 12px 24px -14px ${wdcCol}55`)
+                :"none";
               // Past days fade & desaturate — they're context, not focus.
               // Today and upcoming days stay at full presence.
               const pastFilter=isPast&&!isPeeked?"saturate(0.5) opacity(0.55)":"none";
@@ -13145,6 +13209,8 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
             padding:"16px 16px 12px",
             boxShadow:cardShadow,
             border:`1px solid ${cardBorder}`,
+            backdropFilter:dark?"blur(22px) saturate(1.2)":"none",
+            WebkitBackdropFilter:dark?"blur(22px) saturate(1.2)":"none",
           }}>
             <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:10,marginBottom:10}}>
               <div style={{fontFamily:G.serif,fontWeight:700,fontSize:16,color:tk().ink,letterSpacing:-0.2,textTransform:"capitalize"}}>
@@ -13213,6 +13279,8 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
             borderRadius:18,
             padding:"32px 18px 26px",
             border:`1px solid ${cardBorder}`,
+            backdropFilter:dark?"blur(22px) saturate(1.2)":"none",
+            WebkitBackdropFilter:dark?"blur(22px) saturate(1.2)":"none",
             textAlign:"center",
           }}>
             <style>{`@keyframes wkEmpHalo{0%,100%{transform:scale(0.92);opacity:.5}50%{transform:scale(1.08);opacity:.9}}@keyframes wkEmpFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes wkEmpRot{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
@@ -15972,6 +16040,32 @@ export default function App(){
     if(hour>=20&&hour<23) return "rgba(120, 110, 180, 0.18)";   // dusk
     return "rgba(60, 70, 120, 0.22)";                            // night
   })();
+  // ── DARK MODE — atmospheric night surface ─────────────────────────────────
+  // Light mode gives every screen a living, layered time-of-day sky; dark mode
+  // used to fall back to a single FLAT #0E0E10 on every screen, which read as
+  // "unfinished" beside the light theme (and made the week tool's frosted-glass
+  // card sit on dead black, so its blur did nothing). We give the dark surface
+  // the same sense of depth — without noise — using three quiet layers:
+  //   (1) a soft top glow in the LIVE accent hue (effS.h) so dark mode tracks
+  //       the SAME time-of-day / per-tool rhythm the light header already does;
+  //   (2) a faint cool counter-light low-right, for organic asymmetry;
+  //   (3) a gentle vertical lift from a desaturated indigo at the very top down
+  //       to a near-black base, with a whisper of vignette at the foot.
+  // Every fade reaches `transparent` well before any hard edge → no banding.
+  // The two "sky" screens (home/week) get a touch more glow; tools stay calmer,
+  // mirroring the light theme where only home/week carry the full sky.
+  const _darkAccent = effS?.h || "#9683C2";
+  const _darkSky = screen==="home" || screen==="week";
+  // (4) Edge vignette — pulls the corners down a touch for depth and to frame
+  //     the content. Tools get a firmer vignette (they have no sky to carry the
+  //     eye); the sky screens get a gentle one so stars still settle at the edges.
+  const _vig = _darkSky ? "rgba(0,0,0,0.16)" : "rgba(0,0,0,0.30)";
+  const darkBg = [
+    `radial-gradient(125% 80% at 50% -10%, ${_darkAccent}${_darkSky?"22":"18"} 0%, ${_darkAccent}0C 28%, transparent 62%)`,
+    `radial-gradient(85% 60% at 86% 14%, ${shadeHex(_darkAccent,0.18)}10 0%, transparent 58%)`,
+    `radial-gradient(115% 100% at 50% 42%, transparent 52%, ${_vig} 100%)`,
+    "linear-gradient(180deg, #17141F 0%, #131019 32%, #0E0C14 66%, #0B0A10 100%)",
+  ].join(", ");
   return(
     /* Outer shell — pinned to the FULL visual viewport with position:fixed +
        inset:0. This is the device-independent edge-bleed fix: a fixed element
@@ -15985,7 +16079,7 @@ export default function App(){
       width:"auto",
       overflow:"hidden",
       background:isDark()
-      ? "#0E0E10"
+      ? darkBg
       : (screen==="home"
         // ───── HOME BACKGROUND — atmospheric, layered sunlight ─────
         // Card view excluded so the card's own colour can shine.
@@ -16040,11 +16134,25 @@ export default function App(){
               const br=Math.round(bb2[0]),bg=Math.round(bb2[1]),bb=Math.round(bb2[2]);
               return `linear-gradient(180deg, rgb(${tr},${tg},${tb}) 0%, rgb(${mr},${mg},${mb}) 12%, rgb(${br},${bg},${bb}) 22%, rgba(${br},${bg},${bb},0.6) 30%, rgba(${br},${bg},${bb},0.34) 38%, rgba(${br},${bg},${bb},0.16) 46%, rgba(${br},${bg},${bb},0.06) 54%, #F6F4FA 66%)`;
             })())
-        : effS.hb),color:tk().ink,fontFamily:G.font,transition:"background 1.2s ease"}}>
+        : (screen==="week"
+          // ───── WEEK BACKGROUND — dynamic time-of-day sky ─────
+          // The full-screen surface follows the day: skyAt() gives the top/mid/
+          // bottom sky colours for the current hour, fading down into a pale base.
+          // It sits behind EVERYTHING (header, the shared "• Vecka" button, and
+          // the content), so the button stays pixel-identical to every tool while
+          // the background still breathes with the day. Dark mode uses the shared
+          // near-black base + stars (handled by isDark above), like every tool.
+          ? (()=>{const _sk=skyAt(now.getHours()+now.getMinutes()/60);const t=_sk.top,m=_sk.mid,b=_sk.bot;const tr=Math.round(t[0]),tg=Math.round(t[1]),tb=Math.round(t[2]);const mr=Math.round(m[0]),mg=Math.round(m[1]),mb=Math.round(m[2]);const br=Math.round(b[0]),bg=Math.round(b[1]),bb=Math.round(b[2]);return `linear-gradient(180deg, rgb(${tr},${tg},${tb}) 0%, rgb(${mr},${mg},${mb}) 12%, rgb(${br},${bg},${bb}) 22%, rgba(${br},${bg},${bb},0.6) 30%, rgba(${br},${bg},${bb},0.34) 38%, rgba(${br},${bg},${bb},0.16) 46%, rgba(${br},${bg},${bb},0.06) 54%, #F6F4FA 66%)`;})()
+          : effS.hb)),color:tk().ink,fontFamily:G.font,transition:"background 1.2s ease"}}>
       {/* BOOT OVERLAY — the Luma sun (matching the welcome guide), gently
           rotating, shown for a moment as the app opens then fading away. Sits
           above everything (zIndex high) and ignores taps once fading. */}
-      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",background:isDark()?"#0E0E10":"transparent",height:"100%",width:"100%"}}>
+      {/* DARK-MODE ATMOSPHERE — faint starfield behind everything (home/week
+          only). Sits at zIndex 0; the app-root content is lifted to zIndex 1
+          so the stars read as sky, never as dots over the cards. The accent
+          glow lives in the page background above. */}
+      {isDark()&&<DarkAtmosphere sky={_darkSky} hour={hour}/>}
+      <div className="lt-app-root" style={{display:"flex",flexDirection:"column",margin:"0 auto",position:"relative",zIndex:1,background:"transparent",height:"100%",width:"100%"}}>
       {/* GLOBAL POLISH UTILITY STYLES — touch feedback, focus states, modal entrance */}
       <style>{`
         /* === UNIVERSAL DEVICE ADAPTATION ===
@@ -16440,14 +16548,9 @@ export default function App(){
           transparent, there is no edge where it "ends" — the colour simply
           dissolves into the page, so the whole screen reads as one surface
           whether you're at the top or scrolled down. */}
-      {!isDark()&&screen==="week"&&(
-        <div style={{position:"absolute",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:"100%",
-            background:`linear-gradient(180deg, ${effS.h}3A 0%, ${effS.h}24 12%, ${effS.h}14 22%, transparent 40%)`}}/>
-          <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,
-            background:`linear-gradient(180deg, transparent 0%, transparent 30%, #FFFFFF 60%, #FFFFFF 100%)`}}/>
-        </div>
-      )}
+      {/* Week uses the standard tool background (the App-root's effS.hb in
+          light, the dark base + shared stars in dark) — exactly like every
+          other tool. No unique sky; only Home is unique. */}
       {/* HEADER — a luminous atmospheric composition. Five layered light
           sources work together: a base wash, a primary aurora upper-right,
           a softer counter-glow upper-left, a subtle specular highlight
@@ -16455,7 +16558,7 @@ export default function App(){
           hairline at the bottom. Everything transitions over .5s when the
           screen color changes, and the auroras breathe gently over time. */}
       <div onClick={()=>setHeaderTapCount(c=>c+1)} className="lt-app-header" style={{
-        display: (screen==="week"&&!isEd)?"none":undefined,
+        display: undefined,
         // Per-screen header: each tool has its own fullness and glow shape (see
         // HEADER_CHAR) so every header is unique, while sharing one calm design
         // language. The screen's own hue colours it; calm/Lugn is the fullest.
@@ -16551,10 +16654,10 @@ export default function App(){
             lt-app-root above) is a radial gradient emanating from this
             point in the time-of-day colour, fading to white. The header
             and body are one unified painted surface. */}
-        {((screen==="home"||screen==="week")&&!isEd&&!isDark()) ? (
+        {((screen==="home")&&!isEd&&!isDark()) ? (
           <SkyHeader now={now} lang={lang}/>
         ) : (<>
-        {(isEd||screen==="home"||screen==="week") && (
+        {(isEd||screen==="home") && (
         <div style={{
           display:"flex",
           flexDirection:"row",
@@ -16710,7 +16813,7 @@ export default function App(){
             schedule's scroll handler (writes transform/opacity to tabBarRef) —
             no React state, no re-render, no reflow, so it's perfectly smooth.
             Otherwise it's a normal always-visible in-flow bar. */}
-        {!(screen==="week"&&!isEd)&&(()=>{
+        {(()=>{
           const collapsible = screen==="home" && !isEd && cfg.schedView==="both";
           return(
           <div ref={collapsible?tabBarRef:null} style={collapsible?{
@@ -16730,6 +16833,14 @@ export default function App(){
             if(screen==="home"&&!isEd){
               if(cfg.schedView!=="card") segments.push({key:"list",label:t.list,active:effView==="list"&&!isEd,onClick:()=>setView("list")});
               if(cfg.schedView!=="list") segments.push({key:"card",label:t.card,active:effView==="card"&&!isEd,onClick:()=>setView("card")});
+              // Always keep a 3-slot grid (toggle / toggle-or-spacer / pen) so the
+              // pen lands in the RIGHT THIRD — pixel-identical to the Week header,
+              // which uses the same SlideTabRow with [Vecka / spacer / pen]. In
+              // list-only or card-only mode there's just one toggle pill, which
+              // would collapse the row to 2 slots and shove the pen into the right
+              // HALF — so it visibly jumps left when you swipe Home↔Vecka. The
+              // invisible spacer restores the missing slot and locks the pen's x.
+              if(cfg.schedView!=="both") segments.push({key:"_sp",label:"",active:false,onClick:()=>{},flex:1});
             }
             if(screen!=="home"&&!isEd){
               leadingLabel=(
@@ -16752,7 +16863,39 @@ export default function App(){
             }
             // Redigera / Stäng — present on all screens. It's the gold pill when editing.
             segments.push({key:"edit",label:isEd?t.editorClose:t.editorOpen,active:isEd,icon:!isEd,onClick:()=>setIsEd(e=>!e),flex:1});
-            return <SlideTabRow segments={segments} leadingLabel={leadingLabel} goldKey="edit" color={effS.h} deep={effS.deep} floating={collapsible} onSky={screen==="home"&&!isEd}/>;
+            // Glass tracks for the floating-over-content bars. WEEK floats over
+            // the live sky and gets a delicate see-through glass. The OTHER
+            // TOOLS (timer/stories/emotion/calm/comm/idcard) sat on a solid
+            // cream track — now they get the same frosted glass in LIGHT mode so
+            // every tool's Redigera bar matches Vecka instead of a heavy block.
+            // SAFE: on tool/week screens this bar is an in-flow band with nothing
+            // scrolling behind it — the "bar recolours as cards scroll up" bug
+            // only ever affected Home's floating bar, which is untouched here.
+            // Dark tools already use a translucent track by default, so we only
+            // add glass for light-mode tools; week keeps its existing treatment.
+            const _dkNow = isDark();
+            const _wkFrost = screen==="week" && !isEd;       // week, over the sky
+            const _toolFrost = screen!=="home" && screen!=="week" && !isEd && !_dkNow; // light-mode tools
+            let _wkTrackBg=null,_wkTrackBorder=null,_wkTrackShadow=null,_wkInk=null,_wkInkSh=null;
+            if(_wkFrost){
+              _wkTrackBg = _dkNow?"rgba(255,255,255,0.055)":"rgba(255,255,255,0.20)";
+              _wkTrackBorder = "transparent";
+              _wkTrackShadow = _dkNow
+                ? "0 8px 24px -16px rgba(0,0,0,0.5)"
+                : "0 8px 22px -16px rgba(70,58,92,0.22)";
+              _wkInk = _dkNow?"rgba(245,242,252,0.9)":effS.deep;
+              _wkInkSh = _dkNow?"0 1px 4px rgba(0,0,0,0.5)":"0 1px 3px rgba(255,255,255,0.65)";
+            } else if(_toolFrost){
+              // Frosted glass over the tool's pale pastel page. A touch more white
+              // than Week (which has the colourful sky for contrast) so the pill
+              // still reads as a defined glass surface; a faint hue edge keeps its
+              // outline. Ink stays the neutral default — a clean dark pen on a
+              // near-white frosted pill needs no tint.
+              _wkTrackBg = "rgba(255,255,255,0.34)";
+              _wkTrackBorder = `${effS.h}22`;
+              _wkTrackShadow = `0 6px 18px -12px ${effS.deep}30, inset 0 1px 0 rgba(255,255,255,0.75)`;
+            }
+            return <SlideTabRow segments={segments} leadingLabel={leadingLabel} goldKey="edit" color={effS.h} deep={effS.deep} floating={collapsible} onSky={screen==="home"&&!isEd} trackBg={_wkTrackBg} trackBorder={_wkTrackBorder} trackShadow={_wkTrackShadow} inkColor={_wkInk} inkShadow={_wkInkSh}/>;
           })()}
           </div>
           </div>
@@ -16981,8 +17124,11 @@ export default function App(){
         background:isDark()?"rgba(14,14,16,0.72)":"rgba(255,255,255,0.72)",
         backdropFilter:"blur(22px) saturate(180%)",
         WebkitBackdropFilter:"blur(22px) saturate(180%)",
-        borderTop:isDark()?"1px solid rgba(255,255,255,0.05)":"1px solid rgba(31,27,46,0.05)",
-        boxShadow:"none",
+        // Dark: a hairline tinted with the LIVE screen accent (plus a whisper of
+        // accent glow lifting off the top edge) so the bar belongs to the screen
+        // it sits under, instead of a flat neutral white line. Light unchanged.
+        borderTop:isDark()?`1px solid ${effS.h}26`:"1px solid rgba(31,27,46,0.05)",
+        boxShadow:isDark()?`0 -10px 26px -18px ${effS.h}55, inset 0 1px 0 rgba(255,255,255,0.04)`:"none",
         display:"flex",
         padding:"7px 0 calc(6px + env(safe-area-inset-bottom, 0px))",
         flexShrink:0,zIndex:20,position:"relative",
