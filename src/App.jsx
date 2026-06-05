@@ -191,7 +191,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       var pre = document.createElement("div");
       pre.id = "lumaPreBoot";
       pre.setAttribute("aria-hidden", "true");
-      pre.style.cssText = "position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;background:"+bg+";opacity:1;pointer-events:none;overflow:hidden";
+      pre.style.cssText = "position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;background:"+bg+";background:radial-gradient(125% 100% at 50% 42%, #FBFDFE 0%, #FBF8F1 58%, #F4ECDE 100%);opacity:1;pointer-events:none;overflow:hidden";
       var markStroke = "#1F1B2E";
       var icoBgA = "#FFFCF7";
       var icoBgB = "#F3E6D7";
@@ -210,14 +210,17 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
         + '@keyframes lumaPreGlint{0%{opacity:0;transform:scale(.6)}18%{opacity:1;transform:scale(1.5)}100%{opacity:0;transform:scale(1.95)}}'
         // calm resting pulse on the glow — loops while the app loads, however long that takes
         + '@keyframes lumaPrePulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.78;transform:scale(1.1)}}'
+        // one-shot soft ring when the pearl lands — the light "settles"
+        + '@keyframes lumaPreRipple{0%{opacity:0;transform:scale(.35)}28%{opacity:.5}100%{opacity:0;transform:scale(2.1)}}'
         + '.lpaura{position:absolute;left:50%;top:41%;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle, rgba(232,168,120,0.16) 0%, rgba(232,168,120,0.06) 46%, rgba(232,168,120,0) 70%);transform:translate(-50%,-50%);pointer-events:none;z-index:0;animation:lumaPreAura 5s ease-in-out 0.3s infinite}'
+        + '.lpripple{transform-origin:50px 62px;opacity:0;animation:lumaPreRipple 0.95s ease-out 0.46s 1 both}'
         + '.lpglint{transform-origin:50px 62px;opacity:0}'
         + '.lpglint.go{animation:lumaPreGlint 0.5s ease-out 1 both}'
         + '</style>'
         + '<div class="lpaura"></div>'
         + '<div style="position:relative;z-index:2;margin-top:-9vh;animation:lumaPreIconIn 0.6s cubic-bezier(0.22,1,0.36,1) both">'
         + '<div style="will-change:transform;animation:lumaPreBreath 4.4s ease-in-out 1.0s infinite">'
-        + '<svg width="' + ICON + '" height="' + ICON + '" viewBox="0 0 100 100" style="display:block;overflow:visible;filter:drop-shadow(0 16px 34px rgba(80,70,95,0.20))">'
+        + '<svg width="' + ICON + '" height="' + ICON + '" viewBox="0 0 100 100" style="display:block;overflow:visible;filter:drop-shadow(0 22px 46px rgba(120,92,68,0.18)) drop-shadow(0 6px 14px rgba(80,70,95,0.10))">'
         + '<defs>'
         + '<linearGradient id="lumaPreIcoBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + icoBgA + '"/><stop offset="100%" stop-color="' + icoBgB + '"/></linearGradient>'
         + '<radialGradient id="lumaPrePearl" cx="38%" cy="32%" r="74%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="30%" stop-color="#FFF2E6"/><stop offset="70%" stop-color="#F8D2B2"/><stop offset="100%" stop-color="#EDB78F"/></radialGradient>'
@@ -227,6 +230,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
         + '<rect x="0" y="0" width="100" height="100" rx="22.37" fill="url(#lumaPreIcoBg)"/>'
         + '<path d="M34.5 21 L34.5 63.5 A15.5 15.5 0 0 0 65.5 63.5 L65.5 43.3" fill="none" stroke="' + markStroke + '" stroke-width="12.8" stroke-linecap="round"/>'
         + '<circle cx="50" cy="62" r="12" fill="url(#lumaPreGlow)" style="transform-origin:50px 62px;animation:lumaPrePulse 4.6s ease-in-out 1.6s infinite"/>'
+        + '<circle class="lpripple" cx="50" cy="62" r="11" fill="none" stroke="#E8A878" stroke-width="2"/>'
         + '<circle id="lumaPreGlintEl" class="lpglint" cx="50" cy="62" r="13" fill="url(#lumaPreFlash)"/>'
         + '<g style="transform-origin:50px 62px;animation:lumaPrePearlDrop 0.62s cubic-bezier(0.5,0,0.75,0) 0s 1 both">'
         + '<circle cx="50" cy="62" r="7" fill="url(#lumaPrePearl)"/>'
@@ -1734,6 +1738,19 @@ function skyAt(h){
           warm:(t<0.5?a.warm:b.warm)};
 }
 const _skSunCol=e=>_skMix(_skHx('#F4923C'),_skHx('#FFD982'),_skSmooth(e));
+// ── Adaptive ink for text/icons that sit DIRECTLY on the live sky header
+// (light theme: week + home). It looks at the sky's mid band at hour h and
+// picks luminance-contrast: a LIGHT tint of the hue when the sky is dark
+// (dusk/evening), a DEEP tint when the sky is bright (day) — so the week
+// number, dates, "• Vecka" and the pen are ALWAYS clearly legible as the
+// background shifts through the day, while still being a live tone of the hue.
+function _skyMidLum(h){ const sk=skyAt(h); const b=(sk&&sk.mid)||[200,200,200]; return 0.299*b[0]+0.587*b[1]+0.114*b[2]; }
+function skyIsDark(h){ return _skyMidLum(h) < 150; }
+function skyInk(h, hue, soft){
+  return skyIsDark(h)
+    ? shadeHex(hue, soft?0.54:0.72)    // dark sky → light tint of the hue
+    : shadeHex(hue, soft?-0.42:-0.62); // bright sky → deep tint of the hue
+}
 const SKY_STARS=Array.from({length:42},(_,i)=>({x:20+((i*73)%760),y:8+((i*39)%112),r:0.6+((i*7)%10)/10*1.4,ph:((i*53)%100)/100}));
 
 // ── DARK-MODE STARFIELD ──────────────────────────────────────────────────
@@ -12730,7 +12747,7 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
   // softly-lit glass capsule rather than a flat tint.
   const colBgTodayFor=(wdc)=>dark
     ?`linear-gradient(180deg, ${wdc}3A 0%, ${wdc}1C 46%, ${wdc}0C 100%)`
-    :`linear-gradient(180deg, ${wdc}24 0%, ${wdc}08 100%)`;
+    :`linear-gradient(180deg, ${wdc}30 0%, ${wdc}16 32%, ${wdc}07 100%)`;
   const colBgWeekend="transparent";
   const colBgEmpty="transparent";
   const colBgPeek=dark?"linear-gradient(180deg, rgba(138,175,210,0.10) 0%, rgba(138,175,210,0.04) 100%)":"linear-gradient(180deg, rgba(138,175,210,0.07) 0%, rgba(138,175,210,0.02) 100%)";
@@ -12907,16 +12924,18 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
           //    just a whisper of the live hue — crisp and high-contrast against the
           //    near-black night; the date is a quieter, muted tint a clear step
           //    down, for a calm, mature hierarchy.
-          const dynInk = dark ? shadeHex(accent, 0.82) : shadeHex(accent, -0.52);
-          const dynSoft= dark ? shadeHex(accent, 0.52) : shadeHex(accent, -0.26);
-          const dynSh  = dark ? "0 1px 12px rgba(0,0,0,0.5)" : "0 1px 2px rgba(255,255,255,0.6)";
+          const _wkH = (typeof now!=="undefined"&&now) ? (now.getHours()+now.getMinutes()/60) : 12;
+          const _skDark = skyIsDark(_wkH);   // is the sky behind the header dark right now?
+          const dynInk = dark ? shadeHex(accent, 0.82) : skyInk(_wkH, accent, false);
+          const dynSoft= dark ? shadeHex(accent, 0.52) : skyInk(_wkH, accent, true);
+          const dynSh  = dark ? "0 1px 12px rgba(0,0,0,0.5)" : (_skDark ? "0 1px 8px rgba(28,18,46,0.55)" : "0 1px 2px rgba(255,255,255,0.6)");
           // Dark mode: a premium liquid-glass treatment (think iOS) — the glyphs
           // are filled with a refractive, top-lit gradient of the LIVE hue that
           // keeps real colour in its core (so it reads luminous, never flat grey
           // or stark white) and carries a soft hue glow for depth on the night.
           const _numStyle = dark
             ? {backgroundImage:`linear-gradient(162deg, ${shadeHex(accent,0.92)} 0%, ${shadeHex(accent,0.58)} 42%, ${shadeHex(accent,0.36)} 74%, ${shadeHex(accent,0.56)} 100%)`,WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent",filter:`drop-shadow(0 2px 12px ${shadeHex(accent,0.42)}3D)`}
-            : {color:dynInk,textShadow:dynSh};
+            : {color:dynInk,textShadow:_skDark ? "0 2px 10px rgba(18,10,38,0.55)" : "0 2px 6px rgba(58,44,84,0.18), 0 1px 1px rgba(255,255,255,0.5)"};
           const _dateStyle = dark
             ? {backgroundImage:`linear-gradient(162deg, ${shadeHex(accent,0.70)} 0%, ${shadeHex(accent,0.44)} 100%)`,WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}
             : {color:dynSoft,textShadow:dynSh};
@@ -13160,7 +13179,7 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
                         {more>0&&(
                           <div style={{
                             fontSize:8.5,fontWeight:700,
-                            color:isToday?PEACH_DEEP:tk().ink3,
+                            color:isToday?(dark?shadeHex(wdcCol,0.45):shadeHex(wdcCol,-0.18)):tk().ink3,
                             textAlign:"center",marginTop:2,letterSpacing:0.3,
                           }}>{`+${more}`}</div>
                         )}
@@ -13186,14 +13205,19 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
             <div/>
             {dayActs.map(da=>{
               const past=da.day.isPast;
+              // Match the rest of the day-identity system: today's count reads in
+              // its OWN weekday colour (deepened for light / lifted for dark),
+              // not a hardcoded peach.
+              const _cwc=weekColors[da.day.jsDay]||PEACH;
+              const _cHue=dark?shadeHex(_cwc,0.45):shadeHex(_cwc,-0.18);
               return(
               <div key={da.day.jsDay} style={{
                 fontSize:da.day.isToday?12:(past?9:10.5),
                 fontWeight:da.day.isToday?800:600,
-                color:da.day.isToday?PEACH_DEEP:tk().ink3,
+                color:da.day.isToday?_cHue:tk().ink3,
                 textAlign:"center",letterSpacing:0.2,
                 opacity:da.count===0?0.4:(past?0.5:1),
-                transition:"opacity .3s ease",
+                transition:"opacity .3s ease, color .3s ease",
               }}>{da.count===0?"—":da.count}</div>
               );
             })}
@@ -16682,7 +16706,7 @@ export default function App(){
               SkyWordmark is the same logo without the sun. */}
           <LumaWordmark
             size={28}
-            color={isDark()?shadeHex(effS.h,0.80):shadeHex(effS.h,-0.55)}
+            color={isDark()?shadeHex(effS.h,0.80):(screen==="week"?skyInk((typeof now!=="undefined"&&now)?(now.getHours()+now.getMinutes()/60):12,effS.h,false):shadeHex(effS.h,-0.55))}
             showSun={isEd}
             pearlScale={1.18}
             style={{transition:"color .5s ease"}}
@@ -16733,14 +16757,23 @@ export default function App(){
               {isEd ? (()=>{
                 const toolName=screen==="home"?t.schedule:(navItems.find(n=>n.key===screen)?.label||"");
                 const editWord=lang==="sv"?"Redigera":"Edit";
+                // The header sits over the LIVE sky only on WEEK (its band stays
+                // saturated/dark in the evening). Home's edit header fades to a
+                // pale surface, so it — and every tool — keep the neutral deep
+                // theme ink; only Week needs sky-adaptive ink.
+                const _hdSky=(screen==="week") && !isDark();
+                const _hdH=(typeof now!=="undefined"&&now)?(now.getHours()+now.getMinutes()/60):12;
+                const _hdMain=_hdSky?skyInk(_hdH,effS.h,false):tk().inkSoft;
+                const _hdSub =_hdSky?skyInk(_hdH,effS.h,true):tk().ink2;
+                const _hdSh  =(_hdSky&&skyIsDark(_hdH))?"0 1px 8px rgba(28,18,46,0.5)":"none";
                 // "Redigera • Tala" — the chosen header style: the action word
                 // de-emphasised, a small brand-coloured pip, then the tool name
                 // as the hero in the heading weight.
                 return(
                   <div style={{display:"flex",alignItems:"baseline",gap:10}}>
-                    <span style={{textTransform:"none",fontWeight:500,color:tk().ink2}}>{editWord}</span>
+                    <span style={{textTransform:"none",fontWeight:500,color:_hdSub,textShadow:_hdSh,transition:"color .5s ease"}}>{editWord}</span>
                     <span style={{width:6,height:6,borderRadius:"50%",background:`${effS.h}`,opacity:0.55,flexShrink:0,alignSelf:"center"}}/>
-                    <span style={{textTransform:"none",fontWeight:isDark()?600:700,color:tk().inkSoft}}>{toolName}</span>
+                    <span style={{textTransform:"none",fontWeight:isDark()?600:700,color:_hdMain,textShadow:_hdSh,transition:"color .5s ease"}}>{toolName}</span>
                   </div>
                 );
               })() : (
@@ -16843,9 +16876,23 @@ export default function App(){
               if(cfg.schedView!=="both") segments.push({key:"_sp",label:"",active:false,onClick:()=>{},flex:1});
             }
             if(screen!=="home"&&!isEd){
+              // "• Vecka" on the Week screen uses the SAME live, time-of-day ink
+              // as the week number & date (dynInk: shadeHex(liveHue,-0.52) light /
+              // +0.82 dark) so the dot + label shift with the sky through the day.
+              // Other tools keep their own fixed-hue treatment.
+              const _llWeek = screen==="week";
+              const _llH = (typeof now!=="undefined"&&now) ? (now.getHours()+now.getMinutes()/60) : 12;
+              const _llSkyDark = _llWeek && skyIsDark(_llH);
+              const _llColor = _llWeek
+                ? (isDark()?shadeHex(effS.h,0.82):skyInk(_llH, effS.h, false))
+                : (isDark()?shadeHex(effS.h,0.6):shadeHex(effS.deep,-0.18));
+              const _llDot = _llWeek
+                ? (isDark()?shadeHex(effS.h,0.72):(_llSkyDark?shadeHex(effS.h,0.5):effS.h))
+                : (isDark()?shadeHex(effS.h,0.6):effS.h);
+              const _llSh = isDark()?"0 1px 3px rgba(0,0,0,0.4)":(_llSkyDark?"0 1px 8px rgba(28,18,46,0.5)":"0 1px 2px rgba(255,255,255,0.7)");
               leadingLabel=(
-                <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:600,fontSize:12.5,color:isDark()?shadeHex(effS.h,0.55):effS.deep,display:"flex",alignItems:"center",gap:7,letterSpacing:.2,position:"relative",zIndex:2}}>
-                  <span style={{width:6,height:6,borderRadius:"50%",background:isDark()?shadeHex(effS.h,0.55):effS.h,boxShadow:`0 0 6px ${isDark()?shadeHex(effS.h,0.55):effS.h}88`}}/>
+                <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:700,fontSize:13,color:_llColor,textShadow:_llSh,display:"flex",alignItems:"center",gap:7,letterSpacing:.2,position:"relative",zIndex:2,transition:"color .5s ease"}}>
+                  <span style={{width:7,height:7,borderRadius:"50%",background:_llDot,boxShadow:`0 0 7px ${_llDot}99`,transition:"background .5s ease"}}/>
                   {navItems.find(n=>n.key===screen)?.label}
                 </div>
               );
@@ -16874,26 +16921,31 @@ export default function App(){
             // Dark tools already use a translucent track by default, so we only
             // add glass for light-mode tools; week keeps its existing treatment.
             const _dkNow = isDark();
-            const _wkFrost = screen==="week" && !isEd;       // week, over the sky
-            const _toolFrost = screen!=="home" && screen!=="week" && !isEd && !_dkNow; // light-mode tools
+            // ONE identical treatment for Week AND every other tool, so the
+            // Redigera pill + track look pixel-for-pixel the same everywhere.
+            // No border at all — a clean, frame-free frosted track (a 1px
+            // transparent border is kept only so the box size stays identical).
+            const _frostOn = screen!=="home" && !isEd;   // week + tools
             let _wkTrackBg=null,_wkTrackBorder=null,_wkTrackShadow=null,_wkInk=null,_wkInkSh=null;
-            if(_wkFrost){
-              _wkTrackBg = _dkNow?"rgba(255,255,255,0.055)":"rgba(255,255,255,0.20)";
-              _wkTrackBorder = "transparent";
-              _wkTrackShadow = _dkNow
-                ? "0 8px 24px -16px rgba(0,0,0,0.5)"
-                : "0 8px 22px -16px rgba(70,58,92,0.22)";
-              _wkInk = _dkNow?"rgba(245,242,252,0.9)":effS.deep;
-              _wkInkSh = _dkNow?"0 1px 4px rgba(0,0,0,0.5)":"0 1px 3px rgba(255,255,255,0.65)";
-            } else if(_toolFrost){
-              // Frosted glass over the tool's pale pastel page. A touch more white
-              // than Week (which has the colourful sky for contrast) so the pill
-              // still reads as a defined glass surface; a faint hue edge keeps its
-              // outline. Ink stays the neutral default — a clean dark pen on a
-              // near-white frosted pill needs no tint.
-              _wkTrackBg = "rgba(255,255,255,0.34)";
-              _wkTrackBorder = `${effS.h}22`;
-              _wkTrackShadow = `0 6px 18px -12px ${effS.deep}30, inset 0 1px 0 rgba(255,255,255,0.75)`;
+            if(_frostOn){
+              if(_dkNow){
+                _wkTrackBg     = "rgba(255,255,255,0.055)";
+                _wkTrackBorder = "transparent";
+                _wkTrackShadow = "0 8px 24px -16px rgba(0,0,0,0.5)";
+                _wkInk         = "rgba(245,242,252,0.9)";
+                _wkInkSh       = "0 1px 4px rgba(0,0,0,0.5)";
+              } else {
+                _wkTrackBg     = "rgba(255,255,255,0.14)";
+                _wkTrackBorder = "transparent";
+                _wkTrackShadow = "0 8px 22px -16px rgba(70,58,92,0.20), inset 0 1px 0 rgba(255,255,255,0.5)";
+                // Week's pen follows the same sky-adaptive ink as the number/label
+                // (light on a dark sky, deep on a bright sky); other tools keep
+                // their own deep hue over their pale page.
+                const _wkH2 = (typeof now!=="undefined"&&now) ? (now.getHours()+now.getMinutes()/60) : 12;
+                const _wkSkyDark = screen==="week" && skyIsDark(_wkH2);
+                _wkInk   = screen==="week" ? skyInk(_wkH2, effS.h, false) : effS.deep;
+                _wkInkSh = _wkSkyDark ? "0 1px 8px rgba(28,18,46,0.5)" : "0 1px 3px rgba(255,255,255,0.65)";
+              }
             }
             return <SlideTabRow segments={segments} leadingLabel={leadingLabel} goldKey="edit" color={effS.h} deep={effS.deep} floating={collapsible} onSky={screen==="home"&&!isEd} trackBg={_wkTrackBg} trackBorder={_wkTrackBorder} trackShadow={_wkTrackShadow} inkColor={_wkInk} inkShadow={_wkInkSh}/>;
           })()}
