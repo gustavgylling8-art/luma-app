@@ -1221,6 +1221,22 @@ function usePersistentState(key,initial){
   return[value,setValue];
 }
 
+// First-run language guess. Swedish only when the device looks Swedish — i.e.
+// a Swedish browser/OS locale, or the Europe/Stockholm timezone. Everyone else
+// (a person outside Sweden / on a non-Swedish device) starts in English.
+// Used only as the INITIAL value: usePersistentState keeps any saved choice, so
+// this never overrides a language the user has already picked in Settings.
+function detectInitialLang(){
+  try{
+    const langs=(typeof navigator!=="undefined"&&navigator.languages&&navigator.languages.length)
+      ? navigator.languages
+      : [(typeof navigator!=="undefined"&&navigator.language)||""];
+    if(langs.some(l=>typeof l==="string"&&l.toLowerCase().indexOf("sv")===0)) return "sv";
+    try{ if((Intl.DateTimeFormat().resolvedOptions().timeZone||"")==="Europe/Stockholm") return "sv"; }catch(_){}
+    return "en";
+  }catch(_){ return "sv"; }
+}
+
 // Parse "HH:MM" → minutes since midnight. Hardened: a missing or malformed
 // time string used to crash here (s.split on undefined) or return NaN, which
 // then poisoned every sort/layout calc that uses it (the whole schedule could
@@ -1866,7 +1882,8 @@ function SkyHeader({now,lang,inFlow=false,sun=false,showWord=true,showDate=true}
         <path d={hillPath(139,22,2.1)} fill={_skRgb(_skMix(sk.hill,[0,0,0],0.18))} opacity={0.55}/>
         <path d={hillPath(161,16,0.6)} fill={_skRgb(sk.hill)} opacity={1}/>
       </svg>
-      <div style={{position:"relative",width:"100%",display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"flex-end",padding:"0 22px 14px",gap:7,zIndex:2}}>
+      <div style={{position:"relative",width:"100%",display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"flex-end",padding:"0 22px 6px",gap:7,zIndex:2,animation:"skLockIn 0.55s cubic-bezier(.2,.7,.2,1) both"}}>
+        <style>{`@keyframes skLockIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
         {showWord&&<div><SkyWordmark size={34} sun={sun}/></div>}
         {!inFlow&&showDate&&(
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
@@ -14082,7 +14099,8 @@ function SceneIntro(){
   );
 }
 
-function SceneSchedule(){
+function SceneSchedule({lang}){
+  const en=lang==="en";
   // Schedule view — Sigvard lamps + a clean stack of activity cards
   return(
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:"100%",padding:"0 28px",boxSizing:"border-box"}}>
@@ -14110,9 +14128,9 @@ function SceneSchedule(){
         {/* Cards */}
         <div style={{flex:1,display:"flex",flexDirection:"column",gap:10}}>
           {[
-            {emoji:"🥣",name:"Frukost",time:"07:30",color:"#E89B89",done:true,delay:0.2},
-            {emoji:"🎮",name:"Spela",time:"NU",color:"#E89B89",now:true,delay:0.4},
-            {emoji:"🚶",name:"Promenad",time:"14:00",color:"#8FBFA1",delay:0.6},
+            {emoji:"🥣",name:en?"Breakfast":"Frukost",time:"07:30",color:"#E89B89",done:true,delay:0.2},
+            {emoji:"🎮",name:en?"Play":"Spela",time:en?"NOW":"NU",color:"#E89B89",now:true,delay:0.4},
+            {emoji:"🚶",name:en?"Walk":"Promenad",time:"14:00",color:"#8FBFA1",delay:0.6},
             {emoji:"📺",name:"TV",time:"17:00",color:"#8AAFD2",delay:0.8},
           ].map((c,i)=>(
             <div key={i} style={{
@@ -14140,7 +14158,8 @@ function SceneSchedule(){
   );
 }
 
-function SceneTimer(){
+function SceneTimer({lang}){
+  const en=lang==="en";
   // Three different timers shown in a playful, asymmetric arrangement — varied heights,
   // slight rotations, and gentle floating to feel alive instead of lined up.
   return(
@@ -14221,7 +14240,7 @@ function SceneTimer(){
               </svg>
             </div>
           </div>
-          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.5,textTransform:"uppercase"}}>Våg</div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.5,textTransform:"uppercase"}}>{en?"Wave":"Våg"}</div>
         </div>
 
         {/* 3. SUNSET TIMER — sits mid-height between the other two */}
@@ -14264,7 +14283,7 @@ function SceneTimer(){
               </svg>
             </div>
           </div>
-          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.5,textTransform:"uppercase"}}>Solnedgång</div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.5,textTransform:"uppercase"}}>{en?"Sunset":"Solnedgång"}</div>
         </div>
 
       </div>
@@ -14272,7 +14291,8 @@ function SceneTimer(){
   );
 }
 
-function SceneChecklist(){
+function SceneChecklist({lang}){
+  const en=lang==="en";
   // Checklist — simple stack of steps, two checked, one pending
   return(
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:"100%",padding:"0 28px",boxSizing:"border-box"}}>
@@ -14284,12 +14304,12 @@ function SceneChecklist(){
       <div style={{background:"#FFFFFF",borderRadius:18,padding:"22px 22px",boxShadow:"0 12px 32px rgba(31,27,46,0.06), 0 2px 6px rgba(31,27,46,0.04)",border:"1px solid rgba(31,27,46,0.06)",width:"100%",maxWidth:320}}>
         <div style={{fontFamily:G.serif,fontWeight:600,fontSize:16,color:"#1F1B2E",letterSpacing:-0.2,marginBottom:18,display:"flex",alignItems:"center",gap:10}}>
           <span style={{fontSize:22}}>🌅</span>
-          <span>Morgon</span>
+          <span>{en?"Morning":"Morgon"}</span>
         </div>
         {[
-          {label:"Borsta tänder",done:true,delay:0.15},
-          {label:"Tvätta ansiktet",done:true,delay:0.35},
-          {label:"Kamma håret",done:false,delay:0.55},
+          {label:en?"Brush teeth":"Borsta tänder",done:true,delay:0.15},
+          {label:en?"Wash face":"Tvätta ansiktet",done:true,delay:0.35},
+          {label:en?"Comb hair":"Kamma håret",done:false,delay:0.55},
         ].map((s,i)=>(
           <div key={i} style={{display:"flex",alignItems:"center",gap:13,padding:"10px 0",borderBottom:i<2?"1px solid rgba(31,27,46,0.06)":"none",animation:`dChkRow 0.5s ${s.delay}s cubic-bezier(0.22,1,0.36,1) both`}}>
             <div style={{
@@ -14528,7 +14548,8 @@ function SceneCalm(){
   );
 }
 
-function SceneIdCard(){
+function SceneIdCard({lang}){
+  const en=lang==="en";
   // ID card — fuller preview with multiple sections: about, what helps, emergency contacts.
   return(
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:"100%",padding:"0 22px",boxSizing:"border-box"}}>
@@ -14544,7 +14565,7 @@ function SceneIdCard(){
           <div style={{width:50,height:50,borderRadius:"50%",background:"linear-gradient(140deg,#FCE5DC,#E89B89)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,boxShadow:"0 4px 12px rgba(232,155,137,0.3)",flexShrink:0}}>👧</div>
           <div style={{minWidth:0,flex:1}}>
             <div style={{fontFamily:G.serif,fontWeight:600,fontSize:17,color:"#1F1B2E",letterSpacing:-0.2}}>Maja Lindberg</div>
-            <div style={{fontFamily:"-apple-system, sans-serif",fontSize:11,color:"#7C7691",marginTop:2,letterSpacing:0.2}}>8 år</div>
+            <div style={{fontFamily:"-apple-system, sans-serif",fontSize:11,color:"#7C7691",marginTop:2,letterSpacing:0.2}}>{en?"8 years old":"8 år"}</div>
           </div>
         </div>
 
@@ -14571,9 +14592,9 @@ function SceneIdCard(){
           <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.8,textTransform:"uppercase",marginBottom:7}}>Ring vid behov</div>
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
             {[
-              {who:"Mamma Anna",num:"070 123 45 67",emoji:"👩",pulse:true},
-              {who:"Pappa Erik",num:"070 234 56 78",emoji:"👨"},
-              {who:"Sjukvård 1177",num:"1177",emoji:"🏥"},
+              {who:en?"Mom Anna":"Mamma Anna",num:"070 123 45 67",emoji:"👩",pulse:true},
+              {who:en?"Dad Erik":"Pappa Erik",num:"070 234 56 78",emoji:"👨"},
+              {who:en?"Healthcare 1177":"Sjukvård 1177",num:"1177",emoji:"🏥"},
             ].map((c,i)=>(
               <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 9px",borderRadius:11,background:i===0?"rgba(143,191,161,0.10)":"rgba(31,27,46,0.03)",border:`1px solid ${i===0?"rgba(143,191,161,0.30)":"rgba(31,27,46,0.05)"}`}}>
                 <div style={{width:26,height:26,borderRadius:"50%",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0,border:"1px solid rgba(31,27,46,0.06)"}}>{c.emoji}</div>
@@ -14596,7 +14617,8 @@ function SceneIdCard(){
   );
 }
 
-function SceneTalk(){
+function SceneTalk({lang}){
+  const en=lang==="en";
   // Comm board — grid of choice cards, one being "spoken"
   return(
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",width:"100%",padding:"0 28px",boxSizing:"border-box"}}>
@@ -14607,12 +14629,12 @@ function SceneTalk(){
       `}</style>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,maxWidth:300}}>
         {[
-          {emoji:"💧",label:"Vatten",color:"#8AAFD2",bg:"#E4EEF7",delay:0.1,active:true},
-          {emoji:"🍎",label:"Mat",color:"#E89B89",bg:"#FCE5DC",delay:0.2},
-          {emoji:"🚽",label:"Toa",color:"#8FBFA1",bg:"#E8F1E8",delay:0.3},
-          {emoji:"🛌",label:"Vila",color:"#9683C2",bg:"#EFEBF8",delay:0.4},
+          {emoji:"💧",label:en?"Water":"Vatten",color:"#8AAFD2",bg:"#E4EEF7",delay:0.1,active:true},
+          {emoji:"🍎",label:en?"Food":"Mat",color:"#E89B89",bg:"#FCE5DC",delay:0.2},
+          {emoji:"🚽",label:en?"Toilet":"Toa",color:"#8FBFA1",bg:"#E8F1E8",delay:0.3},
+          {emoji:"🛌",label:en?"Rest":"Vila",color:"#9683C2",bg:"#EFEBF8",delay:0.4},
           {emoji:"📺",label:"TV",color:"#D9B868",bg:"#FAF1D9",delay:0.5},
-          {emoji:"🎵",label:"Musik",color:"#B58CD0",bg:"#F1E9F6",delay:0.6},
+          {emoji:"🎵",label:en?"Music":"Musik",color:"#B58CD0",bg:"#F1E9F6",delay:0.6},
         ].map((c,i)=>(
           <div key={i} style={{
             background:c.bg,
@@ -15145,7 +15167,7 @@ export default function App(){
       if(window.visualViewport) window.visualViewport.removeEventListener("resize",apply);
     };
   },[]);
-  const[lang,setLang]=usePersistentState("lang","sv");
+  const[lang,setLang]=usePersistentState("lang",detectInitialLang);
   const emojiReq=useGlobalEmoji(); // global emoji picker request (rendered at root)
   const[headerTapCount,setHeaderTapCount]=useState(0); // increments on header tap — used by WeekScreen to reset focus
   // Comm modals lifted to App level so they render outside the body-wrapper's overflow:hidden,
