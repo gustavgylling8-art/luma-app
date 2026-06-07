@@ -1748,7 +1748,7 @@ function _skyMidLum(h){ const sk=skyAt(h); const b=(sk&&sk.mid)||[200,200,200]; 
 function skyIsDark(h){ return _skyMidLum(h) < 150; }
 function skyInk(h, hue, soft){
   return skyIsDark(h)
-    ? shadeHex(hue, soft?0.54:0.72)    // dark sky → light tint of the hue
+    ? shadeHex(hue, soft?0.48:0.62)    // dark sky → warm LIGHT-lavender (keeps hue, still legible)
     : shadeHex(hue, soft?-0.42:-0.62); // bright sky → deep tint of the hue
 }
 const SKY_STARS=Array.from({length:42},(_,i)=>({x:20+((i*73)%760),y:8+((i*39)%112),r:0.6+((i*7)%10)/10*1.4,ph:((i*53)%100)/100}));
@@ -1819,10 +1819,11 @@ function SkyHeader({now,lang,inFlow=false,sun=false,showWord=true,showDate=true}
   const h=now.getHours()+now.getMinutes()/60;
   const sk=skyAt(h);
   const sunUp = h>5.2 && h<19.6;
-  let halo=null, rays=null, body=null, moon=null;
+  let halo=null, rays=null, body=null, moon=null, lightRgb=[238,232,218];
   if(sunUp){
     const prog=(h-5.2)/(19.6-5.2), elev=Math.sin(prog*Math.PI);
     const x=_skLerp(70,730,prog), y=_skLerp(112,70,elev), col=_skSunCol(elev), R=_skLerp(26,22,elev);
+    lightRgb=col;
     const rayA=0.18+0.34*(1-elev);
     rays=Array.from({length:12}).map((_,i)=>{
       const ang=(i/12)*2*Math.PI, r1=R+8, r2=r1+_skLerp(10,20,1-elev);
@@ -1840,6 +1841,10 @@ function SkyHeader({now,lang,inFlow=false,sun=false,showWord=true,showDate=true}
   const hillPath=(baseY,amp,phase)=>{ let d=`M0 236 L0 ${baseY}`; for(let x=0;x<=800;x+=40){const y=baseY-Math.sin((x/800)*Math.PI*1.4+phase)*amp-Math.sin(x/120)*amp*0.3; d+=` L${x} ${y.toFixed(1)}`;} return d+' L800 236 Z'; };
   const wd=now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{weekday:"long"});
   const dm=now.toLocaleDateString(lang==="sv"?"sv-SE":"en-GB",{day:"numeric",month:"long"});
+  // Date underline carries the day's light — but SOFT: a pastel tint of the
+  // live sun (the tone blended ~halfway to white) with a gentle, low glow.
+  const _ulr=Math.round(lightRgb[0]+(255-lightRgb[0])*0.5),_ulg=Math.round(lightRgb[1]+(255-lightRgb[1])*0.5),_ulb=Math.round(lightRgb[2]+(255-lightRgb[2])*0.5);
+  const _ulHi=`rgb(${Math.min(255,_ulr+18)},${Math.min(255,_ulg+18)},${Math.min(255,_ulb+18)})`;
   return(
     <div style={{position:"relative",overflow:"hidden",zIndex:2,display:"flex",alignItems:"flex-end",
       marginTop:inFlow?"-20px":"calc(-20px - env(safe-area-inset-top, 0px))",
@@ -1858,16 +1863,23 @@ function SkyHeader({now,lang,inFlow=false,sun=false,showWord=true,showDate=true}
         <rect x="0" y="0" width="800" height="236" fill="url(#skHdrGrad)"/>
         <g>{SKY_STARS.map((s,i)=><circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#FFFDF4" opacity={Number((starOp*(0.5+0.5*s.ph)).toFixed(2))}/>)}</g>
         {halo}{rays}{body}{moon}
-        <path d={hillPath(146,22,2.1)} fill={_skRgb(_skMix(sk.hill,[0,0,0],0.18))} opacity={0.55}/>
-        <path d={hillPath(168,16,0.6)} fill={_skRgb(sk.hill)} opacity={1}/>
+        <path d={hillPath(139,22,2.1)} fill={_skRgb(_skMix(sk.hill,[0,0,0],0.18))} opacity={0.55}/>
+        <path d={hillPath(161,16,0.6)} fill={_skRgb(sk.hill)} opacity={1}/>
       </svg>
-      <div style={{position:"relative",width:"100%",display:"flex",alignItems:"flex-end",justifyContent:"space-between",padding:"0 22px 16px",gap:14,zIndex:2}}>
-        {showWord&&<div style={{alignSelf:"flex-end",transform:"translateY(3px)"}}><SkyWordmark size={34} sun={sun}/></div>}
+      <div style={{position:"relative",width:"100%",display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"flex-end",padding:"0 22px 14px",gap:7,zIndex:2}}>
+        {showWord&&<div><SkyWordmark size={34} sun={sun}/></div>}
         {!inFlow&&showDate&&(
-        <div style={{display:"flex",alignItems:"baseline",gap:7,transform:"translateY(4px)",filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
-          <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{wd}</span>
-          <span style={{width:4,height:4,borderRadius:"50%",background:"rgba(255,255,255,0.7)",flexShrink:0,alignSelf:"center"}}/>
-          <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{dm}</span>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
+          <div style={{display:"flex",alignItems:"baseline",gap:7}}>
+            <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{wd}</span>
+            <span style={{width:4,height:4,borderRadius:"50%",background:"rgba(255,255,255,0.7)",flexShrink:0,alignSelf:"center"}}/>
+            <span style={{fontFamily:"'Nunito','Inter',sans-serif",fontWeight:600,fontSize:13.5,letterSpacing:.2,color:"#FFFFFF",opacity:0.9,textTransform:"capitalize",whiteSpace:"nowrap"}}>{dm}</span>
+          </div>
+          {/* iOS-style section indicator — a short white capsule that springs
+              in under today's WEEKDAY (left edge), echoing the dark-theme home
+              underline. White so it reads cleanly against the coloured sky. */}
+          <div style={{height:3,width:32,borderRadius:999,background:`linear-gradient(90deg, ${_ulHi}, rgba(${_ulr},${_ulg},${_ulb},0.8))`,boxShadow:`0 1px 5px rgba(${_ulr},${_ulg},${_ulb},0.4)`,animation:"skDateUnder 0.7s 0.3s cubic-bezier(0.34,1.56,0.64,1) both",transformOrigin:"left center"}}/>
+          <style>{`@keyframes skDateUnder{0%{transform:scaleX(0);opacity:0}70%{transform:scaleX(1.12);opacity:.95}100%{transform:scaleX(1);opacity:1}}`}</style>
         </div>
         )}
       </div>
@@ -15623,6 +15635,12 @@ export default function App(){
   const navHidden=inputFocused||immersiveMode||modalOpenCount>0;
   const[notifShown,setNotifShown]=usePersistentState("notifShown",{});
   const[startAlert,setStartAlert]=useState(null);
+  // Refs so the activity-reminder interval always reads the LATEST completion
+  // + shown-state without re-subscribing. Fixes a stale-closure where a
+  // just-completed activity could still fire its "starting now" alert, and a
+  // midnight rollover that compared against yesterday's day-key.
+  const dailyStateRef=useRef(dailyState); useEffect(()=>{dailyStateRef.current=dailyState;},[dailyState]);
+  const notifShownRef=useRef(notifShown); useEffect(()=>{notifShownRef.current=notifShown;},[notifShown]);
   const[supervisorClient,setSupervisorClient]=useState(null);
   useEffect(()=>{
     // Show onboarding once on first visit, after mount so layout settles.
@@ -15705,17 +15723,20 @@ export default function App(){
     const check=()=>{
       const now=new Date();
       const today=now.toDateString();
+      const tKey=dateKey(now);           // fresh per-day key (correct across midnight)
       const nowMin=now.getHours()*60+now.getMinutes();
+      const shown=notifShownRef.current||{};
+      const dstate=dailyStateRef.current||{};
       // Clean up old day's keys (keep only today's)
-      const todayKeys=Object.keys(notifShown).filter(k=>k.startsWith(today+"::"));
-      if(todayKeys.length!==Object.keys(notifShown).length){
+      const todayKeys=Object.keys(shown).filter(k=>k.startsWith(today+"::"));
+      if(todayKeys.length!==Object.keys(shown).length){
         const fresh={};
         todayKeys.forEach(k=>{fresh[k]=true;});
         setNotifShown(fresh);
       }
-      // Find activity that just started (within 0-3 minutes of start, not yet
-      // notified, not done) — and that actually occurs today per its repeat
-      // rule (otherwise a weekdays-only activity would alert on weekends).
+      // Remind about an activity from its start time through a 15-min grace
+      // window (so opening the app a few minutes late still nudges), once per
+      // day, only if not done and it actually occurs today per its repeat rule.
       const dow=now.getDay(); // 0=Sun..6=Sat — matches stored custom-day indices
       const occursToday=(a)=>{
         const r=a.repeat;
@@ -15726,11 +15747,11 @@ export default function App(){
         return true;
       };
       for(const act of acts){
-        if(dailyState[todayKey]?.[act.id]?.done) continue;
+        if(dstate[tKey]?.[act.id]?.done) continue;
         if(!occursToday(act)) continue;
         const actMin=hm(act.time);
         const key=`${today}::${act.id}`;
-        if(nowMin>=actMin && nowMin<actMin+3 && !notifShown[key]){
+        if(nowMin>=actMin && nowMin<actMin+15 && !shown[key]){
           setStartAlert(act);
           setNotifShown(prev=>({...prev,[key]:true}));
           // Also fire a SYSTEM notification (appears even when the app is in
@@ -15745,7 +15766,7 @@ export default function App(){
     check();
     const id=setInterval(check,20000);
     return()=>clearInterval(id);
-  },[acts,notifShown,isEd,showOnboarding,showSupervisor,showDemo]);
+  },[acts,isEd,showOnboarding,showSupervisor,showDemo]);
   const dismissStartAlert=()=>setStartAlert(null);
   const openStartAlertActivity=()=>{ if(startAlert){openDetail(startAlert); setStartAlert(null);} };
   const closeDemo=()=>{
@@ -16682,7 +16703,7 @@ export default function App(){
           <SkyHeader now={now} lang={lang}/>
         ) : (<>
         {(isEd||screen==="home") && (
-        <div style={{
+        <div key={(screen==="home"||screen==="week")?("lumaHdr-"+screen):"lumaHdr-tool"} style={{
           display:"flex",
           flexDirection:"row",
           // Icon and wordmark are vertically centred to each other — a clean
@@ -16690,12 +16711,19 @@ export default function App(){
           alignItems:"center",
           gap:13,
           marginBottom:10,position:"relative",zIndex:2,
+          // Home/week paint the heavy living sky behind the header, so the text
+          // used to "blink" in a beat late. Keying by screen remounts the
+          // lockup (colour lands instantly — CSS transitions don't fire on
+          // mount) and a soft fade-in masks the sky render. Other tools keep a
+          // stable key → no remount, they snap in directly as before.
+          animation:(screen==="home"||screen==="week")?"hdrFade .42s cubic-bezier(.2,.7,.2,1) both":undefined,
         }}>
           <style>{`
             @keyframes lumaRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
             @keyframes lumaCoreBreath{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.04);filter:brightness(1.08)}}
             @keyframes rayFade1{0%,100%{opacity:.85}50%{opacity:.58}}
             @keyframes rayFade2{0%,100%{opacity:.58}50%{opacity:.85}}
+            @keyframes hdrFade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
           `}</style>
           {/* luma wordmark (new vector logo). Sun-in-u rule:
                 • editor views (isEd)      → wordmark WITH the orange sun
@@ -16742,7 +16770,7 @@ export default function App(){
           >v2026-05-30-A</span>
         </div>
         )}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:0,position:"relative",gap:12,minHeight:(isEd||screen==="home")?36:0}}>
+        <div key={(screen==="home"||screen==="week")?("hdHdr-"+screen):"hdHdr-tool"} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:0,position:"relative",gap:12,minHeight:(isEd||screen==="home")?36:0,animation:(screen==="home"||screen==="week")?"hdrFade .42s cubic-bezier(.2,.7,.2,1) both":undefined}}>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontFamily:G.font,fontWeight:isEd?400:500,fontSize:10.5,color:isEd?(isDark()?tk().ink3:"#7C7691"):(isDark()?effS.h:effS.deep),textTransform:"capitalize",letterSpacing:.8,marginBottom:(isEd||screen==="home")?5:0,textAlign:"left",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",transition:"color .4s ease"}}>
               {/* Subtitle line under Luma. In edit mode we show the screen
@@ -16794,10 +16822,10 @@ export default function App(){
                       borderRadius:999,
                       background:isDark()
                         ? `linear-gradient(90deg, ${effS.h}, ${shadeHex(effS.h,0.3)})`
-                        : `linear-gradient(90deg, ${effS.h}, ${shadeHex(effS.h,-0.12)})`,
+                        : `linear-gradient(90deg, ${effS.deep}, ${shadeHex(effS.deep,0.2)})`,
                       boxShadow:isDark()
                         ? `0 0 10px ${effS.h}55, 0 0 2px ${effS.h}88`
-                        : `0 1px 4px ${effS.h}40`,
+                        : `0 1px 5px ${effS.deep}45`,
                       animation:"hmDateUnder 0.7s 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both",
                       transformOrigin:"left center",
                     }}/>
@@ -16876,24 +16904,57 @@ export default function App(){
               if(cfg.schedView!=="both") segments.push({key:"_sp",label:"",active:false,onClick:()=>{},flex:1});
             }
             if(screen!=="home"&&!isEd){
-              // "• Vecka" on the Week screen uses the SAME live, time-of-day ink
-              // as the week number & date (dynInk: shadeHex(liveHue,-0.52) light /
-              // +0.82 dark) so the dot + label shift with the sky through the day.
-              // Other tools keep their own fixed-hue treatment.
+              // ── CONCEPT 01 — floating title, no bar ──────────────────────
+              // The "• Tool" title sits directly on the page (it breathes), and
+              // Redigera becomes a small frosted glass icon button. Applies to
+              // every tool + Week. Home keeps its own unique floating tab bar
+              // (handled by the SlideTabRow path below).
               const _llWeek = screen==="week";
               const _llH = (typeof now!=="undefined"&&now) ? (now.getHours()+now.getMinutes()/60) : 12;
               const _llSkyDark = _llWeek && skyIsDark(_llH);
+              // Title ink: sky-adaptive on Week (light on a dark evening sky,
+              // deep on a bright day); a deep tone of the tool's own hue
+              // elsewhere. Dot follows the same logic.
               const _llColor = _llWeek
                 ? (isDark()?shadeHex(effS.h,0.82):skyInk(_llH, effS.h, false))
                 : (isDark()?shadeHex(effS.h,0.6):shadeHex(effS.deep,-0.18));
               const _llDot = _llWeek
                 ? (isDark()?shadeHex(effS.h,0.72):(_llSkyDark?shadeHex(effS.h,0.5):effS.h))
                 : (isDark()?shadeHex(effS.h,0.6):effS.h);
-              const _llSh = isDark()?"0 1px 3px rgba(0,0,0,0.4)":(_llSkyDark?"0 1px 8px rgba(28,18,46,0.5)":"0 1px 2px rgba(255,255,255,0.7)");
-              leadingLabel=(
-                <div style={{flex:2,padding:"6px 12px",fontFamily:G.serif,fontWeight:700,fontSize:13,color:_llColor,textShadow:_llSh,display:"flex",alignItems:"center",gap:7,letterSpacing:.2,position:"relative",zIndex:2,transition:"color .5s ease"}}>
-                  <span style={{width:7,height:7,borderRadius:"50%",background:_llDot,boxShadow:`0 0 7px ${_llDot}99`,transition:"background .5s ease"}}/>
-                  {navItems.find(n=>n.key===screen)?.label}
+              const _llSh = isDark()?"none":(_llSkyDark?"0 1px 8px rgba(28,18,46,0.5)":"0 1px 2px rgba(255,255,255,0.7)");
+              // Frosted glass icon button. The pen takes a DEEP ink in light
+              // mode so it reads on the near-white glass surface (NOT the
+              // sky-adaptive light tint, which would vanish on the white
+              // button); a light pen in dark mode.
+              const _penColor = isDark()?"rgba(245,242,252,0.92)":effS.deep;
+              // White frosted glass (sheen only). The tool-hue tint lives in a
+              // SEPARATE solid overlay below so it can crossfade smoothly when
+              // the screen colour arrives a beat late (e.g. Timer/Tala push
+              // their colour up after mount) — instead of a hard, delayed pop
+              // (gradients can't be transitioned).
+              const _glassBg  = isDark()
+                ? "linear-gradient(130deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.045) 46%, rgba(255,255,255,0.09) 62%, rgba(255,255,255,0.04) 100%)"
+                : "linear-gradient(130deg, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.34) 46%, rgba(255,255,255,0.46) 62%, rgba(255,255,255,0.33) 100%)";
+              const _glassSh  = isDark()
+                ? "0 8px 20px -10px rgba(0,0,0,0.5), inset 0 4px 7px -3px rgba(255,255,255,0.16), inset 0 -2px 4px rgba(0,0,0,0.25)"
+                : "0 8px 20px -10px rgba(40,50,70,0.5), inset 0 5px 8px -3px rgba(255,255,255,0.5), inset 0 -2px 4px rgba(50,60,85,0.14)";
+              return(
+                <div style={{display:"flex",alignItems:"center",gap:12,flex:1}}>
+                  <div style={{flex:1,minWidth:0,display:"flex",alignItems:"center",gap:9,fontFamily:G.serif,fontWeight:700,fontSize:17,color:_llColor,textShadow:_llSh,letterSpacing:-.2,transition:"color .5s ease"}}>
+                    <span style={{width:8,height:8,borderRadius:"50%",background:_llDot,boxShadow:`0 0 8px ${_llDot}99`,flexShrink:0,transition:"background .5s ease"}}/>
+                    <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{navItems.find(n=>n.key===screen)?.label}</span>
+                  </div>
+                  <button onClick={()=>setIsEd(true)} aria-label={t.editorOpen} className="lt-press-soft"
+                    style={{position:"relative",overflow:"hidden",width:44,height:44,flexShrink:0,borderRadius:14,border:"none",cursor:"pointer",display:"grid",placeItems:"center",color:_penColor,background:_glassBg,boxShadow:_glassSh,backdropFilter:"blur(8px) saturate(1.2)",WebkitBackdropFilter:"blur(8px) saturate(1.2)",WebkitTapHighlightColor:"transparent",transition:"background .25s ease, color .5s ease, transform .15s ease"}}>
+                    {/* tool-hue tint — solid layer so it crossfades smoothly
+                        when the screen colour settles (no late pop) */}
+                    <span style={{position:"absolute",inset:0,background:effS.h,opacity:isDark()?0.16:0.12,transition:"background-color .4s ease",pointerEvents:"none",zIndex:0}}/>
+                    {/* specular highlight — soft light pooling at the top of the glass */}
+                    <span style={{position:"absolute",top:-7,left:7,right:7,height:"58%",borderRadius:"50%",background:isDark()?"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.2), transparent 72%)":"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.7), transparent 72%)",filter:"blur(1px)",pointerEvents:"none",zIndex:1}}/>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{display:"block",position:"relative",zIndex:2,filter:isDark()?"drop-shadow(0 1px 2px rgba(0,0,0,0.4))":"drop-shadow(0 1px 1.5px rgba(60,50,90,0.25))"}}>
+                      <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                    </svg>
+                  </button>
                 </div>
               );
             }
@@ -16921,31 +16982,19 @@ export default function App(){
             // Dark tools already use a translucent track by default, so we only
             // add glass for light-mode tools; week keeps its existing treatment.
             const _dkNow = isDark();
-            // ONE identical treatment for Week AND every other tool, so the
-            // Redigera pill + track look pixel-for-pixel the same everywhere.
-            // No border at all — a clean, frame-free frosted track (a 1px
-            // transparent border is kept only so the box size stays identical).
-            const _frostOn = screen!=="home" && !isEd;   // week + tools
+            // Track styling vars — only the Home tab bar sets these now (below).
+            // Tools/Week in VIEW mode render their own floating header earlier
+            // and never reach this SlideTabRow path; edit-mode keeps the default
+            // track. (The former per-tool "frost" block was dead code — removed.)
             let _wkTrackBg=null,_wkTrackBorder=null,_wkTrackShadow=null,_wkInk=null,_wkInkSh=null;
-            if(_frostOn){
-              if(_dkNow){
-                _wkTrackBg     = "rgba(255,255,255,0.055)";
-                _wkTrackBorder = "transparent";
-                _wkTrackShadow = "0 8px 24px -16px rgba(0,0,0,0.5)";
-                _wkInk         = "rgba(245,242,252,0.9)";
-                _wkInkSh       = "0 1px 4px rgba(0,0,0,0.5)";
-              } else {
-                _wkTrackBg     = "rgba(255,255,255,0.14)";
-                _wkTrackBorder = "transparent";
-                _wkTrackShadow = "0 8px 22px -16px rgba(70,58,92,0.20), inset 0 1px 0 rgba(255,255,255,0.5)";
-                // Week's pen follows the same sky-adaptive ink as the number/label
-                // (light on a dark sky, deep on a bright sky); other tools keep
-                // their own deep hue over their pale page.
-                const _wkH2 = (typeof now!=="undefined"&&now) ? (now.getHours()+now.getMinutes()/60) : 12;
-                const _wkSkyDark = screen==="week" && skyIsDark(_wkH2);
-                _wkInk   = screen==="week" ? skyInk(_wkH2, effS.h, false) : effS.deep;
-                _wkInkSh = _wkSkyDark ? "0 1px 8px rgba(28,18,46,0.5)" : "0 1px 3px rgba(255,255,255,0.65)";
-              }
+            // Glassy & dimensional, but NO visible edge: the top light is now a
+            // soft, blurred inner glow (not a crisp 1–2px white line), so it
+            // reads as light catching the glass rather than a white border. The
+            // diagonal sheen + soft inner bottom shade keep the depth.
+            if(screen==="home" && !isEd && !_dkNow){
+              _wkTrackBg     = "linear-gradient(125deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.12) 42%, rgba(255,255,255,0.24) 60%, rgba(255,255,255,0.11) 100%)";
+              _wkTrackBorder = "transparent";
+              _wkTrackShadow = "0 14px 32px -16px rgba(40,50,70,0.55), inset 0 6px 10px -4px rgba(255,255,255,0.28), inset 0 -3px 6px rgba(50,60,85,0.14)";
             }
             return <SlideTabRow segments={segments} leadingLabel={leadingLabel} goldKey="edit" color={effS.h} deep={effS.deep} floating={collapsible} onSky={screen==="home"&&!isEd} trackBg={_wkTrackBg} trackBorder={_wkTrackBorder} trackShadow={_wkTrackShadow} inkColor={_wkInk} inkShadow={_wkInkSh}/>;
           })()}
