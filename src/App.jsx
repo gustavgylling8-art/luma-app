@@ -4229,13 +4229,22 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
       setBannerCollide(collide);
     };
     check();
+    // Re-check after the browser has laid out / any mount auto-scroll has run —
+    // otherwise the very first measurement (taken before layout settles) can
+    // get stuck, so the pill only "wakes up" once the user scrolls. The rAF +
+    // short timeout catch the settled state; the [target?.id] dep re-checks
+    // whenever the next activity changes.
+    const raf=requestAnimationFrame(check);
+    const t2=setTimeout(check,300);
     scroller.addEventListener("scroll",check,{passive:true});
     window.addEventListener("resize",check);
     return()=>{
+      cancelAnimationFrame(raf);
+      clearTimeout(t2);
       scroller.removeEventListener("scroll",check);
       window.removeEventListener("resize",check);
     };
-  },[]);
+  },[target?.id]);
 
   // ── Collapsing tab bar (driven entirely outside React) ──────────────────
   // The bar node is provided via collapseBarRef. We attach our OWN scroll
@@ -4296,7 +4305,7 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
           feel like the app second-guessing the user. */}
       {!isEd&&cfg.showBanner===false&&target&&(()=>{
         const isEn=t?.myDay==="My Day";
-        const show=targetBelow;
+        const show=!targetInView;
         return(
         <button onClick={jumpToTarget} aria-label={isEn?"Back to now":"Tillbaka till nu"} className="lt-press-soft" style={{
           position:"absolute",top:14+topInset,left:"50%",zIndex:11,
@@ -4322,10 +4331,10 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
               : (isEn?"Next":"Nästa")}
             <span style={{color:tk().ink2,fontWeight:500,marginLeft:6}}>· {target.name}</span>
           </span>
-          <span style={{color:tk().ink3,flexShrink:0,marginLeft:2,display:"inline-flex",alignItems:"center",opacity:.7,animation:"dayPillChevA 2.6s ease-in-out infinite"}}>
-            <IconChevron dir="down" size={12} strokeWidth={2.2}/>
+          <span style={{color:tk().ink3,flexShrink:0,marginLeft:2,display:"inline-flex",alignItems:"center",opacity:.7,animation:targetAbove?"dayPillChevAUp 2.6s ease-in-out infinite":"dayPillChevA 2.6s ease-in-out infinite"}}>
+            <IconChevron dir={targetAbove?"up":"down"} size={12} strokeWidth={2.2}/>
           </span>
-          <style>{`@keyframes dayPillChevA{0%,100%{transform:translateY(0);opacity:0.6}50%{transform:translateY(1.5px);opacity:1}}`}</style>
+          <style>{`@keyframes dayPillChevA{0%,100%{transform:translateY(0);opacity:0.6}50%{transform:translateY(1.5px);opacity:1}}@keyframes dayPillChevAUp{0%,100%{transform:translateY(0);opacity:0.6}50%{transform:translateY(-1.5px);opacity:1}}`}</style>
         </button>
         );
       })()}
@@ -4486,7 +4495,7 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
             <>
               <div style={{position:"absolute",top:lineY-1,left:-12,right:0,height:dk?1.5:2,background:overStyle
                 ?`linear-gradient(90deg, ${shade(lineColor,-0.05)} 0%, ${shade(lineColor,0.12)} 40%, ${withAlpha(lineColor,dk?0.28:0.35)} 100%)`
-                :(whiteBase?(dk?`linear-gradient(90deg, rgba(206,214,230,0.78) 0%, rgba(206,214,230,0.62) 42%, rgba(206,214,230,0.18) 100%)`:`linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 40%, rgba(255,255,255,0.4) 100%)`):`linear-gradient(90deg, ${shade(lineColor,-0.1)} 0%, ${shade(lineColor,0.1)} 40%, ${withAlpha(lineColor,0.2)} 100%)`),borderRadius:1,zIndex:overStyle?25:1,pointerEvents:"none",animation:`${pulseId} ${overStyle?"3.4s":"2.4s"} ease-in-out infinite`,transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1), background .8s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
+                :(whiteBase?(dk?`linear-gradient(90deg, rgba(206,214,230,0.78) 0%, rgba(206,214,230,0.62) 42%, rgba(206,214,230,0.18) 100%)`:`linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 40%, rgba(255,255,255,0.4) 100%)`):`linear-gradient(90deg, ${shade(lineColor,-0.1)} 0%, ${shade(lineColor,0.1)} 40%, ${withAlpha(lineColor,0.2)} 100%)`),borderRadius:1,zIndex:overStyle?25:24,pointerEvents:"none",animation:`${pulseId} ${overStyle?"3.4s":"2.4s"} ease-in-out infinite`,transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1), background .8s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
               <style>{overStyle
                 ? `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 ${dk?6:8}px ${withAlpha(lineColor,dk?0.30:0.45)}, 0 0 ${dk?10:14}px ${withAlpha(lineColor,dk?0.12:0.18)};opacity:${dk?0.85:0.92}}50%{box-shadow:0 0 ${dk?12:18}px ${withAlpha(lineColor,dk?0.55:0.85)}, 0 0 ${dk?22:32}px ${withAlpha(lineColor,dk?0.22:0.40)}${dk?"":`, 0 0 48px ${withAlpha(lineColor,0.18)}`};opacity:1}}`
                 : (whiteBase?(dk
@@ -6478,45 +6487,9 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
             </div>
           </Section>
         )}
-        <Section
-          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-3.86-7.4"/><path d="M21 3v6h-6"/></svg>}
-          title={t.syncTitle}
-          color={SCREENS.idcard.h}
-          delay={0.46}
-          dark={isDark()}
-        >
-          {[[false,t.sameDevice,t.sameDeviceDesc],[true,t.syncMode,t.syncModeDesc]].map(([v,title,desc])=>(
-            <div key={String(v)} onClick={()=>setSm(v)} style={{borderRadius:14,border:`1px solid ${sm===v?S.h:tk().border}`,background:sm===v?S.hll:"transparent",padding:"13px 16px",marginBottom:10,cursor:"pointer",transition:"all .25s ease"}}>
-              <div style={{fontFamily:G.serif,fontWeight:700,fontSize:14,color:sm===v?S.h:tk().ink,marginBottom:2}}>{title}</div>
-              <div style={{fontFamily:G.serif,fontSize:12,color:tk().ink2}}>{desc}</div>
-            </div>
-          ))}
-          {sm&&(
-            <div style={{background:S.hll,borderRadius:14,padding:16,border:`1px solid ${S.hl}`,marginTop:12}}>
-              <SLabel>{t.yourCode}</SLabel>
-              <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
-                <div style={{fontFamily:G.serif,fontWeight:600,fontSize:26,color:S.h,letterSpacing:5,background:tk().white,padding:"10px 22px",borderRadius:12,border:`1px solid ${S.hl}`}}>{shareCode}</div>
-                <button onClick={copy} className="lt-press-soft" style={{...GHOST,padding:"10px 13px",display:"flex",alignItems:"center",gap:6}}>
-                  {cp?(
-                    <><IconCheck size={14} className="" strokeWidth={2.4}/><span>{t.copied.replace(" ✓","")}</span></>
-                  ):(
-                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect x="9" y="9" width="13" height="13" rx="2"/>
-                      <path d="M5 15 H4 a2 2 0 0 1 -2 -2 V4 a2 2 0 0 1 2 -2 h9 a2 2 0 0 1 2 2 v1"/>
-                    </svg>
-                  )}
-                </button>
-              </div>
-              <div style={{fontFamily:G.serif,fontSize:12,color:tk().ink2,marginBottom:14}}>{t.codeHint}</div>
-              <SLabel>{t.enterCode}</SLabel>
-              <div style={{display:"flex",gap:7}}>
-                <input value={code} onChange={e=>setCode(e.target.value.toUpperCase())} maxLength={4} placeholder="AB3X" className="lt-input" style={{...INPT(),marginBottom:0,textAlign:"center",fontFamily:G.serif,fontWeight:600,fontSize:20,letterSpacing:4,flex:1}}/>
-                <button onClick={conn} style={{padding:"0 16px",borderRadius:12,border:"none",background:SCREENS.emotion.h,color:"#fff",fontFamily:G.serif,fontWeight:700,cursor:"pointer"}}>{t.connect}</button>
-              </div>
-              {err&&<div style={{color:"#EF4444",fontFamily:G.serif,fontSize:12,marginTop:6}}>{err}</div>}
-            </div>
-          )}
-        </Section>
+        {/* "Dela via kod"-sektionen borttagen — den var icke-funktionell (ingen
+            riktig synk mellan enheter). Kan återinföras som en riktig funktion i
+            framtiden; state/genCode/shareCode lämnas kvar orört för det. */}
         <button onClick={save} className="lt-press saveBtn" style={{marginTop:8,width:"100%",padding:"16px 0",borderRadius:16,border:isDark()?"1px solid rgba(255,255,255,0.18)":"none",background:isDark()?"rgba(255,255,255,0.1)":`linear-gradient(135deg, ${S.h}, ${S.h}DC)`,backdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",WebkitBackdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",color:isDark()?"#F4F1FA":"#fff",fontFamily:G.serif,fontWeight:700,fontSize:15,cursor:"pointer",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.22), 0 6px 16px -8px rgba(0,0,0,0.6)":`0 12px 28px ${S.h}45, 0 3px 8px ${S.h}28`,display:"flex",alignItems:"center",justifyContent:"center",gap:8,letterSpacing:.3}}>
           <svg className="saveTick" width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
             <path d="M2.5 7.2 L5.8 10.5 L11.5 3.5"/>
