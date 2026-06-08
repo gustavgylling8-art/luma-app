@@ -1118,11 +1118,11 @@ const SIGVARD_LAMP_PALETTE=[
   "#FFFFFF", // white — soft & minimal
 ];
 
-const CFG0={cardStyle:"normal",theme:"light",logoStyle:"none",schedView:"both",showSigvard:false,sigvardColor:"#FF4848",showBanner:false,showNowLine:true,nowLineColor:"auto",weekColors:SIGVARD0,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","aurora","lava","monster"],defaultType:"wave",defaultMin:5,defaultColor:"#8AAFD2",dotMode:"globe"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]}};
+const CFG0={cardStyle:"compact",theme:"light",logoStyle:"none",schedView:"both",showSigvard:false,sigvardColor:"#FF4848",showBanner:false,showNowLine:true,nowLineColor:"white",weekColors:SIGVARD0,tools:{home:true,timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","aurora","lava","monster"],defaultType:"wave",defaultMin:5,defaultColor:"#8AAFD2",dotMode:"globe"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]}};
 
 const TR={
-  sv:{other:"EN",myDay:"Min dag",editorOpen:"Redigera",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Lägg till aktiviteter i redigeraren",addAct:"Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Solnedgång",aurora:"Norrsken",lava:"Lava",monster:"Monster",monsterFull:"Mätt!",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",themeLabel:"Utseende",themeLight:"Ljust",themeDark:"Mörkt",themeHint:"Mörkt läge ger hela appen ett lugnt, mörkt utseende.",modeChoiceTitle:"Välj utseende",modeChoiceDesc:"Hur vill du att Luma ska se ut? Du kan alltid ändra detta i inställningarna.",modeChoiceContinue:"Fortsätt",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redigering & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",playAgain:"Spela igen",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Hem",comm:"Tala",sigvardOn:"Sigvard-lampor",sigvardColor:"Färg på lampor",sigvardColorHint:"Tidslinjen följer samma färg",schedVisuals:"Visa i schemat",schedVisualsHint:"Slå av om det blir för mycket – båda kan användas, en av dem, eller inget alls.",bannerLabel:"\"Pågår nu\"-rad",bannerHint:"Liten rad högst upp som visar pågående eller nästa aktivitet.",nowLineLabel:"Tidsstreck",nowLineHint:"Linjen som följer aktuell tid genom dagen.",nowLineColor:"Färg på strecket",nowLineSameAsSig:"Samma som lamporna",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",barometerStyle:"Mätarens stil",barometerStyleHint:"Hur känslorna visas för användaren.",styleArc:"Bågformad",styleVertical:"Lodrät",addEmotion:"+ Lägg till känsla",editEmotion:"Redigera känsla",emotionName:"Namn",emotionNamePH:"t.ex. Stressad",customLabel:"Egen",changePhoto:"Byt foto",resetEmotions:"Återställ förvalda",resetEmotionsHint:"Sätter tillbaka standardkänslorna till sina ursprungliga namn, emojis och färger.",confirmDeleteEmotion:"Ta bort?",reasonField:"Anteckningsfält",reasonFieldHint:"Användaren får skriva några ord om sin känsla. Stäng av om det är för mycket.",reasonLabelPH:"t.ex. Varför? eller Vad hände?",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – tryck Redigera för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",helloMyNameIs:"Hej, jag heter",yearsOld:"år",emptyCardTitle:"Kortet är inte ifyllt än",emptyCardDesc:"Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Tryck Redigera för att fylla i det.",createCardTitle:"Skapa mitt-mig-kortet",createCardDesc:"Sammanfattar viktig information — namn, kontaktpersoner, och vad som hjälper i pressade situationer. Visas vid behov.",showLarge:"Visa stort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng",week:"Vecka",myWeek:"Min vecka",weekEmpty:"Inga aktiviteter den här veckan",weekAdd:"Lägg till aktivitet",dayColors:"Veckodagsfärger",dayColorsHint:"Tryck på en dag för att välja färg",resetColors:"Återställ till standard",monday:"Måndag",tuesday:"Tisdag",wednesday:"Onsdag",thursday:"Torsdag",friday:"Fredag",saturday:"Lördag",sunday:"Söndag",skylight:"Himmel",skyHint:"Låt blicken vila",notTodayHint:"Du tittar på en annan dag. Stegen kan inte bockas av nu.",editStory:"Redigera berättelse",storyType:"Typ",typeSeq:"Steg-för-steg",typeSeqDesc:"Flera sidor",typeFT:"Först-Sedan",typeFTDesc:"Två aktiviteter",coverImage:"Huvudbild",camera:"Kamera",gallery:"Galleri",emoji:"Emoji",removePhoto:"Ta bort foto",storyPlacehSeq:"t.ex. Städa rummet",storyPlacehFT:"t.ex. Först läxor, sedan TV",ftLabels:"Etiketter (visas över korten)",ftSection:"Först och Sedan",pageImage:"Bild på sidan",pageTextPH:"Skriv vad som händer på sidan…",pageTimer:"Timer på sidan",off:"Av",sunset:"Solnedgång",editingLabel:"Redigerar",duEditing:"Du redigerar",cover:"Huvudbild",schedule:"Schema",doneTitle:"Klart",doneSub:"Du kan vila en stund.",dayOpen:"Inga aktiviteter idag",allActsDoneTitle:"Alla aktiviteter är klara",allActsDoneSub:"Du kan vila resten av dagen.",lampOne:"1 lampa = 1 minut",lampMany:"1 lampa = {n} minuter",lampSec:"1 lampa = {n} sek",dotToCandle:"Ljus",dotToPearl:"Pärlor",dotToGlobe:"Klot",dotToBulb:"Glöd",dotToLantern:"Lykta",unitLamp:"lampa",unitFlame:"låga",unitSecShort:"sek",unitMinOne:"minut",unitMinMany:"minuter",stepCountOne:"1 steg",stepCountMany:"{n} steg",noName:"(Utan namn)",unsavedTitle:"Osparade ändringar",unsavedDesc:"Vill du spara innan du stänger?",discardChanges:"Släng",keepEditing:"Fortsätt redigera",overlapTitle:"Tidskrock",overlapDesc:"Den nya aktiviteten {t} överlappar:",goBack:"Gå tillbaka",saveAnyway:"Spara ändå",editAct:"Redigera aktivitet",newAct:"Ny aktivitet",actNamePH:"t.ex. Frukost",timeStart:"Start",timeEnd:"Slut (frivilligt)",repeat:"Upprepa",repNone:"Endast idag",repDaily:"Varje dag",repWeekdays:"Vardagar",repWeekend:"Helger",repPickDays:"Välj veckodagar",repDailyShort:"Dagligen",repDaysSuffix:"dagar",daysShort:["sön","mån","tis","ons","tor","fre","lör"],resetSection:"Återställ",resetDataDesc:"Rensar alla aktiviteter, berättelser, känslohistorik och inställningar. Kan inte ångras.",resetDataBtn:"Rensa all data",resetDataConfirm:"Är du säker? Allt data raderas och kan inte återskapas.",backupSection:"Säkerhetskopiering",backupDesc:"Spara allt – scheman, kort, berättelser och inställningar – till en fil. Använd den för att återställa eller flytta till en annan enhet.",exportBtn:"Exportera till fil",importBtn:"Importera från fil",importConfirm:"Detta ersätter all nuvarande data med innehållet i filen. Fortsätt?",importBad:"Filen kunde inte läsas som en Luma-säkerhetskopia.",importOk:"Importerat ✓",exportOk:"Exporterat ✓",tmplTitle:"Vill du komma igång snabbt?",tmplDesc:"Lägg till en färdig rutin – du kan ändra allt efteråt.",tmplAdd:"Lägg till",tmplDismiss:"Nej tack",tmplAdded:"Tillagd ✓",tmplPickTitle:"Förslag på rutiner",tmplPickDesc:"Plussa in de aktiviteter du vill. Du kan ändra allt efteråt.",tmplPickDone:"Klar",tmplAddAll:"Lägg till alla",tmplAdded2:"Tillagd",undoSaved:"Klart!",undoBtn:"Ångra",logoStyle:"Logga-stil",logoStyleHint:"Hur Luma-loggan visas högst upp i appen.",logoStyleNone:"Bara solen",logoStyleGlass:"Glaslåda",logoStylePillow:"Mjuk bädd",logoStyleSquircle:"Appikon"},
-  en:{other:"SV",myDay:"My Day",editorOpen:"Edit",editorClose:"Close",list:"List",card:"Cards",noActs:"Add activities in the editor",addAct:"New activity",save:"Save",cancel:"Cancel",actName:"Activity name",actTime:"Time",pickEmoji:"Pick emoji",pickColor:"Colour",steps:"Checklist",stepPH:"e.g. Put on shoes",timerAct:"Timer – activity",timerType:"Timer type",timerMin:"Minutes",timerColor:"Timer colour",sector:"Time Timer",ring:"Ring",dots:"Dot timer",wave:"Wave",sun:"Sunset",aurora:"Aurora",lava:"Lava",monster:"Monster",monsterFull:"Full!",pause:"Pause",resume:"Start",reset:"Reset",next:"Next",prev:"Back",min:"min",settings:"Settings",themeLabel:"Appearance",themeLight:"Light",themeDark:"Dark",themeHint:"Dark mode gives the whole app a calm, dark look.",modeChoiceTitle:"Choose appearance",modeChoiceDesc:"How would you like Luma to look? You can always change this in settings.",modeChoiceContinue:"Continue",cardStyle:"Card style",styleNormal:"Normal",styleCompact:"Compact",styleBig:"Large",syncTitle:"Sharing",sameDevice:"Same device",syncMode:"Via code",sameDeviceDesc:"Edit & user view on same device.",syncModeDesc:"Share schedule via code.",yourCode:"Your code",codeHint:"Give this code to the user",enterCode:"Enter code",connect:"Connect",wrongCode:"Not found.",copied:"Copied ✓",playAgain:"Play again",openTimer:"Start timer",allDoneMsg:"Great job! 🌟",emotions:"How are you?",emotionSaved:"Saved! ✓",emotionReason:"Why?",emotionHistory:"History",noHistory:"No history",toolsTimer:"Timer",toolsEmotion:"Mood",home:"Home",comm:"Talk",sigvardOn:"Sigvard lamps",sigvardColor:"Lamp colour",sigvardColorHint:"The time line follows the same colour",schedVisuals:"Show in schedule",schedVisualsHint:"Turn off if it gets noisy – use both, one of them, or neither.",bannerLabel:"\"Happening now\" bar",bannerHint:"Small bar at the top showing the current or upcoming activity.",nowLineLabel:"Time line",nowLineHint:"The line that follows the current time through the day.",nowLineColor:"Line colour",nowLineSameAsSig:"Same as lamps",visibleTools:"Visible tools",schedView:"Schedule view",viewBoth:"List + Cards",viewList:"List only",viewCard:"Cards only",addCard:"+ New card",addCat:"+ New category",catName:"Category name",autoTimer:"Syncs with start time",preview:"Preview",startTimer:"Start",timerSettings:"Timer settings for user view",allowedTimers:"Allowed timers",defaultTimer:"Default timer",visibleEmotions:"Visible emotions",barometerStyle:"Barometer style",barometerStyleHint:"How feelings are shown to the user.",styleArc:"Arc",styleVertical:"Vertical",addEmotion:"+ Add feeling",editEmotion:"Edit feeling",emotionName:"Name",emotionNamePH:"e.g. Stressed",customLabel:"Custom",changePhoto:"Change photo",resetEmotions:"Reset defaults",resetEmotionsHint:"Restores the standard feelings to their original names, emojis and colours.",confirmDeleteEmotion:"Remove?",reasonField:"Notes field",reasonFieldHint:"User can write a few words about their feeling. Turn off if it's too much.",reasonLabelPH:"e.g. Why? or What happened?",enlarge:"Enlarge",cardImage:"Image",uploadPhoto:"Upload photo",useEmoji:"Use emoji instead",stories:"Stories",newStory:"New story",storyTitle:"Title",pages:"Pages",addPage:"+ Add page",pageNum:"Page",storyText:"Page text",noStories:"No stories – tap Edit to create",renameCat:"Rename category",calm:"Calm",calmTitle:"Find calm",breathing:"Breathe",grounding:"54321",breathIn:"Breathe in",breathHold:"Hold",breathOut:"Breathe out",breathDone:"Well done",groundIntro:"Pause. Let's do this together.",groundStart:"Begin",see5:"5 things you can see",hear4:"4 things you can hear",touch3:"3 things you can touch",smell2:"2 things you can smell",taste1:"1 thing you can taste",iAmHere:"I am here. I am safe.",roundsDone:"Done",calmSettings:"Calm – exercises",idcard:"My card",myName:"My name",myAge:"Age",aboutMe:"About me",myTriggers:"This can be hard",whatHelps:"This helps me",emergencyContacts:"Call",contactName:"Name",contactPhone:"Phone",contactRelation:"Relation",addContact:"+ Add contact",call:"Call",idHint:"Show this to someone who wants to help","editCard":"Edit my card",helloMyNameIs:"Hi, my name is",yearsOld:"years old",emptyCardTitle:"The card isn't filled in yet",emptyCardDesc:"My card shows important information that can be valuable in situations where you need help. Tap Edit to fill it in.",createCardTitle:"Create your card",createCardDesc:"A summary of important information — name, contacts, and what helps in stressful moments. Shown when needed.",showLarge:"Show large",tools:"Tools",firstthen:"First-Then",choices:"Choices",rewards:"Reward",recipes:"Recipes",first:"First",then:"Then",ftDone:"Done!",chQuestion:"What do you want?",chTap:"Tap to choose",stars:"stars",goalReached:"You've earned your reward! 🎉",reward:"Reward",starsGoal:"Goal – number of stars",addChoice:"+ New choice",newCategory:"+ New category",rewardEmoji:"Emoji",rewardText:"Reward",ingredients:"Ingredients",instructions:"How to make it",servings:"Servings",time:"Time",newRecipe:"New recipe",step:"Step",addStep:"+ Add step",useReward:"Give star when done",resetStars:"Reset stars",starsEarned:"Stars earned",bannerNowOngoing:"Happening now",bannerNextUp:"Next up",bannerDayLabel:"Today",bannerNoActsLeft:"Nothing left today",close:"Close",week:"Week",myWeek:"My week",weekEmpty:"No activities this week",weekAdd:"Add activity",dayColors:"Day colours",dayColorsHint:"Tap a day to pick a colour",resetColors:"Reset to default",monday:"Monday",tuesday:"Tuesday",wednesday:"Wednesday",thursday:"Thursday",friday:"Friday",saturday:"Saturday",sunday:"Sunday",skylight:"Sky",skyHint:"Let your gaze rest",notTodayHint:"You're viewing a different day. Steps can't be checked off now.",editStory:"Edit story",storyType:"Type",typeSeq:"Step-by-step",typeSeqDesc:"Multiple pages",typeFT:"First-Then",typeFTDesc:"Two activities",coverImage:"Cover image",camera:"Camera",gallery:"Gallery",emoji:"Emoji",removePhoto:"Remove photo",storyPlacehSeq:"e.g. Clean the room",storyPlacehFT:"e.g. First homework, then TV",ftLabels:"Labels (shown above the cards)",ftSection:"First and Then",pageImage:"Page image",pageTextPH:"Write what happens on this page…",pageTimer:"Page timer",off:"Off",sunset:"Sunset",editingLabel:"Editing",duEditing:"Editing",cover:"Cover",schedule:"Schedule",doneTitle:"Done",doneSub:"Take a moment to rest.",dayOpen:"No activities today",allActsDoneTitle:"All activities done",allActsDoneSub:"You can rest the rest of the day.",lampOne:"1 lamp = 1 minute",lampMany:"1 lamp = {n} minutes",lampSec:"1 lamp = {n} sec",dotToCandle:"Candle",dotToPearl:"Pearls",dotToGlobe:"Globe",dotToBulb:"Bulb",dotToLantern:"Lantern",unitLamp:"lamp",unitFlame:"flame",unitSecShort:"sec",unitMinOne:"minute",unitMinMany:"minutes",stepCountOne:"1 step",stepCountMany:"{n} steps",noName:"(No name)",unsavedTitle:"Unsaved changes",unsavedDesc:"Save before closing?",discardChanges:"Discard",keepEditing:"Keep editing",overlapTitle:"Time conflict",overlapDesc:"The new activity {t} overlaps:",goBack:"Go back",saveAnyway:"Save anyway",editAct:"Edit activity",newAct:"New activity",actNamePH:"e.g. Breakfast",timeStart:"Start",timeEnd:"End (optional)",repeat:"Repeat",repNone:"Today only",repDaily:"Every day",repWeekdays:"Weekdays",repWeekend:"Weekends",repPickDays:"Pick days of week",repDailyShort:"Daily",repDaysSuffix:"days",daysShort:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],resetSection:"Reset",resetDataDesc:"Clears all activities, stories, mood history and settings. Cannot be undone.",resetDataBtn:"Clear all data",resetDataConfirm:"Are you sure? All data will be erased and cannot be recovered.",backupSection:"Backup",backupDesc:"Save everything – schedules, cards, stories and settings – to a file. Use it to restore or move to another device.",exportBtn:"Export to file",importBtn:"Import from file",importConfirm:"This replaces all current data with the file's contents. Continue?",importBad:"The file couldn't be read as a Luma backup.",importOk:"Imported ✓",exportOk:"Exported ✓",tmplTitle:"Want a quick start?",tmplDesc:"Add a ready-made routine – you can change everything afterwards.",tmplAdd:"Add",tmplDismiss:"No thanks",tmplAdded:"Added ✓",tmplPickTitle:"Suggested routines",tmplPickDesc:"Add the activities you want. You can change everything afterwards.",tmplPickDone:"Done",tmplAddAll:"Add all",tmplAdded2:"Added",undoSaved:"Done!",undoBtn:"Undo",logoStyle:"Logo style",logoStyleHint:"How the Luma logo appears at the top of the app.",logoStyleNone:"Just the sun",logoStyleGlass:"Glass box",logoStylePillow:"Soft pillow",logoStyleSquircle:"App icon"},
+  sv:{other:"EN",myDay:"Min dag",editorOpen:"Redigera",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Lägg till aktiviteter i redigeraren",addAct:"Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Solnedgång",aurora:"Norrsken",lava:"Lava",monster:"Monster",monsterFull:"Mätt!",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",themeLabel:"Utseende",themeLight:"Ljust",themeDark:"Mörkt",themeHint:"Mörkt läge ger hela appen ett lugnt, mörkt utseende.",modeChoiceTitle:"Välj utseende",modeChoiceDesc:"Hur vill du att Luma ska se ut? Du kan alltid ändra detta i inställningarna.",modeChoiceContinue:"Fortsätt",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redigering & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",playAgain:"Spela igen",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Dag",comm:"Tala",sigvardOn:"Sigvard-lampor",sigvardColor:"Färg på lampor",sigvardColorHint:"Tidslinjen följer samma färg",schedVisuals:"Visa i schemat",schedVisualsHint:"Slå av om det blir för mycket – båda kan användas, en av dem, eller inget alls.",bannerLabel:"\"Pågår nu\"-rad",bannerHint:"Liten rad högst upp som visar pågående eller nästa aktivitet.",nowLineLabel:"Tidsstreck",nowLineHint:"Linjen som följer aktuell tid genom dagen.",nowLineColor:"Färg på strecket",nowLineSameAsSig:"Samma som lamporna",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",barometerStyle:"Mätarens stil",barometerStyleHint:"Hur känslorna visas för användaren.",styleArc:"Bågformad",styleVertical:"Lodrät",addEmotion:"+ Lägg till känsla",editEmotion:"Redigera känsla",emotionName:"Namn",emotionNamePH:"t.ex. Stressad",customLabel:"Egen",changePhoto:"Byt foto",resetEmotions:"Återställ förvalda",resetEmotionsHint:"Sätter tillbaka standardkänslorna till sina ursprungliga namn, emojis och färger.",confirmDeleteEmotion:"Ta bort?",reasonField:"Anteckningsfält",reasonFieldHint:"Användaren får skriva några ord om sin känsla. Stäng av om det är för mycket.",reasonLabelPH:"t.ex. Varför? eller Vad hände?",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – tryck Redigera för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",helloMyNameIs:"Hej, jag heter",yearsOld:"år",emptyCardTitle:"Kortet är inte ifyllt än",emptyCardDesc:"Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Tryck Redigera för att fylla i det.",createCardTitle:"Skapa mitt-mig-kortet",createCardDesc:"Sammanfattar viktig information — namn, kontaktpersoner, och vad som hjälper i pressade situationer. Visas vid behov.",showLarge:"Visa stort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng",week:"Vecka",myWeek:"Min vecka",weekEmpty:"Inga aktiviteter den här veckan",weekAdd:"Lägg till aktivitet",dayColors:"Veckodagsfärger",dayColorsHint:"Tryck på en dag för att välja färg",resetColors:"Återställ till standard",monday:"Måndag",tuesday:"Tisdag",wednesday:"Onsdag",thursday:"Torsdag",friday:"Fredag",saturday:"Lördag",sunday:"Söndag",skylight:"Himmel",skyHint:"Låt blicken vila",notTodayHint:"Du tittar på en annan dag. Stegen kan inte bockas av nu.",editStory:"Redigera berättelse",storyType:"Typ",typeSeq:"Steg-för-steg",typeSeqDesc:"Flera sidor",typeFT:"Först-Sedan",typeFTDesc:"Två aktiviteter",coverImage:"Huvudbild",camera:"Kamera",gallery:"Galleri",emoji:"Emoji",removePhoto:"Ta bort foto",storyPlacehSeq:"t.ex. Städa rummet",storyPlacehFT:"t.ex. Först läxor, sedan TV",ftLabels:"Etiketter (visas över korten)",ftSection:"Först och Sedan",pageImage:"Bild på sidan",pageTextPH:"Skriv vad som händer på sidan…",pageTimer:"Timer på sidan",off:"Av",sunset:"Solnedgång",editingLabel:"Redigerar",duEditing:"Du redigerar",cover:"Huvudbild",schedule:"Schema",doneTitle:"Klart",doneSub:"Du kan vila en stund.",dayOpen:"Inga aktiviteter idag",allActsDoneTitle:"Alla aktiviteter är klara",allActsDoneSub:"Du kan vila resten av dagen.",lampOne:"1 lampa = 1 minut",lampMany:"1 lampa = {n} minuter",lampSec:"1 lampa = {n} sek",dotToCandle:"Ljus",dotToPearl:"Pärlor",dotToGlobe:"Klot",dotToBulb:"Glöd",dotToLantern:"Lykta",unitLamp:"lampa",unitFlame:"låga",unitSecShort:"sek",unitMinOne:"minut",unitMinMany:"minuter",stepCountOne:"1 steg",stepCountMany:"{n} steg",noName:"(Utan namn)",unsavedTitle:"Osparade ändringar",unsavedDesc:"Vill du spara innan du stänger?",discardChanges:"Släng",keepEditing:"Fortsätt redigera",overlapTitle:"Tidskrock",overlapDesc:"Den nya aktiviteten {t} överlappar:",goBack:"Gå tillbaka",saveAnyway:"Spara ändå",editAct:"Redigera aktivitet",newAct:"Ny aktivitet",actNamePH:"t.ex. Frukost",timeStart:"Start",timeEnd:"Slut (frivilligt)",repeat:"Upprepa",repNone:"Endast idag",repDaily:"Varje dag",repWeekdays:"Vardagar",repWeekend:"Helger",repPickDays:"Välj veckodagar",repDailyShort:"Dagligen",repDaysSuffix:"dagar",daysShort:["sön","mån","tis","ons","tor","fre","lör"],resetSection:"Återställ",resetDataDesc:"Rensar alla aktiviteter, berättelser, känslohistorik och inställningar. Kan inte ångras.",resetDataBtn:"Rensa all data",resetDataConfirm:"Är du säker? Allt data raderas och kan inte återskapas.",backupSection:"Säkerhetskopiering",backupDesc:"Spara allt – scheman, kort, berättelser och inställningar – till en fil. Använd den för att återställa eller flytta till en annan enhet.",exportBtn:"Exportera till fil",importBtn:"Importera från fil",importConfirm:"Detta ersätter all nuvarande data med innehållet i filen. Fortsätt?",importBad:"Filen kunde inte läsas som en Luma-säkerhetskopia.",importOk:"Importerat ✓",exportOk:"Exporterat ✓",tmplTitle:"Vill du komma igång snabbt?",tmplDesc:"Lägg till en färdig rutin – du kan ändra allt efteråt.",tmplAdd:"Lägg till",tmplDismiss:"Nej tack",tmplAdded:"Tillagd ✓",tmplPickTitle:"Förslag på rutiner",tmplPickDesc:"Plussa in de aktiviteter du vill. Du kan ändra allt efteråt.",tmplPickDone:"Klar",tmplAddAll:"Lägg till alla",tmplAdded2:"Tillagd",undoSaved:"Klart!",undoBtn:"Ångra",logoStyle:"Logga-stil",logoStyleHint:"Hur Luma-loggan visas högst upp i appen.",logoStyleNone:"Bara solen",logoStyleGlass:"Glaslåda",logoStylePillow:"Mjuk bädd",logoStyleSquircle:"Appikon"},
+  en:{other:"SV",myDay:"My Day",editorOpen:"Edit",editorClose:"Close",list:"List",card:"Cards",noActs:"Add activities in the editor",addAct:"New activity",save:"Save",cancel:"Cancel",actName:"Activity name",actTime:"Time",pickEmoji:"Pick emoji",pickColor:"Colour",steps:"Checklist",stepPH:"e.g. Put on shoes",timerAct:"Timer – activity",timerType:"Timer type",timerMin:"Minutes",timerColor:"Timer colour",sector:"Time Timer",ring:"Ring",dots:"Dot timer",wave:"Wave",sun:"Sunset",aurora:"Aurora",lava:"Lava",monster:"Monster",monsterFull:"Full!",pause:"Pause",resume:"Start",reset:"Reset",next:"Next",prev:"Back",min:"min",settings:"Settings",themeLabel:"Appearance",themeLight:"Light",themeDark:"Dark",themeHint:"Dark mode gives the whole app a calm, dark look.",modeChoiceTitle:"Choose appearance",modeChoiceDesc:"How would you like Luma to look? You can always change this in settings.",modeChoiceContinue:"Continue",cardStyle:"Card style",styleNormal:"Normal",styleCompact:"Compact",styleBig:"Large",syncTitle:"Sharing",sameDevice:"Same device",syncMode:"Via code",sameDeviceDesc:"Edit & user view on same device.",syncModeDesc:"Share schedule via code.",yourCode:"Your code",codeHint:"Give this code to the user",enterCode:"Enter code",connect:"Connect",wrongCode:"Not found.",copied:"Copied ✓",playAgain:"Play again",openTimer:"Start timer",allDoneMsg:"Great job! 🌟",emotions:"How are you?",emotionSaved:"Saved! ✓",emotionReason:"Why?",emotionHistory:"History",noHistory:"No history",toolsTimer:"Timer",toolsEmotion:"Mood",home:"Day",comm:"Talk",sigvardOn:"Sigvard lamps",sigvardColor:"Lamp colour",sigvardColorHint:"The time line follows the same colour",schedVisuals:"Show in schedule",schedVisualsHint:"Turn off if it gets noisy – use both, one of them, or neither.",bannerLabel:"\"Happening now\" bar",bannerHint:"Small bar at the top showing the current or upcoming activity.",nowLineLabel:"Time line",nowLineHint:"The line that follows the current time through the day.",nowLineColor:"Line colour",nowLineSameAsSig:"Same as lamps",visibleTools:"Visible tools",schedView:"Schedule view",viewBoth:"List + Cards",viewList:"List only",viewCard:"Cards only",addCard:"+ New card",addCat:"+ New category",catName:"Category name",autoTimer:"Syncs with start time",preview:"Preview",startTimer:"Start",timerSettings:"Timer settings for user view",allowedTimers:"Allowed timers",defaultTimer:"Default timer",visibleEmotions:"Visible emotions",barometerStyle:"Barometer style",barometerStyleHint:"How feelings are shown to the user.",styleArc:"Arc",styleVertical:"Vertical",addEmotion:"+ Add feeling",editEmotion:"Edit feeling",emotionName:"Name",emotionNamePH:"e.g. Stressed",customLabel:"Custom",changePhoto:"Change photo",resetEmotions:"Reset defaults",resetEmotionsHint:"Restores the standard feelings to their original names, emojis and colours.",confirmDeleteEmotion:"Remove?",reasonField:"Notes field",reasonFieldHint:"User can write a few words about their feeling. Turn off if it's too much.",reasonLabelPH:"e.g. Why? or What happened?",enlarge:"Enlarge",cardImage:"Image",uploadPhoto:"Upload photo",useEmoji:"Use emoji instead",stories:"Stories",newStory:"New story",storyTitle:"Title",pages:"Pages",addPage:"+ Add page",pageNum:"Page",storyText:"Page text",noStories:"No stories – tap Edit to create",renameCat:"Rename category",calm:"Calm",calmTitle:"Find calm",breathing:"Breathe",grounding:"54321",breathIn:"Breathe in",breathHold:"Hold",breathOut:"Breathe out",breathDone:"Well done",groundIntro:"Pause. Let's do this together.",groundStart:"Begin",see5:"5 things you can see",hear4:"4 things you can hear",touch3:"3 things you can touch",smell2:"2 things you can smell",taste1:"1 thing you can taste",iAmHere:"I am here. I am safe.",roundsDone:"Done",calmSettings:"Calm – exercises",idcard:"My card",myName:"My name",myAge:"Age",aboutMe:"About me",myTriggers:"This can be hard",whatHelps:"This helps me",emergencyContacts:"Call",contactName:"Name",contactPhone:"Phone",contactRelation:"Relation",addContact:"+ Add contact",call:"Call",idHint:"Show this to someone who wants to help","editCard":"Edit my card",helloMyNameIs:"Hi, my name is",yearsOld:"years old",emptyCardTitle:"The card isn't filled in yet",emptyCardDesc:"My card shows important information that can be valuable in situations where you need help. Tap Edit to fill it in.",createCardTitle:"Create your card",createCardDesc:"A summary of important information — name, contacts, and what helps in stressful moments. Shown when needed.",showLarge:"Show large",tools:"Tools",firstthen:"First-Then",choices:"Choices",rewards:"Reward",recipes:"Recipes",first:"First",then:"Then",ftDone:"Done!",chQuestion:"What do you want?",chTap:"Tap to choose",stars:"stars",goalReached:"You've earned your reward! 🎉",reward:"Reward",starsGoal:"Goal – number of stars",addChoice:"+ New choice",newCategory:"+ New category",rewardEmoji:"Emoji",rewardText:"Reward",ingredients:"Ingredients",instructions:"How to make it",servings:"Servings",time:"Time",newRecipe:"New recipe",step:"Step",addStep:"+ Add step",useReward:"Give star when done",resetStars:"Reset stars",starsEarned:"Stars earned",bannerNowOngoing:"Happening now",bannerNextUp:"Next up",bannerDayLabel:"Today",bannerNoActsLeft:"Nothing left today",close:"Close",week:"Week",myWeek:"My week",weekEmpty:"No activities this week",weekAdd:"Add activity",dayColors:"Day colours",dayColorsHint:"Tap a day to pick a colour",resetColors:"Reset to default",monday:"Monday",tuesday:"Tuesday",wednesday:"Wednesday",thursday:"Thursday",friday:"Friday",saturday:"Saturday",sunday:"Sunday",skylight:"Sky",skyHint:"Let your gaze rest",notTodayHint:"You're viewing a different day. Steps can't be checked off now.",editStory:"Edit story",storyType:"Type",typeSeq:"Step-by-step",typeSeqDesc:"Multiple pages",typeFT:"First-Then",typeFTDesc:"Two activities",coverImage:"Cover image",camera:"Camera",gallery:"Gallery",emoji:"Emoji",removePhoto:"Remove photo",storyPlacehSeq:"e.g. Clean the room",storyPlacehFT:"e.g. First homework, then TV",ftLabels:"Labels (shown above the cards)",ftSection:"First and Then",pageImage:"Page image",pageTextPH:"Write what happens on this page…",pageTimer:"Page timer",off:"Off",sunset:"Sunset",editingLabel:"Editing",duEditing:"Editing",cover:"Cover",schedule:"Schedule",doneTitle:"Done",doneSub:"Take a moment to rest.",dayOpen:"No activities today",allActsDoneTitle:"All activities done",allActsDoneSub:"You can rest the rest of the day.",lampOne:"1 lamp = 1 minute",lampMany:"1 lamp = {n} minutes",lampSec:"1 lamp = {n} sec",dotToCandle:"Candle",dotToPearl:"Pearls",dotToGlobe:"Globe",dotToBulb:"Bulb",dotToLantern:"Lantern",unitLamp:"lamp",unitFlame:"flame",unitSecShort:"sec",unitMinOne:"minute",unitMinMany:"minutes",stepCountOne:"1 step",stepCountMany:"{n} steps",noName:"(No name)",unsavedTitle:"Unsaved changes",unsavedDesc:"Save before closing?",discardChanges:"Discard",keepEditing:"Keep editing",overlapTitle:"Time conflict",overlapDesc:"The new activity {t} overlaps:",goBack:"Go back",saveAnyway:"Save anyway",editAct:"Edit activity",newAct:"New activity",actNamePH:"e.g. Breakfast",timeStart:"Start",timeEnd:"End (optional)",repeat:"Repeat",repNone:"Today only",repDaily:"Every day",repWeekdays:"Weekdays",repWeekend:"Weekends",repPickDays:"Pick days of week",repDailyShort:"Daily",repDaysSuffix:"days",daysShort:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],resetSection:"Reset",resetDataDesc:"Clears all activities, stories, mood history and settings. Cannot be undone.",resetDataBtn:"Clear all data",resetDataConfirm:"Are you sure? All data will be erased and cannot be recovered.",backupSection:"Backup",backupDesc:"Save everything – schedules, cards, stories and settings – to a file. Use it to restore or move to another device.",exportBtn:"Export to file",importBtn:"Import from file",importConfirm:"This replaces all current data with the file's contents. Continue?",importBad:"The file couldn't be read as a Luma backup.",importOk:"Imported ✓",exportOk:"Exported ✓",tmplTitle:"Want a quick start?",tmplDesc:"Add a ready-made routine – you can change everything afterwards.",tmplAdd:"Add",tmplDismiss:"No thanks",tmplAdded:"Added ✓",tmplPickTitle:"Suggested routines",tmplPickDesc:"Add the activities you want. You can change everything afterwards.",tmplPickDone:"Done",tmplAddAll:"Add all",tmplAdded2:"Added",undoSaved:"Done!",undoBtn:"Undo",logoStyle:"Logo style",logoStyleHint:"How the Luma logo appears at the top of the app.",logoStyleNone:"Just the sun",logoStyleGlass:"Glass box",logoStylePillow:"Soft pillow",logoStyleSquircle:"App icon"},
 };
 
 const TTYPES=["sector","ring","dots","wave","sun","aurora","lava","monster"];
@@ -1920,7 +1920,7 @@ function SkyHeader({now,lang,inFlow=false,sun=false,showWord=true,showDate=true}
       </svg>
       <div style={{position:"relative",width:"100%",display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"flex-end",padding:"0 22px 2px",gap:7,zIndex:2,animation:"skLockIn 0.55s cubic-bezier(.2,.7,.2,1) both"}}>
         <style>{`@keyframes skLockIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
-        {showWord&&<div style={{marginLeft:-4}}><SkyWordmark size={41} sun={sun}/></div>}
+        {showWord&&<div style={{marginLeft:-4,position:"relative",top:3}}><SkyWordmark size={41} sun={sun}/></div>}
         {!inFlow&&showDate&&(
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
           <div style={{display:"flex",alignItems:"baseline",gap:7}}>
@@ -3599,38 +3599,33 @@ function TimerComp({type,totalSec,color,t,autoRun=false,size=240,showCtrl=true,d
 
 function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
   const[dotsMode,setDotsMode]=useState("globe");   // globe(default) · candle · bulb · lantern looks for the dot timer
-  // Compute size from actual rendered viewport — if FullTimer's fixed positioning
-  // is constrained by a parent with transform/will-change, it inherits that container.
-  // Be defensive: measure actual viewport AND deduct header/nav heights generously.
-  // When activity header is shown, deduct extra ~80px for emoji + name + spacing.
+  // Timer size — TABLET-AWARE. On phones this is exactly as before. On tablets
+  // (smallest viewport side ≥600px → any iPad, either orientation) we drop the
+  // 480px width clamp and raise the ceiling a lot, so the timer fills the big
+  // screen instead of sitting phone-sized in a sea of empty space.
   const headerSpace=activity?80:0;
-  const[size,setSize]=useState(()=>{
+  const computeSize=()=>{
     if(typeof window==="undefined") return 260;
-    const landscape=window.innerWidth>window.innerHeight;
-    const vw=landscape?window.innerWidth:Math.min(window.innerWidth, 480);
-    const vh=window.innerHeight;
-    // Card timers (sector/ring/dots/wave/lava/monster) — tallest is ~1.0×.
+    const W=window.innerWidth, H=window.innerHeight;
+    const landscape=W>H;
+    const tablet=Math.min(W,H)>=600;
+    const vw=landscape?W:(tablet?W:Math.min(W,480));
     const chrome=landscape?(170+headerSpace):(300+headerSpace);
-    const maxByHeight=Math.max(150,(vh-chrome)/1.05);
+    const maxByHeight=Math.max(150,(H-chrome)/1.05);
     const maxByWidth=Math.max(150,vw-(landscape?80:32));
-    return Math.round(Math.min(landscape?520:440, Math.min(maxByHeight,maxByWidth)));
-  });
+    const cap=tablet?(landscape?820:680):(landscape?520:440);
+    return Math.round(Math.min(cap, Math.min(maxByHeight,maxByWidth)));
+  };
+  const[size,setSize]=useState(computeSize);
   useEffect(()=>{
-    const onResize=()=>{
-      const landscape=window.innerWidth>window.innerHeight;
-      const vw=landscape?window.innerWidth:Math.min(window.innerWidth, 480);
-      const vh=window.innerHeight;
-      const chrome=landscape?(170+headerSpace):(300+headerSpace);
-      const maxByHeight=Math.max(150,(vh-chrome)/1.05);
-      const maxByWidth=Math.max(150,vw-(landscape?80:32));
-      setSize(Math.round(Math.min(landscape?520:440, Math.min(maxByHeight,maxByWidth))));
-    };
+    const onResize=()=>setSize(computeSize());
     window.addEventListener("resize",onResize);
     window.addEventListener("orientationchange",onResize);
     return()=>{
       window.removeEventListener("resize",onResize);
       window.removeEventListener("orientationchange",onResize);
     };
+  // eslint-disable-next-line
   },[headerSpace]);
   // Aurora is a cinematic scene timer — give it the whole screen, with its own
   // overlaid close + controls, instead of the boxed tile layout.
@@ -4013,15 +4008,17 @@ function SigvardTimeline({now,color="#FF4848"}){
           const isNow = !isPast && !isFuture;
           // Dränerings-andel (0..1) inom nu-lampan
           const drained = isNow?(nowM-lampStartMin)/SIGVARD_MIN_PER_LAMP:0;
-          const fillPct=Math.round((1-drained)*100);
+          // Empty grows DOWN from the top (consumed time joins the dark lamps
+          // above it), so the lit level sinks smoothly downward as time passes.
+          const emptyPct=Math.round(drained*100);
           const emptyColor=isDark()?"#2C2640":"#3A3450";
           // Background per state. Future = full färg gradient (rund LED).
-          // Past = mörk prick. Now = linjär fyllning som glider.
+          // Past = mörk prick. Now = linjär fyllning som sjunker uppifrån.
           const lampBg = isPast
             ? emptyColor
             : isFuture
               ? `radial-gradient(circle at 35% 30%, ${cLight}, ${effColor} 70%, ${cDeep})`
-              : `linear-gradient(180deg, ${cLight} 0%, ${effColor} ${Math.max(0,fillPct-15)}%, ${cDeep} ${fillPct}%, ${emptyColor} ${fillPct}%, ${emptyColor} 100%)`;
+              : `linear-gradient(180deg, ${emptyColor} 0%, ${emptyColor} ${emptyPct}%, ${cDeep} ${emptyPct}%, ${effColor} ${Math.min(100,emptyPct+15)}%, ${cLight} 100%)`;
           return <div key={i} style={{
             width:SIGVARD_LAMP,height:SIGVARD_LAMP,borderRadius:"50%",
             marginBottom:i===SIGVARD_TOTAL_LAMPS-1?0:SIGVARD_GAP,
@@ -4395,13 +4392,19 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
               : `${String(itemHour).padStart(2,"0")}:${String(itemMin).padStart(2,"0")}`;
             const accentCol=isDark()?shadeHex(effS.h,0.55):effS.deep;
             const inkCol=isDark()?"#E8E2F0":G.ink;
+            const _ic=item.color;
+            const _icNeutral=!_ic||_ic==="#FFFFFF"||_ic==="#1F1B2E";
+            // Time label takes a dark (light-mode) / soft-light (dark-mode) tone of
+            // the activity's own colour — tied to the card, yet kept dark/clear.
+            const tlCol=_icNeutral?inkCol:(isDark()?shadeHex(_ic,0.46):shadeHex(_ic,-0.52));
+            const tlNow=_icNeutral?accentCol:(isDark()?shadeHex(_ic,0.58):shadeHex(_ic,-0.4));
             return(
               <div key={`tl-${item.id}`} style={{
                 position:"absolute",top:y-2,right:6,textAlign:"right",lineHeight:1,pointerEvents:"none",
                 fontFamily:G.font,
                 fontWeight:isItemNow?800:700,
                 fontSize:13,
-                color:isItemNow?accentCol:inkCol,
+                color:isItemNow?tlNow:tlCol,
                 fontVariantNumeric:"tabular-nums",
                 letterSpacing:-.1,
                 transition:"color .5s ease",
@@ -4448,14 +4451,15 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
       <div style={{flex:1,position:"relative",height:totalContentH,marginLeft:cfg.showSigvard&&!isEd?10:!isEd?16:0}}>
         {!isEd&&cfg.showNowLine!==false&&(()=>{
           // Horizontal "now" line — independently toggleable, with its own colour.
-          // Special values:
-          //   • "" (or unset) → falls back to Sigvard lamp colour (linked behaviour)
-          //   • "auto" → white line with a soft warm-toned pulsing glow (no fixed identity)
-          //   • anything else → that exact colour
+          //   • "white"  → always a soft pulsing white line
+          //   • "auto"   → follows the ongoing activity's colour (white between them)
+          //   • any hex  → that exact, fixed colour
           const rawNlc=cfg.nowLineColor;
           const dk=isDark();
-          const isAuto=rawNlc==="auto"||cfg.sigvardColor==="auto"&&!rawNlc;
-          const baseLineColor=isAuto?"#FFFFFF":(rawNlc||cfg.sigvardColor||"#FF4848");
+          const mode=(rawNlc==="auto")?"auto":((rawNlc&&rawNlc!=="white")?"fixed":"white");
+          const isAuto=mode==="auto";
+          const whiteBase=(mode==="white"||mode==="auto");
+          const baseLineColor=whiteBase?"#FFFFFF":rawNlc;
           const lineMin=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
           const lineY=yForTime(lineMin);
           // Find the activity (if any) whose time range the now-line is currently
@@ -4469,20 +4473,23 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
             return lineMin>=sM&&lineMin<=eM;
           });
           const overActive=!!overAct;
-          const lineColor=overActive?overAct.item.color:baseLineColor;
+          // Only AUTO follows the ongoing activity's colour; "white" stays white,
+          // a fixed colour stays fixed.
+          const overStyle=overActive&&isAuto;
+          const lineColor=overStyle?overAct.item.color:baseLineColor;
           // Stable animation id per state so the keyframe is reusable without
           // colliding across colour changes. Each variant has its own block.
-          const pulseId=overActive
+          const pulseId=overStyle
             ?`nowPulseOver_${(overAct.item.color||"x").replace("#","")}`
-            :`nowPulse_${isAuto?"auto":baseLineColor.replace("#","")}`;
+            :`nowPulse_${whiteBase?"auto":baseLineColor.replace("#","")}`;
           return(
             <>
-              <div style={{position:"absolute",top:lineY-1,left:-12,right:0,height:dk?1.5:2,background:overActive
+              <div style={{position:"absolute",top:lineY-1,left:-12,right:0,height:dk?1.5:2,background:overStyle
                 ?`linear-gradient(90deg, ${shade(lineColor,-0.05)} 0%, ${shade(lineColor,0.12)} 40%, ${withAlpha(lineColor,dk?0.28:0.35)} 100%)`
-                :(isAuto?(dk?`linear-gradient(90deg, rgba(206,214,230,0.78) 0%, rgba(206,214,230,0.62) 42%, rgba(206,214,230,0.18) 100%)`:`linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 40%, rgba(255,255,255,0.4) 100%)`):`linear-gradient(90deg, ${shade(lineColor,-0.1)} 0%, ${shade(lineColor,0.1)} 40%, ${withAlpha(lineColor,0.2)} 100%)`),borderRadius:1,zIndex:overActive?25:1,pointerEvents:"none",animation:`${pulseId} ${overActive?"3.4s":"2.4s"} ease-in-out infinite`,transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1), background .8s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
-              <style>{overActive
+                :(whiteBase?(dk?`linear-gradient(90deg, rgba(206,214,230,0.78) 0%, rgba(206,214,230,0.62) 42%, rgba(206,214,230,0.18) 100%)`:`linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 40%, rgba(255,255,255,0.4) 100%)`):`linear-gradient(90deg, ${shade(lineColor,-0.1)} 0%, ${shade(lineColor,0.1)} 40%, ${withAlpha(lineColor,0.2)} 100%)`),borderRadius:1,zIndex:overStyle?25:1,pointerEvents:"none",animation:`${pulseId} ${overStyle?"3.4s":"2.4s"} ease-in-out infinite`,transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1), background .8s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
+              <style>{overStyle
                 ? `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 ${dk?6:8}px ${withAlpha(lineColor,dk?0.30:0.45)}, 0 0 ${dk?10:14}px ${withAlpha(lineColor,dk?0.12:0.18)};opacity:${dk?0.85:0.92}}50%{box-shadow:0 0 ${dk?12:18}px ${withAlpha(lineColor,dk?0.55:0.85)}, 0 0 ${dk?22:32}px ${withAlpha(lineColor,dk?0.22:0.40)}${dk?"":`, 0 0 48px ${withAlpha(lineColor,0.18)}`};opacity:1}}`
-                : (isAuto?(dk
+                : (whiteBase?(dk
                     ? `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 4px rgba(172,184,206,0.28);opacity:.70}50%{box-shadow:0 0 9px rgba(192,204,226,0.42), 0 0 16px rgba(150,165,190,0.18);opacity:.86}}`
                     : `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 6px rgba(184,197,216,0.5);opacity:.85}50%{box-shadow:0 0 14px rgba(255,255,255,0.95), 0 0 22px rgba(184,197,216,0.55);opacity:1}}`)
                   : `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 6px ${withAlpha(lineColor,0.33)};opacity:.85}50%{box-shadow:0 0 14px ${withAlpha(lineColor,0.67)}, 0 0 22px ${withAlpha(lineColor,0.27)};opacity:1}}`)
@@ -4503,7 +4510,7 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
           return(
             <div key={item.id}>
               <div ref={el=>{cardRefs.current[item.id]=el; if(el) el.setAttribute("data-act-id",item.id);}} style={{position:"absolute",top:y,left:0,right:0,zIndex:lifeState==="now"?20:2+i,transition:"z-index 0s"}}>
-                <ActRow item={item} cardStyle={cfg.cardStyle||"normal"} isEditor={isEd} onEdit={onEdit} onTap={onTap} onMarkDone={onMarkDone} idx={i} lifeState={lifeState} t={t}/>
+                <ActRow item={item} cardStyle={cfg.cardStyle||"compact"} isEditor={isEd} onEdit={onEdit} onTap={onTap} onMarkDone={onMarkDone} idx={i} lifeState={lifeState} t={t}/>
                 {endM&&(()=>{
                   // Duration bar: a slim colour rail beside the card showing how
                   // long the activity lasts. Shown on EVERY timed card. The bar
@@ -6027,7 +6034,7 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
 
 /* ═══ Settings ═══ */
 function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSupervisor,onOpenDemo,onOpenWelcomeTour,onResetAll,notifsEnabled,setNotifsEnabled,requestNotifPermission,notifSupported}){
-  const[cs,setCs]=useState(cfg.cardStyle);
+  const[cs,setCs]=useState(cfg.cardStyle==="normal"?"compact":cfg.cardStyle);
   const[ls,setLs]=useState(cfg.logoStyle||"none");
   const[sv,setSv]=useState(cfg.schedView);
   const[sig,setSig]=useState(cfg.showSigvard);
@@ -6124,7 +6131,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
   const DAY_ORDER=[1,2,3,4,5,6,0];
   const dayLabel=jsDay=>{const map=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];return t[map[jsDay]];};
   const S=scrPal("home");
-  const TOOLLIST=[{k:"week",t:"week",l:t.week,s:SCREENS.week},{k:"timer",t:"timer",l:t.toolsTimer,s:SCREENS.timer},{k:"stories",t:"stories",l:t.stories,s:SCREENS.stories},{k:"emotion",t:"emotion",l:t.toolsEmotion,s:SCREENS.emotion},{k:"calm",t:"calm",l:t.calm,s:SCREENS.calm},{k:"comm",t:"comm",l:t.comm,s:SCREENS.comm},{k:"idcard",t:"idcard",l:t.idcard,s:SCREENS.idcard}];
+  const TOOLLIST=[{k:"home",t:"home",l:t.home,s:SCREENS.home},{k:"week",t:"week",l:t.week,s:SCREENS.week},{k:"timer",t:"timer",l:t.toolsTimer,s:SCREENS.timer},{k:"stories",t:"stories",l:t.stories,s:SCREENS.stories},{k:"emotion",t:"emotion",l:t.toolsEmotion,s:SCREENS.emotion},{k:"calm",t:"calm",l:t.calm,s:SCREENS.calm},{k:"comm",t:"comm",l:t.comm,s:SCREENS.comm},{k:"idcard",t:"idcard",l:t.idcard,s:SCREENS.idcard}];
   // Beautifully styled section block — each major area gets its own
   // visually distinct card with a colored leading icon. Replaces the flat
   // SLabel-then-content list with a sectioned notebook layout.
@@ -6236,7 +6243,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
         >
           <SLabel>{t.cardStyle}</SLabel>
           <div style={{display:"flex",gap:7,marginBottom:18}}>
-            {[["normal",t.styleNormal],["compact",t.styleCompact],["big",t.styleBig]].map(([k,lb])=><button key={k} onClick={()=>setCs(k)} style={{flex:1,padding:"12px 0",borderRadius:13,border:`1px solid ${cs===k?(isDark()?"rgba(255,255,255,0.22)":S.h):tk().border}`,background:cs===k?(isDark()?"rgba(255,255,255,0.13)":S.h):"transparent",color:cs===k?(isDark()?"#FFFFFF":"#fff"):tk().ink2,fontFamily:G.serif,fontWeight:600,cursor:"pointer",fontSize:13,transition:"all .25s ease",boxShadow:cs===k&&isDark()?"inset 0 1px 0 rgba(255,255,255,0.25)":"none"}}>{lb}</button>)}
+            {[["compact",t.styleCompact],["big",t.styleBig]].map(([k,lb])=><button key={k} onClick={()=>setCs(k)} style={{flex:1,padding:"12px 0",borderRadius:13,border:`1px solid ${cs===k?(isDark()?"rgba(255,255,255,0.22)":S.h):tk().border}`,background:cs===k?(isDark()?"rgba(255,255,255,0.13)":S.h):"transparent",color:cs===k?(isDark()?"#FFFFFF":"#fff"):tk().ink2,fontFamily:G.serif,fontWeight:600,cursor:"pointer",fontSize:13,transition:"all .25s ease",boxShadow:cs===k&&isDark()?"inset 0 1px 0 rgba(255,255,255,0.25)":"none"}}>{lb}</button>)}
           </div>
           <SLabel>{t.schedView}</SLabel>
           <div style={{display:"flex",gap:7}}>
@@ -6317,7 +6324,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
           {/* ── Verktyg 3: Tidsstrecket — färgväljare med AUTO-länk ── */}
           <div style={{display:"flex",alignItems:"flex-start",gap:SPACE.md,paddingTop:SPACE.lg,borderTop:`1px solid ${S.hl}`}}>
             <div style={{flexShrink:0,paddingTop:2}}>
-              <Toggle on={nowLn} onChange={()=>setNowLn(n=>!n)} color={nowLnC||sigC}/>
+              <Toggle on={nowLn} onChange={()=>setNowLn(n=>!n)} color={(nowLnC&&nowLnC!=="white"&&nowLnC!=="auto")?nowLnC:S.h}/>
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontFamily:G.serif,fontWeight:600,fontSize:TYPO.body.size,color:tk().ink,letterSpacing:TYPO.body.tracking,opacity:nowLn?1:0.55,transition:"opacity .3s ease"}}>{t.nowLineLabel}</div>
@@ -6326,34 +6333,34 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
                 <div style={{marginTop:SPACE.md,padding:SPACE.md,background:tk().white,borderRadius:SPACE.sm+2,border:`1px solid ${S.hl}`,animation:"adSection 0.35s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
                   <div style={{fontFamily:G.serif,fontWeight:TYPO.caption.weight,fontSize:TYPO.caption.size,color:tk().ink3,letterSpacing:TYPO.caption.tracking,textTransform:"uppercase",marginBottom:SPACE.sm}}>{t.nowLineColor}</div>
                   <div style={{display:"flex",flexWrap:"wrap",gap:SPACE.sm,alignItems:"center"}}>
-                    {/* "Same as lamp" — empty value, follows sigvardColor */}
-                    <button onClick={()=>setNowLnC("")} className="lt-press" aria-label={t.nowLineSameAsSig} style={{
-                      width:32,height:32,borderRadius:16,padding:0,
-                      background:tk().white,
-                      border:nowLnC===""?`2px solid ${tk().ink}`:`1px dashed ${tk().ink3}`,
-                      boxShadow:nowLnC===""
-                        ?`0 4px 14px rgba(31,27,46,0.18), 0 0 0 3px ${tk().white}, 0 0 0 4px ${tk().ink}`
-                        :`0 2px 8px rgba(31,27,46,0.06)`,
-                      cursor:"pointer",
-                      display:"flex",alignItems:"center",justifyContent:"center",
-                      fontFamily:G.serif,fontSize:7.5,fontWeight:700,color:tk().ink2,letterSpacing:.3,
-                      transition:"transform .2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .2s ease",
-                      transform:nowLnC===""?"scale(1.06)":"scale(1)",
-                    }}>{lang==="sv"?"LAMP":"LAMP"}</button>
-                    {/* AUTO — white pulse */}
-                    <button onClick={()=>setNowLnC("auto")} className="lt-press" aria-label="Auto" style={{
+                    {/* VIT — always a soft pulsing white line */}
+                    <button onClick={()=>setNowLnC("white")} className="lt-press" aria-label={lang==="sv"?"Vit":"White"} style={{
                       width:32,height:32,borderRadius:16,padding:0,
                       background:"radial-gradient(circle at 30% 30%, #FFFFFF, #F2F2F7)",
-                      border:nowLnC==="auto"?`2px solid ${tk().ink}`:`1px solid rgba(31,27,46,0.18)`,
-                      boxShadow:nowLnC==="auto"
+                      border:(nowLnC==="white"||nowLnC==="")?`2px solid ${tk().ink}`:`1px solid rgba(31,27,46,0.18)`,
+                      boxShadow:(nowLnC==="white"||nowLnC==="")
                         ?`0 4px 14px rgba(31,27,46,0.22), 0 0 0 3px ${tk().white}, 0 0 0 4px ${tk().ink}`
                         :`0 2px 8px rgba(31,27,46,0.06), inset 0 1px 0 rgba(255,255,255,0.5)`,
                       cursor:"pointer",
                       display:"flex",alignItems:"center",justifyContent:"center",
-                      fontFamily:G.serif,fontSize:8,fontWeight:700,color:tk().ink2,letterSpacing:.5,
+                      fontFamily:G.serif,fontSize:7.5,fontWeight:700,color:tk().ink2,letterSpacing:.3,
+                      transition:"transform .2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .2s ease",
+                      transform:(nowLnC==="white"||nowLnC==="")?"scale(1.06)":"scale(1)",
+                      animation:(nowLnC==="white"||nowLnC==="")?"sigAutoPulse 2.2s ease-in-out infinite":"none",
+                    }}>{lang==="sv"?"VIT":"WHITE"}</button>
+                    {/* AUTO — the line follows the ongoing activity's colour */}
+                    <button onClick={()=>setNowLnC("auto")} className="lt-press" aria-label="Auto" style={{
+                      width:32,height:32,borderRadius:16,padding:0,
+                      background:"conic-gradient(from 210deg, #8AAFD2, #E58A9A, #F0B36B, #9BD0A2, #B49AD6, #8AAFD2)",
+                      border:nowLnC==="auto"?`2px solid ${tk().ink}`:`1px solid rgba(31,27,46,0.18)`,
+                      boxShadow:nowLnC==="auto"
+                        ?`0 4px 14px rgba(31,27,46,0.22), 0 0 0 3px ${tk().white}, 0 0 0 4px ${tk().ink}`
+                        :`0 2px 8px rgba(31,27,46,0.10), inset 0 1px 0 rgba(255,255,255,0.4)`,
+                      cursor:"pointer",
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      fontFamily:G.serif,fontSize:6.5,fontWeight:800,color:"#FFFFFF",letterSpacing:.2,textShadow:"0 1px 2px rgba(0,0,0,0.5)",
                       transition:"transform .2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .2s ease",
                       transform:nowLnC==="auto"?"scale(1.06)":"scale(1)",
-                      animation:nowLnC==="auto"?"sigAutoPulse 2.2s ease-in-out infinite":"none",
                     }}>AUTO</button>
                     {SIGVARD_LAMP_PALETTE.map(c=>{
                       const selected=c.toLowerCase()===nowLnC.toLowerCase();
@@ -6372,11 +6379,11 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
                       );
                     })}
                   </div>
-                  {nowLnC===""&&(
-                    <div style={{fontFamily:G.serif,fontSize:TYPO.caption.size,color:tk().ink3,marginTop:SPACE.sm,letterSpacing:TYPO.caption.tracking,fontStyle:"italic"}}>{t.nowLineSameAsSig}</div>
+                  {(nowLnC==="white"||nowLnC==="")&&(
+                    <div style={{fontFamily:G.serif,fontSize:TYPO.caption.size,color:tk().ink3,marginTop:SPACE.sm,letterSpacing:TYPO.caption.tracking,fontStyle:"italic"}}>{lang==="sv"?"Mjukt pulserande vit linje":"Soft pulsing white line"}</div>
                   )}
                   {nowLnC==="auto"&&(
-                    <div style={{fontFamily:G.serif,fontSize:TYPO.caption.size,color:tk().ink3,marginTop:SPACE.sm,letterSpacing:TYPO.caption.tracking,fontStyle:"italic"}}>{lang==="sv"?"Vit linje med mjuk pulsering":"White line with soft pulsing"}</div>
+                    <div style={{fontFamily:G.serif,fontSize:TYPO.caption.size,color:tk().ink3,marginTop:SPACE.sm,letterSpacing:TYPO.caption.tracking,fontStyle:"italic"}}>{lang==="sv"?"Följer den pågående aktivitetens färg":"Follows the ongoing activity's colour"}</div>
                   )}
                 </div>
               )}
@@ -6432,7 +6439,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
         >
           {TOOLLIST.map((tool,idx)=>(
             <div key={tool.k} style={{display:"flex",alignItems:"center",gap:14,paddingBottom:13,marginBottom:13,borderBottom:idx===TOOLLIST.length-1?"none":`1px solid ${tk().border}`}}>
-              <Toggle on={tools[tool.k]} color={tool.s.h} onChange={()=>setTools(tv=>({...tv,[tool.k]:!tv[tool.k]}))}/>
+              <Toggle on={tools[tool.k]} color={tool.s.h} onChange={()=>setTools(tv=>{const next={...tv,[tool.k]:!tv[tool.k]};return Object.values(next).some(Boolean)?next:tv;})}/>
               <div style={{width:34,height:34,borderRadius:11,background:`linear-gradient(140deg, ${tool.s.h}${isDark()?"26":"1F"}, ${tool.s.h}${isDark()?"3A":"33"})`,border:`1px solid ${tool.s.h}${isDark()?"3D":"30"}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.08)":`inset 0 1px 0 rgba(255,255,255,0.5)`}}>
                 <NavIcon type={tool.t} active={true} color={isDark()?tool.s.h:tool.s.deep} size={20}/>
               </div>
@@ -9228,7 +9235,12 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone,onActiveColor}){
       // (no React render) for a smooth, connected drag.
       let d=dx;
       const atStart=idx===0, atEnd=idx===acts.length-1;
-      if((atStart&&dx>0)||(atEnd&&dx<0)) d=dx*0.32;   // resist past the edge
+      if((atStart&&dx>0)||(atEnd&&dx<0)){
+        // Asymptotic rubber-band (UIScrollView feel): the pull diminishes the
+        // further you go, so the edge never feels abrupt — it gently resists.
+        const w=(typeof window!=="undefined"?window.innerWidth:480), c=0.55;
+        d=(dx*w*c)/(w+c*Math.abs(dx));
+      }
       swipeX.current=d;
       // Track velocity (px/ms) with light smoothing — powers flick detection.
       const now=performance.now();
@@ -9236,7 +9248,7 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone,onActiveColor}){
       if(prev.t){
         const dt=Math.max(1,now-prev.t);
         const inst=(d-prev.x)/dt;
-        swipeVel.current={x:d,t:now,v:prev.v*0.7+inst*0.3};
+        swipeVel.current={x:d,t:now,v:prev.v*0.65+inst*0.35};
       }else{
         swipeVel.current={x:d,t:now,v:0};
       }
@@ -9295,9 +9307,9 @@ function CardView({acts,onTap,t,isEditor,onEdit,onMarkDone,onActiveColor}){
     if(pickState==="swiping"){
       const el=cardRef.current;
       const vel=swipeVel.current.v; // px/ms (signed)
-      const FLICK=0.5;             // px/ms — a quick flick commits even if short
-      const dist=Math.abs(dx)>56 && Math.abs(dx)>Math.abs(dy);
-      const flick=Math.abs(vel)>FLICK && Math.abs(dx)>12;
+      const FLICK=0.45;            // px/ms — a quick flick commits even if short
+      const dist=Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy);
+      const flick=Math.abs(vel)>FLICK && Math.abs(dx)>10;
       const dir=(dx<0||vel<0)?-1:1; // intended direction
       const goNext=(dist||flick)&&dir<0&&idx<acts.length-1;
       const goPrev=(dist||flick)&&dir>0&&idx>0;
@@ -15921,7 +15933,7 @@ export default function App(){
     if(undoTimerRef.current)clearTimeout(undoTimerRef.current);
   };
   const navItems=[
-    {key:"home",icon:"home",label:t.home,always:true,S:SCREENS.home},
+    {key:"home",icon:"home",label:t.home,always:false,S:SCREENS.home},
     {key:"week",icon:"week",label:t.week,always:false,S:SCREENS.week},
     {key:"timer",icon:"timer",label:t.toolsTimer,always:false,S:SCREENS.timer},
     {key:"stories",icon:"stories",label:t.stories,always:false,S:SCREENS.stories},
@@ -15930,6 +15942,16 @@ export default function App(){
     {key:"comm",icon:"comm",label:t.comm,always:false,S:SCREENS.comm},
     {key:"idcard",icon:"idcard",label:t.idcard,always:false,S:SCREENS.idcard},
   ].filter(n=>n.always||cfg.tools[n.key]||isEd);
+  // If the screen the user is on has been hidden in settings (e.g. Dag/Home
+  // turned off), don't strand them on an unreachable view — jump to the first
+  // visible tool. Skipped while editing (editor shows every screen).
+  useEffect(()=>{
+    if(isEd) return;
+    if(navItems.length && !navItems.some(n=>n.key===screen)){
+      setScreen(navItems[0].key);
+    }
+  // eslint-disable-next-line
+  },[screen,isEd,cfg.tools]);
   const curS=scrPal(screen);
   /* On the Comm/Tala screen, the header palette adapts to the active
      category's colour — same idea as the screen background. We synthesise
@@ -16347,7 +16369,7 @@ export default function App(){
            the calm, one-hand feel. */
         @media (min-width: 700px) {
           .lt-app-root {
-            max-width: 560px;
+            max-width: 700px;
             box-shadow: 0 0 60px rgba(31, 27, 46, 0.10);
           }
         }
@@ -16356,7 +16378,7 @@ export default function App(){
            edges so the content doesn't drown in empty space. */
         @media (min-width: 900px) {
           .lt-app-root {
-            max-width: 580px;
+            max-width: 740px;
             margin-top: 24px;
             margin-bottom: 24px;
             border-radius: 28px;
@@ -16370,7 +16392,7 @@ export default function App(){
         /* Large desktop — slightly wider frame to feel proportional on big screens */
         @media (min-width: 1200px) {
           .lt-app-root {
-            max-width: 600px;
+            max-width: 760px;
             margin-top: 40px;
             margin-bottom: 40px;
             height: calc(var(--app-vh) - 80px);
@@ -16881,6 +16903,33 @@ export default function App(){
           )}
         </div>
         </>)}
+        {/* HOME edit pen — positioned ABSOLUTELY within lt-app-header at the
+            exact same offset the other tools' pen lands at: tool pen sits at
+            (header height = safe+22) + (body row padding-top 6) = safe+28 from
+            the top of lt-app-header, flush 22px from the right. Anchoring here
+            (lt-app-header is position:relative with identical padding on every
+            screen) makes Home's pen pixel-identical in level to Vecka/Timer/etc.
+            — no guessing, no per-screen drift. */}
+        {screen==="home" && !isEd && (()=>{
+          const _ph=(typeof now!=="undefined"&&now)?(now.getHours()+now.getMinutes()/60):12;
+          const _pdark=isDark()||skyIsDark(_ph);
+          return(
+            <button onClick={(e)=>{e.stopPropagation();setIsEd(true);}} aria-label={t.editorOpen} className="lt-press-soft"
+              style={{position:"absolute",top:"calc(28px + env(safe-area-inset-top, 0px))",right:22,zIndex:40,overflow:"hidden",width:44,height:44,borderRadius:14,border:"none",cursor:"pointer",display:"grid",placeItems:"center",color:"#FFFFFF",
+                background:_pdark
+                  ? "linear-gradient(130deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 46%, rgba(255,255,255,0.11) 62%, rgba(255,255,255,0.05) 100%)"
+                  : "linear-gradient(130deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.14) 46%, rgba(255,255,255,0.24) 62%, rgba(255,255,255,0.12) 100%)",
+                boxShadow:_pdark
+                  ? "0 8px 22px -10px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -2px 4px rgba(0,0,0,0.28)"
+                  : "0 8px 20px -10px rgba(40,40,60,0.45), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 5px rgba(40,40,60,0.12)",
+                backdropFilter:"blur(10px) saturate(1.2)",WebkitBackdropFilter:"blur(10px) saturate(1.2)",WebkitTapHighlightColor:"transparent",transition:"transform .15s ease",animation:"hdrFade .42s cubic-bezier(.2,.7,.2,1) both"}}>
+              <span style={{position:"absolute",top:-6,left:7,right:7,height:"56%",borderRadius:"50%",background:_pdark?"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.2), transparent 72%)":"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.55), transparent 72%)",filter:"blur(1px)",pointerEvents:"none"}}/>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{display:"block",position:"relative",zIndex:2,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.3))"}}>
+                <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+              </svg>
+            </button>
+          );
+        })()}
       </div>
       {/* BODY — instant screen-color background match (no transition). Any
           tween between the old and new screen color would read as a muddy
@@ -16898,6 +16947,10 @@ export default function App(){
             Otherwise it's a normal always-visible in-flow bar. */}
         {(()=>{
           const collapsible = screen==="home" && !isEd && cfg.schedView==="both";
+          // Home with a single view (list-only / card-only) needs no toggle, and
+          // Redigera now lives as a pen in the header — so there is no banner at
+          // all here. The beautiful banner only appears when both views exist.
+          if(screen==="home" && !isEd && cfg.schedView!=="both") return null;
           return(
           <div ref={collapsible?tabBarRef:null} style={collapsible?{
             position:"absolute",top:0,left:0,right:0,zIndex:30,
@@ -16996,8 +17049,10 @@ export default function App(){
                 </div>
               );
             }
-            // Redigera / Stäng — present on all screens. It's the gold pill when editing.
-            segments.push({key:"edit",label:isEd?t.editorClose:t.editorOpen,active:isEd,icon:!isEd,onClick:()=>setIsEd(e=>!e),flex:1});
+            // Redigera/Stäng pill. In VIEW mode editing is launched from the
+            // header pen (home) or the tool's pen (other screens), so this pill
+            // only appears in EDIT mode — as the gold "Stäng" pill.
+            if(isEd) segments.push({key:"edit",label:isEd?t.editorClose:t.editorOpen,active:isEd,icon:!isEd,onClick:()=>setIsEd(e=>!e),flex:1});
             // Glass tracks for the floating-over-content bars. WEEK floats over
             // the live sky and gets a delicate see-through glass. The OTHER
             // TOOLS (timer/stories/emotion/calm/comm/idcard) sat on a solid
@@ -17353,7 +17408,12 @@ export default function App(){
                 transform:"translateX(-50%)",
                 animation:"navPillIn .45s cubic-bezier(0.34, 1.56, 0.64, 1) both",
                 zIndex:0,
-              }}/>
+              }}>
+                {/* Specular gloss — a soft pool of light along the top of the
+                    pill so it reads as polished liquid glass catching light.
+                    Pure highlight, no shape/size change to the pill itself. */}
+                <span style={{position:"absolute",top:1.5,left:5,right:5,height:12,borderRadius:11,pointerEvents:"none",background:dkNav?"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.26), transparent 76%)":"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.85), transparent 78%)"}}/>
+              </div>
             )}
             {/* Icon — sits slightly higher and tints to the screen's deep color when active */}
             <div style={{position:"relative",zIndex:1,height:24,display:"flex",alignItems:"center",justifyContent:"center",transform:on?"scale(1.12) translateY(-1px)":"scale(1)",transition:"transform .45s cubic-bezier(0.34, 1.56, 0.64, 1)"}}>
@@ -17365,11 +17425,11 @@ export default function App(){
                 active tab, for a cleaner look. */}
             {on&&!dkNav&&(
               <div style={{
-                "--dot-c":S.h,
+                "--dot-c":effS.h,
                 width:4,height:4,borderRadius:"50%",
-                background:S.h,
+                background:effS.h,
                 marginTop:2,
-                animation:"navUnderSoft .4s cubic-bezier(0.32, 0.72, 0, 1) both, navDotPulse 2.6s ease-in-out 0.4s infinite",
+                animation:"navUnderSoft .4s cubic-bezier(0.32, 0.72, 0, 1) both, navDotPulse 3.2s ease-in-out 0.4s infinite",
                 transformOrigin:"center",
                 willChange:"box-shadow",
                 position:"relative",zIndex:1,
