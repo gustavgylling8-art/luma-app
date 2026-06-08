@@ -1118,7 +1118,7 @@ const SIGVARD_LAMP_PALETTE=[
   "#FFFFFF", // white — soft & minimal
 ];
 
-const CFG0={cardStyle:"compact",theme:"light",logoStyle:"none",schedView:"both",showSigvard:false,sigvardColor:"#FF4848",showBanner:false,showNowLine:true,nowLineColor:"white",weekColors:SIGVARD0,tools:{home:true,timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","aurora","lava","monster"],defaultType:"wave",defaultMin:5,defaultColor:"#8AAFD2",dotMode:"globe"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]}};
+const CFG0={cardStyle:"compact",theme:"light",logoStyle:"none",schedView:"both",showSigvard:false,sigvardColor:"#FF4848",showBanner:false,showNowLine:true,nowLineColor:"white",weekColors:SIGVARD0,tools:{home:true,timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","aurora","lava","monster"],defaultType:"wave",defaultMin:5,defaultColor:"#5AA99F",dotMode:"globe"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]}};
 
 const TR={
   sv:{other:"EN",myDay:"Min dag",editorOpen:"Redigera",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Lägg till aktiviteter i redigeraren",addAct:"Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Solnedgång",aurora:"Norrsken",lava:"Lava",monster:"Monster",monsterFull:"Mätt!",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",themeLabel:"Utseende",themeLight:"Ljust",themeDark:"Mörkt",themeHint:"Mörkt läge ger hela appen ett lugnt, mörkt utseende.",modeChoiceTitle:"Välj utseende",modeChoiceDesc:"Hur vill du att Luma ska se ut? Du kan alltid ändra detta i inställningarna.",modeChoiceContinue:"Fortsätt",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redigering & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",playAgain:"Spela igen",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Dag",comm:"Tala",sigvardOn:"Sigvard-lampor",sigvardColor:"Färg på lampor",sigvardColorHint:"Tidslinjen följer samma färg",schedVisuals:"Visa i schemat",schedVisualsHint:"Slå av om det blir för mycket – båda kan användas, en av dem, eller inget alls.",bannerLabel:"\"Pågår nu\"-rad",bannerHint:"Liten rad högst upp som visar pågående eller nästa aktivitet.",nowLineLabel:"Tidsstreck",nowLineHint:"Linjen som följer aktuell tid genom dagen.",nowLineColor:"Färg på strecket",nowLineSameAsSig:"Samma som lamporna",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",barometerStyle:"Mätarens stil",barometerStyleHint:"Hur känslorna visas för användaren.",styleArc:"Bågformad",styleVertical:"Lodrät",addEmotion:"+ Lägg till känsla",editEmotion:"Redigera känsla",emotionName:"Namn",emotionNamePH:"t.ex. Stressad",customLabel:"Egen",changePhoto:"Byt foto",resetEmotions:"Återställ förvalda",resetEmotionsHint:"Sätter tillbaka standardkänslorna till sina ursprungliga namn, emojis och färger.",confirmDeleteEmotion:"Ta bort?",reasonField:"Anteckningsfält",reasonFieldHint:"Användaren får skriva några ord om sin känsla. Stäng av om det är för mycket.",reasonLabelPH:"t.ex. Varför? eller Vad hände?",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – tryck Redigera för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",helloMyNameIs:"Hej, jag heter",yearsOld:"år",emptyCardTitle:"Kortet är inte ifyllt än",emptyCardDesc:"Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Tryck Redigera för att fylla i det.",createCardTitle:"Skapa mitt-mig-kortet",createCardDesc:"Sammanfattar viktig information — namn, kontaktpersoner, och vad som hjälper i pressade situationer. Visas vid behov.",showLarge:"Visa stort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng",week:"Vecka",myWeek:"Min vecka",weekEmpty:"Inga aktiviteter den här veckan",weekAdd:"Lägg till aktivitet",dayColors:"Veckodagsfärger",dayColorsHint:"Tryck på en dag för att välja färg",resetColors:"Återställ till standard",monday:"Måndag",tuesday:"Tisdag",wednesday:"Onsdag",thursday:"Torsdag",friday:"Fredag",saturday:"Lördag",sunday:"Söndag",skylight:"Himmel",skyHint:"Låt blicken vila",notTodayHint:"Du tittar på en annan dag. Stegen kan inte bockas av nu.",editStory:"Redigera berättelse",storyType:"Typ",typeSeq:"Steg-för-steg",typeSeqDesc:"Flera sidor",typeFT:"Först-Sedan",typeFTDesc:"Två aktiviteter",coverImage:"Huvudbild",camera:"Kamera",gallery:"Galleri",emoji:"Emoji",removePhoto:"Ta bort foto",storyPlacehSeq:"t.ex. Städa rummet",storyPlacehFT:"t.ex. Först läxor, sedan TV",ftLabels:"Etiketter (visas över korten)",ftSection:"Först och Sedan",pageImage:"Bild på sidan",pageTextPH:"Skriv vad som händer på sidan…",pageTimer:"Timer på sidan",off:"Av",sunset:"Solnedgång",editingLabel:"Redigerar",duEditing:"Du redigerar",cover:"Huvudbild",schedule:"Schema",doneTitle:"Klart",doneSub:"Du kan vila en stund.",dayOpen:"Inga aktiviteter idag",allActsDoneTitle:"Alla aktiviteter är klara",allActsDoneSub:"Du kan vila resten av dagen.",lampOne:"1 lampa = 1 minut",lampMany:"1 lampa = {n} minuter",lampSec:"1 lampa = {n} sek",dotToCandle:"Ljus",dotToPearl:"Pärlor",dotToGlobe:"Klot",dotToBulb:"Glöd",dotToLantern:"Lykta",unitLamp:"lampa",unitFlame:"låga",unitSecShort:"sek",unitMinOne:"minut",unitMinMany:"minuter",stepCountOne:"1 steg",stepCountMany:"{n} steg",noName:"(Utan namn)",unsavedTitle:"Osparade ändringar",unsavedDesc:"Vill du spara innan du stänger?",discardChanges:"Släng",keepEditing:"Fortsätt redigera",overlapTitle:"Tidskrock",overlapDesc:"Den nya aktiviteten {t} överlappar:",goBack:"Gå tillbaka",saveAnyway:"Spara ändå",editAct:"Redigera aktivitet",newAct:"Ny aktivitet",actNamePH:"t.ex. Frukost",timeStart:"Start",timeEnd:"Slut (frivilligt)",repeat:"Upprepa",repNone:"Endast idag",repDaily:"Varje dag",repWeekdays:"Vardagar",repWeekend:"Helger",repPickDays:"Välj veckodagar",repDailyShort:"Dagligen",repDaysSuffix:"dagar",daysShort:["sön","mån","tis","ons","tor","fre","lör"],resetSection:"Återställ",resetDataDesc:"Rensar alla aktiviteter, berättelser, känslohistorik och inställningar. Kan inte ångras.",resetDataBtn:"Rensa all data",resetDataConfirm:"Är du säker? Allt data raderas och kan inte återskapas.",backupSection:"Säkerhetskopiering",backupDesc:"Spara allt – scheman, kort, berättelser och inställningar – till en fil. Använd den för att återställa eller flytta till en annan enhet.",exportBtn:"Exportera till fil",importBtn:"Importera från fil",importConfirm:"Detta ersätter all nuvarande data med innehållet i filen. Fortsätt?",importBad:"Filen kunde inte läsas som en Luma-säkerhetskopia.",importOk:"Importerat ✓",exportOk:"Exporterat ✓",tmplTitle:"Vill du komma igång snabbt?",tmplDesc:"Lägg till en färdig rutin – du kan ändra allt efteråt.",tmplAdd:"Lägg till",tmplDismiss:"Nej tack",tmplAdded:"Tillagd ✓",tmplPickTitle:"Förslag på rutiner",tmplPickDesc:"Plussa in de aktiviteter du vill. Du kan ändra allt efteråt.",tmplPickDone:"Klar",tmplAddAll:"Lägg till alla",tmplAdded2:"Tillagd",undoSaved:"Klart!",undoBtn:"Ångra",logoStyle:"Logga-stil",logoStyleHint:"Hur Luma-loggan visas högst upp i appen.",logoStyleNone:"Bara solen",logoStyleGlass:"Glaslåda",logoStylePillow:"Mjuk bädd",logoStyleSquircle:"Appikon"},
@@ -1920,7 +1920,7 @@ function SkyHeader({now,lang,inFlow=false,sun=false,showWord=true,showDate=true}
       </svg>
       <div style={{position:"relative",width:"100%",display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"flex-end",padding:"0 22px 2px",gap:7,zIndex:2,animation:"skLockIn 0.55s cubic-bezier(.2,.7,.2,1) both"}}>
         <style>{`@keyframes skLockIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
-        {showWord&&<div style={{marginLeft:-4,position:"relative",top:3}}><SkyWordmark size={41} sun={sun}/></div>}
+        {showWord&&<div style={{marginLeft:-4,position:"relative",top:1}}><SkyWordmark size={41} sun={sun}/></div>}
         {!inFlow&&showDate&&(
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
           <div style={{display:"flex",alignItems:"baseline",gap:7}}>
@@ -4205,44 +4205,47 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
     targetMetaRef.current={y:pos?.y??-99999,h:pos?.h??0};
   });
   useEffect(()=>{
-    if(!scrollRef.current) return;
     const scroller=scrollRef.current;
-    const BANNER_H=110; // banner zone at top of scroller (sticky banner ~90 + margin)
-    const check=()=>{
-      const{y,h}=targetMetaRef.current;
-      if(y<-9000){setTargetInView(false);setTargetBelow(false);setTargetAbove(false);setBannerCollide(false);return;}
-      const top=scroller.scrollTop;
-      const viewH=scroller.clientHeight;
-      // Target activity overlaps the comfortable visible band of the viewport.
-      // Comfortable band excludes the banner zone at top and a small bottom margin.
-      const inView=(y+h)>top+50 && y<(top+viewH-30);
-      setTargetInView(inView);
-      // Target is positioned BELOW the visible viewport — user needs to scroll
-      // down to reach it. Only this case warrants the smart-shortcut banner.
-      setTargetBelow(y>=top+viewH-30);
-      // Target is ABOVE the visible band — user has scrolled past it; the banner
-      // chevron should point UP so it always references the actual activity.
-      setTargetAbove((y+h)<=top+50);
-      // Target overlaps the banner's sticky zone (top of the scroller).
-      // When the activity tile crosses into the banner area, the banner dims.
-      const collide=(y-top)<BANNER_H && (y+h-top)>0;
-      setBannerCollide(collide);
+    if(!scroller) return;
+    if(!target){ setTargetInView(false);setTargetBelow(false);setTargetAbove(false);setBannerCollide(false); return; }
+    const TOP_BAND=60;   // banner zone at the top of the scroller
+    const BOT_BAND=34;   // small bottom margin
+    const BANNER_H=110;
+    // Measure the ACTUAL rendered card rect against the scroller rect. Using real
+    // DOM geometry (not a precomputed y, and not scrollTop/clientHeight) is what
+    // makes this reliable inside an iOS standalone PWA, where those reads were
+    // flaky — the pill used to only "wake up" mid-scroll and bump away on release.
+    const compute=()=>{
+      const node=cardRefs.current[target.id];
+      if(!node){ setTargetInView(false); setTargetBelow(true); setTargetAbove(false); setBannerCollide(false); return; }
+      const cr=node.getBoundingClientRect();
+      const rr=scroller.getBoundingClientRect();
+      const topEdge=rr.top+TOP_BAND;
+      const botEdge=rr.bottom-BOT_BAND;
+      setTargetInView(cr.bottom>topEdge && cr.top<botEdge);
+      setTargetBelow(cr.top>=botEdge);
+      setTargetAbove(cr.bottom<=topEdge);
+      setBannerCollide(cr.top<rr.top+BANNER_H && cr.bottom>rr.top);
     };
-    check();
-    // Re-check after the browser has laid out / any mount auto-scroll has run —
-    // otherwise the very first measurement (taken before layout settles) can
-    // get stuck, so the pill only "wakes up" once the user scrolls. The rAF +
-    // short timeout catch the settled state; the [target?.id] dep re-checks
-    // whenever the next activity changes.
-    const raf=requestAnimationFrame(check);
-    const t2=setTimeout(check,300);
-    scroller.addEventListener("scroll",check,{passive:true});
-    window.addEventListener("resize",check);
+    compute();
+    const raf=requestAnimationFrame(compute);
+    const t2=setTimeout(compute,300);
+    // IntersectionObserver fires reliably when scrolling SETTLES (including after
+    // momentum) in iOS PWAs — the missing settle-trigger that left the pill stuck.
+    let io=null;
+    const node=cardRefs.current[target.id];
+    if(node && typeof IntersectionObserver!=="undefined"){
+      io=new IntersectionObserver(()=>compute(),{root:scroller,rootMargin:`-${TOP_BAND}px 0px -${BOT_BAND}px 0px`,threshold:[0,0.01,0.5,1]});
+      io.observe(node);
+    }
+    scroller.addEventListener("scroll",compute,{passive:true});
+    window.addEventListener("resize",compute);
     return()=>{
       cancelAnimationFrame(raf);
       clearTimeout(t2);
-      scroller.removeEventListener("scroll",check);
-      window.removeEventListener("resize",check);
+      if(io) io.disconnect();
+      scroller.removeEventListener("scroll",compute);
+      window.removeEventListener("resize",compute);
     };
   },[target?.id]);
 
@@ -15314,9 +15317,9 @@ export default function App(){
   // sync with what the user just picked. Initial value follows the saved
   // default; TimerScreen pushes updates here whenever the user changes
   // the colour. Reset to default whenever the timer config changes.
-  const[liveTimerColor,setLiveTimerColor]=useState(cfg.timerCfg?.defaultColor||"#8AAFD2");
+  const[liveTimerColor,setLiveTimerColor]=useState(cfg.timerCfg?.defaultColor||"#5AA99F");
   useEffect(()=>{
-    setLiveTimerColor(cfg.timerCfg?.defaultColor||"#8AAFD2");
+    setLiveTimerColor(cfg.timerCfg?.defaultColor||"#5AA99F");
   },[cfg.timerCfg?.defaultColor]);
   // Full data reset — empties every persistent state in memory AND clears
   // localStorage. No page reload needed (reload fails in some in-app webviews).
@@ -15658,10 +15661,13 @@ export default function App(){
       return()=>clearTimeout(t);
     }
   },[hasOnboarded]);
-  // One-time migration: force old peach default timer color to new blue
+  // One-time migration: move old default timer colours (peach, then blue) to the
+  // new curated teal default. Catches installs still carrying a prior default so
+  // the new colour actually shows up after update.
   useEffect(()=>{
-    if(cfg.timerCfg?.defaultColor==="#E89B89"){
-      setCfg(c=>({...c,timerCfg:{...c.timerCfg,defaultColor:"#8AAFD2"}}));
+    const dc=cfg.timerCfg?.defaultColor;
+    if(dc==="#E89B89"||dc==="#8AAFD2"){
+      setCfg(c=>({...c,timerCfg:{...c.timerCfg,defaultColor:"#5AA99F"}}));
     }
   // eslint-disable-next-line
   },[]);
