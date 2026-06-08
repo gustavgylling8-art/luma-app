@@ -514,11 +514,11 @@ const isDark=()=>APP_THEME==="dark";
 // mode these match the original warm palette; in dark mode they map to the
 // night palette so every screen, card, header and tool can read one source.
 const tk=()=>isDark()?{
-  ink:"#F4F1FA", ink2:"#A39EB5", ink3:"#8E889E", inkSoft:"#EDEAF6",
+  ink:"#F4F1FA", ink2:"#9E99AE", ink3:"#7F7A90", inkSoft:"#EDEAF6",
   white:"rgba(255,255,255,0.05)", cream:"rgba(255,255,255,0.035)",
-  border:"rgba(255,255,255,0.09)", border2:"rgba(255,255,255,0.13)",
-  card:"rgba(255,255,255,0.05)", cardBorder:"rgba(255,255,255,0.08)",
-  page:"#100D1A",
+  border:"rgba(255,255,255,0.08)", border2:"rgba(255,255,255,0.13)",
+  card:"rgba(255,255,255,0.05)", cardBorder:"rgba(255,255,255,0.075)",
+  page:"#0C0B14",
 }:{
   ink:G.ink, ink2:G.ink2, ink3:G.ink3, inkSoft:G.inkSoft,
   white:G.white, cream:G.cream, border:G.border, border2:G.border2,
@@ -563,6 +563,13 @@ function hslToHex(h,s,l){h/=360;const a=s*Math.min(l,1-l);const f=n=>{const k=(n
 // Map a hex colour to its hue (0-360) so the spectrum rail knob can show position
 function hexToHue(hex){if(!hex||hex.length<7)return 0;const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;if(d===0)return 0;let h;if(mx===r)h=((g-b)/d)%6;else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;return h<0?h+360:h;}
 
+// Curated spectrum for the colour rail — hand-picked, clear-but-never-neon
+// tones (the same refined family as the swatches). Dragging interpolates
+// between these anchors, so every colour the rail produces is a beautiful one.
+const RAIL_SPECTRUM=["#E0857B","#E0A46A","#D9C06A","#A9C06C","#7FB069","#5AA99F","#5FA6CC","#5B86C4","#8E92D2","#AE8BCB","#C98BB0","#E0857B"];
+function lerpHex(a,b,f){const A=hexToRgb(a)||[0,0,0],B=hexToRgb(b)||[0,0,0];const ch=i=>Math.round(A[i]+(B[i]-A[i])*f).toString(16).padStart(2,"0");return "#"+ch(0)+ch(1)+ch(2);}
+function railHexAt(p){p=p<0?0:p>1?1:p;const seg=p*(RAIL_SPECTRUM.length-1);const i=Math.min(RAIL_SPECTRUM.length-2,Math.floor(seg));return lerpHex(RAIL_SPECTRUM[i],RAIL_SPECTRUM[i+1],seg-i);}
+
 /* ═══ ColorField — unified colour picker used EVERYWHERE in the app ═══
    Spectrum drag-rail is the default (premium "glass-capsule" marker, concept B);
    a small pill toggle switches to fixed swatches. One component, one behaviour,
@@ -575,7 +582,7 @@ function hexToHue(hex){if(!hex||hex.length<7)return 0;const r=parseInt(hex.slice
      dark       force dark styling (else auto via isDark())
      sat,lig    HSL saturation/lightness for the rail (defaults tuned for calm)
 ═══ */
-function ColorField({value,onChange,swatches=[],dark,sat=0.62,lig=0.6,lang="sv"}){
+function ColorField({value,onChange,swatches=[],dark,sat=0.55,lig=0.58,lang="sv"}){
   const dk=dark===undefined?isDark():dark;
   const [mode,setMode]=useState("rail"); // spectrum first by default
   const railRef=useRef(null), knobRef=useRef(null);
@@ -583,15 +590,18 @@ function ColorField({value,onChange,swatches=[],dark,sat=0.62,lig=0.6,lang="sv"}
     e.preventDefault();e.stopPropagation();
     const rail=railRef.current,knob=knobRef.current;if(!rail)return;
     try{rail.setPointerCapture(e.pointerId);}catch(_){}
-    const move=cx=>{
-      const r=rail.getBoundingClientRect();
-      let p=(cx-r.left)/r.width;p=p<0?0:p>1?1:p;
-      if(knob)knob.style.left=`${p*100}%`;
-      rail._hex=hslToHex(p*360,sat,lig);
+    const rect=rail.getBoundingClientRect();          // measure once — no per-frame layout reads
+    let pendingX=e.clientX, rafId=null;
+    const apply=()=>{
+      rafId=null;
+      let p=(pendingX-rect.left)/rect.width;p=p<0?0:p>1?1:p;
+      if(knob)knob.style.left=`${(p*100).toFixed(3)}%`;
+      rail._hex=railHexAt(p);
     };
-    move(e.clientX);
+    const move=cx=>{ pendingX=cx; if(rafId==null) rafId=requestAnimationFrame(apply); };
+    apply();                                          // place immediately on tap
     const mv=ev=>{ev.preventDefault();move(ev.clientX);};
-    const up=()=>{rail.removeEventListener("pointermove",mv);rail.removeEventListener("pointerup",up);rail.removeEventListener("pointercancel",up);if(rail._hex)onChange(rail._hex);};
+    const up=()=>{if(rafId!=null)cancelAnimationFrame(rafId);rail.removeEventListener("pointermove",mv);rail.removeEventListener("pointerup",up);rail.removeEventListener("pointercancel",up);if(rail._hex)onChange(rail._hex);};
     rail.addEventListener("pointermove",mv);rail.addEventListener("pointerup",up);rail.addEventListener("pointercancel",up);
   };
   return(
@@ -615,14 +625,14 @@ function ColorField({value,onChange,swatches=[],dark,sat=0.62,lig=0.6,lang="sv"}
             style={{position:"relative",height:32,display:"flex",alignItems:"center",cursor:"pointer",touchAction:"none",userSelect:"none",WebkitUserSelect:"none"}}>
             {/* slim premium rainbow strip — rounded ends (concept "B · Smal kapsel") */}
             <div style={{position:"absolute",left:0,right:0,top:"50%",transform:"translateY(-50%)",height:16,borderRadius:8,
-              background:"linear-gradient(90deg, hsl(0,65%,60%), hsl(45,65%,60%), hsl(90,65%,60%), hsl(150,65%,60%), hsl(200,65%,60%), hsl(260,65%,60%), hsl(320,65%,60%), hsl(360,65%,60%))",
+              background:`linear-gradient(90deg, ${RAIL_SPECTRUM.join(", ")})`,
               boxShadow:dk?"inset 0 1px 3px rgba(0,0,0,0.4)":"inset 0 1px 3px rgba(31,27,46,0.18)"}}/>
-            {/* slim glass capsule marker with a hairline inside */}
-            <div ref={knobRef} style={{position:"absolute",top:"50%",left:`${(hexToHue(value)/360)*100}%`,transform:"translate(-50%,-50%)",width:11,height:30,borderRadius:6,
-              background:"rgba(255,255,255,0.14)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",
-              border:"1px solid rgba(255,255,255,0.7)",boxShadow:"0 3px 9px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.6)",
-              pointerEvents:"none",display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <div style={{width:1,height:14,background:"#fff",borderRadius:1,opacity:0.95}}/>
+            {/* slim premium marker — solid (no backdrop-filter) so dragging stays buttery */}
+            <div ref={knobRef} style={{position:"absolute",top:"50%",left:`${(hexToHue(value)/360)*100}%`,transform:"translate(-50%,-50%)",width:12,height:30,borderRadius:6,
+              background:"linear-gradient(180deg,#FFFFFF,#F4F4F7)",
+              border:"1px solid rgba(255,255,255,0.95)",boxShadow:"0 3px 10px rgba(20,24,40,0.32), 0 1px 2px rgba(20,24,40,0.18), inset 0 1px 0 rgba(255,255,255,0.95)",
+              willChange:"left",pointerEvents:"none",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <div style={{width:1.5,height:13,background:"rgba(20,24,40,0.18)",borderRadius:1}}/>
             </div>
           </div>
           <div style={{fontFamily:G.font,fontSize:11,color:dk?"#8E889E":"#9A93AB",marginTop:11,textAlign:"center"}}>{lang==="sv"?"Dra för att välja färg":"Drag to choose a colour"}</div>
@@ -988,6 +998,14 @@ function shadeHex(hex,amt){
   const[r,g,b]=rgb.map(c=>Math.round(c+(target-c)*t));
   return"#"+[r,g,b].map(c=>c.toString(16).padStart(2,"0")).join("");
 }
+// Reduce saturation by blending a colour toward its own luminance grey.
+// amt in [0,1] — used to mute dynamic accents in dark mode for a calm, mature feel.
+function desatHex(hex,amt){
+  const rgb=hexToRgb(hex); if(!rgb) return hex;
+  const[r,g,b]=rgb, lum=0.299*r+0.587*g+0.114*b, t=Math.max(0,Math.min(1,amt));
+  const m=c=>Math.round(c+(lum-c)*t);
+  return"#"+[m(r),m(g),m(b)].map(c=>c.toString(16).padStart(2,"0")).join("");
+}
 // Hex with alpha suffix — for shadow/border tints. alpha in [0,1].
 function withAlpha(hex,alpha){
   const a=Math.max(0,Math.min(1,alpha));
@@ -1100,14 +1118,14 @@ const SIGVARD_LAMP_PALETTE=[
   "#FFFFFF", // white — soft & minimal
 ];
 
-const CFG0={cardStyle:"normal",theme:"light",logoStyle:"none",schedView:"both",showSigvard:false,sigvardColor:"#FF4848",showBanner:false,showNowLine:true,nowLineColor:"auto",weekColors:SIGVARD0,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","lava","monster"],defaultType:"wave",defaultMin:5,defaultColor:"#8AAFD2",dotMode:"pearl"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]}};
+const CFG0={cardStyle:"normal",theme:"light",logoStyle:"none",schedView:"both",showSigvard:false,sigvardColor:"#FF4848",showBanner:false,showNowLine:true,nowLineColor:"auto",weekColors:SIGVARD0,tools:{timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","aurora","lava","monster"],defaultType:"wave",defaultMin:5,defaultColor:"#8AAFD2",dotMode:"globe"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]}};
 
 const TR={
-  sv:{other:"EN",myDay:"Min dag",editorOpen:"Redigera",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Lägg till aktiviteter i redigeraren",addAct:"Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Solnedgång",lava:"Lava",monster:"Monster",monsterFull:"Mätt!",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",themeLabel:"Utseende",themeLight:"Ljust",themeDark:"Mörkt",themeHint:"Mörkt läge ger hela appen ett lugnt, mörkt utseende.",modeChoiceTitle:"Välj utseende",modeChoiceDesc:"Hur vill du att Luma ska se ut? Du kan alltid ändra detta i inställningarna.",modeChoiceContinue:"Fortsätt",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redigering & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Hem",comm:"Tala",sigvardOn:"Sigvard-lampor",sigvardColor:"Färg på lampor",sigvardColorHint:"Tidslinjen följer samma färg",schedVisuals:"Visa i schemat",schedVisualsHint:"Slå av om det blir för mycket – båda kan användas, en av dem, eller inget alls.",bannerLabel:"\"Pågår nu\"-rad",bannerHint:"Liten rad högst upp som visar pågående eller nästa aktivitet.",nowLineLabel:"Tidsstreck",nowLineHint:"Linjen som följer aktuell tid genom dagen.",nowLineColor:"Färg på strecket",nowLineSameAsSig:"Samma som lamporna",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",barometerStyle:"Mätarens stil",barometerStyleHint:"Hur känslorna visas för användaren.",styleArc:"Bågformad",styleVertical:"Lodrät",addEmotion:"+ Lägg till känsla",editEmotion:"Redigera känsla",emotionName:"Namn",emotionNamePH:"t.ex. Stressad",customLabel:"Egen",changePhoto:"Byt foto",resetEmotions:"Återställ förvalda",resetEmotionsHint:"Sätter tillbaka standardkänslorna till sina ursprungliga namn, emojis och färger.",confirmDeleteEmotion:"Ta bort?",reasonField:"Anteckningsfält",reasonFieldHint:"Användaren får skriva några ord om sin känsla. Stäng av om det är för mycket.",reasonLabelPH:"t.ex. Varför? eller Vad hände?",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – tryck Redigera för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",helloMyNameIs:"Hej, jag heter",yearsOld:"år",emptyCardTitle:"Kortet är inte ifyllt än",emptyCardDesc:"Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Tryck Redigera för att fylla i det.",createCardTitle:"Skapa mitt-mig-kortet",createCardDesc:"Sammanfattar viktig information — namn, kontaktpersoner, och vad som hjälper i pressade situationer. Visas vid behov.",showLarge:"Visa stort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng",week:"Vecka",myWeek:"Min vecka",weekEmpty:"Inga aktiviteter den här veckan",weekAdd:"Lägg till aktivitet",dayColors:"Veckodagsfärger",dayColorsHint:"Tryck på en dag för att välja färg",resetColors:"Återställ till standard",monday:"Måndag",tuesday:"Tisdag",wednesday:"Onsdag",thursday:"Torsdag",friday:"Fredag",saturday:"Lördag",sunday:"Söndag",skylight:"Himmel",skyHint:"Låt blicken vila",notTodayHint:"Du tittar på en annan dag. Stegen kan inte bockas av nu.",editStory:"Redigera berättelse",storyType:"Typ",typeSeq:"Steg-för-steg",typeSeqDesc:"Flera sidor",typeFT:"Först-Sedan",typeFTDesc:"Två aktiviteter",coverImage:"Huvudbild",camera:"Kamera",gallery:"Galleri",emoji:"Emoji",removePhoto:"Ta bort foto",storyPlacehSeq:"t.ex. Städa rummet",storyPlacehFT:"t.ex. Först läxor, sedan TV",ftLabels:"Etiketter (visas över korten)",ftSection:"Först och Sedan",pageImage:"Bild på sidan",pageTextPH:"Skriv vad som händer på sidan…",pageTimer:"Timer på sidan",off:"Av",sunset:"Solnedgång",editingLabel:"Redigerar",duEditing:"Du redigerar",cover:"Huvudbild",schedule:"Schema",doneTitle:"Klart",doneSub:"Du kan vila en stund.",dayOpen:"Inga aktiviteter idag",allActsDoneTitle:"Alla aktiviteter är klara",allActsDoneSub:"Du kan vila resten av dagen.",lampOne:"1 lampa = 1 minut",lampMany:"1 lampa = {n} minuter",lampSec:"1 lampa = {n} sek",dotToCandle:"Ljus",dotToPearl:"Pärlor",unitLamp:"lampa",unitFlame:"låga",unitSecShort:"sek",unitMinOne:"minut",unitMinMany:"minuter",stepCountOne:"1 steg",stepCountMany:"{n} steg",noName:"(Utan namn)",unsavedTitle:"Osparade ändringar",unsavedDesc:"Vill du spara innan du stänger?",discardChanges:"Släng",keepEditing:"Fortsätt redigera",overlapTitle:"Tidskrock",overlapDesc:"Den nya aktiviteten {t} överlappar:",goBack:"Gå tillbaka",saveAnyway:"Spara ändå",editAct:"Redigera aktivitet",newAct:"Ny aktivitet",actNamePH:"t.ex. Frukost",timeStart:"Start",timeEnd:"Slut (frivilligt)",repeat:"Upprepa",repNone:"Endast idag",repDaily:"Varje dag",repWeekdays:"Vardagar",repWeekend:"Helger",repPickDays:"Välj veckodagar",repDailyShort:"Dagligen",repDaysSuffix:"dagar",daysShort:["sön","mån","tis","ons","tor","fre","lör"],resetSection:"Återställ",resetDataDesc:"Rensar alla aktiviteter, berättelser, känslohistorik och inställningar. Kan inte ångras.",resetDataBtn:"Rensa all data",resetDataConfirm:"Är du säker? Allt data raderas och kan inte återskapas.",backupSection:"Säkerhetskopiering",backupDesc:"Spara allt – scheman, kort, berättelser och inställningar – till en fil. Använd den för att återställa eller flytta till en annan enhet.",exportBtn:"Exportera till fil",importBtn:"Importera från fil",importConfirm:"Detta ersätter all nuvarande data med innehållet i filen. Fortsätt?",importBad:"Filen kunde inte läsas som en Luma-säkerhetskopia.",importOk:"Importerat ✓",exportOk:"Exporterat ✓",tmplTitle:"Vill du komma igång snabbt?",tmplDesc:"Lägg till en färdig rutin – du kan ändra allt efteråt.",tmplAdd:"Lägg till",tmplDismiss:"Nej tack",tmplAdded:"Tillagd ✓",tmplPickTitle:"Förslag på rutiner",tmplPickDesc:"Plussa in de aktiviteter du vill. Du kan ändra allt efteråt.",tmplPickDone:"Klar",tmplAddAll:"Lägg till alla",tmplAdded2:"Tillagd",undoSaved:"Klart!",undoBtn:"Ångra",logoStyle:"Logga-stil",logoStyleHint:"Hur Luma-loggan visas högst upp i appen.",logoStyleNone:"Bara solen",logoStyleGlass:"Glaslåda",logoStylePillow:"Mjuk bädd",logoStyleSquircle:"Appikon"},
-  en:{other:"SV",myDay:"My Day",editorOpen:"Edit",editorClose:"Close",list:"List",card:"Cards",noActs:"Add activities in the editor",addAct:"New activity",save:"Save",cancel:"Cancel",actName:"Activity name",actTime:"Time",pickEmoji:"Pick emoji",pickColor:"Colour",steps:"Checklist",stepPH:"e.g. Put on shoes",timerAct:"Timer – activity",timerType:"Timer type",timerMin:"Minutes",timerColor:"Timer colour",sector:"Time Timer",ring:"Ring",dots:"Dot timer",wave:"Wave",sun:"Sunset",lava:"Lava",monster:"Monster",monsterFull:"Full!",pause:"Pause",resume:"Start",reset:"Reset",next:"Next",prev:"Back",min:"min",settings:"Settings",themeLabel:"Appearance",themeLight:"Light",themeDark:"Dark",themeHint:"Dark mode gives the whole app a calm, dark look.",modeChoiceTitle:"Choose appearance",modeChoiceDesc:"How would you like Luma to look? You can always change this in settings.",modeChoiceContinue:"Continue",cardStyle:"Card style",styleNormal:"Normal",styleCompact:"Compact",styleBig:"Large",syncTitle:"Sharing",sameDevice:"Same device",syncMode:"Via code",sameDeviceDesc:"Edit & user view on same device.",syncModeDesc:"Share schedule via code.",yourCode:"Your code",codeHint:"Give this code to the user",enterCode:"Enter code",connect:"Connect",wrongCode:"Not found.",copied:"Copied ✓",openTimer:"Start timer",allDoneMsg:"Great job! 🌟",emotions:"How are you?",emotionSaved:"Saved! ✓",emotionReason:"Why?",emotionHistory:"History",noHistory:"No history",toolsTimer:"Timer",toolsEmotion:"Mood",home:"Home",comm:"Talk",sigvardOn:"Sigvard lamps",sigvardColor:"Lamp colour",sigvardColorHint:"The time line follows the same colour",schedVisuals:"Show in schedule",schedVisualsHint:"Turn off if it gets noisy – use both, one of them, or neither.",bannerLabel:"\"Happening now\" bar",bannerHint:"Small bar at the top showing the current or upcoming activity.",nowLineLabel:"Time line",nowLineHint:"The line that follows the current time through the day.",nowLineColor:"Line colour",nowLineSameAsSig:"Same as lamps",visibleTools:"Visible tools",schedView:"Schedule view",viewBoth:"List + Cards",viewList:"List only",viewCard:"Cards only",addCard:"+ New card",addCat:"+ New category",catName:"Category name",autoTimer:"Syncs with start time",preview:"Preview",startTimer:"Start",timerSettings:"Timer settings for user view",allowedTimers:"Allowed timers",defaultTimer:"Default timer",visibleEmotions:"Visible emotions",barometerStyle:"Barometer style",barometerStyleHint:"How feelings are shown to the user.",styleArc:"Arc",styleVertical:"Vertical",addEmotion:"+ Add feeling",editEmotion:"Edit feeling",emotionName:"Name",emotionNamePH:"e.g. Stressed",customLabel:"Custom",changePhoto:"Change photo",resetEmotions:"Reset defaults",resetEmotionsHint:"Restores the standard feelings to their original names, emojis and colours.",confirmDeleteEmotion:"Remove?",reasonField:"Notes field",reasonFieldHint:"User can write a few words about their feeling. Turn off if it's too much.",reasonLabelPH:"e.g. Why? or What happened?",enlarge:"Enlarge",cardImage:"Image",uploadPhoto:"Upload photo",useEmoji:"Use emoji instead",stories:"Stories",newStory:"New story",storyTitle:"Title",pages:"Pages",addPage:"+ Add page",pageNum:"Page",storyText:"Page text",noStories:"No stories – tap Edit to create",renameCat:"Rename category",calm:"Calm",calmTitle:"Find calm",breathing:"Breathe",grounding:"54321",breathIn:"Breathe in",breathHold:"Hold",breathOut:"Breathe out",breathDone:"Well done",groundIntro:"Pause. Let's do this together.",groundStart:"Begin",see5:"5 things you can see",hear4:"4 things you can hear",touch3:"3 things you can touch",smell2:"2 things you can smell",taste1:"1 thing you can taste",iAmHere:"I am here. I am safe.",roundsDone:"Done",calmSettings:"Calm – exercises",idcard:"My card",myName:"My name",myAge:"Age",aboutMe:"About me",myTriggers:"This can be hard",whatHelps:"This helps me",emergencyContacts:"Call",contactName:"Name",contactPhone:"Phone",contactRelation:"Relation",addContact:"+ Add contact",call:"Call",idHint:"Show this to someone who wants to help","editCard":"Edit my card",helloMyNameIs:"Hi, my name is",yearsOld:"years old",emptyCardTitle:"The card isn't filled in yet",emptyCardDesc:"My card shows important information that can be valuable in situations where you need help. Tap Edit to fill it in.",createCardTitle:"Create your card",createCardDesc:"A summary of important information — name, contacts, and what helps in stressful moments. Shown when needed.",showLarge:"Show large",tools:"Tools",firstthen:"First-Then",choices:"Choices",rewards:"Reward",recipes:"Recipes",first:"First",then:"Then",ftDone:"Done!",chQuestion:"What do you want?",chTap:"Tap to choose",stars:"stars",goalReached:"You've earned your reward! 🎉",reward:"Reward",starsGoal:"Goal – number of stars",addChoice:"+ New choice",newCategory:"+ New category",rewardEmoji:"Emoji",rewardText:"Reward",ingredients:"Ingredients",instructions:"How to make it",servings:"Servings",time:"Time",newRecipe:"New recipe",step:"Step",addStep:"+ Add step",useReward:"Give star when done",resetStars:"Reset stars",starsEarned:"Stars earned",bannerNowOngoing:"Happening now",bannerNextUp:"Next up",bannerDayLabel:"Today",bannerNoActsLeft:"Nothing left today",close:"Close",week:"Week",myWeek:"My week",weekEmpty:"No activities this week",weekAdd:"Add activity",dayColors:"Day colours",dayColorsHint:"Tap a day to pick a colour",resetColors:"Reset to default",monday:"Monday",tuesday:"Tuesday",wednesday:"Wednesday",thursday:"Thursday",friday:"Friday",saturday:"Saturday",sunday:"Sunday",skylight:"Sky",skyHint:"Let your gaze rest",notTodayHint:"You're viewing a different day. Steps can't be checked off now.",editStory:"Edit story",storyType:"Type",typeSeq:"Step-by-step",typeSeqDesc:"Multiple pages",typeFT:"First-Then",typeFTDesc:"Two activities",coverImage:"Cover image",camera:"Camera",gallery:"Gallery",emoji:"Emoji",removePhoto:"Remove photo",storyPlacehSeq:"e.g. Clean the room",storyPlacehFT:"e.g. First homework, then TV",ftLabels:"Labels (shown above the cards)",ftSection:"First and Then",pageImage:"Page image",pageTextPH:"Write what happens on this page…",pageTimer:"Page timer",off:"Off",sunset:"Sunset",editingLabel:"Editing",duEditing:"Editing",cover:"Cover",schedule:"Schedule",doneTitle:"Done",doneSub:"Take a moment to rest.",dayOpen:"No activities today",allActsDoneTitle:"All activities done",allActsDoneSub:"You can rest the rest of the day.",lampOne:"1 lamp = 1 minute",lampMany:"1 lamp = {n} minutes",lampSec:"1 lamp = {n} sec",dotToCandle:"Candles",dotToPearl:"Pearls",unitLamp:"lamp",unitFlame:"flame",unitSecShort:"sec",unitMinOne:"minute",unitMinMany:"minutes",stepCountOne:"1 step",stepCountMany:"{n} steps",noName:"(No name)",unsavedTitle:"Unsaved changes",unsavedDesc:"Save before closing?",discardChanges:"Discard",keepEditing:"Keep editing",overlapTitle:"Time conflict",overlapDesc:"The new activity {t} overlaps:",goBack:"Go back",saveAnyway:"Save anyway",editAct:"Edit activity",newAct:"New activity",actNamePH:"e.g. Breakfast",timeStart:"Start",timeEnd:"End (optional)",repeat:"Repeat",repNone:"Today only",repDaily:"Every day",repWeekdays:"Weekdays",repWeekend:"Weekends",repPickDays:"Pick days of week",repDailyShort:"Daily",repDaysSuffix:"days",daysShort:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],resetSection:"Reset",resetDataDesc:"Clears all activities, stories, mood history and settings. Cannot be undone.",resetDataBtn:"Clear all data",resetDataConfirm:"Are you sure? All data will be erased and cannot be recovered.",backupSection:"Backup",backupDesc:"Save everything – schedules, cards, stories and settings – to a file. Use it to restore or move to another device.",exportBtn:"Export to file",importBtn:"Import from file",importConfirm:"This replaces all current data with the file's contents. Continue?",importBad:"The file couldn't be read as a Luma backup.",importOk:"Imported ✓",exportOk:"Exported ✓",tmplTitle:"Want a quick start?",tmplDesc:"Add a ready-made routine – you can change everything afterwards.",tmplAdd:"Add",tmplDismiss:"No thanks",tmplAdded:"Added ✓",tmplPickTitle:"Suggested routines",tmplPickDesc:"Add the activities you want. You can change everything afterwards.",tmplPickDone:"Done",tmplAddAll:"Add all",tmplAdded2:"Added",undoSaved:"Done!",undoBtn:"Undo",logoStyle:"Logo style",logoStyleHint:"How the Luma logo appears at the top of the app.",logoStyleNone:"Just the sun",logoStyleGlass:"Glass box",logoStylePillow:"Soft pillow",logoStyleSquircle:"App icon"},
+  sv:{other:"EN",myDay:"Min dag",editorOpen:"Redigera",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Lägg till aktiviteter i redigeraren",addAct:"Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Solnedgång",aurora:"Norrsken",lava:"Lava",monster:"Monster",monsterFull:"Mätt!",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",themeLabel:"Utseende",themeLight:"Ljust",themeDark:"Mörkt",themeHint:"Mörkt läge ger hela appen ett lugnt, mörkt utseende.",modeChoiceTitle:"Välj utseende",modeChoiceDesc:"Hur vill du att Luma ska se ut? Du kan alltid ändra detta i inställningarna.",modeChoiceContinue:"Fortsätt",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redigering & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",playAgain:"Spela igen",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Hem",comm:"Tala",sigvardOn:"Sigvard-lampor",sigvardColor:"Färg på lampor",sigvardColorHint:"Tidslinjen följer samma färg",schedVisuals:"Visa i schemat",schedVisualsHint:"Slå av om det blir för mycket – båda kan användas, en av dem, eller inget alls.",bannerLabel:"\"Pågår nu\"-rad",bannerHint:"Liten rad högst upp som visar pågående eller nästa aktivitet.",nowLineLabel:"Tidsstreck",nowLineHint:"Linjen som följer aktuell tid genom dagen.",nowLineColor:"Färg på strecket",nowLineSameAsSig:"Samma som lamporna",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",barometerStyle:"Mätarens stil",barometerStyleHint:"Hur känslorna visas för användaren.",styleArc:"Bågformad",styleVertical:"Lodrät",addEmotion:"+ Lägg till känsla",editEmotion:"Redigera känsla",emotionName:"Namn",emotionNamePH:"t.ex. Stressad",customLabel:"Egen",changePhoto:"Byt foto",resetEmotions:"Återställ förvalda",resetEmotionsHint:"Sätter tillbaka standardkänslorna till sina ursprungliga namn, emojis och färger.",confirmDeleteEmotion:"Ta bort?",reasonField:"Anteckningsfält",reasonFieldHint:"Användaren får skriva några ord om sin känsla. Stäng av om det är för mycket.",reasonLabelPH:"t.ex. Varför? eller Vad hände?",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – tryck Redigera för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",helloMyNameIs:"Hej, jag heter",yearsOld:"år",emptyCardTitle:"Kortet är inte ifyllt än",emptyCardDesc:"Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Tryck Redigera för att fylla i det.",createCardTitle:"Skapa mitt-mig-kortet",createCardDesc:"Sammanfattar viktig information — namn, kontaktpersoner, och vad som hjälper i pressade situationer. Visas vid behov.",showLarge:"Visa stort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng",week:"Vecka",myWeek:"Min vecka",weekEmpty:"Inga aktiviteter den här veckan",weekAdd:"Lägg till aktivitet",dayColors:"Veckodagsfärger",dayColorsHint:"Tryck på en dag för att välja färg",resetColors:"Återställ till standard",monday:"Måndag",tuesday:"Tisdag",wednesday:"Onsdag",thursday:"Torsdag",friday:"Fredag",saturday:"Lördag",sunday:"Söndag",skylight:"Himmel",skyHint:"Låt blicken vila",notTodayHint:"Du tittar på en annan dag. Stegen kan inte bockas av nu.",editStory:"Redigera berättelse",storyType:"Typ",typeSeq:"Steg-för-steg",typeSeqDesc:"Flera sidor",typeFT:"Först-Sedan",typeFTDesc:"Två aktiviteter",coverImage:"Huvudbild",camera:"Kamera",gallery:"Galleri",emoji:"Emoji",removePhoto:"Ta bort foto",storyPlacehSeq:"t.ex. Städa rummet",storyPlacehFT:"t.ex. Först läxor, sedan TV",ftLabels:"Etiketter (visas över korten)",ftSection:"Först och Sedan",pageImage:"Bild på sidan",pageTextPH:"Skriv vad som händer på sidan…",pageTimer:"Timer på sidan",off:"Av",sunset:"Solnedgång",editingLabel:"Redigerar",duEditing:"Du redigerar",cover:"Huvudbild",schedule:"Schema",doneTitle:"Klart",doneSub:"Du kan vila en stund.",dayOpen:"Inga aktiviteter idag",allActsDoneTitle:"Alla aktiviteter är klara",allActsDoneSub:"Du kan vila resten av dagen.",lampOne:"1 lampa = 1 minut",lampMany:"1 lampa = {n} minuter",lampSec:"1 lampa = {n} sek",dotToCandle:"Ljus",dotToPearl:"Pärlor",dotToGlobe:"Klot",dotToBulb:"Glöd",dotToLantern:"Lykta",unitLamp:"lampa",unitFlame:"låga",unitSecShort:"sek",unitMinOne:"minut",unitMinMany:"minuter",stepCountOne:"1 steg",stepCountMany:"{n} steg",noName:"(Utan namn)",unsavedTitle:"Osparade ändringar",unsavedDesc:"Vill du spara innan du stänger?",discardChanges:"Släng",keepEditing:"Fortsätt redigera",overlapTitle:"Tidskrock",overlapDesc:"Den nya aktiviteten {t} överlappar:",goBack:"Gå tillbaka",saveAnyway:"Spara ändå",editAct:"Redigera aktivitet",newAct:"Ny aktivitet",actNamePH:"t.ex. Frukost",timeStart:"Start",timeEnd:"Slut (frivilligt)",repeat:"Upprepa",repNone:"Endast idag",repDaily:"Varje dag",repWeekdays:"Vardagar",repWeekend:"Helger",repPickDays:"Välj veckodagar",repDailyShort:"Dagligen",repDaysSuffix:"dagar",daysShort:["sön","mån","tis","ons","tor","fre","lör"],resetSection:"Återställ",resetDataDesc:"Rensar alla aktiviteter, berättelser, känslohistorik och inställningar. Kan inte ångras.",resetDataBtn:"Rensa all data",resetDataConfirm:"Är du säker? Allt data raderas och kan inte återskapas.",backupSection:"Säkerhetskopiering",backupDesc:"Spara allt – scheman, kort, berättelser och inställningar – till en fil. Använd den för att återställa eller flytta till en annan enhet.",exportBtn:"Exportera till fil",importBtn:"Importera från fil",importConfirm:"Detta ersätter all nuvarande data med innehållet i filen. Fortsätt?",importBad:"Filen kunde inte läsas som en Luma-säkerhetskopia.",importOk:"Importerat ✓",exportOk:"Exporterat ✓",tmplTitle:"Vill du komma igång snabbt?",tmplDesc:"Lägg till en färdig rutin – du kan ändra allt efteråt.",tmplAdd:"Lägg till",tmplDismiss:"Nej tack",tmplAdded:"Tillagd ✓",tmplPickTitle:"Förslag på rutiner",tmplPickDesc:"Plussa in de aktiviteter du vill. Du kan ändra allt efteråt.",tmplPickDone:"Klar",tmplAddAll:"Lägg till alla",tmplAdded2:"Tillagd",undoSaved:"Klart!",undoBtn:"Ångra",logoStyle:"Logga-stil",logoStyleHint:"Hur Luma-loggan visas högst upp i appen.",logoStyleNone:"Bara solen",logoStyleGlass:"Glaslåda",logoStylePillow:"Mjuk bädd",logoStyleSquircle:"Appikon"},
+  en:{other:"SV",myDay:"My Day",editorOpen:"Edit",editorClose:"Close",list:"List",card:"Cards",noActs:"Add activities in the editor",addAct:"New activity",save:"Save",cancel:"Cancel",actName:"Activity name",actTime:"Time",pickEmoji:"Pick emoji",pickColor:"Colour",steps:"Checklist",stepPH:"e.g. Put on shoes",timerAct:"Timer – activity",timerType:"Timer type",timerMin:"Minutes",timerColor:"Timer colour",sector:"Time Timer",ring:"Ring",dots:"Dot timer",wave:"Wave",sun:"Sunset",aurora:"Aurora",lava:"Lava",monster:"Monster",monsterFull:"Full!",pause:"Pause",resume:"Start",reset:"Reset",next:"Next",prev:"Back",min:"min",settings:"Settings",themeLabel:"Appearance",themeLight:"Light",themeDark:"Dark",themeHint:"Dark mode gives the whole app a calm, dark look.",modeChoiceTitle:"Choose appearance",modeChoiceDesc:"How would you like Luma to look? You can always change this in settings.",modeChoiceContinue:"Continue",cardStyle:"Card style",styleNormal:"Normal",styleCompact:"Compact",styleBig:"Large",syncTitle:"Sharing",sameDevice:"Same device",syncMode:"Via code",sameDeviceDesc:"Edit & user view on same device.",syncModeDesc:"Share schedule via code.",yourCode:"Your code",codeHint:"Give this code to the user",enterCode:"Enter code",connect:"Connect",wrongCode:"Not found.",copied:"Copied ✓",playAgain:"Play again",openTimer:"Start timer",allDoneMsg:"Great job! 🌟",emotions:"How are you?",emotionSaved:"Saved! ✓",emotionReason:"Why?",emotionHistory:"History",noHistory:"No history",toolsTimer:"Timer",toolsEmotion:"Mood",home:"Home",comm:"Talk",sigvardOn:"Sigvard lamps",sigvardColor:"Lamp colour",sigvardColorHint:"The time line follows the same colour",schedVisuals:"Show in schedule",schedVisualsHint:"Turn off if it gets noisy – use both, one of them, or neither.",bannerLabel:"\"Happening now\" bar",bannerHint:"Small bar at the top showing the current or upcoming activity.",nowLineLabel:"Time line",nowLineHint:"The line that follows the current time through the day.",nowLineColor:"Line colour",nowLineSameAsSig:"Same as lamps",visibleTools:"Visible tools",schedView:"Schedule view",viewBoth:"List + Cards",viewList:"List only",viewCard:"Cards only",addCard:"+ New card",addCat:"+ New category",catName:"Category name",autoTimer:"Syncs with start time",preview:"Preview",startTimer:"Start",timerSettings:"Timer settings for user view",allowedTimers:"Allowed timers",defaultTimer:"Default timer",visibleEmotions:"Visible emotions",barometerStyle:"Barometer style",barometerStyleHint:"How feelings are shown to the user.",styleArc:"Arc",styleVertical:"Vertical",addEmotion:"+ Add feeling",editEmotion:"Edit feeling",emotionName:"Name",emotionNamePH:"e.g. Stressed",customLabel:"Custom",changePhoto:"Change photo",resetEmotions:"Reset defaults",resetEmotionsHint:"Restores the standard feelings to their original names, emojis and colours.",confirmDeleteEmotion:"Remove?",reasonField:"Notes field",reasonFieldHint:"User can write a few words about their feeling. Turn off if it's too much.",reasonLabelPH:"e.g. Why? or What happened?",enlarge:"Enlarge",cardImage:"Image",uploadPhoto:"Upload photo",useEmoji:"Use emoji instead",stories:"Stories",newStory:"New story",storyTitle:"Title",pages:"Pages",addPage:"+ Add page",pageNum:"Page",storyText:"Page text",noStories:"No stories – tap Edit to create",renameCat:"Rename category",calm:"Calm",calmTitle:"Find calm",breathing:"Breathe",grounding:"54321",breathIn:"Breathe in",breathHold:"Hold",breathOut:"Breathe out",breathDone:"Well done",groundIntro:"Pause. Let's do this together.",groundStart:"Begin",see5:"5 things you can see",hear4:"4 things you can hear",touch3:"3 things you can touch",smell2:"2 things you can smell",taste1:"1 thing you can taste",iAmHere:"I am here. I am safe.",roundsDone:"Done",calmSettings:"Calm – exercises",idcard:"My card",myName:"My name",myAge:"Age",aboutMe:"About me",myTriggers:"This can be hard",whatHelps:"This helps me",emergencyContacts:"Call",contactName:"Name",contactPhone:"Phone",contactRelation:"Relation",addContact:"+ Add contact",call:"Call",idHint:"Show this to someone who wants to help","editCard":"Edit my card",helloMyNameIs:"Hi, my name is",yearsOld:"years old",emptyCardTitle:"The card isn't filled in yet",emptyCardDesc:"My card shows important information that can be valuable in situations where you need help. Tap Edit to fill it in.",createCardTitle:"Create your card",createCardDesc:"A summary of important information — name, contacts, and what helps in stressful moments. Shown when needed.",showLarge:"Show large",tools:"Tools",firstthen:"First-Then",choices:"Choices",rewards:"Reward",recipes:"Recipes",first:"First",then:"Then",ftDone:"Done!",chQuestion:"What do you want?",chTap:"Tap to choose",stars:"stars",goalReached:"You've earned your reward! 🎉",reward:"Reward",starsGoal:"Goal – number of stars",addChoice:"+ New choice",newCategory:"+ New category",rewardEmoji:"Emoji",rewardText:"Reward",ingredients:"Ingredients",instructions:"How to make it",servings:"Servings",time:"Time",newRecipe:"New recipe",step:"Step",addStep:"+ Add step",useReward:"Give star when done",resetStars:"Reset stars",starsEarned:"Stars earned",bannerNowOngoing:"Happening now",bannerNextUp:"Next up",bannerDayLabel:"Today",bannerNoActsLeft:"Nothing left today",close:"Close",week:"Week",myWeek:"My week",weekEmpty:"No activities this week",weekAdd:"Add activity",dayColors:"Day colours",dayColorsHint:"Tap a day to pick a colour",resetColors:"Reset to default",monday:"Monday",tuesday:"Tuesday",wednesday:"Wednesday",thursday:"Thursday",friday:"Friday",saturday:"Saturday",sunday:"Sunday",skylight:"Sky",skyHint:"Let your gaze rest",notTodayHint:"You're viewing a different day. Steps can't be checked off now.",editStory:"Edit story",storyType:"Type",typeSeq:"Step-by-step",typeSeqDesc:"Multiple pages",typeFT:"First-Then",typeFTDesc:"Two activities",coverImage:"Cover image",camera:"Camera",gallery:"Gallery",emoji:"Emoji",removePhoto:"Remove photo",storyPlacehSeq:"e.g. Clean the room",storyPlacehFT:"e.g. First homework, then TV",ftLabels:"Labels (shown above the cards)",ftSection:"First and Then",pageImage:"Page image",pageTextPH:"Write what happens on this page…",pageTimer:"Page timer",off:"Off",sunset:"Sunset",editingLabel:"Editing",duEditing:"Editing",cover:"Cover",schedule:"Schedule",doneTitle:"Done",doneSub:"Take a moment to rest.",dayOpen:"No activities today",allActsDoneTitle:"All activities done",allActsDoneSub:"You can rest the rest of the day.",lampOne:"1 lamp = 1 minute",lampMany:"1 lamp = {n} minutes",lampSec:"1 lamp = {n} sec",dotToCandle:"Candle",dotToPearl:"Pearls",dotToGlobe:"Globe",dotToBulb:"Bulb",dotToLantern:"Lantern",unitLamp:"lamp",unitFlame:"flame",unitSecShort:"sec",unitMinOne:"minute",unitMinMany:"minutes",stepCountOne:"1 step",stepCountMany:"{n} steps",noName:"(No name)",unsavedTitle:"Unsaved changes",unsavedDesc:"Save before closing?",discardChanges:"Discard",keepEditing:"Keep editing",overlapTitle:"Time conflict",overlapDesc:"The new activity {t} overlaps:",goBack:"Go back",saveAnyway:"Save anyway",editAct:"Edit activity",newAct:"New activity",actNamePH:"e.g. Breakfast",timeStart:"Start",timeEnd:"End (optional)",repeat:"Repeat",repNone:"Today only",repDaily:"Every day",repWeekdays:"Weekdays",repWeekend:"Weekends",repPickDays:"Pick days of week",repDailyShort:"Daily",repDaysSuffix:"days",daysShort:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],resetSection:"Reset",resetDataDesc:"Clears all activities, stories, mood history and settings. Cannot be undone.",resetDataBtn:"Clear all data",resetDataConfirm:"Are you sure? All data will be erased and cannot be recovered.",backupSection:"Backup",backupDesc:"Save everything – schedules, cards, stories and settings – to a file. Use it to restore or move to another device.",exportBtn:"Export to file",importBtn:"Import from file",importConfirm:"This replaces all current data with the file's contents. Continue?",importBad:"The file couldn't be read as a Luma backup.",importOk:"Imported ✓",exportOk:"Exported ✓",tmplTitle:"Want a quick start?",tmplDesc:"Add a ready-made routine – you can change everything afterwards.",tmplAdd:"Add",tmplDismiss:"No thanks",tmplAdded:"Added ✓",tmplPickTitle:"Suggested routines",tmplPickDesc:"Add the activities you want. You can change everything afterwards.",tmplPickDone:"Done",tmplAddAll:"Add all",tmplAdded2:"Added",undoSaved:"Done!",undoBtn:"Undo",logoStyle:"Logo style",logoStyleHint:"How the Luma logo appears at the top of the app.",logoStyleNone:"Just the sun",logoStyleGlass:"Glass box",logoStylePillow:"Soft pillow",logoStyleSquircle:"App icon"},
 };
 
-const TTYPES=["sector","ring","dots","wave","sun","lava","monster"];
+const TTYPES=["sector","ring","dots","wave","sun","aurora","lava","monster"];
 
 // Get localized story/page text — falls back to whichever language has content
 const lsText=(obj,lang)=>{
@@ -1185,6 +1203,21 @@ function TimerIcon({type,size=22,color="currentColor"}){
         <circle cx="10" cy="9.5" r="1.3" fill={color} stroke="none"/>
       </svg>
     );
+    case "aurora": return(
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" style={s}>
+        {/* flowing aurora ribbons */}
+        <path d="M3 7 Q8 4 12 7 T21 7"/>
+        <path d="M3 11 Q8 8 12 11 T21 11" opacity="0.6"/>
+        {/* light striations falling */}
+        <path d="M7 7.4 L6.4 11.6" opacity="0.4"/>
+        <path d="M16 7.4 L16.6 11.6" opacity="0.4"/>
+        {/* horizon + reflection */}
+        <path d="M3 18 L21 18"/>
+        <path d="M8 21 L16 21" opacity="0.4"/>
+        {/* star */}
+        <circle cx="18.5" cy="4" r="0.8" fill={color} stroke="none"/>
+      </svg>
+    );
     default: return(
       <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" style={s}>
         <circle cx="12" cy="13" r="8"/>
@@ -1193,7 +1226,7 @@ function TimerIcon({type,size=22,color="currentColor"}){
     );
   }
 }
-const tlbl=(k,t)=>({sector:t.sector,ring:t.ring,dots:t.dots,wave:t.wave,sun:t.sun,lava:t.lava,monster:t.monster}[k]||k);
+const tlbl=(k,t)=>({sector:t.sector,ring:t.ring,dots:t.dots,wave:t.wave,sun:t.sun,aurora:t.aurora,lava:t.lava,monster:t.monster}[k]||k);
 
 const SYNC_DB={};
 const genCode=()=>Math.random().toString(36).slice(2,6).toUpperCase();
@@ -1433,113 +1466,116 @@ function useTimer(initSec,autoRun=false){
 
 function TCtrl({c,color,t}){
   if(c.done) return null;
-  // Keep the button its chosen colour. If that colour is very light/white,
-  // white text would vanish — so switch to dark text + a visible border.
-  const _r=hexToRgb(color)||[138,175,210];
-  const _l=0.299*_r[0]+0.587*_r[1]+0.114*_r[2];
-  const lightBtn=_l>205;
-  const btnText=lightBtn?shadeHex(color,-0.62):"#fff";
-  const btnBorder=lightBtn?`1.5px solid ${shadeHex(color,-0.28)}`:"none";
+  const dk=isDark();
+  const ico=dk?shadeHex(color,0.55):shadeHex(color,-0.32);
+  const bg=dk?"#23213A":"#FFFFFF";
+  const border=dk?"1px solid rgba(255,255,255,0.10)":"none";
+  const bsh=dk
+    ?"0 22px 40px -12px rgba(0,0,0,0.85), 0 8px 18px -8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)"
+    :`0 24px 42px -14px ${shadeHex(color,-0.2)}66, 0 9px 20px -8px rgba(20,24,40,0.18), inset 0 1px 0 #FFFFFF`;
   return(
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,marginTop:22}}>
-      <style>{`@keyframes tcResetIn{0%{opacity:0}100%{opacity:1}}`}</style>
-      {/* Primary — compact pill */}
-      <button onClick={()=>c.setRun(r=>!r)} className="lt-press" style={{
-        padding:"13px 38px",borderRadius:999,border:isDark()?`1px solid ${color}40`:btnBorder,
-        fontFamily:G.font,fontWeight:600,fontSize:15,letterSpacing:.3,cursor:"pointer",
-        background:isDark()?`linear-gradient(180deg, ${color}1F, ${color}10)`:color,color:isDark()?"#F4F1FA":btnText,
-        backdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",WebkitBackdropFilter:isDark()?"blur(16px) saturate(1.5)":"none",
-        boxShadow:isDark()?`inset 0 1px 0 rgba(255,255,255,0.18), 0 8px 22px -10px ${color}55, 0 4px 10px -6px rgba(0,0,0,0.7)`:`0 6px 18px ${shadeHex(color,_l>205?-0.3:0)}40`,
-        transition:"transform .26s cubic-bezier(0.32, 0.72, 0, 1)",
-        display:"inline-flex",alignItems:"center",justifyContent:"center",gap:9
+    <div style={{display:"flex",justifyContent:"center",marginTop:22}}>
+      <button onClick={()=>c.setRun(r=>!r)} className="lt-press" aria-label={c.run?t.pause:t.resume} style={{
+        width:64,height:64,borderRadius:"50%",cursor:"pointer",
+        border,background:bg,boxShadow:bsh,
+        display:"inline-flex",alignItems:"center",justifyContent:"center",
+        transition:"transform .26s cubic-bezier(0.32,0.72,0,1)"
       }}>
-        {c.run?(
-          <>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.4"/><rect x="14" y="5" width="4" height="14" rx="1.4"/></svg>
-            <span>{t.pause}</span>
-          </>
-        ):(
-          <>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5 L19 12 L8 19 Z"/></svg>
-            <span>{t.resume}</span>
-          </>
-        )}
+        {c.run
+          ? <svg width="22" height="22" viewBox="0 0 24 24" fill={ico}><rect x="6.8" y="5" width="3.3" height="14" rx="1.3"/><rect x="13.9" y="5" width="3.3" height="14" rx="1.3"/></svg>
+          : <svg width="24" height="24" viewBox="0 0 24 24" fill={ico} style={{marginLeft:3}}><path d="M8 5.4 L18.4 12 L8 18.6 Z"/></svg>}
       </button>
-      {/* Reset — ultra-quiet text link, only when paused */}
-      {!c.run&&(
-        <button onClick={c.reset} className="lt-press-soft" style={{
-          padding:"4px 10px",border:"none",background:"transparent",
-          color:isDark()?"rgba(244,241,250,0.7)":G.ink3,fontFamily:G.font,fontWeight:500,fontSize:13,letterSpacing:.2,cursor:"pointer",
-          animation:"tcResetIn 0.4s ease both",
-          display:"inline-flex",alignItems:"center",justifyContent:"center",gap:6
-        }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 9 8 9"/></svg>
-          <span>{t.reset}</span>
-        </button>
-      )}
     </div>
   );
 }
 
-function DoneBadge({color,t}){
-  // Fallback string if no translation context — keeps DoneBadge useful in any caller
-  const doneTxt=t?.doneTitle||"Klart";
-  // Derive a brighter / darker shade of the color for the gradient stops
-  // so the sun-core has depth.
+/* Shared overlay for full-screen "scene" timers (aurora, sunset): close X,
+   activity chip, big glowing time readout, a single big glass play/pause
+   button, and a done state. No reset — just X + pause, by design. */
+function ImmersiveChrome({c,t,onClose,activity,W,H,hideLabel,doneEmoji="🌅",labelYFrac=0.5,color="#E0A46A"}){
+  const big=Math.min(W,H);
   return(
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:18,padding:"40px 0"}}>
+    <>
+      <button onClick={onClose} aria-label={t?.close||"Stäng"} className="lt-press" style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 14px)",right:18,width:44,height:44,borderRadius:22,border:"1px solid rgba(255,255,255,0.24)",background:"rgba(255,255,255,0.13)",backdropFilter:"blur(16px) saturate(1.3)",WebkitBackdropFilter:"blur(16px) saturate(1.3)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 24px -10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.28)",zIndex:4}}><IconX size={15}/></button>
+      {activity&&(
+        <div style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 16px)",left:18,display:"flex",alignItems:"center",gap:10,padding:"9px 15px 9px 11px",background:"rgba(255,255,255,0.12)",backdropFilter:"blur(16px) saturate(1.3)",WebkitBackdropFilter:"blur(16px) saturate(1.3)",borderRadius:18,border:"1px solid rgba(255,255,255,0.2)",boxShadow:"0 10px 28px -14px rgba(0,0,0,0.6)",zIndex:4,maxWidth:"58%"}}>
+          <div style={{width:30,height:30,borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,background:activity.photo?"transparent":"rgba(255,255,255,0.16)",overflow:"hidden",flexShrink:0}}>{activity.photo?<img src={activity.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:activity.emoji}</div>
+          <div style={{fontFamily:G.serif,fontWeight:600,fontSize:14,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",letterSpacing:-.2}}>{activity.name}</div>
+        </div>
+      )}
+      {!hideLabel&&!c.done&&(
+        <div style={{position:"absolute",top:`${labelYFrac*100}%`,left:0,right:0,transform:"translateY(-50%)",display:"flex",justifyContent:"center",pointerEvents:"none"}}>
+          <span style={{fontFamily:G.font,fontWeight:500,fontSize:big*0.165,color:"#F4F7FF",letterSpacing:-1.5,textShadow:"0 2px 32px rgba(0,0,0,0.4), 0 0 70px rgba(120,170,255,0.3)",fontVariantNumeric:"tabular-nums"}}>{c.label}</span>
+        </div>
+      )}
+      {c.done&&(
+        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"auto"}}>
+          <DoneBadge color={color} t={t} onDark onReplay={()=>{c.reset();c.setRun(true);}} onClose={onClose}/>
+        </div>
+      )}
+      {!c.done&&(
+        <div style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 42px)",display:"flex",justifyContent:"center",zIndex:4}}>
+          <button onClick={()=>c.setRun(r=>!r)} className="lt-press" aria-label={c.run?(t?.pause||"Paus"):(t?.resume||"Starta")} style={{width:84,height:84,borderRadius:42,border:"1px solid rgba(255,255,255,0.30)",background:"rgba(255,255,255,0.15)",backdropFilter:"blur(20px) saturate(1.4)",WebkitBackdropFilter:"blur(20px) saturate(1.4)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 16px 44px -12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 56px -12px rgba(120,180,255,0.5)"}}>
+            {c.run
+              ? <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><rect x="6.5" y="5" width="3.6" height="14" rx="1.4"/><rect x="13.9" y="5" width="3.6" height="14" rx="1.4"/></svg>
+              : <svg width="30" height="30" viewBox="0 0 24 24" fill="#fff" style={{marginLeft:3}}><path d="M8 5.2 L18.6 12 L8 18.8 Z"/></svg>}
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+function DoneBadge({color,t,onReplay,onClose,onDark}){
+  const dk = onDark!==undefined ? onDark : isDark();
+  const uid = (color||"x").replace('#','')+(dk?"d":"l");
+  const deep = shadeHex(color,-0.30);
+  const btn=(primary)=>({
+    display:"inline-flex",alignItems:"center",justifyContent:"center",gap:8,
+    padding:"13px 22px",borderRadius:999,cursor:"pointer",
+    border: dk ? (primary?"1px solid rgba(255,255,255,0.14)":"1px solid rgba(255,255,255,0.34)") : "none",
+    fontFamily:G.font,fontWeight:700,fontSize:15,letterSpacing:0.2,
+    WebkitBackdropFilter: dk?"blur(8px)":undefined, backdropFilter: dk?"blur(8px)":undefined,
+    background: dk ? (primary?"#FFFFFF":"rgba(16,14,28,0.66)") : "#FFFFFF",
+    color: dk ? (primary?deep:"#FFFFFF") : (primary?deep:G.ink2),
+    boxShadow: dk
+      ? (primary
+          ? "0 18px 38px -14px rgba(0,0,0,0.9), inset 0 1px 0 #fff"
+          : "0 14px 32px -14px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.18)")
+      : (primary
+          ? `0 18px 36px -14px ${deep}59, 0 5px 12px -5px rgba(20,24,40,0.14), inset 0 1px 0 #fff`
+          : "0 14px 30px -14px rgba(20,24,40,0.32), 0 4px 9px -4px rgba(20,24,40,0.12), inset 0 1px 0 #fff"),
+    transition:"transform .18s ease",
+  });
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:28,padding:"28px 0"}}>
       <style>{`
-        @keyframes dbSunIn{0%{opacity:0;transform:scale(0.85)}100%{opacity:1;transform:scale(1)}}
-        @keyframes dbSunRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        @keyframes dbSunBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
-        @keyframes dbSunRayFadeA{0%,100%{opacity:0.75}50%{opacity:0.45}}
-        @keyframes dbSunRayFadeB{0%,100%{opacity:0.45}50%{opacity:0.8}}
-        @keyframes dbTextIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+        @keyframes dcPop_${uid}{0%{transform:scale(0.5);opacity:0}62%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+        @keyframes dcRing_${uid}{0%{transform:scale(0.7);opacity:0.5}75%{transform:scale(1.6);opacity:0}100%{opacity:0}}
+        @keyframes dcChk_${uid}{from{stroke-dashoffset:30}to{stroke-dashoffset:0}}
+        @keyframes dcUp_${uid}{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:translateY(0)}}
       `}</style>
-      {/* Luma sun — same glyph as the brand mark, tinted in the timer color */}
-      <div style={{width:110,height:110,position:"relative",animation:"dbSunIn 1.1s cubic-bezier(0.32, 0.72, 0, 1) both"}}>
-        <svg width={110} height={110} viewBox="0 0 26 26" style={{overflow:"visible"}}>
-          <defs>
-            <radialGradient id={`dbSunCore-${color.slice(1)}`} cx="35%" cy="30%" r="70%">
-              <stop offset="0%" stopColor="#FFFFFF"/>
-              <stop offset="22%" stopColor="#FFFFFF" stopOpacity="0.95"/>
-              <stop offset="58%" stopColor={color}/>
-              <stop offset="100%" stopColor={color}/>
-            </radialGradient>
-            <radialGradient id={`dbSunGlow-${color.slice(1)}`} cx="50%" cy="50%" r="50%">
-              <stop offset="40%" stopColor={color} stopOpacity="0"/>
-              <stop offset="70%" stopColor={color} stopOpacity="0.20"/>
-              <stop offset="100%" stopColor={color} stopOpacity="0"/>
-            </radialGradient>
-          </defs>
-          {/* Outer glow */}
-          <circle cx="13" cy="13" r="13" fill={`url(#dbSunGlow-${color.slice(1)})`}/>
-          {/* Slowly-rotating rays — alternating long & short, alternating fade phase */}
-          <g style={{transformOrigin:"13px 13px",animation:"dbSunRotate 22s linear infinite"}}>
-            {Array.from({length:8}).map((_,i)=>{
-              const ang=(i/8)*2*Math.PI;
-              const isLong=i%2===0;
-              const r1=8.5, r2=isLong?12.2:11;
-              const x1=13+Math.cos(ang)*r1, y1=13+Math.sin(ang)*r1;
-              const x2=13+Math.cos(ang)*r2, y2=13+Math.sin(ang)*r2;
-              return(
-                <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
-                  stroke={color} strokeWidth={isLong?1.3:1} strokeLinecap="round"
-                  style={{animation:`${i%2===0?"dbSunRayFadeA":"dbSunRayFadeB"} ${3.2+i*0.1}s ease-in-out infinite`,opacity:0.7}}
-                />
-              );
-            })}
-          </g>
-          {/* Breathing sun core */}
-          <g style={{transformOrigin:"13px 13px",animation:"dbSunBreath 3.4s ease-in-out infinite"}}>
-            <circle cx="13" cy="13" r="7.5" fill={`url(#dbSunCore-${color.slice(1)})`}/>
-            {/* Soft highlight dot — gives the sun a tactile, dimensional feel */}
-            <ellipse cx="10.5" cy="10" rx="2" ry="1.4" fill="rgba(255,255,255,0.55)"/>
-          </g>
-        </svg>
+      <div style={{position:"relative",width:122,height:122,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{position:"absolute",inset:9,borderRadius:"50%",border:`2px solid ${color}`,animation:`dcRing_${uid} 0.95s 0.25s cubic-bezier(0.22,0.61,0.36,1) both`}}/>
+        <div style={{position:"relative",width:104,height:104,borderRadius:"50%",
+          background:`radial-gradient(circle at 38% 32%, ${shadeHex(color,0.42)}, ${color} 68%, ${shadeHex(color,-0.12)})`,
+          boxShadow:dk?`0 22px 46px -16px rgba(0,0,0,0.7), 0 0 52px -10px ${color}88, inset 0 2px 0 rgba(255,255,255,0.45)`:`0 20px 42px -14px ${deep}80, inset 0 2px 0 rgba(255,255,255,0.6)`,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          animation:`dcPop_${uid} 0.6s cubic-bezier(0.22,0.61,0.36,1) both`}}>
+          <svg width="58" height="58" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12.5 L10 17.5 L19 7" style={{strokeDasharray:30,animation:`dcChk_${uid} 0.45s 0.5s cubic-bezier(0.65,0,0.35,1) both`}}/>
+          </svg>
+        </div>
       </div>
-      {/* "Klart" — that's all that needs to be said. */}
-      <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:tk().inkSoft,letterSpacing:-.2,animation:"dbTextIn 0.7s 0.7s cubic-bezier(0.32, 0.72, 0, 1) both"}}>{doneTxt}</div>
+      {(onReplay||onClose)&&(
+        <div style={{display:"flex",gap:12,animation:`dcUp_${uid} 0.5s 0.78s cubic-bezier(0.32,0.72,0,1) both`}}>
+          {onReplay&&<button onClick={onReplay} className="lt-press" style={btn(true)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/></svg>
+            {t?.playAgain||"Spela igen"}
+          </button>}
+          {onClose&&<button onClick={onClose} className="lt-press" style={btn(false)}>{t?.close||"Stäng"}</button>}
+        </div>
+      )}
     </div>
   );
 }
@@ -1882,9 +1918,9 @@ function SkyHeader({now,lang,inFlow=false,sun=false,showWord=true,showDate=true}
         <path d={hillPath(139,22,2.1)} fill={_skRgb(_skMix(sk.hill,[0,0,0],0.18))} opacity={0.55}/>
         <path d={hillPath(161,16,0.6)} fill={_skRgb(sk.hill)} opacity={1}/>
       </svg>
-      <div style={{position:"relative",width:"100%",display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"flex-end",padding:"0 22px 6px",gap:7,zIndex:2,animation:"skLockIn 0.55s cubic-bezier(.2,.7,.2,1) both"}}>
+      <div style={{position:"relative",width:"100%",display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"flex-end",padding:"0 22px 2px",gap:7,zIndex:2,animation:"skLockIn 0.55s cubic-bezier(.2,.7,.2,1) both"}}>
         <style>{`@keyframes skLockIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
-        {showWord&&<div><SkyWordmark size={34} sun={sun}/></div>}
+        {showWord&&<div style={{marginLeft:-4}}><SkyWordmark size={41} sun={sun}/></div>}
         {!inFlow&&showDate&&(
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
           <div style={{display:"flex",alignItems:"baseline",gap:7}}>
@@ -1949,9 +1985,9 @@ function LumaSymbol({size=40,color="#9DC4D8"}){
 }
 
 /* ═══ SECTOR TIME TIMER (numbers CCW from top — like a real Time Timer) ═══ */
-function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false}){
+function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false,onClose}){
   const c=useTimer(totalSec,autoRun);
-  if(c.done) return <DoneBadge color={color} t={t}/>;
+  if(c.done) return <DoneBadge color={color} t={t} onReplay={()=>{c.reset();c.setRun(true);}} onClose={onClose}/>;
   const cx=size/2, cy=size/2, R=size/2-size*0.15;
   // Time Timer behavior: sector shrinks counter-clockwise (matches the red disc
   // that disappears as time passes). c.pct = remaining.
@@ -2038,7 +2074,7 @@ function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hide
 }
 
 /* ═══ RING (Minee-style donut) ═══ */
-function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false}){
+function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false,onClose}){
   const c=useTimer(totalSec,autoRun);
   // Smoothly eased pct so the ring glides between 1-second ticks instead of
   // stepping. A rAF loop nudges a local value toward the real c.pct each frame.
@@ -2057,7 +2093,7 @@ function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLa
     raf=requestAnimationFrame(tick);
     return()=>cancelAnimationFrame(raf);
   },[c.pct]);
-  if(c.done) return <DoneBadge color={color} t={t}/>;
+  if(c.done) return <DoneBadge color={color} t={t} onReplay={()=>{c.reset();c.setRun(true);}} onClose={onClose}/>;
   const cx=size/2, cy=size/2;
   const dk=isDark();
   const pct=smooth;
@@ -2169,17 +2205,136 @@ function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLa
 }
 
 /* ═══ DOTS / Timstock 2.0 — premium horizontal LED row, color from user ═══ */
-function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMode="pearl",mode:modeProp,setMode:setModeProp,hideLabel=false}){
+const DOT_LOOKS=["globe","candle","bulb","lantern"];
+function dotLookLabel(m,t){return ({globe:t?.dotToGlobe||"Klot",candle:t?.dotToCandle||"Ljus",bulb:t?.dotToBulb||"Glöd",lantern:t?.dotToLantern||"Lykta"})[m]||m;}
+/* ── Premium lamp row for Timstock — four looks (globe / candle / bulb /
+   lantern) on one canvas, with a short per-lamp extinguish animation (a lamp
+   fades/flickers out over ~0.95s, then settles to a dim "off" — it does NOT
+   stay mid-animation until the next lamp goes). Layered radial-gradient glow
+   (no shadowBlur) keeps it buttery on mobile. ── */
+function DotLamps({mode,tot,lit,color,size}){
+  const ref=useRef(null);
+  const st=useRef({mode,tot,lit,color,size}); st.current={mode,tot,lit,color,size};
+  const extRef=useRef({});            // lamp index → time it was extinguished
+  const litPrev=useRef(lit);
+  useEffect(()=>{
+    if(lit<litPrev.current){ for(let i=lit;i<litPrev.current;i++) extRef.current[i]=performance.now(); }
+    else if(lit>litPrev.current){ for(let i=litPrev.current;i<lit;i++) delete extRef.current[i]; }
+    litPrev.current=lit;
+  },[lit]);
+  useEffect(()=>{
+    const cv=ref.current; if(!cv) return; const ctx=cv.getContext("2d");
+    const DPR=Math.min(2,(typeof window!=="undefined"?window.devicePixelRatio:1)||1);
+    const DUR=950; let raf;
+    const lerp=(a,b,k)=>a+(b-a)*k;
+    const mix=(a,b,k)=>[Math.round(lerp(a[0],b[0],k)),Math.round(lerp(a[1],b[1],k)),Math.round(lerp(a[2],b[2],k))];
+    const rgba=(c,a)=>`rgba(${c[0]},${c[1]},${c[2]},${a})`;
+    const shade=(c,k)=>k>0?mix(c,[255,255,255],k):mix(c,[10,9,16],-k);
+    const gray=c=>{const l=Math.round(0.3*c[0]+0.6*c[1]+0.1*c[2]);return mix([l,l,l],[205,205,212],0.45);};
+    const warm=c=>mix(c,[255,205,130],0.45);
+    const bloom=(cx,cy,r,col,a)=>{if(a<=0)return;let g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,rgba(col,a));g.addColorStop(0.5,rgba(col,a*0.4));g.addColorStop(1,rgba(col,0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fill();};
+    const dark=isDark();
+    const draw=()=>{
+      const {mode,tot,lit,color,size}=st.current;
+      const c=hexToRgb(color)||[138,175,210];
+      const W=Math.max(120,Math.min(size,360)), H=Math.round(W*(mode==="lantern"?0.56:0.5));
+      if(cv.width!==Math.round(W*DPR)||cv.height!==Math.round(H*DPR)){cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);cv.style.width=W+"px";cv.style.height=H+"px";}
+      ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H);
+      const tt=performance.now()/1000, now=performance.now();
+      const baseGap=W/tot;
+      const gap=Math.min(baseGap,W*0.19);   // cap spacing so 2–3 lamps don't span the whole width
+      const R=Math.max(5,Math.min(W*0.062,baseGap*0.40));
+      const offsetX=(W-gap*tot)/2;          // centre the whole group
+      for(let i=0;i<tot;i++){
+        const cx=offsetX+gap*(i+0.5);
+        const ext=extRef.current[i];
+        let amt, extP=null;
+        if(i<lit) amt=1;
+        else if(ext!=null){ extP=(now-ext)/DUR; if(extP>=1){amt=0;extP=null;} else amt=1-extP; }
+        else amt=0;
+        const isNext=(i===lit-1);
+        // ---- GLOBE ----
+        if(mode==="globe"||mode==="pearl"){
+          const cy=H*0.46, r=R*(isNext&&amt>=0.999?1+0.05*Math.sin(tt*3):1);
+          // floor reflection
+          let fr=ctx.createRadialGradient(cx,cy+r*2.05,0,cx,cy+r*2.05,r);fr.addColorStop(0,rgba(amt>0?c:gray(c),0.06+0.16*amt));fr.addColorStop(1,rgba(c,0));ctx.fillStyle=fr;ctx.beginPath();ctx.ellipse(cx,cy+r*1.95,r*0.8,r*0.45,0,0,7);ctx.fill();
+          if(amt>0){ctx.save();ctx.globalCompositeOperation="lighter";bloom(cx,cy,r*2.5,mix(c,[255,240,210],0.3),0.28*amt);ctx.restore();}
+          const sphere=on=>{const gc=on?c:gray(c);let g=ctx.createRadialGradient(cx,cy+r*0.15,1,cx,cy,r);if(on){g.addColorStop(0,rgba(mix(c,[255,255,255],0.72),1));g.addColorStop(0.55,rgba(mix(c,[255,255,255],0.18),0.96));g.addColorStop(1,rgba(shade(c,-0.05),0.9));}else{g.addColorStop(0,rgba(shade(gc,0.42),dark?0.62:0.55));g.addColorStop(0.55,rgba(gc,dark?0.52:0.48));g.addColorStop(1,rgba(shade(gc,-0.15),dark?0.46:0.42));}ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fill();};
+          sphere(false); if(amt>0){ctx.save();ctx.globalAlpha=amt;sphere(true);ctx.restore();}
+          ctx.strokeStyle=`rgba(255,255,255,${0.12+0.23*amt})`;ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.stroke();
+          ctx.fillStyle=`rgba(255,255,255,${0.4+0.45*amt})`;ctx.beginPath();ctx.arc(cx-r*0.32,cy-r*0.34,r*0.16,0,7);ctx.fill();
+        }
+        // ---- EDISON BULB ----
+        else if(mode==="bulb"){
+          const cy=H*0.40, gcol=warm(c);
+          const flick=extP!=null?(0.35+0.65*Math.random()):(0.9+0.1*Math.sin(tt*7+i*1.9));
+          const a=amt*(extP!=null?flick:1);
+          if(a>0){ctx.save();ctx.globalCompositeOperation="lighter";bloom(cx,cy-2,R*2.7,gcol,0.30*a);bloom(cx,cy-2,R*1.5,mix(gcol,[255,255,255],0.4),0.34*a);ctx.restore();}
+          // brass base
+          const bw=R*0.92,bx=cx-bw/2,byT=cy+R*0.78,bh=R*0.7;
+          let mg=ctx.createLinearGradient(bx,0,bx+bw,0);mg.addColorStop(0,"#8a6e3f");mg.addColorStop(0.5,"#d9b878");mg.addColorStop(1,"#7d6235");ctx.fillStyle=mg;
+          ctx.beginPath();ctx.moveTo(bx,byT);ctx.lineTo(bx+bw,byT);ctx.lineTo(bx+bw*0.84,byT+bh);ctx.lineTo(bx+bw*0.16,byT+bh);ctx.closePath();ctx.fill();
+          ctx.strokeStyle="rgba(60,45,20,0.32)";ctx.lineWidth=1;for(let k=1;k<3;k++){ctx.beginPath();ctx.moveTo(bx+1,byT+bh*k/3);ctx.lineTo(bx+bw-1,byT+bh*k/3);ctx.stroke();}
+          // glass envelope
+          const glass=on=>{const gc=on?mix(gcol,[255,255,255],0.1):(dark?[42,42,55]:gray(c));let g=ctx.createRadialGradient(cx-R*0.3,cy-R*0.35,1,cx,cy,R);g.addColorStop(0,rgba(shade(gc,0.55),on?0.95:(dark?0.6:0.5)));g.addColorStop(0.7,rgba(gc,on?0.85:(dark?0.5:0.4)));g.addColorStop(1,rgba(shade(gc,-0.2),on?0.8:(dark?0.5:0.35)));ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.fill();ctx.fillStyle=rgba(gc,on?0.8:0.4);ctx.beginPath();ctx.moveTo(cx-R*0.45,cy+R*0.7);ctx.lineTo(cx+R*0.45,cy+R*0.7);ctx.lineTo(cx+R*0.4,byT);ctx.lineTo(cx-R*0.4,byT);ctx.closePath();ctx.fill();};
+          glass(false); if(amt>0){ctx.save();ctx.globalAlpha=amt;glass(true);ctx.restore();}
+          // filament
+          const fw=R*0.5, fpath=()=>{ctx.beginPath();ctx.moveTo(cx-fw,cy+R*0.35);ctx.lineTo(cx-fw*0.6,cy-R*0.1);ctx.quadraticCurveTo(cx-fw*0.3,cy-R*0.45,cx,cy-R*0.1);ctx.quadraticCurveTo(cx+fw*0.3,cy-R*0.45,cx+fw*0.6,cy-R*0.1);ctx.lineTo(cx+fw,cy+R*0.35);};
+          ctx.lineCap="round";
+          fpath();ctx.strokeStyle=dark?"rgba(150,150,165,0.5)":"rgba(120,120,135,0.45)";ctx.lineWidth=1.4;ctx.stroke();
+          if(a>0){ctx.save();ctx.globalCompositeOperation="lighter";bloom(cx,cy-R*0.1,R*0.85,gcol,0.5*a);ctx.restore();fpath();ctx.strokeStyle=rgba(mix(gcol,[255,255,255],0.2),0.95*a);ctx.lineWidth=2.3;ctx.stroke();fpath();ctx.strokeStyle=`rgba(255,250,235,${0.95*a})`;ctx.lineWidth=1;ctx.stroke();}
+          ctx.strokeStyle=`rgba(255,255,255,${0.12+0.28*amt})`;ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.stroke();
+          ctx.fillStyle=`rgba(255,255,255,${0.4+0.35*amt})`;ctx.beginPath();ctx.ellipse(cx-R*0.34,cy-R*0.4,R*0.12,R*0.18,-0.6,0,7);ctx.fill();
+        }
+        // ---- LANTERN ----
+        else if(mode==="lantern"){
+          const topY=H*0.13, cy=topY+R*1.5;
+          ctx.strokeStyle=dark?"rgba(200,195,210,0.4)":"rgba(80,74,90,0.45)";ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(cx,topY);ctx.lineTo(cx,topY+R*0.5);ctx.stroke();
+          ctx.fillStyle="#6b6478";ctx.fillRect(cx-R*0.28,topY+R*0.5-2,R*0.56,3);
+          if(amt>0){ctx.save();ctx.globalCompositeOperation="lighter";bloom(cx,cy,R*2.1,mix(c,[255,220,150],0.5),0.3*amt);ctx.restore();}
+          const orb=on=>{const bc=on?mix(c,[255,225,160],0.22):(dark?[60,60,72]:gray(c));let g=ctx.createRadialGradient(cx-R*0.3,cy-R*0.3,1,cx,cy,R);g.addColorStop(0,rgba(shade(bc,0.6),on?0.95:0.6));g.addColorStop(0.7,rgba(bc,on?0.92:0.5));g.addColorStop(1,rgba(shade(bc,-0.2),on?0.9:0.4));ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(cx,cy,R*0.78,R,0,0,7);ctx.fill();if(on){ctx.fillStyle="rgba(255,240,200,0.85)";ctx.beginPath();ctx.ellipse(cx,cy+R*0.1,R*0.3,R*0.45,0,0,7);ctx.fill();}};
+          orb(false); if(amt>0){ctx.save();ctx.globalAlpha=amt;orb(true);ctx.restore();}
+          ctx.fillStyle=`rgba(255,255,255,${0.3+0.4*amt})`;ctx.beginPath();ctx.ellipse(cx-R*0.32,cy-R*0.4,R*0.12,R*0.2,0,0,7);ctx.fill();
+        }
+        // ---- CANDLE ----
+        else {
+          const baseY=H*0.78, cw=R*1.05, ch=R*2.3, bx=cx-cw/2, byTop=baseY-ch;
+          // glow pool on ledge
+          if(amt>0){let r=ctx.createRadialGradient(cx,baseY+5,0,cx,baseY+5,R*1.4);r.addColorStop(0,rgba(warm(c),0.22*amt));r.addColorStop(1,rgba(warm(c),0));ctx.fillStyle=r;ctx.beginPath();ctx.ellipse(cx,baseY+4,R*1.1,R*0.4,0,0,7);ctx.fill();}
+          // candle body
+          let bg=ctx.createLinearGradient(bx,0,bx+cw,0);bg.addColorStop(0,"#EFE6D2");bg.addColorStop(0.5,"#FBF6EC");bg.addColorStop(1,"#E3D8C2");ctx.fillStyle=bg;
+          const rr=Math.min(4,cw*0.3);ctx.beginPath();ctx.moveTo(bx+rr,byTop);ctx.arcTo(bx+cw,byTop,bx+cw,baseY,rr);ctx.lineTo(bx+cw,baseY);ctx.lineTo(bx,baseY);ctx.lineTo(bx,byTop+rr);ctx.arcTo(bx,byTop,bx+cw,byTop,rr);ctx.closePath();ctx.fill();
+          ctx.fillStyle="rgba(255,255,255,0.5)";ctx.fillRect(bx+1.5,byTop+2,1.6,ch-3);
+          // wick
+          ctx.strokeStyle=amt>0.1?"#3a3128":"rgba(90,78,70,0.6)";ctx.lineWidth=1.6;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(cx,byTop);ctx.lineTo(cx,byTop-3);ctx.stroke();
+          // flame (shrinks with amt)
+          if(amt>0.03){const fl=Math.sin(tt*6+i*1.7),sway=fl*1.1,fh=R*1.15*amt*(1+0.08*fl),fw=R*0.5*Math.sqrt(amt);ctx.save();ctx.globalCompositeOperation="lighter";bloom(cx,byTop-fh*0.4,R*1.3,warm(c),0.4*amt);ctx.restore();let fg=ctx.createLinearGradient(0,byTop-fh-3,0,byTop);fg.addColorStop(0,"rgba(255,180,90,0.55)");fg.addColorStop(0.45,"#FFD27A");fg.addColorStop(0.8,"#FFF1C8");fg.addColorStop(1,"#ffffff");ctx.fillStyle=fg;ctx.beginPath();ctx.moveTo(cx+sway,byTop-fh-3);ctx.quadraticCurveTo(cx+fw,byTop-fh*0.4,cx,byTop-1);ctx.quadraticCurveTo(cx-fw,byTop-fh*0.4,cx+sway,byTop-fh-3);ctx.fill();ctx.fillStyle="rgba(120,160,255,0.45)";ctx.beginPath();ctx.ellipse(cx,byTop-2,fw*0.4,R*0.28*amt,0,0,7);ctx.fill();}
+          // smoke wisp while extinguishing
+          if(extP!=null){const sa=0.4*(1-extP);for(let s=0;s<3;s++){const sy=byTop-6-extP*22-s*5,sx=cx+Math.sin(extP*6+s)*3;ctx.fillStyle=`rgba(150,150,160,${Math.max(0,sa*(1-s*0.25))})`;ctx.beginPath();ctx.arc(sx,sy,1.6+extP*3+s,0,7);ctx.fill();}}
+        }
+      }
+      raf=requestAnimationFrame(draw);
+    };
+    raf=requestAnimationFrame(draw);
+    return()=>cancelAnimationFrame(raf);
+  },[]);
+  const W=Math.max(120,Math.min(size,360)), H=Math.round(W*(mode==="lantern"?0.56:0.5));
+  return <canvas ref={ref} style={{width:W,height:H,display:"block"}}/>;
+}
+
+function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMode="globe",mode:modeProp,setMode:setModeProp,hideLabel=false,onClose}){
   const c=useTimer(totalSec,autoRun);
   // Two looks of the SAME timer: "pearl" (calm) and "candle" (playful). The
   // mode only changes the visuals — the timer (c) keeps running unaffected, so
   // switching back and forth never disturbs the countdown. The mode can be
   // controlled by a parent (FullTimer renders the toggle up by the close
   // button); otherwise we keep it locally.
-  const[modeLocal,setModeLocal]=useState(dotMode==="candle"?"candle":"pearl");
-  const mode=modeProp!==undefined?modeProp:modeLocal;
+  const DOTLOOKS=["globe","candle","bulb","lantern"];
+  const norm=m=>m==="pearl"?"globe":(DOTLOOKS.includes(m)?m:"globe");
+  const[modeLocal,setModeLocal]=useState(norm(dotMode));
+  const mode=norm(modeProp!==undefined?modeProp:modeLocal);
   const setMode=setModeProp||setModeLocal;
-  if(c.done) return <DoneBadge color={color} t={t}/>;
+  if(c.done) return <DoneBadge color={color} t={t} onReplay={()=>{c.reset();c.setRun(true);}} onClose={onClose}/>;
   // EXACT first: each lamp represents a whole unit of time so lamps × unit ==
   // the set time precisely (the label never lies). Among all exact options we
   // pick the lamp-count closest to a comfortable target, capped at MAXROW;
@@ -2224,15 +2379,13 @@ function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMod
   const oc = color;                            // orb keeps its real colour
   const edge = _light ? shadeHex(color,-0.42) : shadeHex(color,-0.2); // visible contour/shadow
   const coreLight = "#FFFFFF";                  // bright core highlight
-  // Label: exact unit, and the noun matches the current look — "lampa" for the
-  // orbs, "låga" for the candle flames.
-  const lampNoun = mode==="candle" ? (t?.unitFlame||"låga") : (t?.unitLamp||"lampa");
-  const unitPhrase = unit<60
-    ? `${unit} ${t?.unitSecShort||"sek"}`
+  // Legend ("1 lamp = X min") — use the pre-translated template strings so it
+  // follows the app language instead of being composed (which leaked Swedish).
+  const lampLabel = unit<60
+    ? (t?.lampSec||"1 lampa = {n} sek").replace("{n}",String(unit))
     : mpl===1
-      ? `1 ${t?.unitMinOne||"minut"}`
-      : `${mpl} ${t?.unitMinMany||"minuter"}`;
-  const lampLabel = `1 ${lampNoun} = ${unitPhrase}`;
+      ? (t?.lampOne||"1 lampa = 1 minut")
+      : (t?.lampMany||"1 lampa = {n} minuter").replace("{n}",String(mpl));
 
   return(
     <div style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:18,width:"100%"}}>
@@ -2251,151 +2404,27 @@ function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMod
         @keyframes flCore_${uid}{0%,100%{transform:translateX(-50%) scaleY(1);opacity:0.92}50%{transform:translateX(-50%) scaleY(1.1);opacity:1}}
       `}</style>
 
-      {/* Mode toggle (T1 segment, no emoji). Shown here only when used
-          standalone; FullTimer renders its own toggle up by the close button. */}
-      {showCtrl&&!setModeProp&&<div style={{position:"absolute",top:-4,left:0,zIndex:5,display:"inline-flex",
-        background:`${oc}14`,borderRadius:999,padding:3,gap:2,
+      {/* Look toggle — four premium lamp styles. Shown standalone; FullTimer
+          renders its own toggle up by the close button. */}
+      {showCtrl&&!setModeProp&&<div style={{position:"absolute",top:-6,left:"50%",transform:"translateX(-50%)",zIndex:5,display:"inline-flex",
+        background:`${oc}14`,borderRadius:999,padding:3,gap:1,
         boxShadow:`inset 0 0 0 1px ${oc}1F`}}>
-        {["pearl","candle"].map(m=>{const active=mode===m;return(
-          <button key={m} onClick={()=>setMode(m)} className="lt-press-soft"
-            aria-label={m==="pearl"?(t?.dotToPearl||"Pärlor"):(t?.dotToCandle||"Ljus")}
-            style={{padding:"5px 12px",borderRadius:999,border:"none",cursor:"pointer",
+        {DOT_LOOKS.map(m=>{const active=mode===m;const lb=dotLookLabel(m,t);return(
+          <button key={m} onClick={()=>setMode(m)} className="lt-press-soft" aria-label={lb}
+            style={{padding:"5px 10px",borderRadius:999,border:"none",cursor:"pointer",
               fontFamily:G.font,fontWeight:600,fontSize:11,letterSpacing:0.2,
               color:active?shade(oc,-0.3):shade(oc,-0.05),
               background:active?"#FFFFFF":"transparent",
               boxShadow:active?`0 2px 6px ${oc}28`:"none",
               transition:"background .3s ease, color .3s ease, box-shadow .3s ease"}}>
-            {m==="pearl"?(t?.dotToPearl||"Pärlor"):(t?.dotToCandle||"Ljus")}
+            {lb}
           </button>
         );})}
       </div>}
 
-      {mode==="pearl" ? (
-        /* ── PEARL STRAND — lustrous pearls threaded on a fine line ── */
-        <div style={{position:"relative",display:"flex",flexDirection:"row",alignItems:"center",justifyContent:"center",
-          gap,flexWrap:"nowrap",padding:`${Math.round(led*0.55)}px ${Math.round(led*0.9)}px`,maxWidth:"100%"}}>
-          {/* the thread — clearly visible band the orbs rest on (uses edge tone) */}
-          <div style={{position:"absolute",left:Math.round(led*0.7),right:Math.round(led*0.7),top:"50%",height:2.5,
-            transform:"translateY(-50%)",borderRadius:2,
-            background:`linear-gradient(90deg, transparent, ${edge} 8%, ${edge} 92%, transparent)`,
-            boxShadow:`0 1px 2px ${edge}40`,
-            opacity:0.7,pointerEvents:"none"}}/>
-          {Array.from({length:tot}).map((_,i)=>{
-            const on=i<lit;
-            const isNext=on&&i===lit-1;
-            // The CURRENT orb glows & pulses to draw the eye; the others only
-            // glimmer calmly (slow, gentle) with no strong glow aura.
-            const calmDur=(5.0+(i*0.6)%2.4).toFixed(2);
-            const calmDelay=((i*0.7)%3).toFixed(2);
-            return(
-              <div key={i} style={{position:"relative",width:led,height:led,flexShrink:0,zIndex:isNext?2:1,
-                animation:isNext?`dotNext_${uid} 2s ease-in-out infinite`:"none",
-                transformOrigin:"center"}}>
-                {/* strong glow aura — ONLY on the current orb */}
-                {isNext&&<div style={{position:"absolute",inset:-led*0.5,borderRadius:"50%",
-                  background:`radial-gradient(circle, ${edge}48 0%, ${edge}18 46%, transparent 72%)`,
-                  filter:`blur(${Math.max(4,led*0.18)}px)`,pointerEvents:"none",
-                  animation:`dotHaloFloat_${uid} 2s ease-in-out infinite`}}/>}
-                {/* frosted-glass orb (C): inner glow rising from lower-centre,
-                    crisp top dewdrop highlight; keeps its true colour (white
-                    stays white) with an EDGE rim/shadow for visibility. */}
-                <div style={{position:"absolute",inset:0,borderRadius:"50%",
-                  background: on
-                    ? `radial-gradient(circle at 50% 58%, #FFFFFF 0%, ${shadeHex(oc,0.35)} 32%, ${oc} 76%, ${shadeHex(oc,-0.12)} 96%, ${edge} 100%)`
-                    : `radial-gradient(circle at 50% 50%, #FFFFFF 0%, ${oc}12 60%, ${edge}26 100%)`,
-                  boxShadow: on
-                    ? `0 ${led*0.16}px ${led*0.28}px -${led*0.05}px ${edge}80, 0 0 ${led*0.5}px ${led*0.03}px ${edge}3A, inset 0 ${led*0.1}px ${led*0.14}px rgba(255,255,255,0.85), inset 0 -${led*0.2}px ${led*0.24}px ${edge}6E, inset 0 0 0 1px ${edge}40`
-                    : `0 ${led*0.1}px ${led*0.18}px -${led*0.06}px ${edge}4D, inset 0 ${led*0.12}px ${led*0.15}px rgba(255,255,255,0.9), inset 0 -${led*0.1}px ${led*0.14}px ${edge}26, inset 0 0 0 1.5px ${edge}4D`,
-                  animation:on&&!isNext?`dotGlassBreath_${uid} ${calmDur}s ease-in-out ${calmDelay}s infinite`:"none",
-                  transition:"background 0.7s cubic-bezier(0.32,0.72,0,1), box-shadow 0.7s cubic-bezier(0.32,0.72,0,1)"}}/>
-                {/* top dewdrop highlight — the CURRENT orb glimmers brightest &
-                    liveliest; the others shimmer subtler and slower. */}
-                {on&&<div style={{position:"absolute",top:led*0.16,left:"50%",transform:"translateX(-50%)",
-                  width:led*(isNext?0.46:0.38),height:led*(isNext?0.34:0.28),borderRadius:"50%",
-                  background:isNext
-                    ? "radial-gradient(ellipse at 50% 40%, rgba(255,255,255,1) 0%, rgba(255,255,255,0.6) 50%, transparent 82%)"
-                    : "radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.25) 55%, transparent 82%)",
-                  opacity:isNext?1:0.7,
-                  animation:isNext
-                    ? `dotGlimmerBright_${uid} 1.6s ease-in-out infinite`
-                    : `dotGlimmerCalm_${uid} ${calmDur}s ease-in-out ${calmDelay}s infinite`,
-                  pointerEvents:"none"}}/>}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        /* ── CANDLES (flame "C") — layered soft-glow flames with a warm amber
-            heart, each flickering in its own rhythm; they go out left→right,
-            the just-extinguished one releasing a single wisp of smoke. ── */
-        <div style={{display:"flex",flexDirection:"row",alignItems:"flex-end",justifyContent:"center",
-          gap:Math.max(gap, Math.round(led*0.55)),flexWrap:"nowrap",
-          padding:`${Math.round(led*1.4)}px ${Math.round(led*0.5)}px ${Math.round(led*0.4)}px`,maxWidth:"100%"}}>
-          {Array.from({length:tot}).map((_,i)=>{
-            const on=i<lit;
-            const justOut=!on&&i===lit;                 // most recently extinguished
-            const leanDur=(3.4+(i*0.37)%1.8).toFixed(2);
-            const bDur=(0.85+(i*0.17)%0.5).toFixed(2);  // unique flicker speed
-            const cDur=(0.7+(i*0.13)%0.4).toFixed(2);
-            const stickW=Math.max(7,Math.round(led*0.42)), stickH=Math.round(led*1.15);
-            const flW=Math.round(led*0.62), flH=Math.round(led*1.05);
-            return(
-              <div key={i} style={{position:"relative",width:Math.max(led*0.7,stickW),height:stickH+flH,
-                display:"flex",flexDirection:"column",justifyContent:"flex-end",alignItems:"center",flexShrink:0}}>
-                {/* glow halo behind flame */}
-                {on&&<div style={{position:"absolute",bottom:stickH-Math.round(led*0.1),left:"50%",
-                  width:flW*2.1,height:flH*1.5,transform:"translateX(-50%)",borderRadius:"50%",
-                  background:`radial-gradient(circle, ${oc}3A 0%, ${oc}14 42%, transparent 68%)`,
-                  animation:`flameGlow_${uid} ${leanDur}s ease-in-out infinite`,pointerEvents:"none",zIndex:0}}/>}
-
-                {/* FLAME — leaning wrapper holds the three soft layers */}
-                {on&&<div style={{position:"absolute",bottom:stickH-Math.round(led*0.06),left:"50%",
-                  width:flW,height:flH,transformOrigin:"50% 100%",zIndex:2,
-                  animation:`flLean_${uid} ${leanDur}s ease-in-out infinite`}}>
-                  {/* outer soft glow layer */}
-                  <div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",
-                    width:flW,height:flH,filter:`blur(${Math.max(2,led*0.07)}px)`,
-                    borderRadius:"50% 50% 50% 50% / 70% 70% 40% 40%",
-                    background:`radial-gradient(ellipse 50% 58% at 50% 72%, ${oc}8C 0%, ${oc}40 45%, transparent 72%)`}}/>
-                  {/* main flame body */}
-                  <div style={{position:"absolute",bottom:flH*0.05,left:"50%",
-                    width:flW*0.62,height:flH*0.78,transformOrigin:"50% 100%",
-                    borderRadius:"50% 50% 50% 50% / 68% 68% 42% 42%",filter:"blur(0.4px)",
-                    background:`radial-gradient(ellipse 52% 60% at 50% 74%, #FFFFFF 0%, ${shade(oc,0.25)} 30%, ${oc} 60%, transparent 86%)`,
-                    animation:`flBody_${uid} ${bDur}s ease-in-out infinite`}}/>
-                  {/* warm amber heart — the realistic hot core */}
-                  <div style={{position:"absolute",bottom:flH*0.1,left:"50%",
-                    width:flW*0.3,height:flH*0.34,transformOrigin:"50% 100%",
-                    borderRadius:"50% / 60% 60% 40% 40%",
-                    background:`radial-gradient(ellipse at 50% 80%, #FFF6E6 0%, #FFE0A8 42%, rgba(255,200,130,0.4) 72%, transparent 92%)`,
-                    animation:`flCore_${uid} ${cDur}s ease-in-out infinite`}}/>
-                </div>}
-
-                {/* single smoke wisp on the just-extinguished candle */}
-                {justOut&&<div style={{position:"absolute",bottom:stickH+Math.round(led*0.05),left:"50%",
-                  width:Math.max(3,led*0.12),height:flH*0.7,transform:"translateX(-50%)",
-                  background:`linear-gradient(180deg, ${shade(oc,-0.2)}66, transparent)`,borderRadius:3,
-                  filter:"blur(1.5px)",transformOrigin:"50% 100%",
-                  animation:`smokePuff_${uid} 3.2s ease-out infinite`,pointerEvents:"none",zIndex:1}}/>}
-
-                {/* candle body */}
-                <div style={{width:stickW,height:stickH,borderRadius:Math.round(stickW*0.34),position:"relative",zIndex:1,
-                  background: `linear-gradient(100deg, ${oc}20 0%, #FFFFFF 30%, #FBFDFE 55%, ${oc}18 100%)`,
-                  boxShadow:`inset 0 2px 0 rgba(255,255,255,0.95), inset 0 -7px 12px ${oc}1E, inset -3px 0 7px ${oc}14, inset 3px 0 6px rgba(255,255,255,0.7), 0 8px 16px -6px ${oc}3A`,
-                  opacity:on?1:0.55,transition:"opacity 0.8s ease"}}>
-                  {/* soft top rim */}
-                  <div style={{position:"absolute",top:0,left:3,right:3,height:Math.round(stickW*0.24),
-                    borderRadius:"50%",background:`radial-gradient(ellipse at 50% 0%, #fff, ${oc}14)`}}/>
-                  {/* wick */}
-                  <div style={{position:"absolute",top:-Math.round(led*0.13),left:"50%",transform:"translateX(-50%)",
-                    width:2.5,height:Math.round(led*0.16),borderRadius:1.5,
-                    background:on?`linear-gradient(180deg, ${shade(oc,-0.4)}, #2A2030)`:`${shade(oc,-0.2)}66`}}/>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <div style={{marginTop:(showCtrl&&!setModeProp)?28:0}}>
+        <DotLamps mode={mode} tot={tot} lit={lit} color={color} size={size}/>
+      </div>
 
       {/* Lamp legend — hidden in preview */}
       {!hideLabel&&<div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:isDark()?"rgba(244,241,250,0.6)":G.ink3,letterSpacing:.8,textTransform:"uppercase"}}>{lampLabel}</div>}
@@ -2407,215 +2436,141 @@ function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMod
 }
 
 /* ═══ WAVE ═══ */
-function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,aesthetic="C",hideLabel=false}){
+/* ═══ WaveTimer — premium water (canvas) ═══
+   Organic ocean-like surface (sum of several travelling waves + slow swell),
+   dancing caustics, rising bubbles, drifting light motes, a bright meniscus
+   waterline and a glass-vessel sheen. One clean rAF loop, no per-frame
+   shadowBlur — buttery on mobile. Water level follows the timer. */
+function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,aesthetic="C",hideLabel=false,immersive=false,onClose,activity}){
   const c=useTimer(totalSec,autoRun);
-  const W=size, H=Math.round(size*0.65);
-  // Water surface level. The wave path is drawn with its TOP CREST at
-  // local y=18 inside the group, so we offset surfaceY by -18 to put the
-  // crest at the very top of the tank when full. Linear interpolation:
-  //   pctSmooth=1 → surfaceY=-18 → crest at y=0 (tank top, FULL)
-  //   pctSmooth=0 → surfaceY=H-18 → crest at y=H (tank bottom, EMPTY)
-  // Earlier formula placed the crest BELOW the tank's clip at the end,
-  // making the water disappear with ~10% still showing on the timer.
-  const surfaceY=-18+(1-c.pctSmooth)*H;
+  const[vp,setVp]=useState(()=>(typeof window!=="undefined"?{w:window.innerWidth,h:window.innerHeight}:{w:390,h:780}));
+  useEffect(()=>{if(!immersive)return;const on=()=>setVp({w:window.innerWidth,h:window.innerHeight});window.addEventListener("resize",on);window.addEventListener("orientationchange",on);return()=>{window.removeEventListener("resize",on);window.removeEventListener("orientationchange",on);};},[immersive]);
+  const W=immersive?vp.w:size, H=immersive?vp.h:Math.round(size*0.66);
   const dk=isDark();
-
-  // ─── Three world-class water aesthetics ────────────────────────────────
-  // A "Tidewater"  — Japanese watercolour. Soft, luminous, never dark.
-  //                  3 stops, the colour stands on its own, surface kissed
-  //                  with a hint of white. Meditative.
-  // B "Iridescent" — Polished glass in the sun. Sharp specular crest,
-  //                  saturated body, a subtle hue-shift toward the
-  //                  complement deep in the pool. Premium-tech.
-  // C "Linnea"     — Scandinavian gouache. Pastel, slightly milky, warm
-  //                  with a hint of pearl. A gentle aura glows up from
-  //                  the floor. Storybook-soft.
-  //
-  // Every recipe is calibrated to AVOID going so dark it reads as black —
-  // even on already-saturated input colours. The previous gradient went
-  // to -40% which crushed deep blues into near-black; nothing here drops
-  // below -22% so the picked hue is always recognisable.
-  const palette=(()=>{
-    if(aesthetic==="B"){
-      // Iridescent — three stops, sharp crest, subtle hue-shift via shadeHex
-      // toward a slightly cooler tone in the pool (achieved by lifting the
-      // blue channel in `floor` for warm hues, warming it for cool ones —
-      // here approximated with a uniform shift since we don't have HSL).
-      return {
-        crest: dk?shadeHex(color,0.55):shadeHex(color,0.42),
-        upper: dk?shadeHex(color,0.20):shadeHex(color,0.08),
-        mid:   dk?color:                shadeHex(color,-0.06),
-        lower: dk?shadeHex(color,-0.10):shadeHex(color,-0.18),
-        floor: dk?shadeHex(color,-0.22):shadeHex(color,-0.22),
-        meniscusOp: dk?0.30:0.55,
-        auroraStrength: 0,
-        complementHint: true,
-      };
-    }
-    if(aesthetic==="C"){
-      // Linnea — pastel, milky. Highest crest brightness, smallest range,
-      // body stays close to the chosen hue. The aura under the surface
-      // does the heavy lifting for "depth" without darkening anything.
-      return {
-        crest: dk?shadeHex(color,0.52):shadeHex(color,0.46),
-        upper: dk?shadeHex(color,0.32):shadeHex(color,0.22),
-        mid:   dk?shadeHex(color,0.10):shadeHex(color,0.04),
-        lower: dk?shadeHex(color,-0.04):shadeHex(color,-0.08),
-        floor: dk?shadeHex(color,-0.14):shadeHex(color,-0.14),
-        meniscusOp: dk?0.22:0.40,
-        auroraStrength: 1,
-        complementHint: false,
-      };
-    }
-    // A — Tidewater (default). The colour itself sings; tonal range is
-    // gentle and the surface gets just enough brightness to feel like
-    // the sun is on it. No aura, no hue-shift; only what watercolour
-    // pigment naturally does on paper.
-    return {
-      crest: dk?shadeHex(color,0.48):shadeHex(color,0.30),
-      upper: dk?shadeHex(color,0.18):shadeHex(color,0.06),
-      mid:   dk?color:                color,
-      lower: dk?shadeHex(color,-0.08):shadeHex(color,-0.10),
-      floor: dk?shadeHex(color,-0.18):shadeHex(color,-0.18),
-      meniscusOp: dk?0.24:0.42,
-      auroraStrength: 0.35,
-      complementHint: false,
+  const cvRef=useRef(null);
+  const pctRef=useRef(c.pctSmooth); pctRef.current=c.pctSmooth;
+  useEffect(()=>{
+    const cv=cvRef.current; if(!cv) return;
+    const ctx=cv.getContext("2d"); if(!ctx) return;
+    const DPR=Math.min(2,(typeof window!=="undefined"&&window.devicePixelRatio)||1);
+    cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0);
+    const lerp=(a,b,k)=>a+(b-a)*k;
+    const mix=(c1,c2,k)=>[Math.round(lerp(c1[0],c2[0],k)),Math.round(lerp(c1[1],c2[1],k)),Math.round(lerp(c1[2],c2[2],k))];
+    const rgba=(cc,a)=>`rgba(${cc[0]},${cc[1]},${cc[2]},${a})`;
+    const col=hexToRgb(color)||[91,134,196];
+    const shade=(cc,k)=>k>0?mix(cc,[255,255,255],k):mix(cc,dk?[6,9,20]:[8,12,28],-k);
+    const R=immersive?0:30;
+    const roundClip=()=>{ctx.beginPath();ctx.moveTo(R,0);ctx.arcTo(W,0,W,H,R);ctx.arcTo(W,H,0,H,R);ctx.arcTo(0,H,0,0,R);ctx.arcTo(0,0,W,0,R);ctx.closePath();ctx.clip();};
+    const bubbles=Array.from({length:7}).map((_,i)=>{const s=n=>{const x=Math.sin((i+1)*n)*1e4;return x-Math.floor(x);};return{x:0.1+0.8*s(12.9),r:1.6+s(78.2)*3,dur:3.2+s(31.4)*3.6,off:s(7.7)*6,sway:3+s(54.1)*7,swp:2.2+s(19.3)*2.4,op:0.4+s(91.2)*0.4};});
+    const motes=Array.from({length:9}).map((_,i)=>{const s=n=>{const x=Math.sin((i+3)*n)*1e4;return x-Math.floor(x);};return{x:s(5.1),y:s(9.7),r:0.6+s(3.3)*1.2,sp:0.2+s(7.1)*0.5,ph:s(2.2)*6};});
+    let raf, alive=true, t0=performance.now();
+    const draw=()=>{
+      if(!alive)return;
+      const now=performance.now(), time=now-t0, tt=time*0.001;
+      const level=Math.max(0,Math.min(1,pctRef.current));
+      ctx.clearRect(0,0,W,H);
+      ctx.save();roundClip();
+      // empty-vessel tint
+      let bg=ctx.createLinearGradient(0,0,0,H);
+      bg.addColorStop(0,rgba(shade(col,(immersive||dk)?-0.62:0.9),1));bg.addColorStop(1,rgba(shade(col,(immersive||dk)?-0.72:0.82),1));
+      ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+      const surfaceY=lerp(H+10,-6,level);
+      const swell=0.78+0.22*Math.sin(tt*0.17+0.7);
+      const crest=x=>surfaceY
+        + Math.sin(x*0.016 + tt*0.50)        *9.5*swell
+        + Math.sin(x*0.034 - tt*0.40 + 1.3)  *5.4
+        + Math.sin(x*0.066 + tt*0.86 + 2.1)  *2.8
+        + Math.sin(x*0.102 - tt*1.15 + 4.2)  *1.3
+        + Math.sin(x*0.008 + tt*0.24)        *4.2*swell;
+      // water body
+      ctx.beginPath();ctx.moveTo(0,crest(0));
+      for(let x=0;x<=W;x+=2)ctx.lineTo(x,crest(x));
+      ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
+      ctx.save();ctx.clip();
+      let wg=ctx.createLinearGradient(0,surfaceY-8,0,H);
+      wg.addColorStop(0,rgba(shade(col,dk?0.22:0.36),1));
+      wg.addColorStop(0.18,rgba(shade(col,dk?0.04:0.12),1));
+      wg.addColorStop(0.6,rgba(col,1));
+      wg.addColorStop(1,rgba(shade(col,-0.18),1));
+      ctx.fillStyle=wg;ctx.fillRect(0,0,W,H);
+      // aura glow from floor
+      let ag=ctx.createRadialGradient(W/2,H+8,0,W/2,H+8,H*0.9);
+      ag.addColorStop(0,rgba(shade(col,0.45),0.5));ag.addColorStop(1,rgba(col,0));
+      ctx.globalCompositeOperation="lighter";ctx.fillStyle=ag;ctx.fillRect(0,0,W,H);
+      // caustics — additive layered strokes (no shadowBlur)
+      for(let i=0;i<5;i++){
+        const yBase=surfaceY+22+i*((H-surfaceY)/5.0), dir=i%2?-1:1;
+        ctx.beginPath();
+        for(let x=0;x<=W;x+=3){const yy=yBase+Math.sin(x*0.030+tt*0.42*dir+i*1.3)*5+Math.sin(x*0.067-tt*0.30+i*2.0)*2.6+Math.sin(x*0.012+tt*0.18*dir)*3;x===0?ctx.moveTo(x,yy):ctx.lineTo(x,yy);}
+        const a=0.09+0.05*Math.sin(tt*0.5+i*1.7);
+        ctx.strokeStyle=rgba(shade(col,0.72),a*0.5);ctx.lineWidth=5;ctx.stroke();
+        ctx.strokeStyle=rgba(shade(col,0.82),a);ctx.lineWidth=1.6;ctx.stroke();
+      }
+      // light motes
+      for(const m of motes){m.y-=m.sp*0.0012;if(m.y<0)m.y=1;const mx=(m.x+Math.sin(tt*0.6+m.ph)*0.03)*W,my=surfaceY+10+m.y*(H-surfaceY-10);if(my<surfaceY)continue;ctx.fillStyle=rgba(shade(col,0.8),0.5);ctx.beginPath();ctx.arc(mx,my,m.r,0,7);ctx.fill();}
+      ctx.globalCompositeOperation="source-over";
+      // bubbles
+      for(const b of bubbles){
+        const span=H-surfaceY+10, prog=((time/1000/b.dur)+b.off)%1, by=H-prog*span;
+        if(by<surfaceY+2)continue;
+        const bx=b.x*W+Math.sin(tt*(6.28/b.swp)+b.off)*b.sway, op=b.op*Math.sin(prog*Math.PI);
+        ctx.fillStyle=rgba(shade(col,0.85),op*0.55);ctx.beginPath();ctx.arc(bx,by,b.r,0,7);ctx.fill();
+        ctx.strokeStyle=rgba(shade(col,0.95),op*0.7);ctx.lineWidth=0.7;ctx.beginPath();ctx.arc(bx,by,b.r,0,7);ctx.stroke();
+        ctx.fillStyle=`rgba(255,255,255,${op*0.6})`;ctx.beginPath();ctx.arc(bx-b.r*0.3,by-b.r*0.3,b.r*0.3,0,7);ctx.fill();
+      }
+      ctx.restore(); // end water clip
+      // meniscus waterline (layered, no shadowBlur)
+      const wline=(yoff,c2,w,comp)=>{ctx.globalCompositeOperation=comp||"source-over";ctx.beginPath();ctx.moveTo(0,crest(0)+yoff);for(let x=0;x<=W;x+=2)ctx.lineTo(x,crest(x)+yoff);ctx.strokeStyle=c2;ctx.lineWidth=w;ctx.stroke();};
+      if(level>0.012){
+        wline(0, rgba(shade(col,0.7),0.5), 6, "lighter");
+        wline(3, rgba(shade(col,0.6),0.3), 4, "source-over");
+        wline(0, "rgba(255,255,255,0.9)", 1.8, "source-over");
+      }
+      ctx.globalCompositeOperation="source-over";
+      ctx.restore(); // end roundClip
+      // glass vessel sheen
+      ctx.save();roundClip();
+      let shg=ctx.createLinearGradient(0,0,W*0.5,0);
+      shg.addColorStop(0,"rgba(255,255,255,0.20)");shg.addColorStop(0.5,"rgba(255,255,255,0.05)");shg.addColorStop(1,"rgba(255,255,255,0)");
+      ctx.fillStyle=shg;ctx.fillRect(0,0,W,H);
+      ctx.globalCompositeOperation="lighter";
+      let st=ctx.createLinearGradient(W*0.12,0,W*0.42,H);
+      st.addColorStop(0,"rgba(255,255,255,0)");st.addColorStop(0.5,"rgba(255,255,255,0.09)");st.addColorStop(1,"rgba(255,255,255,0)");
+      ctx.fillStyle=st;ctx.fillRect(0,0,W,H);
+      ctx.globalCompositeOperation="source-over";
+      let rim=ctx.createLinearGradient(0,0,0,16);
+      rim.addColorStop(0,`rgba(255,255,255,${dk?0.18:0.42})`);rim.addColorStop(1,"rgba(255,255,255,0)");
+      ctx.fillStyle=rim;ctx.fillRect(0,0,W,16);
+      ctx.restore();
+      raf=requestAnimationFrame(draw);
     };
-  })();
-  const {crest,upper,mid,lower,floor,meniscusOp,auroraStrength,complementHint}=palette;
-  const uid=size+"-"+aesthetic;
-
-  // Unique bubbles — each has its own size, speed, horizontal lane, start
-  // delay, and a gentle sway amplitude/period so no two rise alike.
-  const bubbles=useMemo(()=>Array.from({length:7}).map((_,i)=>{
-    const seed=(n)=>{const x=Math.sin((i+1)*n)*10000;return x-Math.floor(x);};
-    return {
-      x: Math.round((0.08+0.84*seed(12.9))*W),
-      r: 1.4+seed(78.2)*3.0,
-      dur: 3.4+seed(31.4)*3.8,
-      delay: -(seed(7.7)*6),
-      swayAmp: 3+seed(54.1)*7,
-      swayDur: 2.4+seed(19.3)*2.6,
-      maxOp: 0.45+seed(91.2)*0.4,
-    };
-  }),[W]);
-
-  if(c.done) return <DoneBadge color={color} t={t}/>;
-
+    raf=requestAnimationFrame(draw);
+    return()=>{alive=false;cancelAnimationFrame(raf);};
+  },[W,H,color,dk,immersive]);
+  if(immersive){
+    return(
+      <div style={{position:"fixed",inset:0,zIndex:9700,background:"#060a12",overflow:"hidden",animation:"ftIn .3s ease"}}>
+        <style>{`@keyframes ftIn{from{opacity:0}to{opacity:1}}`}</style>
+        <canvas ref={cvRef} style={{position:"absolute",inset:0,width:W,height:H,display:"block"}}/>
+        <ImmersiveChrome c={c} color={color} t={t} onClose={onClose} activity={activity} W={W} H={H} hideLabel={hideLabel} doneEmoji="💧" labelYFrac={0.42}/>
+      </div>
+    );
+  }
+  if(c.done) return <DoneBadge color={color} t={t} onReplay={()=>{c.reset();c.setRun(true);}} onClose={onClose}/>;
+  const onWater=c.pctSmooth>0.42;
   return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:18}}>
-      <style>{`
-        @keyframes aqDrift${uid}{from{transform:translateX(0)}to{transform:translateX(-${W}px)}}
-        ${bubbles.map((b,i)=>`
-        @keyframes aqRise${uid}_${i}{0%{transform:translateY(0);opacity:0}18%{opacity:${b.maxOp}}60%{opacity:${b.maxOp}}74%{opacity:0}100%{transform:translateY(-${(H*0.62).toFixed(0)}px);opacity:0}}
-        @keyframes aqSway${uid}_${i}{0%,100%{transform:translateX(${-b.swayAmp}px)}50%{transform:translateX(${b.swayAmp}px)}}
-        `).join("")}
-      `}</style>
       <div style={{position:"relative",width:W,height:H,borderRadius:30,overflow:"hidden",
-        background:dk?`linear-gradient(180deg, rgba(255,255,255,0.04), ${color}10)`:`linear-gradient(180deg, ${color}05, ${color}12)`,
-        border:`1px solid ${dk?"rgba(255,255,255,0.06)":color+"30"}`,
-        boxShadow:dk?`inset 0 1px 0 rgba(255,255,255,0.08), 0 0 90px -10px ${color}45, 0 28px 60px -20px ${color}33, 0 10px 30px -15px rgba(0,0,0,0.8)`:`${sh.md}, inset 0 1px 0 rgba(255,255,255,0.6)`}}>
-        <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{position:"absolute",inset:0}}>
-          <defs>
-            <clipPath id={`aqTank${uid}`}><rect x="0" y="0" width={W} height={H} rx="30"/></clipPath>
-            {/* Painterly water — five-stop gradient with carefully placed
-                tonal landmarks. The non-uniform offsets (0/8/35/72/100)
-                give the body a sense of depth like a watercolour wash:
-                the top half breathes with light, the bottom half settles
-                into a richer pool. Crest is dabbed with brightness for
-                the meniscus highlight. */}
-            <linearGradient id={`aqWater${uid}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor={crest} stopOpacity={dk?"0.94":"1"}/>
-              <stop offset="8%"   stopColor={upper} stopOpacity={dk?"0.96":"1"}/>
-              <stop offset="35%"  stopColor={mid}   stopOpacity={dk?"0.97":"1"}/>
-              <stop offset="72%"  stopColor={lower} stopOpacity={dk?"0.98":"1"}/>
-              <stop offset="100%" stopColor={floor} stopOpacity={dk?"0.99":"1"}/>
-            </linearGradient>
-            {/* Surface meniscus — a thin band of brightness right at the
-                water line, suggesting that the surface catches light. We
-                paint this just below the crest so the wave's crest line
-                still reads as the sharp edge. */}
-            <linearGradient id={`aqMeniscus${uid}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"  stopColor="#FFFFFF" stopOpacity={dk?"0.22":"0.45"}/>
-              <stop offset="55%" stopColor="#FFFFFF" stopOpacity={dk?"0.05":"0.10"}/>
-              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0"/>
-            </linearGradient>
-            {/* Sub-surface aurora — a faint inner glow rising from the
-                floor, like sunlight bending up through deep water. Tinted
-                slightly cooler than the body for a believable "depth"
-                feeling regardless of which hue the user picked. */}
-            <radialGradient id={`aqAurora${uid}`} cx="50%" cy="100%" r="80%">
-              <stop offset="0%"  stopColor={shadeHex(color, dk?0.10:0.30)} stopOpacity={dk?"0.30":"0.45"}/>
-              <stop offset="55%" stopColor={shadeHex(color, dk?0.05:0.20)} stopOpacity={dk?"0.12":"0.18"}/>
-              <stop offset="100%" stopColor={color} stopOpacity="0"/>
-            </radialGradient>
-            <radialGradient id={`aqGlass${uid}`} cx="30%" cy="16%" r="80%">
-              <stop offset="0%" stopColor="#fff" stopOpacity={dk?"0.16":"0.34"}/>
-              <stop offset="42%" stopColor="#fff" stopOpacity="0"/>
-            </radialGradient>
-          </defs>
-          <g clipPath={`url(#aqTank${uid})`}>
-            {/* Water body sits at the current surface level; one big soft swell
-                rolls slowly across (concept A). The wave path is 2W wide and
-                drifts by exactly W so the loop is seamless. */}
-            <g style={{transform:`translate3d(0, ${surfaceY.toFixed(1)}px, 0)`,willChange:"transform",backfaceVisibility:"hidden",WebkitBackfaceVisibility:"hidden"}}>
-              <g style={{animation:c.run?`aqDrift${uid} 9s linear infinite`:"none",willChange:"transform"}}>
-                <path fill={`url(#aqWater${uid})`}>
-                  <animate attributeName="d" dur="5s" repeatCount="indefinite"
-                    values={`M0,18 C${W*0.33},-6 ${W*0.66},40 ${W},18 C${W*1.33},-6 ${W*1.66},40 ${W*2},18 L${W*2},${H*1.6} L0,${H*1.6} Z;
-                             M0,18 C${W*0.33},40 ${W*0.66},-6 ${W},18 C${W*1.33},40 ${W*1.66},-6 ${W*2},18 L${W*2},${H*1.6} L0,${H*1.6} Z;
-                             M0,18 C${W*0.33},-6 ${W*0.66},40 ${W},18 C${W*1.33},-6 ${W*1.66},40 ${W*2},18 L${W*2},${H*1.6} L0,${H*1.6} Z`}/>
-                </path>
-                {/* Meniscus light — the band of brightness right under the
-                    surface where light skims through the water. Painted as
-                    a soft white-to-transparent gradient overlay clipped to
-                    the wave body, so it never spills above the crest.
-                    Opacity is driven by the aesthetic palette so each
-                    style (A/B/C) gets a different surface character. */}
-                <path fill={`url(#aqMeniscus${uid})`} opacity={meniscusOp}>
-                  <animate attributeName="d" dur="5s" repeatCount="indefinite"
-                    values={`M0,18 C${W*0.33},-6 ${W*0.66},40 ${W},18 C${W*1.33},-6 ${W*1.66},40 ${W*2},18 L${W*2},${(H*0.32).toFixed(0)} L0,${(H*0.32).toFixed(0)} Z;
-                             M0,18 C${W*0.33},40 ${W*0.66},-6 ${W},18 C${W*1.33},40 ${W*1.66},-6 ${W*2},18 L${W*2},${(H*0.32).toFixed(0)} L0,${(H*0.32).toFixed(0)} Z;
-                             M0,18 C${W*0.33},-6 ${W*0.66},40 ${W},18 C${W*1.33},-6 ${W*1.66},40 ${W*2},18 L${W*2},${(H*0.32).toFixed(0)} L0,${(H*0.32).toFixed(0)} Z`}/>
-                </path>
-                {/* Sub-surface aurora — anchored to the tank floor by being
-                    placed at a large y inside the moving group. Glows up
-                    from below and feels like sunlight scattered through
-                    deep water. Sits BEHIND bubbles in z-order. Strength is
-                    palette-controlled: A has a touch, B has none (the
-                    gradient does its own work), C leans on it heavily. */}
-                {auroraStrength>0&&<rect x={-W*0.1} y={H*0.4} width={W*1.2} height={H*1.4} fill={`url(#aqAurora${uid})`} opacity={auroraStrength}/>}
-                {/* bright crest line riding the swell */}
-                <path fill="none" stroke="#EAF8FC" strokeWidth="2" strokeLinecap="round" opacity="0.55">
-                  <animate attributeName="d" dur="5s" repeatCount="indefinite"
-                    values={`M0,18 C${W*0.33},-6 ${W*0.66},40 ${W},18 C${W*1.33},-6 ${W*1.66},40 ${W*2},18;
-                             M0,18 C${W*0.33},40 ${W*0.66},-6 ${W},18 C${W*1.33},40 ${W*1.66},-6 ${W*2},18;
-                             M0,18 C${W*0.33},-6 ${W*0.66},40 ${W},18 C${W*1.33},-6 ${W*1.66},40 ${W*2},18`}/>
-                </path>
-              </g>
-            </g>
-            {/* Unique rising bubbles — each lane animates independently. Two
-                nested groups: outer rises bottom→surface, inner sways. */}
-            {c.run&&bubbles.map((b,i)=>(
-              <g key={i} transform={`translate(${b.x},${H-8})`}>
-                <g style={{animation:`aqRise${uid}_${i} ${b.dur}s linear ${b.delay}s infinite`,willChange:"transform, opacity"}}>
-                  <g style={{animation:`aqSway${uid}_${i} ${b.swayDur}s ease-in-out infinite`,willChange:"transform"}}>
-                    <circle cx={0} cy={0} r={b.r} fill="#DFF6FC" opacity="0.85"/>
-                    <circle cx={-b.r*0.32} cy={-b.r*0.34} r={b.r*0.34} fill="#fff" opacity="0.9"/>
-                  </g>
-                </g>
-              </g>
-            ))}
-            <rect x="0" y="0" width={W} height={H} fill={`url(#aqGlass${uid})`}/>
-          </g>
-          {/* curved glass light streak */}
-          <rect x={W*0.13} y="6" width={W*0.06} height={H-12} rx={W*0.03} fill="rgba(255,255,255,0.26)" opacity="0.6" style={{filter:"blur(3px)"}}/>
-        </svg>
-        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          {!hideLabel&&<span style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.14,color:c.pctSmooth>0.45?"#fff":shadeHex(color,dk?0.35:-0.15),textShadow:c.pctSmooth>0.45?`0 2px ${Math.round(8+c.pctSmooth*10)}px rgba(0,0,0,${(0.2+c.pctSmooth*0.2).toFixed(2)})`:"none",fontVariantNumeric:"tabular-nums",transition:"color .6s cubic-bezier(0.32, 0.72, 0, 1), text-shadow .6s cubic-bezier(0.32, 0.72, 0, 1)",willChange:"contents"}}>{c.label}</span>}
-        </div>
+        boxShadow:dk?`inset 0 1px 0 rgba(255,255,255,0.08), 0 0 90px -10px ${color}45, 0 28px 60px -20px ${color}33, 0 10px 30px -15px rgba(0,0,0,0.8)`:`${sh.md}, inset 0 1px 0 rgba(255,255,255,0.6)`,
+        border:`1px solid ${dk?"rgba(255,255,255,0.06)":color+"30"}`}}>
+        <canvas ref={cvRef} style={{position:"absolute",inset:0,width:W,height:H,display:"block"}}/>
+        {!hideLabel&&(
+          <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
+            <span style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.15,color:onWater?"#fff":shadeHex(color,dk?0.35:-0.15),textShadow:onWater?`0 2px ${Math.round(8+c.pctSmooth*10)}px rgba(0,0,0,${(0.2+c.pctSmooth*0.2).toFixed(2)})`:"none",fontVariantNumeric:"tabular-nums",transition:"color .6s ease"}}>{c.label}</span>
+          </div>
+        )}
       </div>
-      {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
+      {showCtrl&&<div style={{marginTop:16}}><TCtrl c={c} color={color} t={t}/></div>}
     </div>
   );
 }
@@ -2625,7 +2580,261 @@ function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,aesthe
    Just sky + sun + horizon + water + gentle reflection.
    All motion via CSS keyframes on GPU; React state updates only at timer ticks.
 ═══ */
-function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false}){
+/* Canvas overlay for the SunTimer — renders the SUN (soft bloom, gentle
+   rotating rays, clean warm disc — no white core) AND the moving water shimmer
+   + glitter path from the "Filmisk" concept. Canvas gives the luminous, premium
+   light that SVG couldn't (same approach as the Aurora scene). The SVG sun is
+   hidden; SVG still provides sky, clouds, stars, water base and reflection. */
+function SeaShimmer({W,H,horizonY,sunX,warm,progress,radius=24,sunR=30,skyTopMargin=28}){
+  const ref=useRef(null);
+  const live=useRef({});
+  live.current={horizonY,sunX,warm,progress,sunR,skyTopMargin};
+  useEffect(()=>{
+    const cv=ref.current; if(!cv) return;
+    const dpr=Math.min(2,(typeof window!=="undefined"&&window.devicePixelRatio)||1);
+    cv.width=W*dpr; cv.height=H*dpr;
+    const ctx=cv.getContext("2d"); if(!ctx) return;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    let raf;
+    const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+    const mix=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];
+    const rgba=(c,a)=>`rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
+    const bloom=(cx,cy,r,col,a)=>{if(a<=0)return;const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,rgba(col,a));g.addColorStop(0.5,rgba(col,a*0.4));g.addColorStop(1,rgba(col,0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fill();};
+    const draw=()=>{
+      const now=performance.now();
+      const {horizonY:HZ,sunX:SX,warm:wm,progress:pg,sunR:R,skyTopMargin:STM}=live.current;
+      const center=mix(wm,[255,250,238],0.18), mid=wm, edge=mix(wm,[60,28,46],0.18);
+      const light=[Math.min(255,wm[0]+38),Math.min(255,wm[1]+30),Math.min(255,wm[2]+22)];
+      const warmth=clamp((pg-0.35)/0.45,0,1);
+      const sunY=STM+pg*(HZ+R-STM);
+      const sunVis=sunY<HZ+R;
+      const squash=1-clamp((pg-0.70)/0.24,0,1)*0.16;
+      ctx.clearRect(0,0,W,H);
+
+      // ── SUN — "Dis": soft, edgeless, melts into golden haze ──────────────
+      const core=mix(wm,[255,240,206],0.5), rim=mix(wm,[140,52,68],0.32);
+      const breath=1+Math.sin(now*0.0009)*0.012;
+      ctx.save();ctx.globalCompositeOperation="lighter";
+      bloom(SX,sunY,R*6.4*breath,mid,0.20+warmth*0.20);
+      bloom(SX,sunY,R*3.6,mid,0.30);
+      if(sunVis){
+        ctx.translate(SX,sunY);ctx.scale(1,squash);
+        const g=ctx.createRadialGradient(0,0,R*0.08,0,0,R*1.7);
+        g.addColorStop(0,rgba(core,0.98));
+        g.addColorStop(0.40,rgba(mid,0.92));
+        g.addColorStop(0.72,rgba(mix(mid,rim,0.4),0.5));
+        g.addColorStop(1,rgba(rim,0));
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,R*1.7,0,7);ctx.fill();
+      }
+      ctx.restore();
+
+      // ── SEA (below horizon) — living, moving surface ─────────
+      // broad slow swells: wide soft light bands drifting vertically
+      ctx.save();ctx.globalCompositeOperation="lighter";
+      for(let s=0;s<4;s++){
+        const phase=now*0.00035+s*1.7;
+        const baseY=HZ+(H-HZ)*(0.16+s*0.22);
+        const yy=baseY+Math.sin(phase)*((H-HZ)*0.05);
+        const band=(H-HZ)*0.13;
+        const tt=(yy-HZ)/(H-HZ);
+        const a=0.06*(1-tt*0.4);
+        const g=ctx.createLinearGradient(0,yy-band,0,yy+band);
+        g.addColorStop(0,rgba(light,0));g.addColorStop(0.5,rgba(light,a));g.addColorStop(1,rgba(light,0));
+        ctx.fillStyle=g;ctx.fillRect(0,yy-band,W,band*2);
+      }
+      ctx.restore();
+      // fine shimmer lines that drift + wobble
+      const drift=(now*0.012)%7;
+      for(let y=HZ+4;y<H+7;y+=7){
+        const yy=y-drift; if(yy<HZ+1) continue;
+        const tt=(yy-HZ)/(H-HZ);
+        const a=0.06+0.06*Math.sin(now*0.0012+yy*0.3);
+        ctx.strokeStyle=rgba(light,(a*(1-tt*0.5)).toFixed(3));
+        ctx.lineWidth=1.2;
+        const wob=Math.sin(now*0.0016+yy*0.18)*(1.5+tt*4);
+        ctx.beginPath();ctx.moveTo(0,yy+wob);ctx.lineTo(W,yy+wob*0.35);ctx.stroke();
+      }
+      // glitter sun-path — stronger, lively
+      const refA=clamp((pg-0.30)/0.5,0,1);
+      if(refA>0.02){
+        ctx.save();ctx.globalCompositeOperation="lighter";
+        for(let y=HZ+2;y<H;y+=3){
+          const tt=(y-HZ)/(H-HZ);
+          const wc=12+tt*54;
+          const fl=0.35+0.65*Math.abs(Math.sin(now*0.005+y*0.5));
+          const a=0.6*refA*(1-tt)*fl;
+          const wob=Math.sin(now*0.003+y*0.4)*(2.5+tt*12);
+          const gr=ctx.createLinearGradient(SX-wc/2,0,SX+wc/2,0);
+          gr.addColorStop(0,rgba(mid,0));
+          gr.addColorStop(0.5,rgba(light,a.toFixed(3)));
+          gr.addColorStop(1,rgba(mid,0));
+          ctx.fillStyle=gr;ctx.fillRect(SX-wc/2+wob,y,wc,2);
+        }
+        ctx.restore();
+      }
+      raf=requestAnimationFrame(draw);
+    };
+    draw();
+    return ()=>cancelAnimationFrame(raf);
+  },[W,H]);
+  return <canvas ref={ref} style={{position:"absolute",left:0,top:0,width:W,height:H,pointerEvents:"none",borderRadius:radius}}/>;
+}
+
+/* ── SunsetScene ─────────────────────────────────────────────────────────
+   The full "Stilla hav" sunset, rendered entirely on canvas (like Aurora):
+   sun-mirroring sky, fBm "Fjälleld" clouds drifting with the wind, the soft
+   Dis sun, a luminous horizon, a believable shimmering reflection, living
+   water, stars as the sky darkens, and a whale that surfaces and blows a
+   misty spout in the final stretch. Driven by `progress` (0=day → 1=night). */
+const SUN_PAL={
+  skyTop:["#6FA8D6","#8FB2CE","#C7A7BE","#7C68A0","#382B5C","#1A1434"],
+  skyUp :["#92BBDD","#B7BFCE","#D9B0AE","#9A6C96","#42356A","#1F1840"],
+  skyMid:["#B6D2E6","#D6C8CE","#EBAA86","#B66E88","#4A3A6E","#241C46"],
+  skyHor:["#DCEBF2","#F6DCA2","#F8A65A","#F26E6E","#7E4E7E","#2A2050"],
+  sun   :["#FFF7E6","#FFEAB2","#FFC272","#FF8C5A","#F2626C","#C44C66"],
+  seaT  :["#6098C2","#7494AE","#9683A4","#705E92","#352B58","#141228"],
+  seaB  :["#356488","#42607E","#4C4A72","#332A56","#1E1840","#070518"],
+};
+function SunsetScene({W,H,progress,immersive=false,radius=24}){
+  const ref=useRef(null);
+  const live=useRef({progress}); live.current.progress=progress;
+  useEffect(()=>{
+    const cv=ref.current; if(!cv) return;
+    const dpr=Math.min(2,(typeof window!=="undefined"&&window.devicePixelRatio)||1);
+    cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
+    const ctx=cv.getContext("2d"); if(!ctx) return;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    const HZ=Math.round(H*0.585), R=Math.max(16,W*0.076);
+    const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+    const mix=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];
+    const rgba=(c,a)=>`rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
+    const hx=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+    const P={}; for(const k in SUN_PAL) P[k]=SUN_PAL[k].map(hx);
+    const ramp=(s,p)=>{const n=s.length-1;const x=clamp(p,0,1)*n;const i=Math.min(n-1,Math.floor(x));return mix(s[i],s[i+1],x-i);};
+    const bloom=(cx,cy,r,col,a)=>{if(a<=0||r<=0)return;const g=ctx.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,rgba(col,a));g.addColorStop(0.45,rgba(col,a*0.42));g.addColorStop(1,rgba(col,0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fill();};
+    // grain tile
+    const grain=document.createElement("canvas");grain.width=grain.height=90;
+    {const g=grain.getContext("2d"),id=g.createImageData(90,90);for(let i=0;i<id.data.length;i+=4){const v=150+Math.random()*105;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=Math.random()*255;}g.putImageData(id,0,0);}
+    // noise + fBm
+    const rng=seed=>{let a=seed>>>0;return ()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};};
+    const makeNoise=seed=>{const G=256,grid=new Float32Array(G*G),r=rng(seed);for(let i=0;i<G*G;i++)grid[i]=r();const sm=t=>t*t*(3-2*t);return (x,y)=>{const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;const u=sm(xf),v=sm(yf);const A=grid[((yi&255)*G)+(xi&255)],B=grid[((yi&255)*G)+((xi+1)&255)],C=grid[(((yi+1)&255)*G)+(xi&255)],D=grid[(((yi+1)&255)*G)+((xi+1)&255)];return (A*(1-u)+B*u)*(1-v)+(C*(1-u)+D*u)*v;};};
+    const fbm=(n,x,y,oct,gain)=>{let f=1,a=0.5,s=0,nm=0;for(let i=0;i<oct;i++){s+=a*n(x*f,y*f);nm+=a;f*=2;a*=gain;}return s/nm;};
+    const MACK={seed:60,xf:10,yf:9,thr:0.5,sh:2.2,cy:0.6,bh:0.5,warp:0.3,lk:7};
+    const nA=makeNoise(MACK.seed), nW=makeNoise(MACK.seed+101);
+    // bake the cloud layer once (golden-hour lighting), high-res for smoothness
+    const genCloud=()=>{
+      const sun=ramp(P.sun,0.5),hor=mix(ramp(P.skyHor,0.5),sun,0.5),up=mix(ramp(P.skyTop,0.5),ramp(P.skyMid,0.5),0.5);
+      const S=MACK, cw=Math.max(80,Math.round(W*0.7)), ch=Math.max(60,Math.round(HZ*0.7));
+      const off=document.createElement("canvas");off.width=cw;off.height=ch;
+      const octx=off.getContext("2d");const img=octx.createImageData(cw,ch);
+      const core=mix(hor,[54,40,74],0.55), warm=mix(sun,[255,246,228],0.32), cool=mix(up,[255,255,255],0.45);
+      const sunPx=cw*0.5, sunPy=ch*1.06;
+      for(let y=0;y<ch;y++)for(let x=0;x<cw;x++){
+        let bx=x/cw*S.xf, by=y/ch*S.yf;
+        const wv=fbm(nW,bx*0.5+5,by*0.5,3,0.5); bx+=(wv-0.5)*S.warp;
+        const d=fbm(nA,bx+S.seed,by,5,0.55);
+        const vy=y/ch, band=clamp(1-Math.abs(vy-S.cy)/S.bh,0,1);
+        let cd=clamp((d-S.thr)/(1-S.thr),0,1); cd=Math.pow(cd,S.sh)*Math.pow(band,1.3);
+        const i=(y*cw+x)*4;
+        if(cd<=0.012){img.data[i+3]=0;continue;}
+        const dx=sunPx-x,dy=sunPy-y,dl=Math.hypot(dx,dy)||1;
+        const d2=fbm(nA,bx+(dx/dl*S.lk)/cw*S.xf+S.seed,by+(dy/dl*S.lk)/ch*S.yf,5,0.55);
+        const rim=clamp((d-d2)*3.2,0,1), back=Math.pow(clamp(1-cd,0,1),1.5), tp=clamp((S.cy-vy)/S.bh,0,1)*0.5;
+        let col=mix(core,warm,clamp(rim*0.85+back*0.55+0.12,0,1)); col=mix(col,cool,tp*0.4);
+        img.data[i]=col[0]|0;img.data[i+1]=col[1]|0;img.data[i+2]=col[2]|0;img.data[i+3]=(cd*0.92*255)|0;
+      }
+      octx.putImageData(img,0,0);return off;
+    };
+    const cloudImg=genCloud();
+    let raf;
+    const draw=()=>{
+      const now=performance.now(), p=clamp(live.current.progress,0,1);
+      const sun=ramp(P.sun,p), skyW=clamp((p-0.25)/0.5,0,1);
+      const top=mix(ramp(P.skyTop,p),sun,skyW*0.10), up=mix(ramp(P.skyUp,p),sun,skyW*0.16);
+      const mid=mix(ramp(P.skyMid,p),sun,0.13+skyW*0.24), hor=mix(ramp(P.skyHor,p),sun,0.26+skyW*0.40);
+      const seaT=ramp(P.seaT,p), seaB=ramp(P.seaB,p);
+      const sunY=H*0.10+clamp(p/0.985,0,1)*(HZ+R-H*0.10), sunVis=sunY<HZ+R;
+      const sq=1-clamp((sunY-(HZ-R*1.6))/(R*2.4),0,1)*0.16;
+      const warmth=clamp((p-0.30)/0.5,0,1), gold=Math.sin(clamp((p-0.22)/0.62,0,1)*Math.PI);
+      const core=mix(sun,[255,243,212],0.5), rim=mix(sun,[150,56,72],0.34);
+      const starA=clamp((p-0.70)/0.24,0,1);
+      const light=[Math.min(255,sun[0]+32),Math.min(255,sun[1]+26),Math.min(255,sun[2]+18)];
+      ctx.clearRect(0,0,W,H);
+      // sky
+      let g=ctx.createLinearGradient(0,0,0,HZ);g.addColorStop(0,rgba(top,1));g.addColorStop(0.34,rgba(up,1));g.addColorStop(0.66,rgba(mid,1));g.addColorStop(1,rgba(hor,1));ctx.fillStyle=g;ctx.fillRect(0,0,W,HZ);
+      // stars
+      if(starA>0.02){const S=[[0.1,0.1,1],[0.26,0.06,0.8],[0.4,0.14,0.7],[0.55,0.08,1],[0.7,0.15,0.7],[0.84,0.09,0.9],[0.92,0.19,0.8],[0.18,0.24,0.6],[0.48,0.04,0.8],[0.63,0.26,0.6],[0.33,0.2,0.7],[0.77,0.23,0.6]];S.forEach((s,i)=>{const tw=0.45+0.55*Math.sin(now*0.003+i*1.3);ctx.fillStyle=`rgba(255,252,246,${(starA*tw*s[2]).toFixed(3)})`;ctx.beginPath();ctx.arc(s[0]*W,s[1]*HZ,0.9+s[2]*0.5,0,7);ctx.fill();});}
+      // afterglow band + sun
+      ctx.save();ctx.globalCompositeOperation="lighter";
+      const ag=ctx.createLinearGradient(0,HZ-H*0.19,0,HZ);ag.addColorStop(0,rgba(sun,0));ag.addColorStop(1,rgba(sun,0.4*(0.45+warmth*0.55)));ctx.fillStyle=ag;ctx.fillRect(0,HZ-H*0.19,W,H*0.19);
+      bloom(W/2,HZ,W*0.66,sun,0.36*(0.5+gold*0.5));
+      const breath=1+Math.sin(now*0.0009)*0.012;
+      bloom(W/2,sunY,R*6.6*breath,sun,0.20+warmth*0.18);
+      bloom(W/2,sunY,R*3.4,sun,0.30);
+      if(sunVis){ctx.save();ctx.translate(W/2,sunY);ctx.scale(1,sq);const sg=ctx.createRadialGradient(0,0,R*0.07,0,0,R*1.72);sg.addColorStop(0,rgba(core,0.99));sg.addColorStop(0.38,rgba(sun,0.96));sg.addColorStop(0.7,rgba(mix(sun,rim,0.42),0.52));sg.addColorStop(1,rgba(rim,0));ctx.fillStyle=sg;ctx.beginPath();ctx.arc(0,0,R*1.72,0,7);ctx.fill();ctx.restore();}
+      ctx.restore();
+      // clouds (drift with the wind, fade late)
+      const cloudA=clamp(1-Math.max(0,(p-0.78)/0.20),0,1);
+      if(cloudA>0.01){const drift=(now*0.011)%W;ctx.save();ctx.globalAlpha=cloudA;ctx.imageSmoothingEnabled=true;ctx.drawImage(cloudImg,0,0,cloudImg.width,cloudImg.height,-drift,0,W,HZ);ctx.drawImage(cloudImg,0,0,cloudImg.width,cloudImg.height,W-drift,0,W,HZ);ctx.restore();}
+      // sea base
+      let s2=ctx.createLinearGradient(0,HZ,0,H);s2.addColorStop(0,rgba(seaT,1));s2.addColorStop(1,rgba(seaB,1));ctx.fillStyle=s2;ctx.fillRect(0,HZ,W,H-HZ);
+      ctx.save();ctx.globalCompositeOperation="lighter";const sb=ctx.createLinearGradient(0,HZ,0,HZ+(H-HZ)*0.18);sb.addColorStop(0,rgba(mix(hor,sun,0.3),0.42*(0.5+gold*0.5)));sb.addColorStop(1,rgba(hor,0));ctx.fillStyle=sb;ctx.fillRect(0,HZ,W,(H-HZ)*0.18);ctx.restore();
+      ctx.save();ctx.globalCompositeOperation="lighter";const skyRef=ctx.createLinearGradient(0,HZ,0,H);skyRef.addColorStop(0,rgba(mix(mid,seaT,0.5),0.09));skyRef.addColorStop(0.5,rgba(up,0.035));skyRef.addColorStop(1,rgba(up,0));ctx.fillStyle=skyRef;ctx.fillRect(0,HZ,W,H-HZ);ctx.restore();
+      // water movement
+      ctx.save();ctx.globalCompositeOperation="lighter";
+      for(let s=0;s<4;s++){const ph=now*0.0003+s*1.7;const by=HZ+(H-HZ)*(0.18+s*0.21);const yy=by+Math.sin(ph)*((H-HZ)*0.045);const band=(H-HZ)*0.12;const tt=(yy-HZ)/(H-HZ);const a=0.045*(1-tt*0.4);const bg=ctx.createLinearGradient(0,yy-band,0,yy+band);bg.addColorStop(0,rgba(light,0));bg.addColorStop(0.5,rgba(light,a));bg.addColorStop(1,rgba(light,0));ctx.fillStyle=bg;ctx.fillRect(0,yy-band,W,band*2);}
+      const drw=(now*0.01)%6;
+      for(let y=HZ+5;y<H+6;y+=6){const yy=y-drw;if(yy<HZ+2)continue;const tt=(yy-HZ)/(H-HZ);const a=0.035+0.045*Math.sin(now*0.0011+yy*0.3);ctx.strokeStyle=rgba(light,(a*(1-tt*0.5)).toFixed(3));ctx.lineWidth=1;const wob=Math.sin(now*0.0015+yy*0.18)*(1.4+tt*3.6);ctx.beginPath();ctx.moveTo(0,yy+wob);ctx.lineTo(W,yy+wob*0.32);ctx.stroke();}
+      ctx.restore();
+      // horizon line
+      ctx.save();ctx.globalCompositeOperation="lighter";const hl=ctx.createLinearGradient(0,0,W,0);hl.addColorStop(0,rgba(sun,0.06));hl.addColorStop(0.5,rgba(mix(sun,[255,246,224],0.5),0.5*(0.5+gold*0.5)));hl.addColorStop(1,rgba(sun,0.06));ctx.fillStyle=hl;ctx.fillRect(0,HZ-1,W,2);ctx.restore();
+      // reflection
+      const refA=clamp((p-0.12)/0.4,0,1)*clamp(1-(sunY-HZ)/(R*6),0,1);
+      if(refA>0.02){
+        ctx.save();ctx.globalCompositeOperation="lighter";
+        bloom(W/2,HZ+2,R*2.1,sun,0.55*refA); bloom(W/2,HZ-R*0.4,R*1.3,sun,0.30*refA);
+        for(let y=HZ+1;y<H;y+=2){const depth=(y-HZ)/(H-HZ);const w=R*(0.62+depth*1.35);const s1=Math.sin(now*0.004+y*0.55),s2=Math.sin(now*0.0026+y*1.2);const flick=Math.pow(Math.abs(s1*0.6+s2*0.4),1.7);const a=0.5*refA*(1-depth*0.95)*(0.14+0.86*flick);if(a<0.012)continue;const wob=s2*(1+depth*5);const rg=ctx.createLinearGradient(W/2-w,0,W/2+w,0);rg.addColorStop(0,rgba(sun,0));rg.addColorStop(0.5,rgba(mix(sun,[255,244,218],0.42),a));rg.addColorStop(1,rgba(sun,0));ctx.fillStyle=rg;ctx.fillRect(W/2-w+wob,y,w*2,1.6);}
+        for(let k=0;k<5;k++){const gy=HZ+6+k*7+Math.sin(now*0.003+k)*2;const gx=W/2+Math.sin(now*0.0021+k*2)*(R*0.5);const ga=0.5*refA*Math.abs(Math.sin(now*0.005+k*1.7));bloom(gx,gy,R*0.42,light,ga);}
+        ctx.restore();
+      }
+      // whale — surfaces & blows a misty spout near the end
+      const dl=clamp((p-0.9)/0.1,0,1);
+      if(dl>0&&dl<1){
+        const wx=W*0.64, water=HZ+(H-HZ)*0.17, K=(H-HZ);
+        const emerge=clamp(dl/0.28,0,1), submerge=clamp((dl-0.6)/0.4,0,1), backAmt=emerge*(1-submerge*0.92);
+        const halfW=K*0.085, backH=K*0.032*backAmt;
+        ctx.save();ctx.globalCompositeOperation="lighter";
+        for(let r=0;r<3;r++){const rr=halfW*(1+r*0.6)+backAmt*7;const ra=0.09*backAmt*(1-r*0.25);ctx.strokeStyle=rgba(mix(sun,[255,250,236],0.4),ra);ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(wx,water+2,rr,rr*0.24,0,0,7);ctx.stroke();}
+        ctx.restore();
+        if(backH>0.4){
+          ctx.save();ctx.beginPath();ctx.moveTo(wx-halfW,water);
+          ctx.bezierCurveTo(wx-halfW*0.55,water-backH,wx-halfW*0.1,water-backH,wx,water-backH*0.95);
+          ctx.bezierCurveTo(wx+halfW*0.32,water-backH*0.86,wx+halfW*0.5,water-backH*1.32,wx+halfW*0.6,water-backH*1.3);
+          ctx.bezierCurveTo(wx+halfW*0.72,water-backH*0.8,wx+halfW*0.9,water-backH*0.36,wx+halfW,water);
+          ctx.closePath();ctx.fillStyle="rgba(24,22,40,0.92)";ctx.fill();
+          ctx.globalCompositeOperation="lighter";ctx.strokeStyle=rgba(mix(sun,[255,244,220],0.4),0.55);ctx.lineWidth=1.3;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(wx-halfW*0.8,water-backH*0.45);ctx.bezierCurveTo(wx-halfW*0.35,water-backH,wx-halfW*0.05,water-backH,wx,water-backH*0.95);ctx.stroke();ctx.restore();
+        }
+        const spoutT=clamp((dl-0.22)/0.5,0,1), plumeA=clamp(spoutT*2.4,0,1)*(1-clamp((dl-0.8)/0.2,0,1));
+        if(plumeA>0.02){
+          const bx=wx-halfW*0.4, by=water-backH*0.9, ph=K*0.17*Math.min(1,spoutT*1.3), mist=mix(sun,[255,255,255],0.62);
+          ctx.save();ctx.globalCompositeOperation="lighter";
+          for(let i=0;i<16;i++){const tt=i/15,spread=ph*0.24*tt,lean=Math.sin(now*0.0018)*ph*0.06*tt;for(let j=-1;j<=1;j++){const ox=j*spread*0.62+Math.sin(i*12.9+j*7.1)*spread*0.3+lean;const py=by-ph*tt-Math.sin(now*0.004+i*0.5)*0.6;const rr=(1.4+tt*6.5)*(j===0?1.1:0.85);const a=plumeA*(1-tt*0.82)*(0.24-Math.abs(j)*0.05);bloom(bx+ox,py,rr,mist,a);}}
+          ctx.restore();
+        }
+      }
+      // cinematic warm lift + vignette + grain
+      ctx.save();ctx.globalCompositeOperation="lighter";bloom(W/2,HZ-R*0.4,W*0.52,sun,0.07*(0.4+gold*0.6));ctx.restore();
+      const v=ctx.createRadialGradient(W/2,H*0.44,H*0.32,W/2,H*0.5,H*0.84);v.addColorStop(0,"rgba(0,0,0,0)");v.addColorStop(1,`rgba(8,5,18,${(0.28+p*0.26).toFixed(3)})`);ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+      ctx.save();ctx.globalAlpha=0.045;ctx.globalCompositeOperation="overlay";for(let x=0;x<W;x+=90)for(let y=0;y<H;y+=90)ctx.drawImage(grain,x,y);ctx.restore();
+      raf=requestAnimationFrame(draw);
+    };
+    draw();
+    return ()=>cancelAnimationFrame(raf);
+  },[W,H]);
+  return <canvas ref={ref} style={immersive?{position:"absolute",inset:0,width:W,height:H,display:"block"}:{width:W,height:H,display:"block",borderRadius:radius}}/>;
+}
+
+function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false,immersive=false,onClose,activity}){
   const c=useTimer(totalSec,autoRun);
   // CRITICAL — ALL hooks MUST come before any conditional return.
   // Earlier the early return `if(c.done) return <DoneBadge/>` sat BETWEEN
@@ -2635,8 +2844,15 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
   // expected"). Keeping every hook above the early return fixes that.
   const sunGroupRef=useRef(null);
   const dolphinGroupRef=useRef(null);
+  const[vp,setVp]=useState(()=>(typeof window!=="undefined"?{w:window.innerWidth,h:window.innerHeight}:{w:390,h:780}));
+  useEffect(()=>{
+    if(!immersive)return;
+    const on=()=>setVp({w:window.innerWidth,h:window.innerHeight});
+    window.addEventListener("resize",on);window.addEventListener("orientationchange",on);
+    return()=>{window.removeEventListener("resize",on);window.removeEventListener("orientationchange",on);};
+  },[immersive]);
 
-  const W=size, H=Math.round(size*1.34);
+  const W=immersive?vp.w:size, H=immersive?vp.h:Math.round(size*1.34);
   const horizonY=Math.round(H*0.55);
   const sunR=Math.round(size*0.13);
   const skyTopMargin=Math.round(size*0.12);
@@ -2670,13 +2886,13 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
         const dolActive=prog>0.90;
         if(dolActive){
           const dolT=Math.max(0,Math.min(1,(prog-0.90)/0.085));
-          const dxC=W*0.62, span=W*0.22;
+          const dxC=W*0.62, span=W*0.20;
           const dx=dxC-span/2+span*dolT;
-          const peak=H*0.20;
+          const peak=H*0.15;
           const arc=Math.sin(dolT*Math.PI);
-          const dy=horizonY+8-arc*peak;
-          const rot=(dolT-0.5)*150;
-          const sc=size*0.0013;
+          const dy=horizonY+6-arc*peak;
+          const rot=(dolT-0.5)*120;
+          const sc=size*0.0012;
           dolphinGroupRef.current.style.display="";
           dolphinGroupRef.current.style.transform=`translate3d(${dx}px, ${dy}px, 0) rotate(${rot}deg) scale(${sc})`;
         } else {
@@ -2690,7 +2906,7 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[c.run,c.done,totalSec,size]);
 
-  if(c.done) return <DoneBadge color={color} t={t}/>;
+  if(c.done&&!immersive) return <DoneBadge color={color} t={t} onReplay={()=>{c.reset();c.setRun(true);}} onClose={onClose}/>;
 
   // Progress: 0 → 1 across full duration. LINEAR — so that at 50% of the
   // timer's time, the sun is exactly 50% of the way to the horizon, and at
@@ -2701,6 +2917,19 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
   const phaseT=(start,end)=>Math.max(0,Math.min(1,(progress-start)/(end-start)));
 
   // PASTEL palette — soft, muted, never saturated.
+  // ── Rich palette ported from the approved concepts ──────────────────────
+  // Sky + sun colours come from "Skymning"; the moving water shimmer (below,
+  // as a canvas overlay) comes from "Filmisk". RGB-lerped so the colour
+  // strings are always valid (no malformed hsl can ever break the scene).
+  const _hx=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+  const _rampArr=(arr,pp)=>{const n=arr.length-1;const x=Math.max(0,Math.min(1,pp))*n;const i=Math.min(n-1,Math.floor(x));const f=x-i,a=arr[i],b=arr[i+1];return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f];};
+  const _mix=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];
+  const _rgb=c=>`rgb(${c[0]|0},${c[1]|0},${c[2]|0})`;
+  const PAL_SKYTOP=["#6FA8D6","#8FB2CE","#C9A9C0","#7E6AA0","#3A2C5E","#1C1636"].map(_hx);
+  const PAL_SKYMID=["#A9C9E0","#CDC2CE","#E7A98E","#B06E8E","#4A3A6E","#241C46"].map(_hx);
+  const PAL_SKYHOR=["#DCEBF2","#F3D9A6","#F6A45E","#EF6E72","#7A4E7E","#2A2050"].map(_hx);
+  const PAL_SUN=["#FFF7E6","#FFE9B0","#FFC070","#FF8A58","#F0606A","#C24C66"].map(_hx);
+
   // Phases: pale day → soft peach → dusty rose → lavender dusk → indigo night
   // Sky top color
   let skyTopH, skyTopS, skyTopL;
@@ -2740,8 +2969,15 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
     skyBotH=lerp(310,250,p); skyBotS=lerp(40,38,p); skyBotL=lerp(50,30,p);
   }
 
-  const skyTop=`hsl(${skyTopH},${skyTopS}%,${skyTopL}%)`;
-  const skyBot=`hsl(${skyBotH},${skyBotS}%,${skyBotL}%)`;
+  // Sky gradient strings now come from the "Skymning" palette (the HSL numbers
+  // above are kept — hills, clouds, horizon glow & water still derive from them).
+  // Sky now MIRRORS the sun's colour — the dusk palette is blended toward the
+  // sun's warm hue, strongest at the horizon and growing toward sunset, so the
+  // whole sky glows in sympathy with the sun instead of feeling independent.
+  const _skySun=_rampArr(PAL_SUN,progress);
+  const _skyWarm=Math.max(0,Math.min(1,(progress-0.25)/0.5));
+  const skyTop=_rgb(_mix(_rampArr(PAL_SKYTOP,progress),_skySun,_skyWarm*0.13));
+  const skyBot=_rgb(_mix(_rampArr(PAL_SKYHOR,progress),_skySun,0.30+_skyWarm*0.40));
 
   // Water — blue ocean at start, transitions to warmer reflective tones as sun sets
   // Phases: blue → soft teal → muted peach → dusky rose → indigo night
@@ -2780,9 +3016,12 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
 
   // Soft pastel sun: pale cream → peach → rose
   const warmth=Math.min(1,Math.max(0,(progress-0.35)/0.45));
-  const sunCenter=`hsl(${42-warmth*8},${60+warmth*15}%,${96-warmth*4}%)`;
-  const sunMid=`hsl(${32-warmth*12},${55+warmth*15}%,${86-warmth*12}%)`;
-  const sunEdge=`hsl(${22-warmth*10},${50+warmth*10}%,${72-warmth*14}%)`;
+  // Sun colour ramped from the "Skymning" sun palette — warm, soft, never
+  // white-hot: cream → gold → amber → coral → deep coral as it descends.
+  const _sunBase=_rampArr(PAL_SUN,progress);
+  const sunCenter=_rgb(_mix(_sunBase,[255,250,238],0.18));
+  const sunMid=_rgb(_sunBase);
+  const sunEdge=_rgb(_mix(_sunBase,[60,28,46],0.18));
 
   // Glow halo — soft, large, never burning
   const glowR=sunR*(2.2+warmth*0.6);
@@ -2801,17 +3040,20 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
   // Sun rays — visible during the day, soft pastel pulse
   const raysOpacity=progress<0.78?Math.max(0,(1-progress*0.85))*0.65:0;
 
-  // A few quiet stars only at deep dusk — minimal
-  const starOpacity=Math.max(0,(progress-0.82)/0.18);
-  const stars=starOpacity>0.05?[
+  // Quiet stars that emerge as the sky darkens (a little earlier now, and a
+  // few more — they were a liked moment) and twinkle through to night.
+  const starOpacity=Math.max(0,(progress-0.74)/0.22);
+  const stars=starOpacity>0.02?[
     {x:0.12,y:0.14,br:0.85},{x:0.28,y:0.08,br:1.0},{x:0.42,y:0.16,br:0.7},
     {x:0.58,y:0.10,br:0.9},{x:0.72,y:0.18,br:0.75},{x:0.86,y:0.12,br:1.0},
     {x:0.20,y:0.30,br:0.7},{x:0.50,y:0.34,br:0.85},{x:0.78,y:0.32,br:0.7},
+    {x:0.07,y:0.24,br:0.6},{x:0.36,y:0.05,br:0.65},{x:0.66,y:0.26,br:0.6},
+    {x:0.92,y:0.22,br:0.8},{x:0.34,y:0.24,br:0.55},{x:0.48,y:0.06,br:0.7},
   ]:[];
 
   // ── Atmospheric depth (world-class layering) ──
   // Drifting clouds — tinted by the current sky light, fade out as night falls.
-  const cloudOpacity=Math.max(0,(1-progress*1.15))*0.9;
+  const cloudOpacity=Math.max(0,Math.min(1,1-Math.max(0,(progress-0.72)/0.26)))*0.9;
   // Cloud tint: catches warm light at sunset, cool/white by day.
   const cloudTint = progress<0.5
     ? `hsl(${lerp(210,30,progress/0.5)},${lerp(30,55,progress/0.5)}%,${lerp(98,92,progress/0.5)}%)`
@@ -2828,7 +3070,7 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
   const uid=`s${size}`;
   // ── Master-level atmosphere ──
   // Third sky color so the gradient reads zenith → mid → warm horizon.
-  const skyMid=`hsl(${skyBotH},${Math.round((skyTopS+skyBotS)/2)}%,${Math.round((skyTopL+skyBotL)/2)}%)`;
+  const skyMid=_rgb(_mix(_rampArr(PAL_SKYMID,progress),_skySun,0.14+_skyWarm*0.28));
   // Golden-hour horizon bloom — swells as the sun meets the sea, fades after.
   const sunsetBloom=Math.max(0,Math.sin(Math.max(0,Math.min(1,(progress-0.40)/0.50))*Math.PI));
   const bloomCol=`hsl(${lerp(40,6,phaseT(0.5,0.95))},${lerp(78,66,phaseT(0.5,0.95))}%,${lerp(74,60,phaseT(0.5,0.95))}%)`;
@@ -2852,8 +3094,9 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
   const tCol="fill 1s linear, stroke 1s linear, opacity 1s linear, stop-color 1s linear";
 
   return(
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
+    <div style={immersive?{position:"fixed",inset:0,zIndex:9700,background:"#0b1020",overflow:"hidden",animation:"ftIn .3s ease"}:{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
       <style>{`
+        @keyframes ftIn{from{opacity:0}to{opacity:1}}
         @keyframes sunPastelBreath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
         @keyframes sunPastelHalo { 0%, 100% { transform: scale(1); opacity: 0.95; } 50% { transform: scale(1.08); opacity: 1; } }
         @keyframes sunPastelTwinkle { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
@@ -2882,428 +3125,30 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
         @keyframes sunSeaSparkle { 0%,100% { opacity: 0; transform: scale(0.6); } 50% { opacity: 0.9; transform: scale(1); } }
       `}</style>
 
-      <div style={{
+      <div style={immersive?{position:"absolute",inset:0}:{
         position:"relative",
       }}>
-      <svg width={W} height={H} style={{
-        borderRadius:24,
-        overflow:"hidden",
-        // Same premium dark-mode shadow structure as WaveTimer — keeps the
-        // two timer types feeling like part of the same family. Warm sky
-        // tones radiate outward as ambient atmosphere; deep landing shadow
-        // anchors the timer to the page.
-        boxShadow:isDark()
-          ?`inset 0 1px 0 rgba(255,255,255,0.08), 0 0 90px -10px ${skyMid}55, 0 28px 60px -20px ${skyTop}40, 0 10px 30px -15px rgba(0,0,0,0.8)`
-          :"0 12px 40px rgba(31,27,46,0.08), 0 2px 8px rgba(31,27,46,0.04)",
-        border:isDark()?"1px solid rgba(255,255,255,0.06)":`1px solid ${G.border}`,
-        display:"block"
-      }}>
-        <defs>
-          {/* Sky gradient — soft pastel transition, three stops for depth */}
-          <linearGradient id={`sky${uid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={skyTop} style={{transition:"stop-color 1s linear"}}/>
-            <stop offset="54%" stopColor={skyMid} style={{transition:"stop-color 1s linear"}}/>
-            <stop offset="100%" stopColor={skyBot} style={{transition:"stop-color 1s linear"}}/>
-          </linearGradient>
-          {/* Water gradient — luminous near horizon, deepening with depth */}
-          <linearGradient id={`wtr${uid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={`hsl(${waterH},${Math.min(70,waterS+8)}%,${Math.min(82,waterL+10)}%)`} style={{transition:"stop-color 1s linear"}}/>
-            <stop offset="22%" stopColor={waterTop} style={{transition:"stop-color 1s linear"}}/>
-            <stop offset="100%" stopColor={waterBot} style={{transition:"stop-color 1s linear"}}/>
-          </linearGradient>
-          {/* Sun — radial with off-center highlight for soft 3D */}
-          <radialGradient id={`sun${uid}`} cx="42%" cy="38%" r="62%">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95"/>
-            <stop offset="35%" stopColor={sunCenter}/>
-            <stop offset="75%" stopColor={sunMid}/>
-            <stop offset="100%" stopColor={sunEdge}/>
-          </radialGradient>
-          {/* Halo — pure soft glow */}
-          <radialGradient id={`glow${uid}`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={sunMid} stopOpacity={glowOpacity}/>
-            <stop offset="50%" stopColor={sunEdge} stopOpacity={glowOpacity*0.4}/>
-            <stop offset="100%" stopColor={sunEdge} stopOpacity="0"/>
-          </radialGradient>
-          {/* Outer golden-hour bloom — warms & intensifies toward sunset */}
-          <radialGradient id={`bloom${uid}`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={sunMid} stopOpacity={(0.18+warmth*0.30)} style={{transition:"stop-color 1s linear"}}/>
-            <stop offset="45%" stopColor={sunEdge} stopOpacity={(0.10+warmth*0.20)} style={{transition:"stop-color 1s linear"}}/>
-            <stop offset="100%" stopColor={sunEdge} stopOpacity="0"/>
-          </radialGradient>
-          {/* God-ray gradient + clip — soft sunburst streaks */}
-          <radialGradient id={`rays${uid}`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={sunCenter} stopOpacity="0.72" style={{transition:"stop-color 1s linear"}}/>
-            <stop offset="48%" stopColor={sunMid} stopOpacity="0.34" style={{transition:"stop-color 1s linear"}}/>
-            <stop offset="100%" stopColor={sunMid} stopOpacity="0"/>
-          </radialGradient>
-          <clipPath id={`rayclip${uid}`}><path d={rayWedges}/></clipPath>
-          {/* Warm horizon bloom — golden light pooling where sun meets sea */}
-          <radialGradient id={`hbloom${uid}`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={bloomCol} stopOpacity={sunsetBloom*0.7} style={{transition:"stop-color 1s linear"}}/>
-            <stop offset="55%" stopColor={bloomCol} stopOpacity={sunsetBloom*0.28} style={{transition:"stop-color 1s linear"}}/>
-            <stop offset="100%" stopColor={bloomCol} stopOpacity="0"/>
-          </radialGradient>
-          {/* Moon */}
-          <radialGradient id={`moonGlow${uid}`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#F4F1FA" stopOpacity="0.55"/>
-            <stop offset="55%" stopColor="#E6E0F2" stopOpacity="0.18"/>
-            <stop offset="100%" stopColor="#E6E0F2" stopOpacity="0"/>
-          </radialGradient>
-          <radialGradient id={`moonShade${uid}`} cx="38%" cy="34%" r="70%">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.6"/>
-            <stop offset="60%" stopColor="#E8E2F2" stopOpacity="0"/>
-            <stop offset="100%" stopColor="#C9C0DD" stopOpacity="0.35"/>
-          </radialGradient>
-          {/* Horizon glow strip */}
-          <linearGradient id={`hg${uid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={`hsl(${skyBotH+6},${Math.max(35,skyBotS-15)}%,${Math.min(92,skyBotL+8)}%)`} stopOpacity="0"/>
-            <stop offset="100%" stopColor={`hsl(${skyBotH},${Math.max(45,skyBotS-5)}%,${Math.min(85,skyBotL+2)}%)`} stopOpacity={horizonGlow*0.65}/>
-          </linearGradient>
-          {/* Reflection gradient */}
-          <linearGradient id={`refl${uid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={sunMid} stopOpacity={reflectionStrength*0.5}/>
-            <stop offset="100%" stopColor={sunMid} stopOpacity="0"/>
-          </linearGradient>
-          <clipPath id={`sc${uid}`}><rect x={0} y={0} width={W} height={horizonY}/></clipPath>
-          <clipPath id={`wc${uid}`}><rect x={0} y={horizonY} width={W} height={H-horizonY}/></clipPath>
-          {/* Cinematic vignette */}
-          <radialGradient id={`vig${uid}`} cx="50%" cy="46%" r="72%">
-            <stop offset="0%" stopColor="#1A1426" stopOpacity="0"/>
-            <stop offset="68%" stopColor="#1A1426" stopOpacity="0"/>
-            <stop offset="100%" stopColor="#1A1426" stopOpacity="0.22"/>
-          </radialGradient>
-          {/* Sea-surface sun glow */}
-          <radialGradient id={`seaglow${uid}`} cx="50%" cy="0%" r="100%">
-            <stop offset="0%" stopColor={bloomCol} stopOpacity={sunsetBloom*0.55} style={{transition:"stop-color 1s linear"}}/>
-            <stop offset="50%" stopColor={bloomCol} stopOpacity={sunsetBloom*0.20} style={{transition:"stop-color 1s linear"}}/>
-            <stop offset="100%" stopColor={bloomCol} stopOpacity="0"/>
-          </radialGradient>
-          {/* Sea mirror — the sky's light reflected into the water near the surface */}
-          <linearGradient id={`seamirror${uid}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={progress<0.5?skyBot:bloomCol} stopOpacity={progress<0.78?0.38:0.22} style={{transition:"stop-color 1s linear, stop-opacity 1s linear"}}/>
-            <stop offset="100%" stopColor={progress<0.5?skyBot:bloomCol} stopOpacity="0" style={{transition:"stop-color 1s linear"}}/>
-          </linearGradient>
-        </defs>
-
-        {/* Sky — solid pastel gradient */}
-        <rect x={0} y={0} width={W} height={horizonY} fill={`url(#sky${uid})`} style={{transition:tCol}}/>
-
-        {/* Warm horizon bloom — golden light pooling where the sun meets the sea */}
-        {sunsetBloom>0.02&&(
-          <ellipse cx={W/2} cy={horizonY} rx={W*0.62} ry={H*0.34} fill={`url(#hbloom${uid})`} style={{transition:"opacity 1s linear"}}/>
-        )}
-
-        {/* Horizon glow band — subtle peach near horizon during sunset */}
-        {horizonGlow>0&&(
-          <rect x={0} y={horizonY-Math.round(H*0.22)} width={W} height={Math.round(H*0.22)} fill={`url(#hg${uid})`} style={{transition:"opacity 1s linear"}}/>
-        )}
-
-        {/* Drifting clouds — tinted by the sky's light, fade as night falls */}
-        {cloudOpacity>0.04&&(
-          <g clipPath={`url(#sc${uid})`} style={{opacity:cloudOpacity,transition:"opacity 1s linear"}}>
-            {clouds.map((cl,i)=>{
-              const cy=cl.y*horizonY;
-              const cw=size*0.16*cl.s;
-              return(
-                <g key={i} style={{animation:`sunCloudDrift${i} ${cl.dur}s linear ${cl.delay}s infinite`,willChange:"transform"}}>
-                  <g style={{animation:`sunCloudPuff ${7+i*1.5}s ease-in-out ${-i*0.8}s infinite`,transformOrigin:`${cl.x*W}px ${cy}px`}}>
-                    <ellipse cx={cl.x*W} cy={cy} rx={cw} ry={cw*0.32} fill={cloudTint} style={{transition:"fill 1s linear"}}/>
-                    <ellipse cx={cl.x*W-cw*0.5} cy={cy+cw*0.08} rx={cw*0.6} ry={cw*0.26} fill={cloudTint} style={{transition:"fill 1s linear"}}/>
-                    <ellipse cx={cl.x*W+cw*0.55} cy={cy+cw*0.06} rx={cw*0.55} ry={cw*0.24} fill={cloudTint} style={{transition:"fill 1s linear"}}/>
-                    <ellipse cx={cl.x*W-cw*0.1} cy={cy-cw*0.16} rx={cw*0.5} ry={cw*0.28} fill={cloudTint} style={{transition:"fill 1s linear"}}/>
-                    {/* golden-hour rim light on the sun-facing edge */}
-                    {sunsetBloom>0.05&&(
-                      <ellipse cx={cl.x*W} cy={cy+cw*0.22} rx={cw*0.92} ry={cw*0.12} fill={bloomCol} opacity={sunsetBloom*0.5} style={{transition:"fill 1s linear, opacity 1s linear"}}/>
-                    )}
-                  </g>
-                </g>
-              );
-            })}
-          </g>
-        )}
-
-        {/* Distant headlands — capes frame the sides, open sea at centre so the
-            sun sinks cleanly into the water (never wedged between hill & water) */}
-        <g clipPath={`url(#sc${uid})`}>
-          {/* far ridge — lighter, taller */}
-          <path d={`M0,${horizonY} L0,${horizonY-H*0.12} Q${W*0.12},${horizonY-H*0.145} ${W*0.24},${horizonY-H*0.05} Q${W*0.30},${horizonY-H*0.01} ${W*0.36},${horizonY} Z`} fill={hillFar} opacity="0.5" style={{transition:"fill 1s linear"}}/>
-          <path d={`M${W},${horizonY} L${W},${horizonY-H*0.12} Q${W*0.88},${horizonY-H*0.145} ${W*0.76},${horizonY-H*0.05} Q${W*0.70},${horizonY-H*0.01} ${W*0.64},${horizonY} Z`} fill={hillFar} opacity="0.5" style={{transition:"fill 1s linear"}}/>
-          {/* near ridge — darker, lower, overlapping for depth */}
-          <path d={`M0,${horizonY} L0,${horizonY-H*0.07} Q${W*0.10},${horizonY-H*0.088} ${W*0.20},${horizonY-H*0.022} Q${W*0.24},${horizonY} ${W*0.29},${horizonY} Z`} fill={hillNear} opacity="0.78" style={{transition:"fill 1s linear"}}/>
-          <path d={`M${W},${horizonY} L${W},${horizonY-H*0.07} Q${W*0.90},${horizonY-H*0.088} ${W*0.80},${horizonY-H*0.022} Q${W*0.76},${horizonY} ${W*0.71},${horizonY} Z`} fill={hillNear} opacity="0.78" style={{transition:"fill 1s linear"}}/>
-        </g>
-
-        {/* Quiet stars at deep dusk only */}
-        {starOpacity>0&&(
-          <g style={{opacity:starOpacity,transition:"opacity 1s linear"}}>
-            {stars.map((s,i)=>{
-              const baseR=0.9*s.br;
-              const dur=3+(i%4)*0.5;
-              const delay=-(i*0.4)%dur;
-              return(
-                <circle
-                  key={i}
-                  cx={s.x*W}
-                  cy={s.y*horizonY}
-                  r={baseR}
-                  fill="#FFFFFF"
-                  opacity={s.br*0.85}
-                  style={{
-                    animation:`sunPastelTwinkle ${dur}s ease-in-out ${delay}s infinite`,
-                    willChange:"opacity",
-                  }}
-                />
-              );
-            })}
-          </g>
-        )}
-
-        {/* Rising moon — emerges opposite the sun as night falls */}
-        {moonOpacity>0.02&&(
-          <g clipPath={`url(#sc${uid})`} style={{opacity:moonOpacity,transition:"opacity 1s linear"}}>
-            <g style={{transform:`translate(${W*0.76}px, ${horizonY*0.30}px)`,animation:"sunPastelBreath 9s ease-in-out infinite",transformOrigin:`${W*0.76}px ${horizonY*0.30}px`}}>
-              <circle cx={0} cy={0} r={sunR*0.78} fill={`url(#moonGlow${uid})`}/>
-              <circle cx={0} cy={0} r={sunR*0.42} fill="#F4F1FA"/>
-              <circle cx={0} cy={0} r={sunR*0.42} fill={`url(#moonShade${uid})`}/>
-              <circle cx={-sunR*0.12} cy={-sunR*0.1} r={sunR*0.08} fill="#DDD6EA" opacity="0.7"/>
-              <circle cx={sunR*0.12} cy={sunR*0.06} r={sunR*0.06} fill="#DDD6EA" opacity="0.6"/>
-              <circle cx={sunR*0.02} cy={-sunR*0.16} r={sunR*0.04} fill="#DDD6EA" opacity="0.5"/>
-            </g>
-          </g>
-        )}
-
-        {birdOpacity>0.05&&(
-          <g clipPath={`url(#sc${uid})`} style={{opacity:birdOpacity,transition:"opacity 1s linear"}}>
-            {[
-              {dur:62,delay:-12,y:0.26,sz:7,glide:0,bobDelay:0},
-              {dur:78,delay:-38,y:0.34,sz:6,glide:1,bobDelay:-1.2},
-              {dur:54,delay:-26,y:0.20,sz:8,glide:2,bobDelay:-0.5},
-            ].map((b,i)=>{
-              const by=b.y*horizonY;
-              return(
-                <g key={i} style={{animation:`sunBirdGlide${b.glide} ${b.dur}s linear ${b.delay}s infinite`,willChange:"transform"}}>
-                  <g style={{animation:`sunBirdBob 5s ease-in-out ${b.bobDelay}s infinite`,willChange:"transform"}}>
-                    <path
-                      d={`M${-b.sz},${by} Q${-b.sz*0.5},${by-b.sz*0.42} 0,${by} Q${b.sz*0.5},${by-b.sz*0.42} ${b.sz},${by}`}
-                      fill="none"
-                      stroke="rgba(40,30,60,0.55)"
-                      strokeWidth={1.3}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </g>
-                </g>
-              );
-            })}
-          </g>
-        )}
-
-        {/* Sun system — rays + halo + disc all positioned via transform on wrapper.
-            sunCenterY is recomputed every animation frame from pctSmooth (raf loop
-            in useTimer), so the wrapper translate changes smoothly per frame. We
-            deliberately DO NOT use `transition: transform 1s linear` here — that
-            confuses iOS Safari: each frame restarts a new 1s transition toward
-            the new target value, so the sun visibly freezes (every transition is
-            superseded before it can resolve). With no transition, the per-frame
-            translate gives an inherently smooth glide. */}
-        <g clipPath={`url(#sc${uid})`}>
-          <g ref={sunGroupRef} style={{
-            /* translate3d (not translate) forces the layer onto the GPU on
-               iOS Safari — without 3d, transform updates can fall back to
-               CPU-painted rasterization which janks on a busy SVG scene.
-               The raf loop above writes new transforms directly to this
-               node, so the sun moves smoothly between React re-renders. */
-            transform:`translate3d(${W/2}px, ${sunCenterY}px, 0)`,
-            willChange:"transform",
-            backfaceVisibility:"hidden",
-            WebkitBackfaceVisibility:"hidden",
-          }}>
-            {/* Soft crepuscular god-rays — gentle beams radiating from the sun */}
-            {godRayOpacity>0.01&&sunVisible&&(
-              <g clipPath={`url(#rayclip${uid})`} style={{opacity:godRayOpacity,transition:"opacity 1s linear",animation:"sunRaysPulse 7s ease-in-out infinite",willChange:"opacity"}}>
-                <circle cx={0} cy={0} r={sunR*4.4} fill={`url(#rays${uid})`}/>
-              </g>
-            )}
-
-            {/* Outer golden-hour bloom — large, soft, intensifies near horizon */}
-            <g style={{animation:"sunPastelHalo 9s ease-in-out infinite",transformOrigin:"0 0",willChange:"transform, opacity"}}>
-              <circle cx={0} cy={0} r={glowR*1.7} fill={`url(#bloom${uid})`}/>
-            </g>
-
-            {/* Sun halo — soft breathing */}
-            <g style={{animation:"sunPastelHalo 7s ease-in-out infinite",transformOrigin:"0 0",willChange:"transform, opacity"}}>
-              <circle cx={0} cy={0} r={glowR} fill={`url(#glow${uid})`}/>
-            </g>
-
-            {/* Sun disc — quiet breathing, flattens toward the horizon */}
-            {sunVisible&&(
-              <g data-sun-squash="true" style={{transform:`scale(1, ${sunSquash})`}}>
-                <g style={{animation:"sunPastelBreath 8s ease-in-out infinite",transformOrigin:"0 0",willChange:"transform"}}>
-                  <circle cx={0} cy={0} r={sunR} fill={`url(#sun${uid})`}/>
-                  <circle cx={-sunR*0.14} cy={-sunR*0.18} r={sunR*0.4} fill="#FFFFFF" opacity={0.4}/>
-                </g>
-              </g>
-            )}
-          </g>
-        </g>
-
-        {/* Water — clean gradient */}
-        <rect x={0} y={horizonY} width={W} height={H-horizonY} fill={`url(#wtr${uid})`} style={{transition:tCol}}/>
-
-        {/* Sun-glow scattering across the sea surface near the horizon */}
-        {sunsetBloom>0.02&&(
-          <g clipPath={`url(#wc${uid})`}>
-            <ellipse cx={W/2} cy={horizonY} rx={W*0.55} ry={H*0.16} fill={`url(#seaglow${uid})`} style={{transition:"opacity 1s linear"}}/>
-          </g>
-        )}
-
-        {/* Serene luminous sea — a glassy surface mirroring the sky's warmth */}
-        <g clipPath={`url(#wc${uid})`}>
-          {/* mirrored sky-glow pooling just below the horizon */}
-          <rect x={0} y={horizonY} width={W} height={(H-horizonY)*0.5} fill={`url(#seamirror${uid})`} style={{transition:"opacity 1s linear"}}/>
-          {/* horizon surface sheen — crisp light line where sky meets sea */}
-          <rect x={0} y={horizonY} width={W} height={(H-horizonY)*0.045} fill="#FFFFFF" opacity={progress<0.78?0.30:0.12} style={{transition:"opacity 1s linear"}}/>
-          {/* Gentle shimmer bands — soft horizontal strokes of reflected light that
-              breathe in and out (opacity), like calm water catching the sky.
-              Opacity animation is perfectly smooth in the webview. */}
-          {[0.08,0.15,0.23,0.32,0.43,0.55,0.69,0.84].map((yf,i)=>{
-            const yy=horizonY+(H-horizonY)*yf;
-            const inset=W*(0.04+yf*0.10);          // narrower near horizon, wider below
-            const lit=progress<0.78;
-            const bandCol=lit?"rgba(255,255,255,0.55)":`${bloomCol}`;
-            return(
-              <line key={i}
-                x1={inset} y1={yy} x2={W-inset} y2={yy}
-                stroke={bandCol}
-                strokeWidth={0.8+yf*1.6}
-                strokeLinecap="round"
-                style={{
-                  transition:"stroke 1s linear",
-                  animation:`sunSeaShimmer${i%3} ${5+i*0.7}s ease-in-out ${(-i*0.5).toFixed(1)}s infinite`,
-                  opacity:0.5,
-                }}
-              />
-            );
-          })}
-        </g>
-
-        {/* Sun reflection on water — a luminous shimmering column of light */}
-        {reflectionStrength>0&&(
-          <g clipPath={`url(#wc${uid})`} style={{opacity:reflectionStrength,transition:"opacity 1s linear"}}>
-            <g style={{animation:"sunPastelRefl 4s ease-in-out infinite",transformOrigin:`${W/2}px ${horizonY+sunR}px`,willChange:"transform, opacity"}}>
-              {/* Tapering glow column directly beneath the sun */}
-              <path
-                d={`M${W/2-sunR*0.9},${horizonY} L${W/2+sunR*0.9},${horizonY} L${W/2+sunR*0.35},${horizonY+(H-horizonY)*0.9} L${W/2-sunR*0.35},${horizonY+(H-horizonY)*0.9} Z`}
-                fill={`url(#refl${uid})`}
-              />
-              {/* Soft shimmer bands — wider near horizon, narrowing downward, swaying */}
-              {[0.10,0.26,0.44,0.64,0.85].map((yf,i)=>{
-                const yy=horizonY+(H-horizonY)*yf;
-                const halfW=sunR*(0.95-yf*0.7);
-                return(
-                  <line key={i}
-                    x1={W/2-halfW} y1={yy} x2={W/2+halfW} y2={yy}
-                    stroke={i<2?sunCenter:sunMid}
-                    strokeWidth={i===0?2.2:1.4-i*0.12}
-                    strokeLinecap="round"
-                    opacity={(0.6-i*0.09)}
-                    style={{transition:"stroke 1s linear",animation:`${i%2===0?"sunPastelRipple0":"sunPastelRipple1"} ${4+i*0.5}s ease-in-out ${-i*0.3}s infinite`,willChange:"transform"}}
-                  />
-                );
-              })}
-              {/* Twinkling glints scattered down the light path */}
-              {[{x:-0.3,y:0.16,r:1.4,d:0},{x:0.34,y:0.30,r:1.1,d:0.7},{x:-0.18,y:0.5,r:1.2,d:1.3},{x:0.22,y:0.68,r:0.9,d:0.4}].map((gl,i)=>(
-                <circle key={"gl"+i} cx={W/2+sunR*gl.x} cy={horizonY+(H-horizonY)*gl.y} r={gl.r} fill="#FFFFFF"
-                  opacity="0.85" style={{animation:`sunPastelTwinkle ${2.4+i*0.5}s ease-in-out ${gl.d}s infinite`}}/>
-              ))}
-            </g>
-          </g>
-        )}
-        {/* Soft horizon hairline — barely visible separator */}
-        <line x1={0} y1={horizonY} x2={W} y2={horizonY} stroke="rgba(31,27,46,0.06)" strokeWidth={0.5}/>
-
-        {/* Dolphin breach — a quiet little reward just before the timer ends.
-            The silhouette is ALWAYS rendered (hidden initially) so the raf
-            loop above can flip display + transform directly via ref, giving
-            a perfectly smooth arc on iOS. The splash flashes are still
-            React-driven because they tween slowly enough for 1Hz updates. */}
-        <g
-          ref={dolphinGroupRef}
-          style={{
-            display:dolphinActive?"":"none",
-            transform:`translate3d(${W*0.62}px, ${horizonY+8}px, 0) scale(${size*0.0013})`,
-            transformOrigin:"0 0",
-            willChange:"transform",
-            backfaceVisibility:"hidden",
-            WebkitBackfaceVisibility:"hidden",
-          }}
-        >
-          <path d="M48,-30 C30,-44 -4,-42 -26,-24 C-34,-30 -44,-30 -54,-26 C-46,-22 -42,-16 -42,-10 C-52,6 -54,22 -50,36 C-44,24 -36,14 -26,8 C-6,18 26,16 46,-2 C40,-8 34,-12 28,-14 C36,-18 44,-23 48,-30 Z" fill={`hsl(${skyBotH},22%,32%)`} style={{transition:"fill 1s linear"}}/>
-          {/* soft warm rim light along the back */}
-          <path d="M-26,-24 C-4,-42 30,-44 48,-30" fill="none" stroke={bloomCol} strokeWidth="4.5" strokeLinecap="round" opacity={0.45+sunsetBloom*0.4} style={{transition:"stroke 1s linear"}}/>
-          {/* eye */}
-          <circle cx="34" cy="-26" r="2.2" fill="#FFFFFF" opacity="0.85"/>
-        </g>
-        {/* Dolphin splash — React-driven, only renders during breach */}
-        {dolphinActive&&(()=>{
-          const dxC=W*0.62;
-          const span=W*0.22;
-          const arc=Math.sin(dolphinT*Math.PI);
-          const splash=Math.max(arc<0.25?1:0, dolphinT<0.5?(1-dolphinT*4):((dolphinT-0.75)*4));
-          if(splash<=0.05) return null;
-          return(
-            <g opacity={Math.min(1,splash)*0.7} clipPath={`url(#wc${uid})`}>
-              {[-1,0,1].map((s,i)=>(
-                <ellipse key={i} cx={dxC-span/2+span*0.5+s*7} cy={horizonY+6} rx={2-Math.abs(s)*0.4} ry={4+Math.abs(s)} fill="#FFFFFF" opacity="0.6"/>
-              ))}
-              <ellipse cx={dxC-span/2+span*0.5} cy={horizonY+7} rx="11" ry="3" fill="#FFFFFF" opacity="0.35"/>
-            </g>
-          );
-        })()}
-
-        <rect x={0} y={0} width={W} height={H} fill={`url(#vig${uid})`} pointerEvents="none" style={{opacity:0.5+progress*0.4,transition:"opacity 1s linear"}}/>
-
-        {/* Time label — placed in the lower portion of the water area so it
-            doesn't sit on top of the sun. Horizon is at H*0.55, so 80% of H
-            puts the time clearly below the horizon in the calm sea region. */}
-        {!hideLabel&&<text
-          x={W/2} y={H*0.80}
-          textAnchor="middle"
-          dominantBaseline="central"
-          style={{
-            fontSize:Math.round(size*0.14),
-            fontWeight:600,
-            fill:"rgba(255,255,255,0.96)",
-            fontFamily:G.serif,
-            fontVariantNumeric:"tabular-nums",
-            letterSpacing:0.5,
-            transition:"fill 1s linear",
-            filter:"drop-shadow(0 2px 10px rgba(0,0,0,0.45))",
-          }}
-        >{c.label}</text>}
-      </svg>
+      <SunsetScene W={W} H={H} progress={progress} immersive={immersive} radius={immersive?0:24}/>
+      {!hideLabel&&!immersive&&(
+        <div style={{position:"absolute",left:0,right:0,top:H*0.80,transform:"translateY(-50%)",textAlign:"center",pointerEvents:"none",fontSize:Math.round(size*0.14),fontWeight:600,color:"rgba(255,255,255,0.96)",fontFamily:G.serif,fontVariantNumeric:"tabular-nums",letterSpacing:0.5,filter:"drop-shadow(0 2px 10px rgba(0,0,0,0.45))"}}>{c.label}</div>
+      )}
       </div>
-      {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
+      {immersive
+        ? <ImmersiveChrome c={c} color={color} t={t} onClose={onClose} activity={activity} W={W} H={H} hideLabel={hideLabel} doneEmoji="🌇" labelYFrac={0.72}/>
+        : (showCtrl&&<TCtrl c={c} color={color} t={t}/>)}
     </div>
   );
 }
 
 /* ═══ LAVA ═══ */
-function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false}){
+function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false,immersive=false,onClose,activity}){
   const c=useTimer(totalSec,autoRun);
-  const W=Math.round(size*0.52), H=size;
-  // Lava surface position. Map pct=1 to a small air gap (4% from top) instead
-  // of the very top — this guarantees that ANY decrease in pct produces an
-  // immediately visible drop in liquid level. With the previous mapping
-  // (lavaTop = 0 at pct=1), the first few percent of fall were hidden inside
-  // the curved bottle neck and looked like nothing was happening.
-  const TOP_AIR=0.04;  // 4% air gap at the top when full
-  const BOT_PAD=0.07;  // 7% bottom padding so liquid never disappears entirely
+  const[vp,setVp]=useState(()=>(typeof window!=="undefined"?{w:window.innerWidth,h:window.innerHeight}:{w:390,h:780}));
+  useEffect(()=>{if(!immersive)return;const on=()=>setVp({w:window.innerWidth,h:window.innerHeight});window.addEventListener("resize",on);window.addEventListener("orientationchange",on);return()=>{window.removeEventListener("resize",on);window.removeEventListener("orientationchange",on);};},[immersive]);
+  const SZ=immersive?Math.round(Math.min(vp.h*0.82, vp.w*1.7)):size;
+  const W=Math.round(SZ*0.52), H=SZ;
+  const TOP_AIR=0.04, BOT_PAD=0.07;
   const lavaTop=H*(TOP_AIR+(1-TOP_AIR-BOT_PAD)*(1-c.pct));
-  // Blobs stored in a REF, not state — we mutate positions on every animation
-  // frame without triggering React re-renders. A separate version counter
-  // forces SVG re-render at a controlled rate (30fps is plenty for fluid
-  // motion in a tall narrow bottle and saves battery vs 60fps).
   const blobsRef=useRef([
     {x:.5,y:.72,r:.20,vx: .0014,vy:-.0020,ph:0},
     {x:.32,y:.55,r:.16,vx: .0018,vy: .0014,ph:1.7},
@@ -3311,126 +3156,120 @@ function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLa
     {x:.5,y:.86,r:.11,vx: .0010,vy:-.0009,ph:5.2},
   ]);
   const[frame,setFrame]=useState(0);
-  // Live refs for both pct and run — read inside the rAF loop. Updated on
-  // every render via direct assignment. Means the loop sees current values
-  // without forcing useEffect rebuilds and can self-terminate cleanly when
-  // timer ends.
-  const pctRef=useRef(c.pct);
-  pctRef.current=c.pct;
-  const runRef=useRef(c.run);
-  runRef.current=c.run;
-  const doneRef=useRef(c.done);
-  doneRef.current=c.done;
-  // Smoothed pct for blob physics — interpolates between secs-tick steps so
-  // the surface that blobs ride against drifts smoothly with the liquid rect's
-  // CSS transition. This is local interpolation only, no React state writes.
+  const pctRef=useRef(c.pct); pctRef.current=c.pct;
+  const runRef=useRef(c.run); runRef.current=c.run;
+  const doneRef=useRef(c.done); doneRef.current=c.done;
   const smoothLocalRef=useRef(c.pct);
   useEffect(()=>{
     if(!c.run) return;
-    let raf;
-    let mounted=true;
-    let last=performance.now();
-    let nextRender=last;
+    let raf; let mounted=true; let last=performance.now(); let nextRender=last;
     const tick=(now)=>{
-      // Self-terminate the moment run goes false or timer is done.
-      // Don't wait for useEffect cleanup — by that time we might have already
-      // queued a setFrame onto an unmounting component, which throws.
       if(!mounted||!runRef.current||doneRef.current) return;
-      const dt=Math.min(50,now-last)/16.67;
-      last=now;
-      // Interpolate local smooth-pct toward the target (step) pct. This
-      // gives blob bounds a continuous boundary even though c.pct steps.
-      const target=pctRef.current;
-      const cur=smoothLocalRef.current;
+      const dt=Math.min(50,now-last)/16.67; last=now;
+      const target=pctRef.current; const cur=smoothLocalRef.current;
       smoothLocalRef.current=cur+(target-cur)*Math.min(1,dt*0.04);
       const livePct=smoothLocalRef.current;
-      // Match the lava surface formula: blobs must stay below the surface
       const TOP_AIR=0.04, BOT_PAD=0.07;
       const surfaceY=TOP_AIR+(1-TOP_AIR-BOT_PAD)*(1-livePct);
       const bottomMin=surfaceY+0.04;
       const arr=blobsRef.current;
       for(let i=0;i<arr.length;i++){
         const b=arr[i];
-        b.ph+=0.012*dt;
-        const sway=Math.sin(b.ph)*0.0006;
-        b.x+=(b.vx+sway)*dt;
-        b.y+=b.vy*dt;
-        if(b.x<0.14){b.x=0.14;b.vx=Math.abs(b.vx)*0.88;}
-        else if(b.x>0.86){b.x=0.86;b.vx=-Math.abs(b.vx)*0.88;}
-        if(b.y<bottomMin){b.y=bottomMin;b.vy=Math.abs(b.vy)*0.88;}
-        else if(b.y>0.93){b.y=0.93;b.vy=-Math.abs(b.vy)*0.88;}
+        b.ph+=0.012*dt; const sway=Math.sin(b.ph)*0.0006;
+        b.x+=(b.vx+sway)*dt; b.y+=b.vy*dt;
+        if(b.x<0.14){b.x=0.14;b.vx=Math.abs(b.vx)*0.88;} else if(b.x>0.86){b.x=0.86;b.vx=-Math.abs(b.vx)*0.88;}
+        if(b.y<bottomMin){b.y=bottomMin;b.vy=Math.abs(b.vy)*0.88;} else if(b.y>0.93){b.y=0.93;b.vy=-Math.abs(b.vy)*0.88;}
         if(Math.random()<0.008){b.vy+=(Math.random()-0.5)*0.0008;}
-        b.vx=Math.max(-0.0028,Math.min(0.0028,b.vx));
-        b.vy=Math.max(-0.0025,Math.min(0.0025,b.vy));
+        b.vx=Math.max(-0.0028,Math.min(0.0028,b.vx)); b.vy=Math.max(-0.0025,Math.min(0.0025,b.vy));
       }
-      // Render at ~30fps — but ONLY if component is still mounted and
-      // hasn't reached done state. setFrame on an unmounting component
-      // is what was triggering React error #300.
-      if(mounted&&!doneRef.current&&now>=nextRender){
-        nextRender=now+33;
-        setFrame(f=>(f+1)%1000);
-      }
+      if(mounted&&!doneRef.current&&now>=nextRender){ nextRender=now+33; setFrame(f=>(f+1)%1000); }
       if(mounted) raf=requestAnimationFrame(tick);
     };
     raf=requestAnimationFrame(tick);
-    return()=>{
-      mounted=false;
-      cancelAnimationFrame(raf);
-    };
+    return()=>{ mounted=false; cancelAnimationFrame(raf); };
   // eslint-disable-next-line
   },[c.run]);
-  // All hooks above — safe to early-return now
-  if(c.done) return <DoneBadge color={color} t={t}/>;
+  if(c.done&&!immersive) return <DoneBadge color={color} t={t} onReplay={()=>{c.reset();c.setRun(true);}} onClose={onClose}/>;
+  const dk=isDark();
+  const hr=hexToRgb(color)||[179,107,87];
+  const warmHex="#"+[Math.round(hr[0]+(255-hr[0])*0.45),Math.round(hr[1]+(210-hr[1])*0.45),Math.round(hr[2]+(140-hr[2])*0.45)].map(x=>Math.max(0,Math.min(255,x)).toString(16).padStart(2,"0")).join("");
+  const pulse=0.6+0.4*(0.5+0.5*Math.sin(Date.now()*0.0009));
+  const uid=immersive?"L":(""+size);
   const bottle=`M${W*.22},${H*.05} Q${W*.5},${H*.02} ${W*.78},${H*.05} L${W*.74},${H*.2} Q${W*.9},${H*.32} ${W*.9},${H*.52} L${W*.84},${H*.82} Q${W*.78},${H*.93} ${W*.5},${H*.96} Q${W*.22},${H*.93} ${W*.16},${H*.82} L${W*.1},${H*.52} Q${W*.1},${H*.32} ${W*.26},${H*.2} Z`;
   const blobs=blobsRef.current;
+  const svgEl=(
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{display:"block"}}>
+      <defs>
+        <clipPath id={`lc${uid}`}><path d={bottle}/></clipPath>
+        <linearGradient id={`lg${uid}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.55"/>
+          <stop offset="58%" stopColor={color} stopOpacity="0.95"/>
+          <stop offset="100%" stopColor={shadeHex(color,0.28)} stopOpacity="1"/>
+        </linearGradient>
+        <linearGradient id={`bg${uid}`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={dk?"#15131F":"#FFFFFF"} stopOpacity={dk?"0.5":"0.9"}/>
+          <stop offset="50%" stopColor={dk?"#191725":"#FAF8FE"}/>
+          <stop offset="100%" stopColor={dk?"#100E18":"#F0EDF8"} stopOpacity="0.85"/>
+        </linearGradient>
+        <radialGradient id={`heat${uid}`} cx="50%" cy="92%" r="62%">
+          <stop offset="0%" stopColor={warmHex} stopOpacity="0.85"/>
+          <stop offset="55%" stopColor={shadeHex(color,0.2)} stopOpacity="0.32"/>
+          <stop offset="100%" stopColor={color} stopOpacity="0"/>
+        </radialGradient>
+        <radialGradient id={`core${uid}`} cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.5"/>
+          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0"/>
+        </radialGradient>
+        <linearGradient id={`sheen${uid}`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.5"/>
+          <stop offset="38%" stopColor="#FFFFFF" stopOpacity="0.05"/>
+          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0"/>
+        </linearGradient>
+        <filter id={`gob${uid}`} x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation={SZ*0.018} result="blur"/>
+          <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo"/>
+          <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+        </filter>
+      </defs>
+      <path d={bottle} fill={`url(#bg${uid})`} stroke={`${color}59`} strokeWidth={2}/>
+      <g clipPath={`url(#lc${uid})`}>
+        {/* warm heat glow at the base — the lamp, gently pulsing */}
+        <rect x={0} y={0} width={W} height={H} fill={`url(#heat${uid})`} opacity={(0.55+0.45*pulse).toFixed(2)}/>
+        {/* luminous lava liquid */}
+        <rect x={0} y={lavaTop} width={W} height={H-lavaTop} fill={`url(#lg${uid})`} style={{transition:c.run?"y 1s linear, height 1s linear":"y .3s ease, height .3s ease"}}/>
+        {/* goo metaball blobs */}
+        <g filter={`url(#gob${uid})`}>
+          {blobs.map((b,i)=>(
+            <ellipse key={i} cx={b.x*W} cy={b.y*H} rx={b.r*W} ry={b.r*W*1.3} fill={color} opacity={0.82}/>
+          ))}
+        </g>
+        {/* inner core glow rising from the heated base */}
+        <ellipse cx={W*0.5} cy={H*0.9} rx={W*0.42} ry={H*0.14} fill={`url(#core${uid})`} opacity={(0.18*pulse).toFixed(2)}/>
+        {/* gentle fixed reflection */}
+        <ellipse cx={W*.28} cy={H*.4} rx={W*.05} ry={H*.12} fill="rgba(255,255,255,.22)" transform={`rotate(-12,${W*.28},${H*.4})`}/>
+        {/* glass sheen */}
+        <path d={bottle} fill={`url(#sheen${uid})`}/>
+      </g>
+      {/* curved specular streak on the glass */}
+      <path d={`M${W*.30},${H*.07} Q${W*.18},${H*.3} ${W*.2},${H*.7}`} fill="none" stroke="#fff" strokeOpacity="0.45" strokeWidth="3" strokeLinecap="round"/>
+      <rect x={W*.27} y={H*.01} width={W*.46} height={H*.06} rx={4} fill={shadeHex(color,-0.28)}/>
+      <rect x={W*.27} y={H*.92} width={W*.46} height={H*.06} rx={4} fill={shadeHex(color,-0.28)}/>
+    </svg>
+  );
+  if(immersive){
+    return(
+      <div style={{position:"fixed",inset:0,zIndex:9700,background:dk?"#0a0812":"#0c0e18",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",animation:"ftIn .3s ease"}}>
+        <style>{`@keyframes ftIn{from{opacity:0}to{opacity:1}}`}</style>
+        {svgEl}
+        <ImmersiveChrome c={c} color={color} t={t} onClose={onClose} activity={activity} W={vp.w} H={vp.h} hideLabel={hideLabel} doneEmoji="🫧" labelYFrac={0.5}/>
+      </div>
+    );
+  }
   return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
-        <defs>
-          <clipPath id={`lc${size}`}><path d={bottle}/></clipPath>
-          <linearGradient id={`lg${size}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.45"/>
-            <stop offset="100%" stopColor={color} stopOpacity="0.92"/>
-          </linearGradient>
-          <linearGradient id={`bg${size}`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9"/>
-            <stop offset="50%" stopColor="#FAF8FE"/>
-            <stop offset="100%" stopColor="#F0EDF8" stopOpacity="0.85"/>
-          </linearGradient>
-          {/* Gaussian blur + threshold filter — this is what turns rigid
-              ellipses into soft "lava" blobs that visually merge when they
-              touch. The standard CSS approach: blur first, then run an
-              alpha contrast through feColorMatrix to sharpen the edge
-              between liquid and not-liquid. Result: organic merging shapes
-              instead of separate hard ellipses. */}
-          <filter id={`gob${size}`} x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation={size*0.018} result="blur"/>
-            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo"/>
-            <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
-          </filter>
-        </defs>
-        <path d={bottle} fill={`url(#bg${size})`} stroke={`${color}66`} strokeWidth={2}/>
-        <g clipPath={`url(#lc${size})`}>
-          {/* Lava liquid surface — y position interpolates smoothly via CSS
-              transition. pct steps once per second (from setInterval), but
-              the 1s linear transition makes the rect slide continuously down
-              between ticks. No rAF, no React state thrash. */}
-          <rect x={0} y={lavaTop} width={W} height={H-lavaTop} fill={`url(#lg${size})`} style={{transition:c.run?"y 1s linear, height 1s linear":"y .3s ease, height .3s ease"}}/>
-          {/* Apply goo filter to blobs only — so they merge with each other
-              but don't blur the liquid level edge. */}
-          <g filter={`url(#gob${size})`}>
-            {blobs.map((b,i)=>(
-              <ellipse key={i} cx={b.x*W} cy={b.y*H} rx={b.r*W} ry={b.r*W*1.3} fill={color} opacity={0.78}/>
-            ))}
-          </g>
-          {/* Highlight reflection — fixed position, gentle */}
-          <ellipse cx={W*.28} cy={H*.4} rx={W*.05} ry={H*.12} fill="rgba(255,255,255,.25)" transform={`rotate(-12,${W*.28},${H*.4})`}/>
-        </g>
-        <rect x={W*.27} y={H*.01} width={W*.46} height={H*.06} rx={4} fill="#C4BFDB"/>
-        <rect x={W*.27} y={H*.92} width={W*.46} height={H*.06} rx={4} fill="#C4BFDB"/>
-      </svg>
+      {svgEl}
       {!hideLabel&&(<div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.085,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>)}
-      {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
+      {showCtrl&&<div style={{marginTop:14}}><TCtrl c={c} color={color} t={t}/></div>}
     </div>
   );
 }
@@ -3440,7 +3279,7 @@ function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLa
    one as it passes. When all the candy is gone, time is up and it's full & happy.
    Body takes the chosen timer colour; candies are a cheerful fixed palette. */
 const MON_CANDY=["#F48FB1","#FFD86B","#8FD9C0","#FF9E7A","#B8A1E3","#7EC8E3","#F7A8C4","#FFC04D"];
-function MonsterTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false}){
+function MonsterTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false,onClose}){
   const c=useTimer(totalSec,autoRun);
   const W=size, H=Math.round(size*0.62);
   const VB=200, VBH=124;
@@ -3455,52 +3294,8 @@ function MonsterTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hid
   const botJaw=`M${mcx-br},${cy} A${br},${br} 0 0 0 ${mcx+br},${cy} Z`;
   const running=c.run;
 
-  // ── DONE: full & happy ──
-  if(c.done){
-    const cx=VB/2;
-    return(
-      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:18,padding:"20px 0"}}>
-        <style>{`
-          @keyframes monFull2{0%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(-6px) scale(1.04)}60%{transform:translateY(0) scale(1)}}
-          @keyframes monSpark2{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
-          @keyframes monIn2{0%{opacity:0;transform:scale(.82)}100%{opacity:1;transform:scale(1)}}
-        `}</style>
-        <div style={{width:W,height:H,animation:"monIn2 0.7s cubic-bezier(0.34,1.56,0.64,1) both"}}>
-          <svg width={W} height={H} viewBox={`0 0 ${VB} ${VBH}`} style={{display:"block",overflow:"visible"}}>
-            <defs>
-              <radialGradient id={`mb${color.slice(1)}d`} cx="38%" cy="30%" r="78%">
-                <stop offset="0%" stopColor="#FFFFFF" stopOpacity=".55"/>
-                <stop offset="42%" stopColor={color}/><stop offset="100%" stopColor={color}/>
-              </radialGradient>
-            </defs>
-            <circle cx={cx} cy={cy} r="58" fill={color} opacity="0.08"/>
-            <ellipse cx={cx} cy={cy+br+6} rx={br*0.85} ry="4.5" fill="#2A2540" opacity="0.12"/>
-            <g style={{transformOrigin:`${cx}px ${cy}px`,animation:"monFull2 2.4s ease-in-out infinite"}}>
-              {/* antenna */}
-              <line x1={cx-6} y1={cy-br+3} x2={cx-6} y2={cy-br-11} stroke={color} strokeWidth="3.5" strokeLinecap="round"/>
-              <circle cx={cx-6} cy={cy-br-13} r="4" fill={color}/>
-              <circle cx={cx} cy={cy} r={br} fill={`url(#mb${color.slice(1)}d)`}/>
-              {/* happy closed eyes */}
-              <path d={`M${cx-13},${cy-7} q5,-7 10,0`} fill="none" stroke="#2A2540" strokeWidth="3" strokeLinecap="round"/>
-              <path d={`M${cx+3},${cy-7} q5,-7 10,0`} fill="none" stroke="#2A2540" strokeWidth="3" strokeLinecap="round"/>
-              {/* content smile */}
-              <path d={`M${cx-11},${cy+8} q11,11 22,0`} fill="none" stroke="#2A2540" strokeWidth="3.2" strokeLinecap="round"/>
-              {/* cheeks */}
-              <circle cx={cx-17} cy={cy+5} r="5" fill="#FF8FA8" opacity="0.45"/>
-              <circle cx={cx+17} cy={cy+5} r="5" fill="#FF8FA8" opacity="0.45"/>
-              <ellipse cx={cx-9} cy={cy-9} rx="9" ry="6" fill="#FFFFFF" opacity="0.25"/>
-            </g>
-            {[{x:cx-40,y:cy-30,s:1},{x:cx+42,y:cy-24,s:1.3},{x:cx+34,y:cy+30,s:.9},{x:cx-34,y:cy+28,s:1.05}].map((sp,i)=>(
-              <g key={i} style={{transformOrigin:`${sp.x}px ${sp.y}px`,animation:`monSpark2 ${2+i*0.35}s ease-in-out ${i*0.28}s infinite`}}>
-                <path d={`M${sp.x},${sp.y-6*sp.s} L${sp.x+1.5*sp.s},${sp.y-1.5*sp.s} L${sp.x+6*sp.s},${sp.y} L${sp.x+1.5*sp.s},${sp.y+1.5*sp.s} L${sp.x},${sp.y+6*sp.s} L${sp.x-1.5*sp.s},${sp.y+1.5*sp.s} L${sp.x-6*sp.s},${sp.y} L${sp.x-1.5*sp.s},${sp.y-1.5*sp.s} Z`} fill={color}/>
-              </g>
-            ))}
-          </svg>
-        </div>
-        <div style={{fontFamily:G.serif,fontWeight:500,fontSize:size*0.1,color:isDark()?"#F4F1FA":G.inkSoft,letterSpacing:-.3}}>{t?.monsterFull||"Mätt!"}</div>
-      </div>
-    );
-  }
+  // ── DONE — uniform completion across all timers ──
+  if(c.done) return <DoneBadge color={color} t={t} onReplay={()=>{c.reset();c.setRun(true);}} onClose={onClose}/>;
 
   // ── RUNNING / PAUSED ──
   const uid=color.slice(1);
@@ -3635,8 +3430,150 @@ function MonsterTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hid
   );
 }
 
-function TimerComp({type,totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMode="pearl",mode,setMode,preview=false}){
-  const M={sector:SectorTimer,ring:RingTimer,dots:DotsTimer,wave:WaveTimer,sun:SunTimer,lava:LavaTimer,monster:MonsterTimer};
+/* ═══ AuroraTimer — "Norrsken" ════════════════════════════════════════════
+   Flowing northern lights over a still fjord, a moon, a fir forest with a
+   little cabin (warm window + reflection), drifting snow and the odd shooting
+   star. As time runs out the aurora calms and a warm dawn rises over the
+   water. Canvas-rendered; the aurora keeps gently flowing even when paused
+   (only the dawn progress freezes). The chosen colour is blended lightly into
+   the aurora's violet so each activity feels personal. */
+function AuroraTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false,immersive=false,onClose,activity}){
+  const c=useTimer(totalSec,autoRun);
+  const[vp,setVp]=useState(()=>(typeof window!=="undefined"?{w:window.innerWidth,h:window.innerHeight}:{w:390,h:780}));
+  useEffect(()=>{
+    if(!immersive)return;
+    const on=()=>setVp({w:window.innerWidth,h:window.innerHeight});
+    window.addEventListener("resize",on);window.addEventListener("orientationchange",on);
+    return()=>{window.removeEventListener("resize",on);window.removeEventListener("orientationchange",on);};
+  },[immersive]);
+  const W=immersive?vp.w:size, H=immersive?vp.h:Math.round(size*0.66);
+  const HYr=immersive?0.70:0.66;
+  const cvRef=useRef(null);
+  const pctRef=useRef(c.pctSmooth); pctRef.current=c.pctSmooth;
+  useEffect(()=>{
+    const cv=cvRef.current; if(!cv) return;
+    const ctx=cv.getContext("2d"); if(!ctx) return;
+    const DPR=Math.min(2,(typeof window!=="undefined"&&window.devicePixelRatio)||1);
+    cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0);
+    const HY=H*HYr;
+    const lerp=(a,b,k)=>a+(b-a)*k, mix=(c1,c2,k)=>[Math.round(lerp(c1[0],c2[0],k)),Math.round(lerp(c1[1],c2[1],k)),Math.round(lerp(c1[2],c2[2],k))], rgba=(cc,a)=>`rgba(${cc[0]},${cc[1]},${cc[2]},${a})`;
+    const acc=hexToRgb(color)||[167,139,250];
+    const GRN=[74,222,154], TEA=[94,234,212], VIO=mix([167,139,250],acc,0.42);
+    // scene assets (scaled to the tile)
+    const stars=[]; const ns=Math.round(W*HY/2400);
+    for(let i=0;i<ns;i++)stars.push({x:Math.random()*W,y:Math.random()*HY*0.96,r:Math.random()*1.1+0.3,tw:Math.random()*6.28,sp:0.6+Math.random()*1.4,d:Math.random()});
+    const snow=[]; const nf=Math.round(W*H/2600);
+    for(let i=0;i<nf;i++)snow.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.3+0.5,sp:5+Math.random()*12,sw:Math.random()*6.28,d:0.3+Math.random()*0.6});
+    const trees=[]; let tx=-8;
+    while(tx<W+12){const h=8+Math.random()*12;trees.push({x:tx,h,w:h*0.5,depth:0});tx+=3+Math.random()*5;}
+    tx=-10; while(tx<W+14){const h=14+Math.random()*22;trees.push({x:tx,h,w:h*0.46,depth:1});tx+=5+Math.random()*9;}
+    const cabin={x:W*0.28,w:Math.max(18,W*0.12),h:Math.max(15,W*0.10)};
+    // ── Crescent moon on its own layer — destination-out carves a clean, luminous
+    //    lune (never a grey carved blob). Drawn once; faded/positioned in the loop.
+    const mr0=Math.max(7,W*0.05); const MS=Math.ceil(mr0*2.6);
+    const moonCv=document.createElement("canvas"); moonCv.width=Math.round(MS*DPR); moonCv.height=Math.round(MS*DPR);
+    const mctx=moonCv.getContext("2d"); if(mctx){mctx.setTransform(DPR,0,0,DPR,0,0);
+      const cx=MS/2, cy=MS/2, r=mr0;
+      const md=mctx.createRadialGradient(cx-r*0.34,cy-r*0.36,r*0.1,cx,cy,r);
+      md.addColorStop(0,"#FCFDFF"); md.addColorStop(0.55,"#EEF3FF"); md.addColorStop(1,"#D9E4FB");
+      mctx.fillStyle=md; mctx.beginPath(); mctx.arc(cx,cy,r,0,7); mctx.fill();
+      mctx.globalAlpha=0.10; mctx.fillStyle="#94A6CE";
+      [[-0.16,-0.12,0.20],[0.18,0.18,0.15],[-0.04,0.30,0.12],[0.30,-0.24,0.10]].forEach(c=>{mctx.beginPath();mctx.arc(cx+c[0]*r,cy+c[1]*r,c[2]*r,0,7);mctx.fill();});
+      mctx.globalAlpha=1;
+      // delicate bright rim on the lit edge before carving
+      mctx.globalCompositeOperation="lighter"; mctx.strokeStyle="rgba(255,255,255,0.6)"; mctx.lineWidth=1; mctx.beginPath(); mctx.arc(cx,cy,r-0.6,Math.PI*0.62,Math.PI*1.46); mctx.stroke();
+      // carve the crescent
+      mctx.globalCompositeOperation="destination-out"; mctx.beginPath(); mctx.arc(cx+r*0.66,cy-r*0.16,r*1.06,0,7); mctx.fill();
+      mctx.globalCompositeOperation="source-over";
+    }
+    let shoot=null, nextShoot=1400+Math.random()*3000;
+    const fir=(bx,by,h,w)=>{for(let k=0;k<3;k++){const yTip=by-h+(h*0.30)*k,yBot=yTip+h*0.44,lw=w*(0.46+0.54*(k/2));ctx.beginPath();ctx.moveTo(bx,yTip);ctx.lineTo(bx-lw/2,yBot);ctx.lineTo(bx+lw/2,yBot);ctx.closePath();ctx.fill();}ctx.fillRect(bx-0.8,by-2,1.6,3);};
+    const band=(time,b,p)=>{const layerT=b/2,intensity=Math.pow(p,0.7);const baseY=lerp(HY*0.28,HY*0.60,layerT)-(1-p)*HY*0.12;const amp=lerp(H*0.10,H*0.05,layerT)*(0.6+0.4*intensity),speed=0.00016*(1+layerT*0.6),segs=Math.max(18,Math.round(W/7)),step=W/segs,pts=[];for(let i=0;i<=segs;i++){const xx=i*step,ph=xx*0.02+time*speed+b*1.7;pts.push({x:xx,y:baseY+Math.sin(ph)*amp+Math.sin(ph*0.5+1.3)*amp*0.6});}return{pts,layerT,intensity,segs,step};};
+    const hue=(time,b,layerT)=>mix(mix(GRN,TEA,layerT),VIO,0.22+0.10*Math.sin(time*0.0003+b));
+    let raf, alive=true, t0=performance.now(), last=t0;
+    const draw=()=>{
+      if(!alive)return;
+      const now=performance.now(), time=now-t0, dt=Math.min(60,now-last); last=now;
+      const p=Math.max(0,Math.min(1,pctRef.current)), dawn=Math.pow(1-p,1.8);
+      ctx.clearRect(0,0,W,H);
+      // sky
+      const top=mix([5,8,20],[14,18,40],dawn*0.5), midC=mix([13,21,50],[44,42,76],dawn*0.6), horC=mix([24,38,76],[128,90,98],dawn);
+      let g=ctx.createLinearGradient(0,0,0,HY);g.addColorStop(0,rgba(top,1));g.addColorStop(0.55,rgba(midC,1));g.addColorStop(1,rgba(horC,1));ctx.fillStyle=g;ctx.fillRect(0,0,W,HY);
+      const starA=Math.max(0,1-dawn*1.4);
+      for(const s of stars){const tw=0.55+0.45*Math.sin(now*0.001*s.sp+s.tw);ctx.fillStyle=`rgba(225,235,255,${(tw*starA*(0.4+0.6*s.d)).toFixed(3)})`;ctx.fillRect(s.x,s.y,s.r,s.r);}
+      // moon — a luminous crescent that arcs across the night and sets toward dawn
+      const elapsed=1-p;
+      const mx=lerp(W*0.80,W*0.22,elapsed), my=HY*(0.22+0.70*elapsed*elapsed);
+      const moonA=starA;
+      ctx.save();ctx.globalCompositeOperation="lighter";
+      let mg=ctx.createRadialGradient(mx,my,mr0*0.3,mx,my,mr0*3.0);mg.addColorStop(0,`rgba(208,224,255,${(0.16*moonA).toFixed(3)})`);mg.addColorStop(1,"rgba(208,224,255,0)");ctx.fillStyle=mg;ctx.beginPath();ctx.arc(mx,my,mr0*3.0,0,7);ctx.fill();
+      ctx.restore();
+      if(moonA>0.01){ctx.save();ctx.globalAlpha=Math.min(1,moonA);ctx.imageSmoothingEnabled=true;ctx.drawImage(moonCv,Math.round(mx-MS/2),Math.round(my-MS/2),MS,MS);ctx.restore();}
+      // shooting star
+      nextShoot-=dt; if(!shoot&&nextShoot<=0&&starA>0.4){shoot={x:Math.random()*W*0.5,y:Math.random()*HY*0.4,vx:0.5+Math.random()*0.5,life:0};nextShoot=2600+Math.random()*4000;}
+      if(shoot){shoot.life+=dt;const prog=shoot.life/620;if(prog>=1)shoot=null;else{const sx=shoot.x+shoot.vx*shoot.life*0.7,sy=shoot.y+shoot.vx*shoot.life*0.32,a=Math.sin(prog*Math.PI)*starA;ctx.save();ctx.globalCompositeOperation="lighter";const lg=ctx.createLinearGradient(sx,sy,sx-26,sy-12);lg.addColorStop(0,`rgba(255,255,255,${a})`);lg.addColorStop(1,"rgba(255,255,255,0)");ctx.strokeStyle=lg;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx-26,sy-12);ctx.stroke();ctx.restore();}}
+      // aurora — sky
+      ctx.save();ctx.globalCompositeOperation="lighter";
+      for(let b=0;b<3;b++){const {pts,layerT,intensity,segs,step}=band(time,b,p);if(intensity<0.01)continue;const hh=hue(time,b,layerT),curtain=lerp(H*0.5,H*0.85,layerT)*(0.7+0.3*intensity);
+        for(let i=0;i<=segs;i++){const {x:px,y:py}=pts[i];const fl=0.5+0.5*Math.sin(time*0.002+i*0.5+b*2),aTop=0.16*intensity*(0.6+0.4*fl);let gg=ctx.createLinearGradient(0,py,0,py+curtain);gg.addColorStop(0,rgba(hh,aTop));gg.addColorStop(0.35,rgba(hh,aTop*0.5));gg.addColorStop(1,rgba(hh,0));ctx.fillStyle=gg;ctx.fillRect(px-step*0.62,py,step*1.24,curtain);
+          if(i%2===0){const rA=0.10*intensity*(0.4+0.6*Math.sin(time*0.004+i+b*3));let rg=ctx.createLinearGradient(0,py,0,py+curtain*0.8);rg.addColorStop(0,rgba(mix(hh,[255,255,255],0.3),rA));rg.addColorStop(1,rgba(hh,0));ctx.fillStyle=rg;ctx.fillRect(px-0.7,py,1.4,curtain*0.8);}}
+        ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<=segs;i++){const a=pts[i-1],bb=pts[i];ctx.quadraticCurveTo(a.x,a.y,(a.x+bb.x)/2,(a.y+bb.y)/2);}ctx.lineWidth=1.8;ctx.strokeStyle=rgba(mix(hh,[255,255,255],0.4),0.30*intensity);ctx.shadowBlur=16*intensity;ctx.shadowColor=rgba(hh,0.9);ctx.stroke();ctx.shadowBlur=0;}
+      ctx.restore();
+      // water
+      const wTop=mix([10,16,38],[60,52,70],dawn), wBot=mix([4,7,20],[150,96,80],dawn);
+      let wg=ctx.createLinearGradient(0,HY,0,H);wg.addColorStop(0,rgba(wTop,1));wg.addColorStop(1,rgba(wBot,1));ctx.fillStyle=wg;ctx.fillRect(0,HY,W,H-HY);
+      // aurora — reflection + moon glitter
+      ctx.save();ctx.globalCompositeOperation="lighter";
+      for(let b=0;b<3;b++){const {pts,layerT,intensity,segs,step}=band(time,b,p);if(intensity<0.01)continue;const hh=hue(time,b,layerT);for(let i=0;i<=segs;i++){const {x:px,y:py}=pts[i];const ry=HY+(HY-py)*0.5;const wob=Math.sin(time*0.0016+i*0.6+b)*4*(1+(ry-HY)/H);const len=lerp(H*0.35,H*0.55,layerT)*intensity;let rg=ctx.createLinearGradient(0,ry,0,ry+len);rg.addColorStop(0,rgba(hh,0.10*intensity));rg.addColorStop(1,rgba(hh,0));ctx.fillStyle=rg;ctx.fillRect(px-step*0.7+wob,ry,step*1.4,len);}}
+      for(let y=HY;y<H;y+=4){const tt=(y-HY)/(H-HY);const wob=Math.sin(now*0.002+y*0.15)*(4+tt*12);const w=lerp(8,34,tt);ctx.fillStyle=`rgba(232,240,255,${(0.14*(1-tt)*moonA).toFixed(3)})`;ctx.fillRect(mx-w/2+wob,y,w,2.5);}
+      ctx.restore();
+      // dawn glow + rising sun + golden path
+      if(dawn>0.001){ctx.save();ctx.globalCompositeOperation="lighter";const gh=HY*lerp(0,0.85,dawn);let dg=ctx.createLinearGradient(0,HY,0,HY-gh);dg.addColorStop(0,`rgba(250,206,140,${0.5*dawn})`);dg.addColorStop(0.45,`rgba(244,162,130,${0.3*dawn})`);dg.addColorStop(1,"rgba(244,162,130,0)");ctx.fillStyle=dg;ctx.fillRect(0,HY-gh,W,gh);
+        if(dawn>0.55){const sa=(dawn-0.55)/0.45,sx=W*0.5,sy=HY+5;let sg=ctx.createRadialGradient(sx,sy,0,sx,sy,HY*0.6);sg.addColorStop(0,`rgba(255,240,210,${0.6*sa})`);sg.addColorStop(1,"rgba(255,240,210,0)");ctx.fillStyle=sg;ctx.beginPath();ctx.arc(sx,sy,HY*0.6,0,7);ctx.fill();ctx.fillStyle=`rgba(255,247,228,${0.92*sa})`;ctx.beginPath();ctx.arc(sx,sy,Math.max(7,W*0.05),0,7);ctx.fill();for(let y=HY;y<H;y+=4){const tt=(y-HY)/(H-HY);const wob=Math.sin(now*0.0022+y*0.13)*(4+tt*16);const w=lerp(12,52,tt);ctx.fillStyle=`rgba(255,214,150,${(0.2*sa*(1-tt)).toFixed(3)})`;ctx.fillRect(sx-w/2+wob,y,w,2.5);}}
+        ctx.restore();}
+      // shoreline forest + cabin
+      const baseY=HY+2, clearL=cabin.x-cabin.w*0.9, clearR=cabin.x+cabin.w*0.9;
+      ctx.fillStyle=rgba(mix([7,10,22],[58,40,52],dawn),1);ctx.beginPath();ctx.moveTo(0,HY+1);ctx.quadraticCurveTo(W*0.3,HY-6,W*0.55,HY-2);ctx.quadraticCurveTo(W*0.8,HY+2,W,HY-4);ctx.lineTo(W,HY+12);ctx.lineTo(0,HY+12);ctx.closePath();ctx.fill();
+      ctx.fillStyle=rgba(mix([10,13,26],[44,32,46],dawn),1);for(const tr of trees)if(tr.depth===0)fir(tr.x,baseY-1,tr.h,tr.w);
+      (()=>{const cx=cabin.x,by=baseY,w=cabin.w,h=cabin.h;ctx.fillStyle=rgba(mix([6,8,18],[40,26,38],dawn),1);const bodyH=h*0.6,bodyTop=by-bodyH;ctx.fillRect(cx-w/2,bodyTop,w,bodyH);ctx.beginPath();ctx.moveTo(cx-w/2-2,bodyTop+1);ctx.lineTo(cx,by-h);ctx.lineTo(cx+w/2+2,bodyTop+1);ctx.closePath();ctx.fill();const wa=0.92*(1-dawn*0.45),ww=Math.max(3.5,w*0.22),wh=ww*1.1,wx=cx-ww/2,wy=bodyTop+bodyH*0.3;ctx.save();ctx.globalCompositeOperation="lighter";let gg=ctx.createRadialGradient(wx+ww/2,wy+wh/2,0,wx+ww/2,wy+wh/2,ww*4);gg.addColorStop(0,`rgba(255,196,110,${0.55*wa})`);gg.addColorStop(1,"rgba(255,196,110,0)");ctx.fillStyle=gg;ctx.beginPath();ctx.arc(wx+ww/2,wy+wh/2,ww*4,0,7);ctx.fill();for(let y=HY;y<HY+(H-HY)*0.5;y+=4){const tt=(y-HY)/((H-HY)*0.5);const wob=Math.sin(now*0.0022+y*0.2)*(2+tt*6);ctx.fillStyle=`rgba(255,196,110,${(0.16*wa*(1-tt)).toFixed(3)})`;ctx.fillRect(cx-2+wob,y,4,2.5);}ctx.restore();ctx.fillStyle=`rgba(255,212,132,${wa})`;ctx.fillRect(wx,wy,ww,wh);})();
+      ctx.fillStyle=rgba(mix([5,7,15],[30,20,32],dawn),1);for(const tr of trees)if(tr.depth===1&&(tr.x<clearL||tr.x>clearR))fir(tr.x,baseY,tr.h,tr.w);
+      // snow
+      const snowA=Math.max(0,1-dawn*0.7);for(const f of snow){f.y+=f.sp*0.012*dt;f.x+=Math.sin(now*0.001+f.sw)*0.25;if(f.y>H){f.y=-3;f.x=Math.random()*W;}ctx.fillStyle=`rgba(255,255,255,${(0.5*f.d*snowA).toFixed(3)})`;ctx.fillRect(f.x,f.y,f.r,f.r);}
+      raf=requestAnimationFrame(draw);
+    };
+    raf=requestAnimationFrame(draw);
+    return()=>{alive=false;cancelAnimationFrame(raf);};
+  },[W,H,color,HYr]);
+  const dk=isDark();
+  if(immersive){
+    return(
+      <div style={{position:"fixed",inset:0,zIndex:9700,background:"#070b18",overflow:"hidden",animation:"ftIn .3s ease"}}>
+        <style>{`@keyframes ftIn{from{opacity:0}to{opacity:1}}`}</style>
+        <canvas ref={cvRef} style={{position:"absolute",inset:0,width:W,height:H,display:"block"}}/>
+        <ImmersiveChrome c={c} color={color} t={t} onClose={onClose} activity={activity} W={W} H={H} hideLabel={hideLabel} doneEmoji="🌅" labelYFrac={0.5}/>
+      </div>
+    );
+  }
+  if(c.done) return <DoneBadge color={color} t={t} onReplay={()=>{c.reset();c.setRun(true);}} onClose={onClose}/>;
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:18}}>
+      <div style={{position:"relative",width:W,height:H,borderRadius:30,overflow:"hidden",
+        boxShadow:dk?`0 0 90px -10px rgba(94,234,212,0.28), 0 28px 60px -20px rgba(16,24,52,0.6), 0 10px 30px -15px rgba(0,0,0,0.8)`:`0 22px 52px -22px rgba(16,24,52,0.55), 0 6px 18px -10px rgba(16,24,52,0.4)`,
+        border:`1px solid ${dk?"rgba(255,255,255,0.06)":"rgba(16,24,52,0.12)"}`}}>
+        <canvas ref={cvRef} style={{width:W,height:H,display:"block"}}/>
+        {!hideLabel&&(
+          <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
+            <span style={{fontFamily:G.font,fontWeight:500,fontSize:size*0.155,color:"#F4F7FF",letterSpacing:-0.5,textShadow:"0 2px 24px rgba(120,170,255,0.5), 0 0 50px rgba(94,234,212,0.28)",fontVariantNumeric:"tabular-nums"}}>{c.label}</span>
+          </div>
+        )}
+      </div>
+      {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
+    </div>
+  );
+}
+
+function TimerComp({type,totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMode="globe",mode,setMode,preview=false,onClose}){
+  const M={sector:SectorTimer,ring:RingTimer,dots:DotsTimer,wave:WaveTimer,sun:SunTimer,aurora:AuroraTimer,lava:LavaTimer,monster:MonsterTimer};
   const Comp=M[type]||SectorTimer;
   // Preview mode — pick a duration that demonstrates the timer's character in
   // a few seconds, and key it so the timer remounts (and restarts) each cycle.
@@ -3657,11 +3594,11 @@ function TimerComp({type,totalSec,color,t,autoRun=false,size=240,showCtrl=true,d
   const previewSec=type==="dots"?360:8;     // 360s → 6 lamps × 1 min
   const effSec=preview?previewSec:totalSec;
   const effAutoRun=preview?true:autoRun;
-  return <Comp key={preview?`prev-${cycleKey}`:undefined} totalSec={effSec} color={color} t={t} autoRun={effAutoRun} size={size} showCtrl={showCtrl} dotMode={dotMode} mode={mode} setMode={setMode} hideLabel={preview}/>;
+  return <Comp key={preview?`prev-${cycleKey}`:undefined} totalSec={effSec} color={color} t={t} autoRun={effAutoRun} size={size} showCtrl={showCtrl} dotMode={dotMode} mode={mode} setMode={setMode} hideLabel={preview} onClose={onClose}/>;
 }
 
 function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
-  const[dotsMode,setDotsMode]=useState("pearl");   // pearl ↔ candle, for the dot timer
+  const[dotsMode,setDotsMode]=useState("globe");   // globe(default) · candle · bulb · lantern looks for the dot timer
   // Compute size from actual rendered viewport — if FullTimer's fixed positioning
   // is constrained by a parent with transform/will-change, it inherits that container.
   // Be defensive: measure actual viewport AND deduct header/nav heights generously.
@@ -3672,21 +3609,21 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
     const landscape=window.innerWidth>window.innerHeight;
     const vw=landscape?window.innerWidth:Math.min(window.innerWidth, 480);
     const vh=window.innerHeight;
-    // Some scenes render up to ~1.34× tall, so divide the height budget by that.
-    const chrome=landscape?(180+headerSpace):(330+headerSpace);
-    const maxByHeight=Math.max(150,(vh-chrome)/1.34);
-    const maxByWidth=Math.max(150,vw-(landscape?80:80));
-    return Math.round(Math.min(landscape?500:340, Math.min(maxByHeight,maxByWidth)));
+    // Card timers (sector/ring/dots/wave/lava/monster) — tallest is ~1.0×.
+    const chrome=landscape?(170+headerSpace):(300+headerSpace);
+    const maxByHeight=Math.max(150,(vh-chrome)/1.05);
+    const maxByWidth=Math.max(150,vw-(landscape?80:32));
+    return Math.round(Math.min(landscape?520:440, Math.min(maxByHeight,maxByWidth)));
   });
   useEffect(()=>{
     const onResize=()=>{
       const landscape=window.innerWidth>window.innerHeight;
       const vw=landscape?window.innerWidth:Math.min(window.innerWidth, 480);
       const vh=window.innerHeight;
-      const chrome=landscape?(180+headerSpace):(330+headerSpace);
-      const maxByHeight=Math.max(150,(vh-chrome)/1.34);
-      const maxByWidth=Math.max(150,vw-(landscape?80:80));
-      setSize(Math.round(Math.min(landscape?500:340, Math.min(maxByHeight,maxByWidth))));
+      const chrome=landscape?(170+headerSpace):(300+headerSpace);
+      const maxByHeight=Math.max(150,(vh-chrome)/1.05);
+      const maxByWidth=Math.max(150,vw-(landscape?80:32));
+      setSize(Math.round(Math.min(landscape?520:440, Math.min(maxByHeight,maxByWidth))));
     };
     window.addEventListener("resize",onResize);
     window.addEventListener("orientationchange",onResize);
@@ -3695,27 +3632,31 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
       window.removeEventListener("orientationchange",onResize);
     };
   },[headerSpace]);
+  // Aurora is a cinematic scene timer — give it the whole screen, with its own
+  // overlaid close + controls, instead of the boxed tile layout.
+  if(type==="aurora") return <AuroraTimer immersive totalSec={totalSec} color={color} t={t} autoRun={autoRun} onClose={onClose} activity={activity}/>;
+  if(type==="sun") return <SunTimer immersive totalSec={totalSec} color={color} t={t} autoRun={autoRun} onClose={onClose} activity={activity}/>;
   return(
-    <div style={{position:"fixed",inset:0,zIndex:9700,background:isDark()?"#0A0810":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(60% 45% at 50% 55%, ${color}22 0%, ${color}10 35%, transparent 70%), radial-gradient(90% 40% at 50% 0%, ${color}1C 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0A0810 100%)`:`linear-gradient(165deg,${SCREENS.timer.hb} 0%,#FFFFFF 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:`calc(env(safe-area-inset-top, 0px) + ${activity?72:32}px) 20px calc(env(safe-area-inset-bottom, 0px) + 20px)`,gap:22,animation:"ftIn .25s ease",overflow:"hidden"}}>
+    <div style={{position:"fixed",inset:0,zIndex:9700,background:isDark()?"#0A0810":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(60% 45% at 50% 55%, ${color}22 0%, ${color}10 35%, transparent 70%), radial-gradient(90% 40% at 50% 0%, ${color}1C 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0A0810 100%)`:`linear-gradient(180deg,#FFFFFF 0%,#FAF8F4 100%)`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:`calc(env(safe-area-inset-top, 0px) + ${activity?72:32}px) 20px calc(env(safe-area-inset-bottom, 0px) + 20px)`,gap:22,animation:"ftIn .25s ease",overflow:"hidden"}}>
       <style>{`
         @keyframes ftIn{from{opacity:0}to{opacity:1}}
         @keyframes ftActIn{0%{opacity:0;transform:translateY(-8px) scale(0.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
       `}</style>
-      <button onClick={onClose} style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 14px)",right:20,width:42,height:42,borderRadius:21,border:`1px solid ${isDark()?"rgba(255,255,255,0.14)":G.border}`,background:isDark()?"rgba(255,255,255,0.08)":G.white,backdropFilter:isDark()?"blur(12px)":"none",WebkitBackdropFilter:isDark()?"blur(12px)":"none",color:isDark()?"#F4F1FA":G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.16)":sh.sm,zIndex:2}}><IconX size={14}/></button>
+      <button onClick={onClose} aria-label={t?.close||"Stäng"} className="lt-press-soft" style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 14px)",right:20,width:42,height:42,borderRadius:21,border:isDark()?"1px solid rgba(255,255,255,0.10)":"none",background:isDark()?"#23213A":"#FFFFFF",color:isDark()?"#E8E2F0":G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:isDark()?"0 12px 26px -12px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.12)":"0 12px 26px -12px rgba(20,24,40,0.26), 0 3px 8px -4px rgba(20,24,40,0.12), inset 0 1px 0 #FFFFFF",zIndex:2}}><IconX size={14}/></button>
       {/* Dot-timer look toggle — sits at the same height as the close button,
           top-left, so it never collides with the lamps. */}
       {type==="dots"&&(()=>{const oc2=readable(color);return(
         <div style={{position:"absolute",top:20,left:20,zIndex:2,display:"inline-flex",
           background:isDark()?"rgba(255,255,255,0.07)":G.white,borderRadius:999,padding:3,gap:2,boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.12)":sh.sm,border:`1px solid ${isDark()?"rgba(255,255,255,0.1)":G.border}`}}>
-          {["pearl","candle"].map(m=>{const active=dotsMode===m;return(
+          {DOT_LOOKS.map(m=>{const active=dotsMode===m;const lb=dotLookLabel(m,t);return(
             <button key={m} onClick={()=>setDotsMode(m)} className="lt-press-soft"
-              aria-label={m==="pearl"?(t?.dotToPearl||"Pärlor"):(t?.dotToCandle||"Ljus")}
-              style={{padding:"6px 13px",borderRadius:999,border:"none",cursor:"pointer",
-                fontFamily:G.font,fontWeight:600,fontSize:12,letterSpacing:0.2,
+              aria-label={lb}
+              style={{padding:"6px 10px",borderRadius:999,border:"none",cursor:"pointer",
+                fontFamily:G.font,fontWeight:600,fontSize:11.5,letterSpacing:0.1,
                 color:active?(isDark()?"#FFFFFF":shade(oc2,-0.3)):(isDark()?"#9E98AE":G.ink3),
                 background:active?(isDark()?"rgba(255,255,255,0.13)":`${oc2}1A`):"transparent",
                 transition:"background .3s ease, color .3s ease"}}>
-              {m==="pearl"?(t?.dotToPearl||"Pärlor"):(t?.dotToCandle||"Ljus")}
+              {lb}
             </button>
           );})}
         </div>
@@ -3740,13 +3681,7 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
           </div>
         </div>
       )}
-      <TimerComp type={type} totalSec={totalSec} color={color} t={t} autoRun={autoRun} size={
-        // Wave and sun timers are naturally wider (rectangle, ~0.65 ratio) so
-        // give them a tighter max bound — they should never feel oversized.
-        // Other timer types (sector/ring/dots/lava/monster) are square so the
-        // standard size calc works as-is.
-        (type==="wave"||type==="sun")?Math.min(size, Math.round((typeof window!=="undefined"?Math.min(window.innerWidth,480):360)*0.75)):size
-      } mode={type==="dots"?dotsMode:undefined} setMode={type==="dots"?setDotsMode:undefined}/>
+      <TimerComp type={type} totalSec={totalSec} color={color} t={t} autoRun={autoRun} size={size} mode={type==="dots"?dotsMode:undefined} setMode={type==="dots"?setDotsMode:undefined} onClose={onClose}/>
     </div>
   );
 }
@@ -3922,6 +3857,28 @@ function TimerThumb({type,color,size=120,min=30}){
     const W=Math.round(size*0.52), H=size;
     const bot=`M${W*0.22},${H*0.05} Q${W*0.5},${H*0.02} ${W*0.78},${H*0.05} L${W*0.74},${H*0.2} Q${W*0.9},${H*0.32} ${W*0.9},${H*0.52} L${W*0.84},${H*0.82} Q${W*0.78},${H*0.93} ${W*0.5},${H*0.96} Q${W*0.22},${H*0.93} ${W*0.16},${H*0.82} L${W*0.1},${H*0.52} Q${W*0.1},${H*0.32} ${W*0.26},${H*0.2} Z`;
     return(<svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}><defs><clipPath id="lt"><path d={bot}/></clipPath><linearGradient id="ll" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity="0.45"/><stop offset="100%" stopColor={color} stopOpacity="0.9"/></linearGradient></defs><path d={bot} fill="#FAF8FE" stroke={`${color}66`} strokeWidth={2}/><g clipPath="url(#lt)"><rect x={0} y={H*0.4} width={W} height={H*0.56} fill="url(#ll)"/><ellipse cx={W*0.5} cy={H*0.62} rx={W*0.2} ry={H*0.07} fill={color} opacity={0.7}/></g><rect x={W*0.27} y={H*0.01} width={W*0.46} height={H*0.06} rx={4} fill="#C4BFDB"/><rect x={W*0.27} y={H*0.92} width={W*0.46} height={H*0.06} rx={4} fill="#C4BFDB"/></svg>);
+  }
+  if(type==="aurora"){
+    const W=size, H=Math.round(size*0.66), hy=Math.round(H*0.64), uid=("au"+color.slice(1));
+    const arc=`M0 ${hy*0.34} Q${W*0.3} ${hy*0.16} ${W*0.55} ${hy*0.32} T${W} ${hy*0.28}`;
+    return(
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{borderRadius:18,overflow:"hidden",border:`1px solid ${G.border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.10)"}}>
+        <defs>
+          <linearGradient id={uid+"sky"} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0a1228"/><stop offset="60%" stopColor="#16233f"/><stop offset="100%" stopColor="#2a3a5a"/></linearGradient>
+          <linearGradient id={uid+"wat"} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#1a2540"/><stop offset="100%" stopColor="#090f20"/></linearGradient>
+          <linearGradient id={uid+"a"} x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#4ade9a"/><stop offset="55%" stopColor="#5eead4"/><stop offset="100%" stopColor={color}/></linearGradient>
+        </defs>
+        <rect x="0" y="0" width={W} height={hy} fill={`url(#${uid}sky)`}/>
+        {Array.from({length:14}).map((_,i)=><circle key={i} cx={(i*53)%W} cy={((i*37)%(hy-6))+2} r={0.7} fill="#dce6ff" opacity={0.7}/>)}
+        <circle cx={W*0.78} cy={hy*0.28} r={W*0.05} fill="#eaf0ff"/>
+        <path d={arc} fill="none" stroke={`url(#${uid}a)`} strokeWidth={6} strokeLinecap="round" opacity="0.45"/>
+        <path d={arc} fill="none" stroke={`url(#${uid}a)`} strokeWidth={2} strokeLinecap="round"/>
+        <path d={`M0 ${hy*0.5} Q${W*0.35} ${hy*0.36} ${W*0.6} ${hy*0.48} T${W} ${hy*0.44}`} fill="none" stroke={`url(#${uid}a)`} strokeWidth={5} strokeLinecap="round" opacity="0.3"/>
+        <rect x="0" y={hy} width={W} height={H-hy} fill={`url(#${uid}wat)`}/>
+        <rect x="0" y={hy} width={W} height={(H-hy)*0.5} fill={`url(#${uid}a)`} opacity="0.10"/>
+        {Array.from({length:Math.max(6,Math.round(W/10))}).map((_,i)=>{const fx=i*10+4,fh=8+((i*7)%10);return <path key={'f'+i} d={`M${fx} ${hy} L${fx-fh*0.32} ${hy} L${fx} ${hy-fh} L${fx+fh*0.32} ${hy} Z`} fill="#0a1020"/>;})}
+      </svg>
+    );
   }
   if(type==="monster"){
     const W=size, H=Math.round(size*0.74), uid=("th"+color.slice(1));
@@ -4496,6 +4453,7 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
           //   • "auto" → white line with a soft warm-toned pulsing glow (no fixed identity)
           //   • anything else → that exact colour
           const rawNlc=cfg.nowLineColor;
+          const dk=isDark();
           const isAuto=rawNlc==="auto"||cfg.sigvardColor==="auto"&&!rawNlc;
           const baseLineColor=isAuto?"#FFFFFF":(rawNlc||cfg.sigvardColor||"#FF4848");
           const lineMin=now.getHours()*60+now.getMinutes()+now.getSeconds()/60;
@@ -4519,12 +4477,15 @@ function TimelineView({acts,isEd,cfg,t,onTap,onEdit,onMarkDone,now,collapseBarRe
             :`nowPulse_${isAuto?"auto":baseLineColor.replace("#","")}`;
           return(
             <>
-              <div style={{position:"absolute",top:lineY-1,left:-12,right:0,height:2,background:overActive
-                ?`linear-gradient(90deg, ${shade(lineColor,-0.05)} 0%, ${shade(lineColor,0.12)} 40%, ${withAlpha(lineColor,0.35)} 100%)`
-                :(isAuto?`linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 40%, rgba(255,255,255,0.4) 100%)`:`linear-gradient(90deg, ${shade(lineColor,-0.1)} 0%, ${shade(lineColor,0.1)} 40%, ${withAlpha(lineColor,0.2)} 100%)`),borderRadius:1,zIndex:overActive?25:1,pointerEvents:"none",animation:`${pulseId} ${overActive?"3.4s":"2.4s"} ease-in-out infinite`,transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1), background .8s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
+              <div style={{position:"absolute",top:lineY-1,left:-12,right:0,height:dk?1.5:2,background:overActive
+                ?`linear-gradient(90deg, ${shade(lineColor,-0.05)} 0%, ${shade(lineColor,0.12)} 40%, ${withAlpha(lineColor,dk?0.28:0.35)} 100%)`
+                :(isAuto?(dk?`linear-gradient(90deg, rgba(206,214,230,0.78) 0%, rgba(206,214,230,0.62) 42%, rgba(206,214,230,0.18) 100%)`:`linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 40%, rgba(255,255,255,0.4) 100%)`):`linear-gradient(90deg, ${shade(lineColor,-0.1)} 0%, ${shade(lineColor,0.1)} 40%, ${withAlpha(lineColor,0.2)} 100%)`),borderRadius:1,zIndex:overActive?25:1,pointerEvents:"none",animation:`${pulseId} ${overActive?"3.4s":"2.4s"} ease-in-out infinite`,transition:"top .5s cubic-bezier(0.32, 0.72, 0, 1), background .8s cubic-bezier(0.32, 0.72, 0, 1)"}}/>
               <style>{overActive
-                ? `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 8px ${withAlpha(lineColor,0.45)}, 0 0 14px ${withAlpha(lineColor,0.18)};opacity:.92}50%{box-shadow:0 0 18px ${withAlpha(lineColor,0.85)}, 0 0 32px ${withAlpha(lineColor,0.40)}, 0 0 48px ${withAlpha(lineColor,0.18)};opacity:1}}`
-                : `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 6px ${isAuto?"rgba(184,197,216,0.5)":withAlpha(lineColor,0.33)};opacity:.85}50%{box-shadow:${isAuto?"0 0 14px rgba(255,255,255,0.95), 0 0 22px rgba(184,197,216,0.55)":`0 0 14px ${withAlpha(lineColor,0.67)}, 0 0 22px ${withAlpha(lineColor,0.27)}`};opacity:1}}`
+                ? `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 ${dk?6:8}px ${withAlpha(lineColor,dk?0.30:0.45)}, 0 0 ${dk?10:14}px ${withAlpha(lineColor,dk?0.12:0.18)};opacity:${dk?0.85:0.92}}50%{box-shadow:0 0 ${dk?12:18}px ${withAlpha(lineColor,dk?0.55:0.85)}, 0 0 ${dk?22:32}px ${withAlpha(lineColor,dk?0.22:0.40)}${dk?"":`, 0 0 48px ${withAlpha(lineColor,0.18)}`};opacity:1}}`
+                : (isAuto?(dk
+                    ? `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 4px rgba(172,184,206,0.28);opacity:.70}50%{box-shadow:0 0 9px rgba(192,204,226,0.42), 0 0 16px rgba(150,165,190,0.18);opacity:.86}}`
+                    : `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 6px rgba(184,197,216,0.5);opacity:.85}50%{box-shadow:0 0 14px rgba(255,255,255,0.95), 0 0 22px rgba(184,197,216,0.55);opacity:1}}`)
+                  : `@keyframes ${pulseId}{0%,100%{box-shadow:0 0 6px ${withAlpha(lineColor,0.33)};opacity:.85}50%{box-shadow:0 0 14px ${withAlpha(lineColor,0.67)}, 0 0 22px ${withAlpha(lineColor,0.27)};opacity:1}}`)
               }</style>
             </>
           );
@@ -5815,8 +5776,9 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
                 </div>
               </div>
             )}
-            {/* Inline minute stepper — shown only when this step has a timer */}
+            {/* Inline minute stepper + per-step timer TYPE picker — shown only when this step has a timer */}
             {s.timerMin&&!editing?(
+              <>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,padding:"10px 12px",borderTop:`1px solid ${isDark()?edPal().hairline:G.border}`,background:isDark()?"rgba(255,255,255,0.02)":`${S.h}08`}}>
                 <span style={{fontFamily:G.font,fontWeight:500,fontSize:12.5,color:edPal().text2}}>{lang==="sv"?"Tid på steget":"Time for this step"}</span>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -5825,6 +5787,17 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
                   <button onClick={()=>{if(typeof navigator!=="undefined"&&navigator.vibrate)navigator.vibrate(8);setSteps(ss=>ss.map(x=>x.id===s.id?{...x,timerMin:Math.min(180,Math.round(((x.timerMin||10)+5)/5)*5)}:x));}} aria-label="+5" className="lt-press" style={{width:30,height:30,borderRadius:9,border:`1px solid ${isDark()?edPal().cardBorderHi:G.border}`,background:isDark()?edPal().cardBg2:G.white,color:edPal().text,fontSize:18,fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>+</button>
                 </div>
               </div>
+              <div style={{display:"flex",alignItems:"center",gap:9,padding:"9px 12px 11px",borderTop:`1px solid ${isDark()?edPal().hairline:G.border}`,background:isDark()?"rgba(255,255,255,0.02)":`${S.h}08`,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+                <span style={{fontFamily:G.font,fontWeight:500,fontSize:12.5,color:edPal().text2,flexShrink:0}}>{t.timerType}</span>
+                <div style={{display:"flex",gap:6}}>
+                  {TTYPES.map(k=>{const act=(s.timerType||timerType)===k;const hc=(color&&color!=="#FFFFFF"&&color!=="#1F1B2E")?color:S.h;return(
+                    <button key={k} onClick={()=>{if(typeof navigator!=="undefined"&&navigator.vibrate)navigator.vibrate(8);setSteps(ss=>ss.map(x=>x.id===s.id?{...x,timerType:k}:x));}} aria-label={tlbl(k,t)} className="lt-press" style={{flexShrink:0,width:36,height:36,borderRadius:10,display:"inline-flex",alignItems:"center",justifyContent:"center",cursor:"pointer",border:`1px solid ${act?hc:(isDark()?edPal().cardBorder:G.border)}`,background:act?hc:(isDark()?edPal().cardBg2:G.white),color:act?"#fff":edPal().text2,transition:"all .2s ease"}}>
+                      <TimerIcon type={k} size={17} color={act?"#fff":edPal().text2}/>
+                    </button>
+                  );})}
+                </div>
+              </div>
+              </>
             ):null}
           </div>
           );
@@ -8823,7 +8796,7 @@ function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange}){
               (sector/ring/sun/lava/monster) get room and the wide, short ones
               (wave/dots) don't leave a big gap before the Start button. */}
           {(()=>{
-            const previewH = type==="wave" ? 130 : type==="dots" ? 140 : 200;
+            const previewH = type==="wave" ? 130 : type==="aurora" ? 150 : type==="dots" ? 140 : 200;
             return(
           <div style={{position:"relative",height:previewH,width:"100%",marginTop:6,marginBottom:6,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,zIndex:1}}>
             <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:200,height:200,borderRadius:"50%",pointerEvents:"none",zIndex:0,background:`radial-gradient(circle, ${isDark()?`${color}26`:"rgba(255,255,255,0.85)"} 0%, transparent 66%)`}}/>
@@ -8882,11 +8855,12 @@ function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange}){
           scrolls cleanly to the bottom instead of rubber-banding. */}
       {typeSheet&&(()=>{
         const TYPE_DESC={
-          sector:{sv:"En klocka där färgen försvinner med tiden",en:"A clock whose colour disappears over time"},
-          ring:{sv:"En ring där färgen försvinner med tiden",en:"A ring whose colour disappears over time"},
+          sector:{sv:"En klocka där färgen försvinner med tiden",en:"A clock whose colour fades away"},
+          ring:{sv:"En ring där färgen försvinner med tiden",en:"A ring whose colour fades away"},
           dots:{sv:"Lamporna slocknar en i taget",en:"The lamps go out one by one"},
           wave:{sv:"Vattnet sjunker sakta",en:"The water slowly sinks"},
           sun:{sv:"Solen sjunker mot havet",en:"The sun sinks toward the sea"},
+          aurora:{sv:"Norrsken som mattas mot gryning",en:"Aurora fading into dawn"},
           lava:{sv:"Ett timglas av lavalampa",en:"An hourglass made of lava lamp"},
           monster:{sv:"Monstret äter sig fram",en:"The monster eats its way along"},
         };
@@ -10328,11 +10302,11 @@ function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,pa
   // translucency is the intended liquid-glass-over-sky look) are unchanged.
   return(
     <div ref={rowRef} style={{display:"flex",alignItems:"center",gap:4,flex:1,position:"relative",
-      background:trackBg!=null?trackBg:(bare?"transparent":(dk?(floating?"rgba(22,19,34,0.7)":"rgba(255,255,255,0.05)"):(onSky?(floating?"rgba(255,255,255,0.26)":"rgba(255,255,255,0.10)"):G.cream))),
+      background:trackBg!=null?trackBg:(bare?"transparent":(dk?(floating?"rgba(17,15,26,0.88)":"rgba(255,255,255,0.05)"):(onSky?(floating?"rgba(255,255,255,0.26)":"rgba(255,255,255,0.10)"):G.cream))),
       borderRadius:14,padding:4,
-      border:trackBorder!=null?`1px solid ${trackBorder}`:(bare?"1px solid transparent":(dk?"1px solid rgba(255,255,255,0.08)":(onSky?`1px solid rgba(255,255,255,${floating?0.55:0.28})`:`1px solid ${color}1E`))),
-      backdropFilter:trackBg!=null?"blur(12px) saturate(1.25)":(bare?"none":(dk?"blur(14px) saturate(1.2)":(onSky?"blur(12px) saturate(1.3)":"none"))),WebkitBackdropFilter:trackBg!=null?"blur(12px) saturate(1.25)":(bare?"none":(dk?"blur(14px) saturate(1.2)":(onSky?"blur(12px) saturate(1.3)":"none"))),
-      boxShadow:trackShadow!=null?trackShadow:(bare?"none":(dk?(floating?"0 6px 18px -8px rgba(0,0,0,0.6)":"inset 0 1px 2px rgba(0,0,0,0.3)"):(onSky?(floating?`0 8px 22px -10px ${deep}55, inset 0 1px 0 rgba(255,255,255,0.6)`:`0 4px 14px -10px ${deep}33`):`0 4px 14px -8px ${deep}33, inset 0 1px 0 rgba(255,255,255,0.9)`))),
+      border:trackBorder!=null?`1px solid ${trackBorder}`:(bare?"1px solid transparent":(dk?"1px solid rgba(255,255,255,0.10)":(onSky?`1px solid rgba(255,255,255,${floating?0.55:0.28})`:`1px solid ${color}1E`))),
+      backdropFilter:trackBg!=null?"blur(12px) saturate(1.25)":(bare?"none":(dk?(floating?"blur(24px) saturate(1.3)":"blur(14px) saturate(1.2)"):(onSky?"blur(12px) saturate(1.3)":"none"))),WebkitBackdropFilter:trackBg!=null?"blur(12px) saturate(1.25)":(bare?"none":(dk?(floating?"blur(24px) saturate(1.3)":"blur(14px) saturate(1.2)"):(onSky?"blur(12px) saturate(1.3)":"none"))),
+      boxShadow:trackShadow!=null?trackShadow:(bare?"none":(dk?(floating?"0 10px 26px -10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.07)":"inset 0 1px 2px rgba(0,0,0,0.3)"):(onSky?(floating?`0 8px 22px -10px ${deep}55, inset 0 1px 0 rgba(255,255,255,0.6)`:`0 4px 14px -10px ${deep}33`):`0 4px 14px -8px ${deep}33, inset 0 1px 0 rgba(255,255,255,0.9)`))),
       transition:"background .4s ease, box-shadow .4s ease"}}>
       {/* The single gliding pill — moved via GPU transform (translateX) so it
           stays smooth even while the rest of the screen re-renders. */}
@@ -10595,8 +10569,12 @@ function StoryViewer({story,lang,t,onClose}){
           </button>
         )}
 
-        {/* Inline running timer — appears under the card */}
-        {hasTimer&&showTimer&&(
+        {/* Inline running timer — appears under the card. Aurora & Sunset are
+            full-screen scenes, so on a story page they open immersively (just
+            like in the schedule and First-Then), instead of as a cramped card. */}
+        {hasTimer&&showTimer&&((pt.type==="aurora"||pt.type==="sun")
+          ? <FullTimer type={pt.type} totalSec={pt.min*60} color={pt.color} t={t} autoRun={true} onClose={()=>setShowTimer(false)}/>
+          : (
           <div style={{
             width:"100%",
             display:"flex",
@@ -10617,7 +10595,7 @@ function StoryViewer({story,lang,t,onClose}){
               letterSpacing:.2,
             }}>{lang==="sv"?"Dölj timer":"Hide timer"}</button>
           </div>
-        )}
+          ))}
         </div>
       </div>
       <div style={{padding:"0 18px 32px"}}>
@@ -14558,7 +14536,7 @@ function SceneIdCard({lang}){
         @keyframes dIdRowIn{0%{opacity:0;transform:translateX(-6px)}100%{opacity:1;transform:translateX(0)}}
         @keyframes dIdCallPulse{0%,100%{box-shadow:0 0 0 0 rgba(143,191,161,0.5)}50%{box-shadow:0 0 0 8px rgba(143,191,161,0)}}
       `}</style>
-      <div style={{background:"#FFFFFF",borderRadius:20,padding:"20px 18px 18px",boxShadow:"0 16px 40px rgba(31,27,46,0.10), 0 2px 8px rgba(31,27,46,0.04)",border:"1px solid rgba(31,27,46,0.06)",width:"100%",maxWidth:320,animation:"dIdIn 0.9s cubic-bezier(0.22,1,0.36,1) both"}}>
+      <div style={{background:"#FFFFFF",borderRadius:20,padding:"20px 18px 18px",boxShadow:"0 16px 40px rgba(31,27,46,0.10), 0 2px 8px rgba(31,27,46,0.04)",border:"1px solid rgba(31,27,46,0.06)",width:"100%",maxWidth:320,textAlign:"left",animation:"dIdIn 0.9s cubic-bezier(0.22,1,0.36,1) both"}}>
 
         {/* Avatar + name header */}
         <div style={{display:"flex",alignItems:"center",gap:13,marginBottom:14,paddingBottom:14,borderBottom:"1px solid rgba(31,27,46,0.06)"}}>
@@ -14571,25 +14549,25 @@ function SceneIdCard({lang}){
 
         {/* About me */}
         <div style={{marginBottom:11,animation:"dIdRowIn 0.45s 0.25s cubic-bezier(0.22,1,0.36,1) both"}}>
-          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.8,textTransform:"uppercase",marginBottom:3}}>Om mig</div>
-          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:12.5,color:"#1F1B2E",lineHeight:1.4}}>Jag pratar inte alltid. Jag tänker mycket.</div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.8,textTransform:"uppercase",marginBottom:3}}>{en?"About me":"Om mig"}</div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:12.5,color:"#1F1B2E",lineHeight:1.4}}>{en?"I don't always speak. I think a lot.":"Jag pratar inte alltid. Jag tänker mycket."}</div>
         </div>
 
         {/* What helps */}
         <div style={{marginBottom:11,animation:"dIdRowIn 0.45s 0.40s cubic-bezier(0.22,1,0.36,1) both"}}>
-          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.8,textTransform:"uppercase",marginBottom:3}}>Det här hjälper</div>
-          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:12.5,color:"#1F1B2E",lineHeight:1.4}}>Lugn musik · Vatten · Min nalle</div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.8,textTransform:"uppercase",marginBottom:3}}>{en?"This helps":"Det här hjälper"}</div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:12.5,color:"#1F1B2E",lineHeight:1.4}}>{en?"Calm music · Water · My teddy":"Lugn musik · Vatten · Min nalle"}</div>
         </div>
 
         {/* What's hard */}
         <div style={{marginBottom:13,animation:"dIdRowIn 0.45s 0.55s cubic-bezier(0.22,1,0.36,1) both"}}>
-          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.8,textTransform:"uppercase",marginBottom:3}}>Det här är svårt</div>
-          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:12.5,color:"#1F1B2E",lineHeight:1.4}}>Höga ljud · Plötsliga ändringar</div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.8,textTransform:"uppercase",marginBottom:3}}>{en?"This is hard":"Det här är svårt"}</div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:12.5,color:"#1F1B2E",lineHeight:1.4}}>{en?"Loud sounds · Sudden changes":"Höga ljud · Plötsliga ändringar"}</div>
         </div>
 
         {/* Emergency contacts */}
         <div style={{paddingTop:13,borderTop:"1px solid rgba(31,27,46,0.06)",animation:"dIdRowIn 0.45s 0.70s cubic-bezier(0.22,1,0.36,1) both"}}>
-          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.8,textTransform:"uppercase",marginBottom:7}}>Ring vid behov</div>
+          <div style={{fontFamily:"-apple-system, sans-serif",fontSize:9.5,fontWeight:600,color:"#7C7691",letterSpacing:0.8,textTransform:"uppercase",marginBottom:7}}>{en?"Call if needed":"Ring vid behov"}</div>
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
             {[
               {who:en?"Mom Anna":"Mamma Anna",num:"070 123 45 67",emoji:"👩",pulse:true},
@@ -15443,6 +15421,21 @@ export default function App(){
       setMigrMonsterDone(true);
     }
   },[migrMonsterDone,cfgRaw,setCfg,setMigrMonsterDone]);
+  // Same for "aurora" (Norrsken) — added after some users already had a saved
+  // allowedTypes list, which would otherwise hide it.
+  const[migrAuroraDone,setMigrAuroraDone]=usePersistentState("migr_aurora_timer",false);
+  useEffect(()=>{
+    if(!migrAuroraDone){
+      const cur=cfgRaw.timerCfg?.allowedTypes;
+      if(Array.isArray(cur)&&!cur.includes("aurora")){
+        // insert after "sun" to keep the natural order, else append
+        const si=cur.indexOf("sun");
+        const next=si>=0?[...cur.slice(0,si+1),"aurora",...cur.slice(si+1)]:[...cur,"aurora"];
+        setCfg(x=>({...x,timerCfg:{...x.timerCfg,allowedTypes:next}}));
+      }
+      setMigrAuroraDone(true);
+    }
+  },[migrAuroraDone,cfgRaw,setCfg,setMigrAuroraDone]);
   // Keyboard handling — when the iOS keyboard opens it can cover an input.
   // We gently bring an obscured field into view, but ONLY when necessary and
   // ONLY within its own scroll container — never recentering the whole page
@@ -16290,7 +16283,13 @@ export default function App(){
           image-orientation: from-image;
           -webkit-user-drag: none;
         }
-        html.lt-theme-dark, html.lt-theme-dark body { background: #0E0E10; margin: 0; padding: 0; }
+        html.lt-theme-dark, html.lt-theme-dark body { background: #0B0A12; margin: 0; padding: 0; }
+        html.lt-theme-dark body {
+          background:
+            radial-gradient(125% 58% at 50% -6%, rgba(126,140,178,0.10), rgba(126,140,178,0) 58%),
+            radial-gradient(90% 46% at 50% 0%, rgba(150,120,180,0.055), rgba(150,120,180,0) 52%),
+            linear-gradient(180deg, #0E0D17 0%, #0A0910 62%, #08070D 100%) fixed;
+        }
         html.lt-theme-light, html.lt-theme-light body { background: #FBFDFE; margin: 0; padding: 0; }
         .lt-app-root {
           max-width: 480px;
@@ -16732,7 +16731,7 @@ export default function App(){
           // app-icon + wordmark lockup.
           alignItems:"center",
           gap:13,
-          marginBottom:10,position:"relative",zIndex:2,
+          marginBottom:5,position:"relative",zIndex:2,
           // Home/week paint the heavy living sky behind the header, so the text
           // used to "blink" in a beat late. Keying by screen remounts the
           // lockup (colour lands instantly — CSS transitions don't fire on
@@ -16755,7 +16754,7 @@ export default function App(){
               Home/week in the LIGHT theme render the sky header instead, whose
               SkyWordmark is the same logo without the sun. */}
           <LumaWordmark
-            size={28}
+            size={isDark()&&!isEd?38:32}
             color={isDark()?shadeHex(effS.h,0.80):(screen==="week"?skyInk((typeof now!=="undefined"&&now)?(now.getHours()+now.getMinutes()/60):12,effS.h,false):shadeHex(effS.h,-0.55))}
             showSun={isEd}
             pearlScale={1.18}
@@ -16794,7 +16793,7 @@ export default function App(){
         )}
         <div key={(screen==="home"||screen==="week")?("hdHdr-"+screen):"hdHdr-tool"} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:0,position:"relative",gap:12,minHeight:(isEd||screen==="home")?36:0,animation:(screen==="home"||screen==="week")?"hdrFade .42s cubic-bezier(.2,.7,.2,1) both":undefined}}>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontFamily:G.font,fontWeight:isEd?400:500,fontSize:10.5,color:isEd?(isDark()?tk().ink3:"#7C7691"):(isDark()?effS.h:effS.deep),textTransform:"capitalize",letterSpacing:.8,marginBottom:(isEd||screen==="home")?5:0,textAlign:"left",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",transition:"color .4s ease"}}>
+            <div style={{fontFamily:G.font,fontWeight:isEd?400:500,fontSize:isEd?10.5:0,color:isEd?(isDark()?tk().ink3:"#7C7691"):(isDark()?effS.h:effS.deep),textTransform:"capitalize",letterSpacing:.8,marginBottom:isEd?5:0,height:isEd?undefined:0,overflow:"hidden",textAlign:"left",whiteSpace:"nowrap",textOverflow:"ellipsis",transition:"color .4s ease"}}>
               {/* Subtitle line under Luma. In edit mode we show the screen
                   label ("Schema", "Tala", etc.); otherwise empty on every
                   screen — the date used to appear on non-home screens but
@@ -16843,10 +16842,11 @@ export default function App(){
                       width:32,
                       borderRadius:999,
                       background:isDark()
-                        ? `linear-gradient(90deg, ${effS.h}, ${shadeHex(effS.h,0.3)})`
+                        ? `linear-gradient(90deg, ${desatHex(effS.h,0.52)}, ${desatHex(shadeHex(effS.h,0.16),0.52)})`
                         : `linear-gradient(90deg, ${effS.deep}, ${shadeHex(effS.deep,0.2)})`,
+                      opacity:isDark()?0.8:1,
                       boxShadow:isDark()
-                        ? `0 0 10px ${effS.h}55, 0 0 2px ${effS.h}88`
+                        ? `0 1px 4px rgba(0,0,0,0.4)`
                         : `0 1px 5px ${effS.deep}45`,
                       animation:"hmDateUnder 0.7s 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both",
                       transformOrigin:"left center",
@@ -16948,17 +16948,22 @@ export default function App(){
               // mode so it reads on the near-white glass surface (NOT the
               // sky-adaptive light tint, which would vanish on the white
               // button); a light pen in dark mode.
-              const _penColor = isDark()?"rgba(245,242,252,0.92)":effS.deep;
+              // The chip floats over the LIVE sky on Week — at night that sky is
+              // dark even in light theme, so a white frosted glass turns muddy and
+              // the deep pen loses contrast. Treat a dark sky like dark mode: a
+              // subtle translucent chip + a light pen that reads on the night sky.
+              const _onDarkSky = isDark() || _llSkyDark;
+              const _penColor = _onDarkSky?"rgba(245,242,252,0.95)":effS.deep;
               // White frosted glass (sheen only). The tool-hue tint lives in a
               // SEPARATE solid overlay below so it can crossfade smoothly when
               // the screen colour arrives a beat late (e.g. Timer/Tala push
               // their colour up after mount) — instead of a hard, delayed pop
               // (gradients can't be transitioned).
-              const _glassBg  = isDark()
-                ? "linear-gradient(130deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.045) 46%, rgba(255,255,255,0.09) 62%, rgba(255,255,255,0.04) 100%)"
+              const _glassBg  = _onDarkSky
+                ? "linear-gradient(130deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 46%, rgba(255,255,255,0.11) 62%, rgba(255,255,255,0.05) 100%)"
                 : "linear-gradient(130deg, rgba(255,255,255,0.50) 0%, rgba(255,255,255,0.34) 46%, rgba(255,255,255,0.46) 62%, rgba(255,255,255,0.33) 100%)";
-              const _glassSh  = isDark()
-                ? "0 8px 20px -10px rgba(0,0,0,0.5), inset 0 4px 7px -3px rgba(255,255,255,0.16), inset 0 -2px 4px rgba(0,0,0,0.25)"
+              const _glassSh  = _onDarkSky
+                ? "0 8px 22px -10px rgba(0,0,0,0.55), inset 0 4px 7px -3px rgba(255,255,255,0.20), inset 0 -2px 4px rgba(0,0,0,0.28)"
                 : "0 8px 20px -10px rgba(40,50,70,0.5), inset 0 5px 8px -3px rgba(255,255,255,0.5), inset 0 -2px 4px rgba(50,60,85,0.14)";
               return(
                 <div style={{display:"flex",alignItems:"center",gap:12,flex:1}}>
@@ -16970,10 +16975,10 @@ export default function App(){
                     style={{position:"relative",overflow:"hidden",width:44,height:44,flexShrink:0,borderRadius:14,border:"none",cursor:"pointer",display:"grid",placeItems:"center",color:_penColor,background:_glassBg,boxShadow:_glassSh,backdropFilter:"blur(8px) saturate(1.2)",WebkitBackdropFilter:"blur(8px) saturate(1.2)",WebkitTapHighlightColor:"transparent",transition:"background .25s ease, color .5s ease, transform .15s ease"}}>
                     {/* tool-hue tint — solid layer so it crossfades smoothly
                         when the screen colour settles (no late pop) */}
-                    <span style={{position:"absolute",inset:0,background:effS.h,opacity:isDark()?0.16:0.12,transition:"background-color .4s ease",pointerEvents:"none",zIndex:0}}/>
+                    <span style={{position:"absolute",inset:0,background:effS.h,opacity:_onDarkSky?0.16:0.12,transition:"background-color .4s ease",pointerEvents:"none",zIndex:0}}/>
                     {/* specular highlight — soft light pooling at the top of the glass */}
-                    <span style={{position:"absolute",top:-7,left:7,right:7,height:"58%",borderRadius:"50%",background:isDark()?"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.2), transparent 72%)":"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.7), transparent 72%)",filter:"blur(1px)",pointerEvents:"none",zIndex:1}}/>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{display:"block",position:"relative",zIndex:2,filter:isDark()?"drop-shadow(0 1px 2px rgba(0,0,0,0.4))":"drop-shadow(0 1px 1.5px rgba(60,50,90,0.25))"}}>
+                    <span style={{position:"absolute",top:-7,left:7,right:7,height:"58%",borderRadius:"50%",background:_onDarkSky?"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.2), transparent 72%)":"radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.7), transparent 72%)",filter:"blur(1px)",pointerEvents:"none",zIndex:1}}/>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{display:"block",position:"relative",zIndex:2,filter:_onDarkSky?"drop-shadow(0 1px 2px rgba(0,0,0,0.4))":"drop-shadow(0 1px 1.5px rgba(60,50,90,0.25))"}}>
                       <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
                     </svg>
                   </button>
@@ -17305,7 +17310,7 @@ export default function App(){
         }}/>}
         {/* Top hairline — colored, fades from sides, matches header bottom hairline vocabulary */}
         <div style={{position:"absolute",top:0,left:0,right:0,height:1,background:`linear-gradient(90deg, transparent 0%, ${effS.h}25 50%, transparent 100%)`,pointerEvents:"none",transition:"background .5s ease"}}/>
-        {navItems.map(({key,icon,label,S})=>{const on=screen===key;const pastel=NAV_PASTEL[key]||S.h;const dkNav=isDark();const navHue=(dkNav&&on)?effS.h:pastel;return(
+        {navItems.map(({key,icon,label,S})=>{const on=screen===key;const pastel=NAV_PASTEL[key]||S.h;const dkNav=isDark();const navHue=(dkNav&&on)?desatHex(effS.h,0.5):pastel;return(
           <button key={key} onClick={()=>{if(screen!==key)fx.navHaptic();setScreen(key);}} className="lt-press" style={{flex:navItems.length>7?"0 0 auto":"1",minWidth:navItems.length>7?64:0,border:"none",background:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"7px 2px 3px",position:"relative",zIndex:1}}>
             {/* Aurora glow behind active tab — breathes gently. Same vocabulary
                 as the header's aurora, scaled down for the nav. */}
