@@ -8,29 +8,24 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // force a light canvas + light color-scheme immediately, with !important, so
   // no system/stylesheet dark can ever show before the (always-light) splash.
   try {
-    // Read the stored theme synchronously so the very first painted frame
-    // already matches it (adaptive splash). Dark → deep base + dark color-scheme.
-    var _dk = false;
-    try {
-      var _raw0 = (typeof localStorage !== "undefined") ? localStorage.getItem("luma_v1_cfg") : null;
-      if (_raw0) { var _p0 = JSON.parse(_raw0); if (_p0 && _p0.theme === "dark") _dk = true; }
-    } catch (_) {}
-    var _bg0 = _dk ? "#0C0B14" : "#FBFDFE";
-    var _cs0 = _dk ? "dark" : "light";
+    // SPLASH IS ALWAYS LIGHT — one consistent colour from the first painted
+    // pixel through the splash. This is the bug-free design: never paint the
+    // boot canvas dark (that produced the light→dark→edge→splash flashes). The
+    // app switches to dark only AFTER the light splash is gone (see React side).
     var _bootCS = document.createElement("meta");
     _bootCS.setAttribute("name", "color-scheme");
-    _bootCS.setAttribute("content", _cs0);
+    _bootCS.setAttribute("content", "light");
     document.head.appendChild(_bootCS);
     var _r = document.documentElement;
-    _r.style.setProperty("background", _bg0, "important");
-    _r.style.setProperty("color-scheme", _cs0, "important");
+    _r.style.setProperty("background", "#FBFDFE", "important");
+    _r.style.setProperty("color-scheme", "light", "important");
     _r.classList.remove("lt-theme-dark", "lt-theme-light");
-    _r.classList.add(_dk ? "lt-theme-dark" : "lt-theme-light");
-    if (document.body) document.body.style.setProperty("background", _bg0, "important");
+    _r.classList.add("lt-theme-light");
+    if (document.body) document.body.style.setProperty("background", "#FBFDFE", "important");
     // also catch the body the moment it exists, in case it isn't ready yet
     if (!document.body && document.addEventListener) {
       document.addEventListener("DOMContentLoaded", function(){
-        try { document.body.style.setProperty("background", _bg0, "important"); } catch(_){}
+        try { document.body.style.setProperty("background", "#FBFDFE", "important"); } catch(_){}
       }, {once:true});
     }
   } catch (_) {}
@@ -154,32 +149,19 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   if (!fav) { fav = document.createElement("link"); fav.rel = "icon"; document.head.appendChild(fav); }
   fav.setAttribute("type", "image/svg+xml"); fav.setAttribute("href", iconUrl);
 
-  // Web app manifest (Android/Chrome + general PWA) as a data-URI.
-  // Read the user's stored theme preference so the manifest's background_color
-  // matches it. iOS PWA standalone uses this colour to fill the safe-area
-  // regions (notch, home-indicator) until the React app paints over them.
-  // A wrong colour here is what creates the ugly "white frame" some users
-  // were seeing along the screen edges in dark mode.
-  let storedTheme = "light";
-  try {
-    const raw = typeof localStorage !== "undefined" ? localStorage.getItem("luma_v1_cfg") : null;
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && parsed.theme === "dark") storedTheme = "dark";
-    }
-  } catch (_) {}
-  // ADAPTIVE SPLASH: boot surface, launch image and the pre-boot overlay all
-  // follow the user's stored theme. Dark → deep "Midnatt" splash; light → warm
-  // dawn splash. Painting the first pixel to the matching theme means the
-  // safe-area edges (notch, home-indicator, rounded-corner strips) never flash
-  // the wrong colour before React mounts.
-  const splashDark = (storedTheme === "dark");
-  const bootBg = splashDark ? "#0C0B14" : "#FBFDFE";
+  // Web app manifest (Android/Chrome + general PWA) as a data-URI. The splash
+  // is always light, so the boot colours below are fixed light too.
+  // SPLASH ALWAYS LIGHT (bug-free): the boot surface, launch image and pre-boot
+  // overlay are all one consistent light colour. The app switches to dark only
+  // after the light splash is gone (React side), so the dark base is never seen
+  // bare during boot — no light→dark→edge flashing, in any theme.
+  const splashDark = false;
+  const bootBg = "#FBFDFE";
 
   try {
     document.documentElement.style.setProperty("background", bootBg, "important");
     document.documentElement.classList.remove("lt-theme-dark","lt-theme-light");
-    document.documentElement.classList.add(splashDark ? "lt-theme-dark" : "lt-theme-light");
+    document.documentElement.classList.add("lt-theme-light");
     if (document.body) document.body.style.setProperty("background", bootBg, "important");
   } catch (_) {}
   // PRE-REACT BOOT OVERLAY — paints the Luma sun the very moment our JS runs.
@@ -193,8 +175,8 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   try {
     var injectPreBoot = function(){
       if (!document.body || document.getElementById("lumaPreBoot")) return;
-      var dark = (storedTheme === "dark");
-      // Theme-adaptive splash palette — Midnatt (dark) or Peach (light).
+      var dark = false;   // SPLASH ALWAYS LIGHT (bug-free) — never a dark variant
+      // Light "Peach" palette — Concept 2 (Inre ljus): plate lit from within.
       var bg     = dark ? "#0C0B14" : "#FBFDFE";
       var bgCss  = dark
         ? "radial-gradient(125% 100% at 50% 42%, #1A1626 0%, #120F1C 58%, #0A0810 100%)"
@@ -412,9 +394,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     const dev = Math.min(cw, dw)/Math.max(cw, dw);
     if (dev < 0.85 && !(cw === dw && ch === dh)) return; // skip wildly mismatched
     const px = cw * dpr, py = ch * dpr;
-    // Register the launch image matching the user's stored theme, so a fresh
-    // install bakes the correct splash colour and the cached image agrees with
-    // the live overlay. (splashDark is read from the stored theme above.)
+    // Register the LIGHT launch image (splash is always light — bug-free).
     const dataUrl = makeSplash(px, py, splashDark, dpr);
     const link = document.createElement("link");
     link.rel = "apple-touch-startup-image";
