@@ -8,20 +8,29 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // force a light canvas + light color-scheme immediately, with !important, so
   // no system/stylesheet dark can ever show before the (always-light) splash.
   try {
+    // Read the stored theme synchronously so the very first painted frame
+    // already matches it (adaptive splash). Dark → deep base + dark color-scheme.
+    var _dk = false;
+    try {
+      var _raw0 = (typeof localStorage !== "undefined") ? localStorage.getItem("luma_v1_cfg") : null;
+      if (_raw0) { var _p0 = JSON.parse(_raw0); if (_p0 && _p0.theme === "dark") _dk = true; }
+    } catch (_) {}
+    var _bg0 = _dk ? "#0C0B14" : "#FBFDFE";
+    var _cs0 = _dk ? "dark" : "light";
     var _bootCS = document.createElement("meta");
     _bootCS.setAttribute("name", "color-scheme");
-    _bootCS.setAttribute("content", "light");
+    _bootCS.setAttribute("content", _cs0);
     document.head.appendChild(_bootCS);
     var _r = document.documentElement;
-    _r.style.setProperty("background", "#FBFDFE", "important");
-    _r.style.setProperty("color-scheme", "light", "important");
-    _r.classList.remove("lt-theme-dark");
-    _r.classList.add("lt-theme-light");
-    if (document.body) document.body.style.setProperty("background", "#FBFDFE", "important");
+    _r.style.setProperty("background", _bg0, "important");
+    _r.style.setProperty("color-scheme", _cs0, "important");
+    _r.classList.remove("lt-theme-dark", "lt-theme-light");
+    _r.classList.add(_dk ? "lt-theme-dark" : "lt-theme-light");
+    if (document.body) document.body.style.setProperty("background", _bg0, "important");
     // also catch the body the moment it exists, in case it isn't ready yet
     if (!document.body && document.addEventListener) {
       document.addEventListener("DOMContentLoaded", function(){
-        try { document.body.style.setProperty("background", "#FBFDFE", "important"); } catch(_){}
+        try { document.body.style.setProperty("background", _bg0, "important"); } catch(_){}
       }, {once:true});
     }
   } catch (_) {}
@@ -90,35 +99,50 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   // the user chose. Scaled to sit within iOS's safe zone (motif ~75% of the
   // canvas) so it never crops against the rounded icon mask. Soft pearl
   // background with a gentle warm bloom rather than flat white.
-  // ── Luma app icon — the "lu" mark: a tall left stroke (the l) flowing into a
-  //    soft cup (the u), with the warm brand pearl resting in the bowl, on a
-  //    warm cream rounded square. Geometry measured to match the brand sheet.
-  //    Replaces the previous sun mark.
-  const MARK_NAVY = "#1F1B2E";
+  // ── Luma app icon — "Inre ljus": the "lu" mark in WHITE on a warm peach
+  //    plate that is lit FROM WITHIN by the gold light resting in the u's bowl.
+  //    A layered glow (wide diffuse + bright core) makes the light feel alive.
   const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
     <defs>
-      <radialGradient id="bg" cx="50%" cy="38%" r="80%">
-        <stop offset="0%" stop-color="#FFFCF7"/>
-        <stop offset="55%" stop-color="#FBF1E6"/>
-        <stop offset="100%" stop-color="#F3E6D7"/>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#F3B98E"/>
+        <stop offset="100%" stop-color="#E89B6C"/>
+      </linearGradient>
+      <radialGradient id="ig" cx="50%" cy="62%" r="62%">
+        <stop offset="0%" stop-color="#FFEAC4" stop-opacity="0.72"/>
+        <stop offset="45%" stop-color="#F6C089" stop-opacity="0.28"/>
+        <stop offset="100%" stop-color="#F6C089" stop-opacity="0"/>
       </radialGradient>
-      <radialGradient id="pearl" cx="38%" cy="32%" r="72%">
-        <stop offset="0%" stop-color="#FFFFFF"/>
-        <stop offset="30%" stop-color="#FFF2E6"/>
-        <stop offset="70%" stop-color="#F8D2B2"/>
-        <stop offset="100%" stop-color="#EDB78F"/>
+      <radialGradient id="hl" cx="50%" cy="15%" r="75%">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.40"/>
+        <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
       </radialGradient>
-      <radialGradient id="pearlGlow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#F4A861" stop-opacity="0.55"/>
-        <stop offset="45%" stop-color="#F0985A" stop-opacity="0.22"/>
-        <stop offset="100%" stop-color="#F4A861" stop-opacity="0"/>
+      <radialGradient id="pearl" cx="38%" cy="32%" r="74%">
+        <stop offset="0%" stop-color="#FFFDF4"/>
+        <stop offset="34%" stop-color="#FFE9B8"/>
+        <stop offset="72%" stop-color="#FAC877"/>
+        <stop offset="100%" stop-color="#EFB45A"/>
+      </radialGradient>
+      <radialGradient id="glowO" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#FFCF80" stop-opacity="0.40"/>
+        <stop offset="55%" stop-color="#FFCF80" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#FFCF80" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="glowI" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#FFE2A4" stop-opacity="1"/>
+        <stop offset="55%" stop-color="#FFE2A4" stop-opacity="0.42"/>
+        <stop offset="100%" stop-color="#FFE2A4" stop-opacity="0"/>
       </radialGradient>
     </defs>
     <rect width="512" height="512" rx="114" fill="url(#bg)"/>
-    <path d="M176.6 107.5 L176.6 325.1 A79.4 79.4 0 0 0 335.4 325.1 L335.4 221.7" fill="none" stroke="${MARK_NAVY}" stroke-width="65.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="256" cy="317.4" r="92" fill="url(#pearlGlow)"/>
+    <rect width="512" height="512" rx="114" fill="url(#ig)"/>
+    <rect width="512" height="512" rx="114" fill="url(#hl)"/>
+    <path d="M176.6 107.5 L176.6 325.1 A79.4 79.4 0 0 0 335.4 325.1 L335.4 221.7" fill="none" stroke="rgba(150,80,45,0.20)" stroke-width="65.5" stroke-linecap="round" stroke-linejoin="round" transform="translate(0,8)"/>
+    <path d="M176.6 107.5 L176.6 325.1 A79.4 79.4 0 0 0 335.4 325.1 L335.4 221.7" fill="none" stroke="#FFFFFF" stroke-width="65.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="256" cy="317.4" r="138" fill="url(#glowO)"/>
+    <circle cx="256" cy="317.4" r="90" fill="url(#glowI)"/>
     <circle cx="256" cy="317.4" r="35.8" fill="url(#pearl)"/>
-    <circle cx="245.8" cy="307.2" r="11.3" fill="#FFFFFF" opacity="0.5"/>
+    <circle cx="245.8" cy="307.2" r="10" fill="#FFFFFF" opacity="0.55"/>
   </svg>`;
   const iconUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(ICON_SVG)));
 
@@ -144,31 +168,18 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       if (parsed && parsed.theme === "dark") storedTheme = "dark";
     }
   } catch (_) {}
-  // The SPLASH is always light cream (#FBFDFE). The pre-React background MUST
-  // match the splash, not the app theme — otherwise, in dark mode, the edges
-  // get painted #0E0E10 between the launch image and the (light) splash, which
-  // reads as a light→dark→light flash before the splash appears. So we paint
-  // the boot surface light here for EVERYONE; React re-paints to the real dark
-  // base only after it mounts, by which time the light splash is already on
-  // top and about to hand off — so the dark base is never seen bare.
-  const bootBg = "#FBFDFE";
+  // ADAPTIVE SPLASH: boot surface, launch image and the pre-boot overlay all
+  // follow the user's stored theme. Dark → deep "Midnatt" splash; light → warm
+  // dawn splash. Painting the first pixel to the matching theme means the
+  // safe-area edges (notch, home-indicator, rounded-corner strips) never flash
+  // the wrong colour before React mounts.
+  const splashDark = (storedTheme === "dark");
+  const bootBg = splashDark ? "#0C0B14" : "#FBFDFE";
 
-  // PAINT THE EDGES IMMEDIATELY — before React mounts.
-  // Why: the safe-area zones (notch, home-indicator, and the slim 1–2px strip
-  // iOS reserves on the left/right edges of devices with rounded corners) are
-  // painted from `html`/`body` background, NOT from the React tree. We paint
-  // them the SPLASH colour (light cream) so the very first pixel iOS paints
-  // already matches the splash — no flash of any other colour, in any theme.
-  // CRITICAL: we apply lt-theme-LIGHT at boot for EVERYONE — never lt-theme-dark
-  // here. The stylesheet rule `html.lt-theme-dark{background:#0E0E10;color-scheme:dark}`
-  // would otherwise force the boot canvas dark the instant React injects its
-  // <style>, flashing dark behind the always-light splash (the light→dark→light
-  // blink). React adds lt-theme-dark only after it mounts — i.e. after the
-  // light splash has handed off — so the dark base is never seen during boot.
   try {
     document.documentElement.style.setProperty("background", bootBg, "important");
-    document.documentElement.classList.remove("lt-theme-dark");
-    document.documentElement.classList.add("lt-theme-light");
+    document.documentElement.classList.remove("lt-theme-dark","lt-theme-light");
+    document.documentElement.classList.add(splashDark ? "lt-theme-dark" : "lt-theme-light");
     if (document.body) document.body.style.setProperty("background", bootBg, "important");
   } catch (_) {}
   // PRE-REACT BOOT OVERLAY — paints the Luma sun the very moment our JS runs.
@@ -182,60 +193,73 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   try {
     var injectPreBoot = function(){
       if (!document.body || document.getElementById("lumaPreBoot")) return;
-      // SPLASH IS ALWAYS LIGHT — never theme-aware. iOS was showing a stale
-      // cached DARK launch image and then jumping to this overlay (the dark→
-      // light flash). Locking every splash layer to the light cream look means
-      // there is no dark splash variant in the code at all, for any theme.
-      var sunFill = "#1F1B2E";
-      var bg = "#FBFDFE";
+      var dark = (storedTheme === "dark");
+      // Theme-adaptive splash palette — Midnatt (dark) or Peach (light).
+      var bg     = dark ? "#0C0B14" : "#FBFDFE";
+      var bgCss  = dark
+        ? "radial-gradient(125% 100% at 50% 42%, #1A1626 0%, #120F1C 58%, #0A0810 100%)"
+        : "radial-gradient(125% 100% at 50% 42%, #FFF7EF 0%, #FBF1EA 58%, #F4E7DA 100%)";
+      var icoBgA = dark ? "#352C46" : "#F3B98E";
+      var icoBgB = dark ? "#1B1626" : "#E89B6C";
+      var markStroke = dark ? "#F4EEFF" : "#FFFFFF";
+      var glowC  = dark ? "#FFC890" : "#FFD98C";
+      var igA = dark ? "#FFC890" : "#FFEAC4";   // inner glow — the plate lit from within
+      var igB = dark ? "#FFB070" : "#F6C089";
+      var igO0 = dark ? "0.30" : "0.72";
+      var igO1 = dark ? "0.12" : "0.28";
+      var auraC  = dark ? "rgba(255,200,140,0.16)" : "rgba(232,168,120,0.16)";
+      var auraC2 = dark ? "rgba(255,200,140,0.05)" : "rgba(232,168,120,0.06)";
+      var emboss = dark ? "" :
+        '<path class="lpu" d="M34.5 21 L34.5 63.5 A15.5 15.5 0 0 0 65.5 63.5 L65.5 43.3" fill="none" stroke="rgba(150,80,45,0.26)" stroke-width="12.8" stroke-linecap="round" transform="translate(0,1.6)"/>';
+      var topHL = dark ? "" : '<rect x="0" y="0" width="100" height="52" rx="22.37" fill="url(#lumaPreHL)"/>';
       var pre = document.createElement("div");
       pre.id = "lumaPreBoot";
       pre.setAttribute("aria-hidden", "true");
-      pre.style.cssText = "position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;background:"+bg+";background:radial-gradient(125% 100% at 50% 42%, #FBFDFE 0%, #FBF8F1 58%, #F4ECDE 100%);opacity:1;pointer-events:none;overflow:hidden";
-      var markStroke = "#1F1B2E";
-      var icoBgA = "#FFFCF7";
-      var icoBgB = "#F3E6D7";
-      var ICON = 104;
+      pre.style.cssText = "position:fixed;inset:0;z-index:2147483646;display:flex;flex-direction:column;align-items:center;justify-content:center;background:"+bg+";background:"+bgCss+";opacity:1;pointer-events:none;overflow:hidden";
+      var ICON = 108;
       pre.innerHTML =
         '<style>'
         + '#lumaPreBoot *{backface-visibility:hidden;-webkit-backface-visibility:hidden}'
-        + '@keyframes lumaPreBreath{0%,100%{transform:translateZ(0) scale(1)}50%{transform:translateZ(0) scale(1.018)}}'
-        + '@keyframes lumaPreIconIn{0%{opacity:0;transform:translateZ(0) scale(0.94)}100%{opacity:1;transform:translateZ(0) scale(1)}}'
-        + '@keyframes lumaPreAura{0%,100%{opacity:.65;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}'
-        // pearl free-falls fast into the u (accelerating, gravity-like) and lands
-        // with a clear elastic settle bounce — variant B.
-        + '@keyframes lumaPrePearlDrop{0%{transform:translateY(-24px)}70%{transform:translateY(0)}80%{transform:translateY(-4px)}90%{transform:translateY(0)}95%{transform:translateY(-1.5px)}100%{transform:translateY(0)}}'
-        // the glint: a single crisp warm flash. Fired (not on a timer) the moment the app is ready,
-        // so it is ALWAYS the last thing seen before hand-off, whatever the load time.
+        + '@keyframes lumaPreBreath{0%,100%{transform:translateZ(0) scale(1)}50%{transform:translateZ(0) scale(1.02)}}'
+        + '@keyframes lumaPreIconIn{0%{opacity:0}100%{opacity:1}}'
+        + '@keyframes lumaPreAura{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}'
+        // Lumen: the u draws itself, then the light ignites in its bowl.
+        + '@keyframes lumaPreDraw{0%{stroke-dashoffset:128}100%{stroke-dashoffset:0}}'
+        + '@keyframes lumaPreIgnite{0%{opacity:0;transform:scale(.5)}100%{opacity:1;transform:scale(1)}}'
+        + '@keyframes lumaPreGlow{0%{opacity:0}100%{opacity:1}}'
         + '@keyframes lumaPreGlint{0%{opacity:0;transform:scale(.6)}18%{opacity:1;transform:scale(1.5)}100%{opacity:0;transform:scale(1.95)}}'
-        // calm resting pulse on the glow — loops while the app loads, however long that takes
-        + '@keyframes lumaPrePulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.78;transform:scale(1.1)}}'
-        // one-shot soft ring when the pearl lands — the light "settles"
+        + '@keyframes lumaPrePulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.8;transform:scale(1.12)}}'
         + '@keyframes lumaPreRipple{0%{opacity:0;transform:scale(.35)}28%{opacity:.5}100%{opacity:0;transform:scale(2.1)}}'
-        + '.lpaura{position:absolute;left:50%;top:41%;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle, rgba(232,168,120,0.16) 0%, rgba(232,168,120,0.06) 46%, rgba(232,168,120,0) 70%);transform:translate(-50%,-50%);pointer-events:none;z-index:0;animation:lumaPreAura 5s ease-in-out 0.3s infinite}'
-        + '.lpripple{transform-origin:50px 62px;opacity:0;animation:lumaPreRipple 0.95s ease-out 0.46s 1 both}'
-        + '.lpglint{transform-origin:50px 62px;opacity:0}'
+        + '.lpaura{position:absolute;left:50%;top:44%;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle, '+auraC+' 0%, '+auraC2+' 46%, rgba(0,0,0,0) 70%);transform:translate(-50%,-50%);pointer-events:none;z-index:0;animation:lumaPreAura 5s ease-in-out 0.3s infinite}'
+        + '.lpu{stroke-dasharray:128;stroke-dashoffset:128;animation:lumaPreDraw 1s cubic-bezier(0.65,0,0.35,1) 0.25s both}'
+        + '.lpig{opacity:0;animation:lumaPreGlow 0.8s ease 1.15s both}'
+        + '.lplight{transform-box:fill-box;transform-origin:center;opacity:0;animation:lumaPreIgnite 0.6s cubic-bezier(0.34,1.56,0.64,1) 1.15s both}'
+        + '.lpglow{transform-box:fill-box;transform-origin:center;animation:lumaPrePulse 4.6s ease-in-out 1.9s infinite}'
+        + '.lpripple{transform-box:fill-box;transform-origin:center;opacity:0;animation:lumaPreRipple 0.95s ease-out 1.2s 1 both}'
+        + '.lpglint{transform-box:fill-box;transform-origin:center;opacity:0}'
         + '.lpglint.go{animation:lumaPreGlint 0.5s ease-out 1 both}'
         + '</style>'
         + '<div class="lpaura"></div>'
-        + '<div style="position:relative;z-index:2;margin-top:-9vh;animation:lumaPreIconIn 0.6s cubic-bezier(0.22,1,0.36,1) both">'
-        + '<div style="will-change:transform;animation:lumaPreBreath 4.4s ease-in-out 1.0s infinite">'
-        + '<svg width="' + ICON + '" height="' + ICON + '" viewBox="0 0 100 100" style="display:block;overflow:visible;filter:drop-shadow(0 22px 46px rgba(120,92,68,0.18)) drop-shadow(0 6px 14px rgba(80,70,95,0.10))">'
+        + '<div style="position:relative;z-index:2;margin-top:-7vh;animation:lumaPreIconIn 0.5s ease both">'
+        + '<div style="will-change:transform;animation:lumaPreBreath 4.6s ease-in-out 1.9s infinite">'
+        + '<svg width="' + ICON + '" height="' + ICON + '" viewBox="0 0 100 100" style="display:block;overflow:visible;filter:drop-shadow(0 20px 42px '+(dark?'rgba(0,0,0,0.5)':'rgba(150,95,60,0.28)')+') drop-shadow(0 6px 14px '+(dark?'rgba(0,0,0,0.4)':'rgba(90,60,45,0.16)')+')">'
         + '<defs>'
-        + '<linearGradient id="lumaPreIcoBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + icoBgA + '"/><stop offset="100%" stop-color="' + icoBgB + '"/></linearGradient>'
-        + '<radialGradient id="lumaPrePearl" cx="38%" cy="32%" r="74%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="30%" stop-color="#FFF2E6"/><stop offset="70%" stop-color="#F8D2B2"/><stop offset="100%" stop-color="#EDB78F"/></radialGradient>'
-        + '<radialGradient id="lumaPreGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFC79E" stop-opacity="0.9"/><stop offset="55%" stop-color="#FFB888" stop-opacity="0.35"/><stop offset="100%" stop-color="#FFB888" stop-opacity="0"/></radialGradient>'
+        + '<linearGradient id="lumaPreIcoBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="' + icoBgA + '"/><stop offset="100%" stop-color="' + icoBgB + '"/></linearGradient>'
+        + '<radialGradient id="lumaPreHL" cx="50%" cy="16%" r="74%"><stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.30"/><stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>'
+        + '<radialGradient id="lumaPrePearl" cx="38%" cy="32%" r="74%"><stop offset="0%" stop-color="#FFFDF4"/><stop offset="34%" stop-color="#FFE9B8"/><stop offset="72%" stop-color="#FAC877"/><stop offset="100%" stop-color="#EFB45A"/></radialGradient>'
+        + '<radialGradient id="lumaPreIG" cx="50%" cy="62%" r="62%"><stop offset="0%" stop-color="'+igA+'" stop-opacity="'+igO0+'"/><stop offset="45%" stop-color="'+igB+'" stop-opacity="'+igO1+'"/><stop offset="100%" stop-color="'+igB+'" stop-opacity="0"/></radialGradient>'
+        + '<radialGradient id="lumaPreGlowO" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFCF80" stop-opacity="0.40"/><stop offset="55%" stop-color="#FFCF80" stop-opacity="0"/><stop offset="100%" stop-color="#FFCF80" stop-opacity="0"/></radialGradient>'
+        + '<radialGradient id="lumaPreGlowI" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFE2A4" stop-opacity="1"/><stop offset="55%" stop-color="#FFE2A4" stop-opacity="0.42"/><stop offset="100%" stop-color="#FFE2A4" stop-opacity="0"/></radialGradient>'
         + '<radialGradient id="lumaPreFlash" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/><stop offset="55%" stop-color="#FFF0DC" stop-opacity="0.5"/><stop offset="100%" stop-color="#FFF0DC" stop-opacity="0"/></radialGradient>'
         + '</defs>'
         + '<rect x="0" y="0" width="100" height="100" rx="22.37" fill="url(#lumaPreIcoBg)"/>'
-        + '<path d="M34.5 21 L34.5 63.5 A15.5 15.5 0 0 0 65.5 63.5 L65.5 43.3" fill="none" stroke="' + markStroke + '" stroke-width="12.8" stroke-linecap="round"/>'
-        + '<circle cx="50" cy="62" r="12" fill="url(#lumaPreGlow)" style="transform-origin:50px 62px;animation:lumaPrePulse 4.6s ease-in-out 1.6s infinite"/>'
-        + '<circle class="lpripple" cx="50" cy="62" r="11" fill="none" stroke="#E8A878" stroke-width="2"/>'
+        + '<rect class="lpig" x="0" y="0" width="100" height="100" rx="22.37" fill="url(#lumaPreIG)"/>'
+        + topHL
+        + emboss
+        + '<path class="lpu" d="M34.5 21 L34.5 63.5 A15.5 15.5 0 0 0 65.5 63.5 L65.5 43.3" fill="none" stroke="' + markStroke + '" stroke-width="12.8" stroke-linecap="round"/>'
+        + '<g class="lplight"><circle cx="50" cy="62" r="27" fill="url(#lumaPreGlowO)"/><circle class="lpglow" cx="50" cy="62" r="17.5" fill="url(#lumaPreGlowI)"/><circle cx="50" cy="62" r="7" fill="url(#lumaPrePearl)"/><circle cx="48" cy="60" r="2.1" fill="#FFFFFF" opacity="0.55"/></g>'
+        + '<circle class="lpripple" cx="50" cy="62" r="11" fill="none" stroke="'+glowC+'" stroke-width="2"/>'
         + '<circle id="lumaPreGlintEl" class="lpglint" cx="50" cy="62" r="13" fill="url(#lumaPreFlash)"/>'
-        + '<g style="transform-origin:50px 62px;animation:lumaPrePearlDrop 0.62s cubic-bezier(0.5,0,0.75,0) 0s 1 both">'
-        + '<circle cx="50" cy="62" r="7" fill="url(#lumaPrePearl)"/>'
-        + '<circle cx="48" cy="60" r="2.2" fill="#FFFFFF" opacity="0.5"/>'
-        + '</g>'
         + '</svg>'
         + '</div>'
         + '</div>';
@@ -253,7 +277,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       // is ALWAYS the last thing the user sees before the app appears, whether
       // loading took 0.4s or 4s. No fixed glint delay; it adapts to load time.
       var bornAt = performance.now();
-      var minShow = 1450;          // ensures the fall + settle is seen before we can close
+      var minShow = 2600;          // let the full Lumen sequence (draw → ignite → a settle beat) be seen before we hand off
       var fadeMs = 520;
       var removed = false;
       var finish = function(){
@@ -293,13 +317,16 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
       setTimeout(tryFinish, minShow);
     };
     if (document.body) injectPreBoot();
-    else if (typeof document.addEventListener==="function") document.addEventListener("DOMContentLoaded", injectPreBoot, {once:true});
+    else {
+      var _ip = setInterval(function(){ if (document.body){ injectPreBoot(); clearInterval(_ip); } }, 6);
+      if (typeof document.addEventListener === "function") document.addEventListener("DOMContentLoaded", function(){ injectPreBoot(); clearInterval(_ip); }, {once:true});
+    }
   } catch (_) {}
   const manifest = {
     name: "Luma", short_name: "Luma",
     description: "A schedule. A rhythm. A safety.",
     start_url: ".", scope: ".", display: "standalone", orientation: "any",
-    background_color: "#FBFDFE", theme_color: "#FBFDFE",
+    background_color: bootBg, theme_color: bootBg,
     icons: [
       { src: iconUrl, sizes: "192x192", type: "image/svg+xml", purpose: "any" },
       { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "any" },
@@ -322,32 +349,38 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     const c = document.createElement("canvas");
     c.width = w; c.height = h;
     const g = c.getContext("2d");
-    // ALWAYS LIGHT — flat cream fill (#FBFDFE), identical to the pre-boot
-    // overlay. The launch image is never dark, so the cached iOS launch image
-    // can only ever be the light one once the PWA is reinstalled.
-    g.fillStyle = "#FBFDFE";
+    // Theme-matched base — same colour as the pre-boot overlay.
+    g.fillStyle = dark ? "#0C0B14" : "#FBFDFE";
     g.fillRect(0, 0, w, h);
-    // Soft aura — IDENTICAL to the pre-boot overlay's .lpaura (a 360px CSS
-    // circle). The overlay raises the icon (margin-top:-9vh) and sits its aura
-    // at top:41%, so the baked launch image places its aura at the SAME 41% —
-    // the static launch image and the live overlay stay pixel-aligned, no
-    // second, differently-placed splash.
-    var auraR = 180 * dpr;                          // 360px CSS diameter
-    var aCx = w/2, aCy = h * 0.41;
+    // Soft aura (matches overlay .lpaura at top:44%, ~380px).
+    var auraR = 190 * dpr, aCx = w/2, aCy = h * 0.44;
     var ag = g.createRadialGradient(aCx, aCy, 0, aCx, aCy, auraR);
-    ag.addColorStop(0, "rgba(232,168,120,0.16)");
-    ag.addColorStop(0.46, "rgba(232,168,120,0.06)");
-    ag.addColorStop(0.70, "rgba(232,168,120,0)");
-    g.fillStyle = ag;
-    g.beginPath(); g.arc(aCx, aCy, auraR, 0, Math.PI*2); g.fill();
-    // NOTE: The app icon is intentionally NOT drawn into the launch image.
-    // iOS bakes the launch image at install time and never refreshes it, so a
-    // baked icon can drift out of level with the live overlay's icon across
-    // versions/devices. By leaving the launch image as just the cream wash +
-    // soft aura, there is no sharp element that can ever look "misaligned" —
-    // the icon lives ONLY in the pre-boot overlay, where it fades in softly at
-    // the true screen centre. The cream + aura are continuous between the
-    // launch image and the overlay, so the hand-off reads as one calm surface.
+    if (dark) { ag.addColorStop(0,"rgba(255,200,140,0.16)"); ag.addColorStop(0.46,"rgba(255,200,140,0.05)"); ag.addColorStop(0.70,"rgba(255,200,140,0)"); }
+    else      { ag.addColorStop(0,"rgba(232,168,120,0.16)"); ag.addColorStop(0.46,"rgba(232,168,120,0.06)"); ag.addColorStop(0.70,"rgba(232,168,120,0)"); }
+    g.fillStyle = ag; g.beginPath(); g.arc(aCx, aCy, auraR, 0, Math.PI*2); g.fill();
+    // PLATE — baked to match the live overlay's FIRST frame (base plate + top
+    // sheen; NO "u" and NO light — those draw & ignite in the overlay on top).
+    // So even on a slow cold-start, the static launch image already shows the
+    // new Luma plate (not an empty wash), and the overlay continues seamlessly.
+    var S = 108 * dpr;                          // overlay icon is 108 CSS px
+    var cx = w/2, cy = h * 0.43;                // centred, raised ~7vh like the overlay
+    var px = cx - S/2, py = cy - S/2;
+    var rr = 22.37/100 * S;
+    var rrect = function(x,y,wd,ht,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+wd,y,x+wd,y+ht,r); g.arcTo(x+wd,y+ht,x,y+ht,r); g.arcTo(x,y+ht,x,y,r); g.arcTo(x,y,x+wd,y,r); g.closePath(); };
+    g.save();
+    g.shadowColor = dark ? "rgba(0,0,0,0.5)" : "rgba(150,95,60,0.28)";
+    g.shadowBlur = 38 * dpr; g.shadowOffsetY = 18 * dpr;
+    var pg = g.createLinearGradient(px, py, px+S, py+S);
+    if (dark) { pg.addColorStop(0,"#352C46"); pg.addColorStop(1,"#1B1626"); }
+    else      { pg.addColorStop(0,"#F3B98E"); pg.addColorStop(1,"#E89B6C"); }
+    rrect(px, py, S, S, rr); g.fillStyle = pg; g.fill();
+    g.restore();
+    if (!dark) {                                 // top sheen (matches overlay topHL)
+      g.save(); rrect(px, py, S, S, rr); g.clip();
+      var sh = g.createRadialGradient(cx, py+S*0.16, 0, cx, py+S*0.16, S*0.74);
+      sh.addColorStop(0,"rgba(255,255,255,0.30)"); sh.addColorStop(1,"rgba(255,255,255,0)");
+      g.fillStyle = sh; g.fillRect(px, py, S, S); g.restore();
+    }
     return c.toDataURL("image/png");
   };
   // Device size table — portrait orientation (iOS expects portrait splashes
@@ -379,11 +412,9 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     const dev = Math.min(cw, dw)/Math.max(cw, dw);
     if (dev < 0.85 && !(cw === dw && ch === dh)) return; // skip wildly mismatched
     const px = cw * dpr, py = ch * dpr;
-    // ALWAYS register the LIGHT launch image, regardless of app theme or the
-    // device's system colour scheme. A dark launch image on a dark-system phone
-    // (then jumping to the light app) was the dark→light flash. Light-only =
-    // one consistent splash for everyone.
-    const splashDark = false;
+    // Register the launch image matching the user's stored theme, so a fresh
+    // install bakes the correct splash colour and the cached image agrees with
+    // the live overlay. (splashDark is read from the stored theme above.)
     const dataUrl = makeSplash(px, py, splashDark, dpr);
     const link = document.createElement("link");
     link.rel = "apple-touch-startup-image";
@@ -1790,6 +1821,31 @@ function skyAt(h){
           warm:(t<0.5?a.warm:b.warm)};
 }
 const _skSunCol=e=>_skMix(_skHx('#F4923C'),_skHx('#FFD982'),_skSmooth(e));
+// ── Dark-mode time-of-day WARM accent ─────────────────────────────────────
+// In dark mode the dynamic accent (home/week sun, wordmark, the soft glow in
+// the page background) stays in the brand's warm family all day instead of
+// drifting through cool hues — a pale light-orange at dawn, peach by day, a
+// deeper ember-orange in the evening, settling to a low night ember. Keeps the
+// dark theme reading as one warm, cohesive surface. Smoothly interpolated so
+// the colour breathes with the clock rather than snapping between phases.
+const WARM_KEY=[
+  {h:0,   c:'#9C6A44'},  // deep night — low ember
+  {h:5,   c:'#F4CEA6'},  // dawn — pale, light orange
+  {h:8,   c:'#F1B485'},  // sunrise — soft orange
+  {h:11,  c:'#E8A878'},  // morning — peach
+  {h:14,  c:'#EAAB7A'},  // midday — warm peach
+  {h:17,  c:'#DD9560'},  // late afternoon — amber
+  {h:19.5,c:'#CB7E48'},  // evening — deeper orange
+  {h:22,  c:'#A96F46'},  // dusk — ember
+  {h:24,  c:'#9C6A44'},  // → night
+];
+function warmAccentAt(h){
+  let i=0; while(i<WARM_KEY.length-1 && h>WARM_KEY[i+1].h) i++;
+  const a=WARM_KEY[i], b=WARM_KEY[Math.min(i+1,WARM_KEY.length-1)];
+  const t=_skSmooth(b.h===a.h?0:(h-a.h)/(b.h-a.h));
+  const m=_skMix(_skHx(a.c),_skHx(b.c),t);
+  return '#'+[m[0],m[1],m[2]].map(x=>Math.round(Math.max(0,Math.min(255,x))).toString(16).padStart(2,'0')).join('');
+}
 // ── Adaptive ink for text/icons that sit DIRECTLY on the live sky header
 // (light theme: week + home). It looks at the sky's mid band at hour h and
 // picks luminance-contrast: a LIGHT tint of the hue when the sky is dark
@@ -1920,7 +1976,7 @@ function SkyHeader({now,lang,inFlow=false,sun=false,showWord=true,showDate=true}
       </svg>
       <div style={{position:"relative",width:"100%",display:"flex",flexDirection:"column",alignItems:"flex-start",justifyContent:"flex-end",padding:"0 22px 2px",gap:7,zIndex:2,animation:"skLockIn 0.55s cubic-bezier(.2,.7,.2,1) both"}}>
         <style>{`@keyframes skLockIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
-        {showWord&&<div style={{marginLeft:-4,position:"relative",top:1}}><SkyWordmark size={41} sun={sun}/></div>}
+        {showWord&&<div style={{marginLeft:-4,position:"relative",top:2}}><SkyWordmark size={41} sun={sun}/></div>}
         {!inFlow&&showDate&&(
         <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,filter:"drop-shadow(0 1px 4px rgba(60,45,55,.28))"}}>
           <div style={{display:"flex",alignItems:"baseline",gap:7}}>
@@ -6587,16 +6643,6 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
             <button onClick={onOpenDemo} style={{width:"100%",padding:"13px 0",borderRadius:13,border:"none",background:"linear-gradient(135deg,#1F1B2E,#3A3450)",color:"#fff",fontFamily:G.serif,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:"0 8px 18px rgba(31,27,46,0.18)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
               ▶ {lang==="sv"?"Visa guide":"Play guide"}
             </button>
-            {/* Replay welcome → demo as if first-run, without wiping any data */}
-            {onOpenWelcomeTour&&(
-              <button onClick={onOpenWelcomeTour} className="lt-press-soft" style={{width:"100%",marginTop:8,padding:"11px 0",borderRadius:12,border:`1px solid ${tk().border}`,background:"transparent",color:tk().ink2,fontFamily:G.serif,fontWeight:500,fontSize:13,cursor:"pointer",letterSpacing:.2,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M3 12 a9 9 0 1 0 3 -6.7 L3 8"/>
-                  <polyline points="3 3 3 8 8 8"/>
-                </svg>
-                {lang==="sv"?"Visa rundtur från början":"Replay welcome tour"}
-              </button>
-            )}
           </div>
         )}
 
@@ -13012,18 +13058,30 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
           const _dateStyle = dark
             ? {backgroundImage:`linear-gradient(162deg, ${shadeHex(accent,0.70)} 0%, ${shadeHex(accent,0.44)} 100%)`,WebkitBackgroundClip:"text",backgroundClip:"text",WebkitTextFillColor:"transparent",color:"transparent"}
             : {color:dynSoft,textShadow:dynSh};
-          return (
-            // Week number + range — sits directly under the shared "• Vecka"
-            // button, left-aligned, over the dynamic sky. Light: deep hue ink;
-            // dark: liquid-glass gradient glyphs (see above).
-            <div style={{display:"flex",alignItems:"baseline",gap:8,padding:"4px 22px 12px 24px"}}>
-              <span style={{position:"relative",display:"inline-flex"}}>
-                {dark&&(
-                  <span aria-hidden="true" style={{position:"absolute",left:"50%",top:"50%",width:108,height:88,transform:"translate(-50%,-50%)",borderRadius:"50%",filter:"blur(24px)",pointerEvents:"none",zIndex:-1,background:`radial-gradient(circle, ${shadeHex(accent,0.5)}2E, transparent 72%)`}}/>
-                )}
-                <span style={{fontFamily:G.serif,fontWeight:800,fontSize:38,lineHeight:0.95,letterSpacing:-1.2,fontVariantNumeric:"tabular-nums",transition:"color .5s ease",..._numStyle}}>{weekNum}</span>
-              </span>
-              <span style={{fontFamily:G.serif,fontSize:13,fontWeight:500,transition:"color .5s ease",..._dateStyle}}>{dateRange}</span>
+          // Glass cube (dark) — a frosted, hairline-bordered container holding
+          // the week number + date, replacing the old soft light-bloom. Real
+          // translucent material (not blur alone, which is flaky in iOS PWA),
+          // a top highlight, a soft drop, and a whisper of the live warm hue.
+          const _glassCube = {
+            display:"inline-flex", alignItems:"baseline", gap:8,
+            padding:"7px 15px 9px", borderRadius:18,
+            background:"linear-gradient(150deg, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.035) 100%)",
+            border:"1px solid rgba(255,255,255,0.15)",
+            boxShadow:`0 10px 26px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.26), inset 0 0 20px ${shadeHex(accent,0.5)}14`,
+            backdropFilter:"blur(18px) saturate(1.25)",
+            WebkitBackdropFilter:"blur(18px) saturate(1.25)",
+          };
+          const _numSpan = <span style={{fontFamily:G.serif,fontWeight:800,fontSize:38,lineHeight:0.95,letterSpacing:-1.2,fontVariantNumeric:"tabular-nums",transition:"color .5s ease",..._numStyle}}>{weekNum}</span>;
+          const _dateSpan = <span style={{fontFamily:G.serif,fontSize:13,fontWeight:500,transition:"color .5s ease",..._dateStyle}}>{dateRange}</span>;
+          return dark ? (
+            // Dark: number + date inside a frosted glass cube.
+            <div style={{padding:"4px 22px 12px 14px"}}>
+              <div style={_glassCube}>{_numSpan}{_dateSpan}</div>
+            </div>
+          ) : (
+            // Light: deep hue ink over the bright sky (unchanged).
+            <div style={{display:"flex",alignItems:"baseline",gap:8,padding:"4px 22px 12px 14px"}}>
+              {_numSpan}{_dateSpan}
             </div>
           );
         })()}
@@ -13980,33 +14038,47 @@ function SceneIntro(){
     const drawIcon=(plateA,pearlScale=0)=>{
       // plate
       ctx.save(); ctx.globalAlpha=plateA;
-      // soft drop shadow
-      ctx.shadowColor="rgba(80,70,95,0.20)"; ctx.shadowBlur=34; ctx.shadowOffsetY=16;
-      const bg=ctx.createLinearGradient(ix,iy,ix,iy+ICON);
-      bg.addColorStop(0,"#FFFCF7"); bg.addColorStop(1,"#F3E6D7");
+      // soft warm drop shadow (matches the warm plate, no cool halo)
+      ctx.shadowColor="rgba(150,95,60,0.24)"; ctx.shadowBlur=34; ctx.shadowOffsetY=16;
+      const bg=ctx.createLinearGradient(ix,iy,ix+ICON,iy+ICON);
+      bg.addColorStop(0,"#F4BE93"); bg.addColorStop(1,"#EAA371");
       roundRectPath(ix,iy,ICON,ICON,v(22.37)); ctx.fillStyle=bg; ctx.fill();
       ctx.shadowColor="transparent";
-      // top sheen
-      const sh=ctx.createLinearGradient(ix,iy,ix,iy+ICON*0.5);
-      sh.addColorStop(0,"rgba(255,255,255,0.55)"); sh.addColorStop(1,"rgba(255,255,255,0)");
-      roundRectPath(ix+2,iy+2,ICON-4,ICON*0.5,v(20)); ctx.fillStyle=sh; ctx.fill();
-      // "lu" mark
-      ctx.beginPath();
-      ctx.moveTo(ix+v(34.5),iy+v(21));
-      ctx.lineTo(ix+v(34.5),iy+v(63.5));
-      ctx.arc(ix+v(50),iy+v(63.5),v(15.5),Math.PI,0,true);
-      ctx.lineTo(ix+v(65.5),iy+v(43.3));
-      ctx.lineWidth=v(12.8); ctx.strokeStyle="#1F1B2E";
-      ctx.lineCap="round"; ctx.lineJoin="round"; ctx.stroke();
+      // soft top highlight — CLIPPED to the plate so there is no hard rim/edge
+      ctx.save();
+      roundRectPath(ix,iy,ICON,ICON,v(22.37)); ctx.clip();
+      const sh=ctx.createRadialGradient(ix+ICON*0.5, iy+ICON*0.04, 0, ix+ICON*0.5, iy+ICON*0.04, ICON*0.82);
+      sh.addColorStop(0,"rgba(255,255,255,0.40)"); sh.addColorStop(1,"rgba(255,255,255,0)");
+      ctx.fillStyle=sh; ctx.fillRect(ix,iy,ICON,ICON);
+      ctx.restore();
+      // "lu" mark — tone-on-tone (Concept 3 "Tonad"): a soft emboss then a
+      // light-peach stroke, so the gold light is the only true accent.
+      var markPath=function(){ ctx.beginPath();
+        ctx.moveTo(ix+v(34.5),iy+v(21));
+        ctx.lineTo(ix+v(34.5),iy+v(63.5));
+        ctx.arc(ix+v(50),iy+v(63.5),v(15.5),Math.PI,0,true);
+        ctx.lineTo(ix+v(65.5),iy+v(43.3)); };
+      ctx.lineCap="round"; ctx.lineJoin="round"; ctx.lineWidth=v(12.8);
+      ctx.save(); ctx.translate(0,v(1.6)); markPath(); ctx.strokeStyle="rgba(150,80,45,0.30)"; ctx.stroke(); ctx.restore();
+      markPath(); ctx.strokeStyle="#FCE1CB"; ctx.stroke();
       ctx.restore();
       // Seated pearl — grows in at landing and STAYS (pearlScale 0→1).
       if(pearlScale>0){
         const pr=seatR*pearlScale;
+        // Layered glow (level 3): a wide diffuse halo + a bright core, so the
+        // light reads as coming from inside the pearl.
+        ctx.save(); ctx.globalAlpha=pearlScale;
+        const go=ctx.createRadialGradient(seat.x,seat.y,0, seat.x,seat.y,pr*3.85);
+        go.addColorStop(0,"rgba(255,207,128,0.40)"); go.addColorStop(0.55,"rgba(255,207,128,0)"); go.addColorStop(1,"rgba(255,207,128,0)");
+        ctx.fillStyle=go; ctx.beginPath(); ctx.arc(seat.x,seat.y,pr*3.85,0,7); ctx.fill();
+        const gi=ctx.createRadialGradient(seat.x,seat.y,0, seat.x,seat.y,pr*2.5);
+        gi.addColorStop(0,"rgba(255,226,164,1)"); gi.addColorStop(0.55,"rgba(255,226,164,0.42)"); gi.addColorStop(1,"rgba(255,226,164,0)");
+        ctx.fillStyle=gi; ctx.beginPath(); ctx.arc(seat.x,seat.y,pr*2.5,0,7); ctx.fill();
+        ctx.restore();
         ctx.save();
-        ctx.shadowColor="rgba(224,135,63,0.4)"; ctx.shadowBlur=8*pearlScale;
         const pg=ctx.createRadialGradient(seat.x-pr*0.3,seat.y-pr*0.34,pr*0.1, seat.x,seat.y,pr);
-        pg.addColorStop(0,"#FFFFFF"); pg.addColorStop(0.3,"#FFF2E6");
-        pg.addColorStop(0.7,"#F8D2B2"); pg.addColorStop(1,"#EDB78F");
+        pg.addColorStop(0,"#FFFDF4"); pg.addColorStop(0.34,"#FFE9B8");
+        pg.addColorStop(0.72,"#FAC877"); pg.addColorStop(1,"#EFB45A");
         ctx.fillStyle=pg; ctx.beginPath(); ctx.arc(seat.x,seat.y,pr,0,7); ctx.fill();
         ctx.restore();
         // tiny specular highlight
@@ -14887,7 +14959,7 @@ function DemoTour({onClose,lang}){
   const isOutro=idx===scenes.length-1;
   // Per-scene accent color — themes the accent line, play button, and progress.
   const SCENE_COLORS=[
-    SCREENS.home.h,      // intro
+    "#E8A878",           // intro — warm peach to match the new icon
     SCREENS.home.h,      // schedule
     SCREENS.timer.h,     // timer
     SCREENS.calm.h,      // checklist (sage)
@@ -14896,11 +14968,11 @@ function DemoTour({onClose,lang}){
     SCREENS.idcard.h,    // id card
     SCREENS.comm.h,      // talk
     SCREENS.emotion.h,   // theme (violet — calm)
-    SCREENS.home.h,      // outro
+    "#E8A878",           // outro — warm peach (brand bookend)
   ];
   const SCENE_DEEPS=[
-    SCREENS.home.deep,SCREENS.home.deep,SCREENS.timer.deep,SCREENS.calm.deep,
-    SCREENS.emotion.deep,SCREENS.calm.deep,SCREENS.idcard.deep,SCREENS.comm.deep,SCREENS.emotion.deep,SCREENS.home.deep,
+    "#C9783E",SCREENS.home.deep,SCREENS.timer.deep,SCREENS.calm.deep,
+    SCREENS.emotion.deep,SCREENS.calm.deep,SCREENS.idcard.deep,SCREENS.comm.deep,SCREENS.emotion.deep,"#C9783E",
   ];
   const effSceneCol=SCENE_COLORS[idx]||SCREENS.home.h;
   const effSceneDeep=SCENE_DEEPS[idx]||SCREENS.home.deep;
@@ -16116,10 +16188,11 @@ export default function App(){
     if(screen==="home"){
       const h=now.getHours()+now.getMinutes()/60;
       let c;
-      if(h<5)        c="#9683C2";       // pre-dawn → twilight purple
-      else if(h<12)  c="#E8A878";       // morning → warm peach
-      else if(h<17)  c=SCREENS.home.h;  // midday → calm sky blue (default)
-      else           c="#B89DC4";       // evening → soft twilight lilac
+      if(isDark())    c=warmAccentAt(h);   // dark → cohesive warm orange through the day
+      else if(h<5)    c="#9683C2";         // pre-dawn → twilight purple
+      else if(h<12)   c="#E8A878";         // morning → warm peach
+      else if(h<17)   c=SCREENS.home.h;    // midday → calm sky blue (default)
+      else            c="#B89DC4";         // evening → soft twilight lilac
       return{
         ...curS,
         h:c,
@@ -16138,10 +16211,11 @@ export default function App(){
     if(screen==="week"){
       const h=now.getHours()+now.getMinutes()/60;
       let c;
-      if(h<5)        c="#9683C2";
-      else if(h<12)  c="#E8A878";
-      else if(h<17)  c=SCREENS.week.h;
-      else           c="#B89DC4";
+      if(isDark())    c=warmAccentAt(h);
+      else if(h<5)    c="#9683C2";
+      else if(h<12)   c="#E8A878";
+      else if(h<17)   c=SCREENS.week.h;
+      else            c="#B89DC4";
       return{
         ...curS,
         h:c,
@@ -16803,7 +16877,7 @@ export default function App(){
         {((screen==="home")&&!isEd&&!isDark()) ? (
           <SkyHeader now={now} lang={lang}/>
         ) : (<>
-        {(isEd||screen==="home") && (
+        {(screen==="home"&&!isEd) && (
         <div key={(screen==="home"||screen==="week")?("lumaHdr-"+screen):"lumaHdr-tool"} style={{
           display:"flex",
           flexDirection:"row",
@@ -16840,35 +16914,6 @@ export default function App(){
             pearlScale={1.18}
             style={{transition:"color .5s ease"}}
           />
-          {/* VERSION STAMP — hidden by default, revealed by double-tapping
-              the Luma title. Diagnostic only: if the stamp doesn't match the
-              latest deploy, the device is running cached old code. */}
-          <span
-            onClick={(e)=>{
-              const el=e.currentTarget;
-              const now=Date.now();
-              const last=parseInt(el.getAttribute("data-last-tap")||"0",10);
-              if(now-last<400){
-                el.style.opacity=el.style.opacity==="1"?"0":"1";
-              }
-              el.setAttribute("data-last-tap",String(now));
-            }}
-            style={{
-              marginLeft:8,
-              fontFamily:G.font,
-              fontSize:10,
-              fontWeight:600,
-              color:isDark()?"#FFD166":"#C97548",
-              background:isDark()?"rgba(255,209,102,0.15)":"rgba(201,117,72,0.12)",
-              padding:"2px 6px",
-              borderRadius:6,
-              letterSpacing:0.5,
-              verticalAlign:"middle",
-              opacity:0,
-              transition:"opacity .2s ease",
-              cursor:"pointer",
-            }}
-          >v2026-05-30-A</span>
         </div>
         )}
         <div key={(screen==="home"||screen==="week")?("hdHdr-"+screen):"hdHdr-tool"} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:0,position:"relative",gap:12,minHeight:(isEd||screen==="home")?36:0,animation:(screen==="home"||screen==="week")?"hdrFade .42s cubic-bezier(.2,.7,.2,1) both":undefined}}>
