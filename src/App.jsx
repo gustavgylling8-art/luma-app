@@ -402,6 +402,31 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     link.href = dataUrl;
     document.head.appendChild(link);
   });
+  // ── CRITICAL CATCH-ALL ───────────────────────────────────────────────────
+  // iOS only shows an apple-touch-startup-image if its media query EXACTLY
+  // matches the device resolution. If none match (e.g. a newer iPhone not in
+  // the table above), iOS falls back to its SYSTEM launch screen — which is
+  // DARK when the phone is in dark system mode, regardless of the app's theme.
+  // That dark-frame-with-light-edges flash is exactly that fallback. To kill it
+  // for good, we ALSO bake a LIGHT launch image at THIS device's own exact
+  // resolution (so it always matches), plus a media-less last-resort copy. iOS
+  // therefore always has a matching light image and never shows its dark one.
+  try {
+    var _dprNow = window.devicePixelRatio || 2;
+    var _cw = window.screen.width, _ch = window.screen.height;
+    var _pxw = Math.round(_cw * _dprNow), _pxh = Math.round(_ch * _dprNow);
+    var _selfUrl = makeSplash(_pxw, _pxh, false, _dprNow);
+    var _exact = document.createElement("link");
+    _exact.rel = "apple-touch-startup-image";
+    _exact.media = "(device-width: " + _cw + "px) and (device-height: " + _ch + "px) and (-webkit-device-pixel-ratio: " + _dprNow + ") and (orientation: portrait)";
+    _exact.href = _selfUrl;
+    document.head.appendChild(_exact);
+    // media-less last resort (light) — used by iOS when nothing else matches
+    var _any = document.createElement("link");
+    _any.rel = "apple-touch-startup-image";
+    _any.href = _selfUrl;
+    document.head.appendChild(_any);
+  } catch (_) {}
   manLink.setAttribute("href", manUrl);
 })();
 
