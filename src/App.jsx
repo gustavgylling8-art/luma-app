@@ -340,29 +340,10 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     if (dark) { ag.addColorStop(0,"rgba(255,200,140,0.16)"); ag.addColorStop(0.46,"rgba(255,200,140,0.05)"); ag.addColorStop(0.70,"rgba(255,200,140,0)"); }
     else      { ag.addColorStop(0,"rgba(232,168,120,0.16)"); ag.addColorStop(0.46,"rgba(232,168,120,0.06)"); ag.addColorStop(0.70,"rgba(232,168,120,0)"); }
     g.fillStyle = ag; g.beginPath(); g.arc(aCx, aCy, auraR, 0, Math.PI*2); g.fill();
-    // PLATE — baked to match the live overlay's FIRST frame (base plate + top
-    // sheen; NO "u" and NO light — those draw & ignite in the overlay on top).
-    // So even on a slow cold-start, the static launch image already shows the
-    // new Luma plate (not an empty wash), and the overlay continues seamlessly.
-    var S = 108 * dpr;                          // overlay icon is 108 CSS px
-    var cx = w/2, cy = h * 0.43;                // centred, raised ~7vh like the overlay
-    var px = cx - S/2, py = cy - S/2;
-    var rr = 22.37/100 * S;
-    var rrect = function(x,y,wd,ht,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+wd,y,x+wd,y+ht,r); g.arcTo(x+wd,y+ht,x,y+ht,r); g.arcTo(x,y+ht,x,y,r); g.arcTo(x,y,x+wd,y,r); g.closePath(); };
-    g.save();
-    g.shadowColor = dark ? "rgba(0,0,0,0.5)" : "rgba(150,95,60,0.28)";
-    g.shadowBlur = 38 * dpr; g.shadowOffsetY = 18 * dpr;
-    var pg = g.createLinearGradient(px, py, px+S, py+S);
-    if (dark) { pg.addColorStop(0,"#352C46"); pg.addColorStop(1,"#1B1626"); }
-    else      { pg.addColorStop(0,"#F3B98E"); pg.addColorStop(1,"#E89B6C"); }
-    rrect(px, py, S, S, rr); g.fillStyle = pg; g.fill();
-    g.restore();
-    if (!dark) {                                 // top sheen (matches overlay topHL)
-      g.save(); rrect(px, py, S, S, rr); g.clip();
-      var sh = g.createRadialGradient(cx, py+S*0.16, 0, cx, py+S*0.16, S*0.74);
-      sh.addColorStop(0,"rgba(255,255,255,0.30)"); sh.addColorStop(1,"rgba(255,255,255,0)");
-      g.fillStyle = sh; g.fillRect(px, py, S, S); g.restore();
-    }
+    // The icon is intentionally NOT baked into the launch image (iOS never
+    // refreshes the baked image, so a baked icon drifts out of level and reads
+    // as a separate "box" frame). Only the cream wash + soft aura — continuous
+    // with the live overlay, which fades the icon in at the true centre.
     return c.toDataURL("image/png");
   };
   // Device size table — portrait orientation (iOS expects portrait splashes
@@ -402,31 +383,6 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
     link.href = dataUrl;
     document.head.appendChild(link);
   });
-  // ── CRITICAL CATCH-ALL ───────────────────────────────────────────────────
-  // iOS only shows an apple-touch-startup-image if its media query EXACTLY
-  // matches the device resolution. If none match (e.g. a newer iPhone not in
-  // the table above), iOS falls back to its SYSTEM launch screen — which is
-  // DARK when the phone is in dark system mode, regardless of the app's theme.
-  // That dark-frame-with-light-edges flash is exactly that fallback. To kill it
-  // for good, we ALSO bake a LIGHT launch image at THIS device's own exact
-  // resolution (so it always matches), plus a media-less last-resort copy. iOS
-  // therefore always has a matching light image and never shows its dark one.
-  try {
-    var _dprNow = window.devicePixelRatio || 2;
-    var _cw = window.screen.width, _ch = window.screen.height;
-    var _pxw = Math.round(_cw * _dprNow), _pxh = Math.round(_ch * _dprNow);
-    var _selfUrl = makeSplash(_pxw, _pxh, false, _dprNow);
-    var _exact = document.createElement("link");
-    _exact.rel = "apple-touch-startup-image";
-    _exact.media = "(device-width: " + _cw + "px) and (device-height: " + _ch + "px) and (-webkit-device-pixel-ratio: " + _dprNow + ") and (orientation: portrait)";
-    _exact.href = _selfUrl;
-    document.head.appendChild(_exact);
-    // media-less last resort (light) — used by iOS when nothing else matches
-    var _any = document.createElement("link");
-    _any.rel = "apple-touch-startup-image";
-    _any.href = _selfUrl;
-    document.head.appendChild(_any);
-  } catch (_) {}
   manLink.setAttribute("href", manUrl);
 })();
 
