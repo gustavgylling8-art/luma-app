@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, useContext, createContext, Fragment } from "react";
 
 (() => {
   // ── ABSOLUTE FIRST: lock the boot surface to the splash colour ───────────
@@ -100,13 +100,13 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
     <defs>
       <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#F3B98E"/>
-        <stop offset="100%" stop-color="#E89B6C"/>
+        <stop offset="0%" stop-color="#FFCB9C"/>
+        <stop offset="100%" stop-color="#F2968A"/>
       </linearGradient>
       <radialGradient id="ig" cx="50%" cy="62%" r="62%">
-        <stop offset="0%" stop-color="#FFEAC4" stop-opacity="0.72"/>
-        <stop offset="45%" stop-color="#F6C089" stop-opacity="0.28"/>
-        <stop offset="100%" stop-color="#F6C089" stop-opacity="0"/>
+        <stop offset="0%" stop-color="#FFEBD8" stop-opacity="0.74"/>
+        <stop offset="45%" stop-color="#FBC6A2" stop-opacity="0.28"/>
+        <stop offset="100%" stop-color="#FBC6A2" stop-opacity="0"/>
       </radialGradient>
       <radialGradient id="hl" cx="50%" cy="15%" r="75%">
         <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.40"/>
@@ -150,12 +150,9 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   fav.setAttribute("type", "image/svg+xml"); fav.setAttribute("href", iconUrl);
 
   // Web app manifest (Android/Chrome + general PWA) as a data-URI. The splash
-  // is always light, so the boot colours below are fixed light too.
-  // SPLASH ALWAYS LIGHT (bug-free): the boot surface, launch image and pre-boot
-  // overlay are all one consistent light colour. The app switches to dark only
-  // after the light splash is gone (React side), so the dark base is never seen
-  // bare during boot — no light→dark→edge flashing, in any theme.
-  const splashDark = false;
+  // and boot surface are always light (one consistent colour). The app switches
+  // to dark only after the light splash is gone (React side), so the dark base
+  // is never seen bare during boot — no light→dark→edge flashing, in any theme.
   const bootBg = "#FBFDFE";
 
   try {
@@ -319,70 +316,16 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, Fragment } from 
   let manLink = document.head.querySelector('link[rel="manifest"]');
   if (!manLink) { manLink = document.createElement("link"); manLink.rel = "manifest"; document.head.appendChild(manLink); }
 
-  // ── iOS launch splash screens ─────────────────────────────────────────────
-  // Without these, an iOS PWA shows a blank white flash before the React app
-  // hydrates — feels broken, not like a native launch. iOS requires SEPARATE
-  // images per device pixel-size and is strict about media-query matching:
-  // the (device-width)/(device-height) MUST exactly match a real iPhone, or
-  // iOS falls back to the blank screen. We generate each splash as a canvas
-  // data-URI (same Luma sky + centered sun mark used for the icon), so no
-  // external files are needed — the splashes travel with the bundle.
-  const makeSplash = (w, h, dark, dpr) => {
-    const c = document.createElement("canvas");
-    c.width = w; c.height = h;
-    const g = c.getContext("2d");
-    // Theme-matched base — same colour as the pre-boot overlay.
-    g.fillStyle = dark ? "#0C0B14" : "#FBFDFE";
-    g.fillRect(0, 0, w, h);
-    // Soft aura (matches overlay .lpaura at top:44%, ~380px).
-    var auraR = 190 * dpr, aCx = w/2, aCy = h * 0.44;
-    var ag = g.createRadialGradient(aCx, aCy, 0, aCx, aCy, auraR);
-    if (dark) { ag.addColorStop(0,"rgba(255,200,140,0.16)"); ag.addColorStop(0.46,"rgba(255,200,140,0.05)"); ag.addColorStop(0.70,"rgba(255,200,140,0)"); }
-    else      { ag.addColorStop(0,"rgba(232,168,120,0.16)"); ag.addColorStop(0.46,"rgba(232,168,120,0.06)"); ag.addColorStop(0.70,"rgba(232,168,120,0)"); }
-    g.fillStyle = ag; g.beginPath(); g.arc(aCx, aCy, auraR, 0, Math.PI*2); g.fill();
-    // The icon is intentionally NOT baked into the launch image (iOS never
-    // refreshes the baked image, so a baked icon drifts out of level and reads
-    // as a separate "box" frame). Only the cream wash + soft aura — continuous
-    // with the live overlay, which fades the icon in at the true centre.
-    return c.toDataURL("image/png");
-  };
-  // Device size table — portrait orientation (iOS expects portrait splashes
-  // for portrait launches). Devices are listed by logical CSS pixels with the
-  // matching media-query device-width and -height. iOS picks the splash whose
-  // media query matches the launching device.
-  // Format: [cssWidth, cssHeight, devicePixelRatio]
-  const SPLASH_DEVICES = [
-    [430, 932, 3],   // iPhone 15 Pro Max, 14 Pro Max
-    [428, 926, 3],   // iPhone 14 Plus, 13 Pro Max, 12 Pro Max
-    [414, 896, 3],   // iPhone 11 Pro Max, XS Max
-    [414, 896, 2],   // iPhone 11, XR
-    [393, 852, 3],   // iPhone 15, 15 Pro, 14 Pro
-    [390, 844, 3],   // iPhone 14, 13, 13 Pro, 12, 12 Pro
-    [375, 812, 3],   // iPhone 13 mini, 12 mini, 11 Pro, X, XS
-    [414, 736, 3],   // iPhone 8 Plus, 7 Plus, 6S Plus
-    [375, 667, 2],   // iPhone SE 2/3, 8, 7, 6S, 6
-    [320, 568, 2],   // iPhone SE 1
-  ];
-  // Generate splashes lazily — only those whose media query could match the
-  // current device. This avoids burning CPU on splashes that will never load
-  // (e.g. don't generate a 430x932 splash on a 320-wide iPhone SE).
-  // For each matching device size we register ONE launch image, locked to the
-  // app's stored theme (see below) — never a separate dark variant — so the
-  // launch image can never disagree with the pre-boot overlay or the app base.
-  const dw = window.screen.width, dh = window.screen.height;
-  SPLASH_DEVICES.forEach(([cw, ch, dpr]) => {
-    // Only generate if this device size could plausibly match (within a tier)
-    const dev = Math.min(cw, dw)/Math.max(cw, dw);
-    if (dev < 0.85 && !(cw === dw && ch === dh)) return; // skip wildly mismatched
-    const px = cw * dpr, py = ch * dpr;
-    // Register the LIGHT launch image (splash is always light — bug-free).
-    const dataUrl = makeSplash(px, py, splashDark, dpr);
-    const link = document.createElement("link");
-    link.rel = "apple-touch-startup-image";
-    link.media = `(device-width: ${cw}px) and (device-height: ${ch}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait)`;
-    link.href = dataUrl;
-    document.head.appendChild(link);
-  });
+  // ── iOS launch screen ─────────────────────────────────────────────────────
+  // We deliberately register NO apple-touch-startup-image links. Apple's
+  // documented default when none are provided is a plain WHITE launch screen on
+  // EVERY device, in light AND dark system mode. White (#FFFFFF) is visually
+  // identical to our cream (#FBFDFE), so the hand-off into the pre-boot overlay
+  // is seamless. The previous approach (a per-device size table) only worked if
+  // a media query EXACTLY matched the device — on any phone not in the list,
+  // iOS fell back to its DARK system launch screen in dark mode (the dark flash
+  // with light edges). By providing none, that fallback can never happen — it
+  // works the same on every phone, current or future, with zero maintenance.
   manLink.setAttribute("href", manUrl);
 })();
 
@@ -1456,27 +1399,110 @@ function useTimer(initSec,autoRun=false){
   };
 }
 
-function TCtrl({c,color,t}){
+/* Premium ring control: a discreet progress ring around the play/pause button
+   that empties clockwise as time runs out. The countdown digits are hidden by
+   default; tapping the area just above the button gently reveals them, then they
+   fade away on their own. Shared by every timer (scene + boxed) for consistency. */
+const HideCtx=createContext(null);
+function RingControl({c,color="#E0A46A",t,variant="solid",digitSize,peekW,peekH}){
+  const[reveal,setReveal]=useState(false);
+  const[noFade,setNoFade]=useState(false);
+  const[localHidden,setLocalHidden]=useState(false);
+  const[peekT,setPeekT]=useState(false);
+  const hctx=useContext(HideCtx);
+  const hidden = hctx? hctx.hidden : localHidden;
+  const tabY = hctx? hctx.tabY : null;
+  const applyHidden = v => (hctx?hctx.setHidden:setLocalHidden)(v);
+  useEffect(()=>{ if(!hidden) setPeekT(false); },[hidden]);
+  const sx=useRef(0),sy=useRef(0),swped=useRef(false);
+  const peek=()=>{
+    if(reveal){ setNoFade(true); setReveal(false); return; }
+    setNoFade(false); setReveal(true);
+  };
   if(c.done) return null;
+  const glass=variant==="glass";
   const dk=isDark();
-  const ico=dk?shadeHex(color,0.55):shadeHex(color,-0.32);
-  const bg=dk?"#23213A":"#FFFFFF";
-  const border=dk?"1px solid rgba(255,255,255,0.10)":"none";
-  const bsh=dk
-    ?"0 22px 40px -12px rgba(0,0,0,0.85), 0 8px 18px -8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)"
-    :`0 24px 42px -14px ${shadeHex(color,-0.2)}66, 0 9px 20px -8px rgba(20,24,40,0.18), inset 0 1px 0 #FFFFFF`;
+  const BSZ=glass?84:64, RSZ=BSZ+(glass?18:14), sw=glass?3.5:3;
+  const r=(RSZ-sw)/2-1, cxy=RSZ/2, C=2*Math.PI*r;
+  const pctv=Math.max(0,Math.min(1,c.pctSmooth));
+  const th0=Math.max(0.0001,(1-pctv)*2*Math.PI);   // uncovering head, sweeping clockwise from top
+  const hx=cxy+r*Math.sin(th0), hy=cxy-r*Math.cos(th0), large=pctv>0.5?1:0;
+  const arcD=`M ${hx.toFixed(2)} ${hy.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${cxy} ${(cxy-r).toFixed(2)}`;
+  const ico=glass?"#fff":(dk?shadeHex(color,0.55):shadeHex(color,-0.32));
+  const track=glass?"rgba(255,255,255,0.16)":(dk?"rgba(255,255,255,0.12)":`${color}24`);
+  const prog=glass?shadeHex(color,0.45):(dk?shadeHex(color,0.42):color);
+  const dotC=shadeHex(color,glass?0.62:0.5);
+  const _rgb=hexToRgb(color)||[94,234,212];
+  const _mix=(a,b,k)=>`rgb(${Math.round(a[0]+(b[0]-a[0])*k)},${Math.round(a[1]+(b[1]-a[1])*k)},${Math.round(a[2]+(b[2]-a[2])*k)})`;
+  const g0=_mix(_rgb,[120,240,210],0.5), g1=_mix(_rgb,[255,255,255],glass?0.30:0.12), g2=_mix(_rgb,[170,150,255],0.42);
+  const gid="rg_"+variant+"_"+String(color).replace(/[^a-zA-Z0-9]/g,"");
+  const dsz=digitSize||(glass?40:30);
+  const PW=peekW||(glass?320:190), PH=peekH||(glass?400:150);
+  const ease="transform .44s cubic-bezier(0.32,0.72,0,1), opacity .34s ease";
+  const boxedHidden = !!hctx && !glass && hidden;       // inside FullTimer → collapse to recenter
+  const standaloneHidden = !hctx && !glass && hidden;   // story page → park to fixed left tab
+  // Horizontal swipe on the play button hides the control (boxed = self-parks to
+  // a left tab; glass hide is driven by ImmersiveChrome). The guard makes sure a
+  // swipe never accidentally toggles play/pause, even if the click isn't cancelled.
+  const onTS=e=>{const p=e.touches[0];sx.current=p.clientX;sy.current=p.clientY;swped.current=false;};
+  const onTM=e=>{const p=e.touches[0];if(Math.abs(p.clientX-sx.current)>Math.abs(p.clientY-sy.current)&&Math.abs(p.clientX-sx.current)>12)swped.current=true;};
+  const onTE=e=>{ if(!swped.current||glass) return; const dx=e.changedTouches[0].clientX-sx.current; if(dx<-26)applyHidden(true); else if(dx>26)applyHidden(false); };
+  const tapPlay=()=>{ if(swped.current){swped.current=false;return;} c.setRun(rr=>!rr); };
+  const btnStyle=glass
+    ? {width:BSZ,height:BSZ,borderRadius:BSZ/2,border:"1px solid rgba(255,255,255,0.32)",background:"rgba(255,255,255,0.16)",backdropFilter:"blur(20px) saturate(1.4)",WebkitBackdropFilter:"blur(20px) saturate(1.4)",boxShadow:`0 16px 44px -12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.45), 0 0 50px -8px ${color}`}
+    : {width:BSZ,height:BSZ,borderRadius:BSZ/2,border:dk?`1px solid ${color}33`:"none",background:dk?"linear-gradient(180deg,#272540,#201E33)":"linear-gradient(180deg,#FFFFFF,#F4F6FB)",boxShadow:dk?`0 22px 40px -12px rgba(0,0,0,0.85), 0 0 36px -6px ${color}80, inset 0 1px 0 rgba(255,255,255,0.12)`:`0 24px 42px -14px ${shadeHex(color,-0.2)}66, 0 9px 20px -8px rgba(20,24,40,0.18), 0 0 34px -5px ${color}5C, inset 0 1px 0 #FFFFFF`};
   return(
-    <div style={{display:"flex",justifyContent:"center",marginTop:22}}>
-      <button onClick={()=>c.setRun(r=>!r)} className="lt-press" aria-label={c.run?t.pause:t.resume} style={{
-        width:64,height:64,borderRadius:"50%",cursor:"pointer",
-        border,background:bg,boxShadow:bsh,
-        display:"inline-flex",alignItems:"center",justifyContent:"center",
-        transition:"transform .26s cubic-bezier(0.32,0.72,0,1)"
-      }}>
-        {c.run
-          ? <svg width="22" height="22" viewBox="0 0 24 24" fill={ico}><rect x="6.8" y="5" width="3.3" height="14" rx="1.3"/><rect x="13.9" y="5" width="3.3" height="14" rx="1.3"/></svg>
-          : <svg width="24" height="24" viewBox="0 0 24 24" fill={ico} style={{marginLeft:3}}><path d="M8 5.4 L18.4 12 L8 18.6 Z"/></svg>}
+    <>
+    <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",transform:standaloneHidden?"translateX(-130vw)":"none",opacity:(!glass&&hidden)?0:1,pointerEvents:(!glass&&hidden)?"none":"auto",transition:ease}}>
+      <style>{`@keyframes lumaRingShimmer{0%,100%{opacity:.84}50%{opacity:1}}`}</style>
+      <div aria-hidden style={{position:"absolute",bottom:"100%",marginBottom:glass?30:22,left:"50%",transform:`translateX(-50%) translateY(${reveal?"0px":"7px"})`,opacity:reveal?1:0,transition:noFade?"none":"opacity .5s ease, transform .5s ease",pointerEvents:"none",whiteSpace:"nowrap",fontFamily:G.font,fontWeight:500,fontSize:dsz,letterSpacing:-1,color:glass?"#F4F7FF":(dk?"#F4F1FA":shadeHex(color,-0.25)),textShadow:glass?"0 2px 32px rgba(0,0,0,0.45), 0 0 60px rgba(120,170,255,0.3)":"none",fontVariantNumeric:"tabular-nums"}}>{c.label}</div>
+      <button onClick={peek} aria-label={t?.showTime||"Visa tid"} style={{position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%)",width:PW,height:PH,background:"transparent",border:"none",padding:0,margin:0,cursor:"pointer"}}/>
+      <div style={{position:"relative",width:RSZ,height:RSZ,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <svg width={RSZ} height={RSZ} style={{position:"absolute",left:0,top:0,overflow:"visible"}}>
+          <defs>
+            <linearGradient id={gid} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={g0}/><stop offset="50%" stopColor={g1}/><stop offset="100%" stopColor={g2}/>
+            </linearGradient>
+          </defs>
+          <circle cx={cxy} cy={cxy} r={r} fill="none" stroke={track} strokeWidth={sw}/>
+          <path d={arcD} fill="none" stroke={`url(#${gid})`} strokeWidth={sw} strokeLinecap="round" style={{filter:`drop-shadow(0 0 ${glass?8:6}px ${g0}) drop-shadow(0 0 ${glass?20:16}px ${g2})`,animation:"lumaRingShimmer 3.4s ease-in-out infinite"}}/>
+          {pctv>0.004&&pctv<0.999&&<circle cx={hx} cy={hy} r={glass?3.8:3.2} fill={_mix(_rgb,[255,255,255],0.55)} style={{filter:`drop-shadow(0 0 6px ${g0}) drop-shadow(0 0 13px ${g2})`}}/>}
+        </svg>
+        <button onClick={tapPlay} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} className="lt-press" aria-label={c.run?(t?.pause||"Paus"):(t?.resume||"Starta")} style={{...btnStyle,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",color:ico,transition:"transform .26s cubic-bezier(0.32,0.72,0,1)"}}>
+          {c.run
+            ? <svg width={glass?26:22} height={glass?26:22} viewBox="0 0 24 24" fill={ico}><rect x="6.6" y="5" width="3.5" height="14" rx="1.4"/><rect x="13.9" y="5" width="3.5" height="14" rx="1.4"/></svg>
+            : <svg width={glass?30:24} height={glass?30:24} viewBox="0 0 24 24" fill={ico} style={{marginLeft:3}}><path d="M8 5.3 L18.5 12 L8 18.7 Z"/></svg>}
+        </button>
+      </div>
+    </div>
+    {!glass&&hctx&&(
+      <Fragment>
+        {/* hidden mode: tap anywhere shows the time; swipe right restores the control */}
+        <div onClick={()=>{ if(swped.current) return; setPeekT(p=>!p); }} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={e=>{ if(swped.current){ const dx=e.changedTouches[0].clientX-sx.current; if(dx>26){applyHidden(false);setPeekT(false);} } }} style={{position:"fixed",inset:0,zIndex:9748,background:"transparent",pointerEvents:hidden?"auto":"none"}}/>
+        <div aria-hidden style={{position:"fixed",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 86px)",display:"flex",justifyContent:"center",zIndex:9749,pointerEvents:"none",opacity:(hidden&&peekT)?1:0,transform:`translateY(${(hidden&&peekT)?"0":"6px"})`,transition:"opacity .42s ease, transform .42s ease"}}>
+          <span style={{fontFamily:G.font,fontWeight:500,fontSize:46,letterSpacing:-1.5,color:dk?"#F4F1FA":shadeHex(color,-0.22),fontVariantNumeric:"tabular-nums",textShadow:dk?"0 8px 40px rgba(0,0,0,0.5)":"none"}}>{c.label}</span>
+        </div>
+        <button onClick={()=>{applyHidden(false);setPeekT(false);}} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={e=>{if(swped.current){const dx=e.changedTouches[0].clientX-sx.current;if(dx>26){applyHidden(false);setPeekT(false);}}}} aria-label={t?.resume||"Visa"} style={{position:"fixed",left:0,top:"70%",transform:"translateY(-50%)",width:27,height:62,borderTopRightRadius:16,borderBottomRightRadius:16,border:`1px solid ${dk?"rgba(255,255,255,0.16)":color+"40"}`,borderLeft:"none",background:dk?"rgba(28,26,42,0.92)":"#FFFFFF",boxShadow:`0 10px 28px -12px rgba(0,0,0,0.4), 0 0 22px -10px ${color}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:9750,opacity:hidden?1:0,pointerEvents:hidden?"auto":"none",transition:"opacity .34s ease"}}>
+          <svg width="10" height="13" viewBox="0 0 11 14" fill="none"><path d="M2.2 2 L8 7 L2.2 12" stroke={dk?"#fff":shadeHex(color,-0.3)} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
+      </Fragment>
+    )}
+    {!glass&&!hctx&&(
+      <button onClick={()=>applyHidden(false)} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={e=>{if(swped.current){const dx=e.changedTouches[0].clientX-sx.current;if(dx>26)applyHidden(false);}}} aria-label={t?.resume||"Visa"} style={{position:"fixed",left:0,top:"50%",transform:hidden?"translateY(-50%) translateX(0)":"translateY(-50%) translateX(-118%)",opacity:hidden?1:0,pointerEvents:hidden?"auto":"none",transition:ease,width:26,height:60,borderTopRightRadius:15,borderBottomRightRadius:15,border:`1px solid ${dk?"rgba(255,255,255,0.16)":color+"40"}`,borderLeft:"none",background:dk?"rgba(28,26,42,0.92)":"#FFFFFF",boxShadow:`0 10px 28px -12px rgba(0,0,0,0.4), 0 0 22px -10px ${color}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:9999}}>
+        <svg width="10" height="13" viewBox="0 0 11 14" fill="none"><path d="M2.2 2 L8 7 L2.2 12" stroke={dk?"#fff":shadeHex(color,-0.3)} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
+    )}
+    </>
+  );
+}
+
+function TCtrl({c,color,t}){
+  const hctx=useContext(HideCtx);
+  const hidden=!!hctx&&hctx.hidden;
+  if(c.done) return null;
+  return(
+    <div style={{display:"flex",justifyContent:"center",marginTop:hidden?0:70,maxHeight:hidden?0:84,overflow:hidden?"hidden":"visible",transition:"margin-top .44s cubic-bezier(0.32,0.72,0,1), max-height .44s cubic-bezier(0.32,0.72,0,1)"}}>
+      <RingControl c={c} color={color} t={t} variant="solid"/>
     </div>
   );
 }
@@ -1486,18 +1512,26 @@ function TCtrl({c,color,t}){
    button, and a done state. No reset — just X + pause, by design. */
 function ImmersiveChrome({c,t,onClose,activity,W,H,hideLabel,doneEmoji="🌅",labelYFrac=0.5,color="#E0A46A"}){
   const big=Math.min(W,H);
+  const[hidden,setHidden]=useState(false);
+  const[tPeek,setTPeek]=useState(false);
+  const[tNoFade,setTNoFade]=useState(false);
+  const sx=useRef(0), sy=useRef(0), swp=useRef(false);
+  const onStart=e=>{const p=e.touches[0];sx.current=p.clientX;sy.current=p.clientY;swp.current=false;};
+  const onMove=e=>{const p=e.touches[0];const dx=p.clientX-sx.current,dy=p.clientY-sy.current;if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>12)swp.current=true;};
+  const show=()=>{setHidden(false);setTPeek(false);};
+  const endHide=e=>{if(swp.current){const dx=e.changedTouches[0].clientX-sx.current;if(dx<-26){setHidden(true);}else if(dx>26){show();}e.preventDefault();}};
+  const endShow=e=>{if(swp.current){const dx=e.changedTouches[0].clientX-sx.current;if(dx>26){show();}e.preventDefault();}};
+  const toggleT=()=>{ if(tPeek){setTNoFade(true);setTPeek(false);} else {setTNoFade(false);setTPeek(true);} };
+  const ease="transform .44s cubic-bezier(0.32,0.72,0,1), opacity .34s ease";
   return(
     <>
-      <button onClick={onClose} aria-label={t?.close||"Stäng"} className="lt-press" style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 14px)",right:18,width:44,height:44,borderRadius:22,border:"1px solid rgba(255,255,255,0.24)",background:"rgba(255,255,255,0.13)",backdropFilter:"blur(16px) saturate(1.3)",WebkitBackdropFilter:"blur(16px) saturate(1.3)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 24px -10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.28)",zIndex:4}}><IconX size={15}/></button>
+      <div style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 14px)",right:18,zIndex:4,transform:hidden?"translateX(150%)":"translateX(0)",opacity:hidden?0:1,pointerEvents:hidden?"none":"auto",transition:ease}}>
+        <button onClick={onClose} aria-label={t?.close||"Stäng"} className="lt-press" style={{width:44,height:44,borderRadius:22,border:"1px solid rgba(255,255,255,0.24)",background:"rgba(255,255,255,0.13)",backdropFilter:"blur(16px) saturate(1.3)",WebkitBackdropFilter:"blur(16px) saturate(1.3)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 24px -10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.28)"}}><IconX size={15}/></button>
+      </div>
       {activity&&(
-        <div style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 16px)",left:18,display:"flex",alignItems:"center",gap:10,padding:"9px 15px 9px 11px",background:"rgba(255,255,255,0.12)",backdropFilter:"blur(16px) saturate(1.3)",WebkitBackdropFilter:"blur(16px) saturate(1.3)",borderRadius:18,border:"1px solid rgba(255,255,255,0.2)",boxShadow:"0 10px 28px -14px rgba(0,0,0,0.6)",zIndex:4,maxWidth:"58%"}}>
+        <div style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 16px)",left:18,display:"flex",alignItems:"center",gap:10,padding:"9px 15px 9px 11px",background:"rgba(255,255,255,0.12)",backdropFilter:"blur(16px) saturate(1.3)",WebkitBackdropFilter:"blur(16px) saturate(1.3)",borderRadius:18,border:"1px solid rgba(255,255,255,0.2)",boxShadow:"0 10px 28px -14px rgba(0,0,0,0.6)",zIndex:4,maxWidth:"58%",opacity:hidden?0.4:1,transition:"opacity .34s ease"}}>
           <div style={{width:30,height:30,borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,background:activity.photo?"transparent":"rgba(255,255,255,0.16)",overflow:"hidden",flexShrink:0}}>{activity.photo?<img src={activity.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:activity.emoji}</div>
           <div style={{fontFamily:G.serif,fontWeight:600,fontSize:14,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",letterSpacing:-.2}}>{activity.name}</div>
-        </div>
-      )}
-      {!hideLabel&&!c.done&&(
-        <div style={{position:"absolute",top:`${labelYFrac*100}%`,left:0,right:0,transform:"translateY(-50%)",display:"flex",justifyContent:"center",pointerEvents:"none"}}>
-          <span style={{fontFamily:G.font,fontWeight:500,fontSize:big*0.165,color:"#F4F7FF",letterSpacing:-1.5,textShadow:"0 2px 32px rgba(0,0,0,0.4), 0 0 70px rgba(120,170,255,0.3)",fontVariantNumeric:"tabular-nums"}}>{c.label}</span>
         </div>
       )}
       {c.done&&(
@@ -1506,13 +1540,19 @@ function ImmersiveChrome({c,t,onClose,activity,W,H,hideLabel,doneEmoji="🌅",la
         </div>
       )}
       {!c.done&&(
-        <div style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 42px)",display:"flex",justifyContent:"center",zIndex:4}}>
-          <button onClick={()=>c.setRun(r=>!r)} className="lt-press" aria-label={c.run?(t?.pause||"Paus"):(t?.resume||"Starta")} style={{width:84,height:84,borderRadius:42,border:"1px solid rgba(255,255,255,0.30)",background:"rgba(255,255,255,0.15)",backdropFilter:"blur(20px) saturate(1.4)",WebkitBackdropFilter:"blur(20px) saturate(1.4)",color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 16px 44px -12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 56px -12px rgba(120,180,255,0.5)"}}>
-            {c.run
-              ? <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><rect x="6.5" y="5" width="3.6" height="14" rx="1.4"/><rect x="13.9" y="5" width="3.6" height="14" rx="1.4"/></svg>
-              : <svg width="30" height="30" viewBox="0 0 24 24" fill="#fff" style={{marginLeft:3}}><path d="M8 5.2 L18.6 12 L8 18.8 Z"/></svg>}
+        <>
+          {/* tap anywhere to peek the time, or swipe right to bring the controls back */}
+          {hidden&&<div onClick={toggleT} onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={endShow} style={{position:"absolute",inset:0,zIndex:3,background:"transparent"}}/>}
+          {hidden&&(
+            <div aria-hidden style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 52px)",textAlign:"center",fontFamily:G.font,fontWeight:500,fontSize:Math.round(big*0.16),letterSpacing:-1,color:"#F4F7FF",textShadow:"0 2px 32px rgba(0,0,0,0.45), 0 0 60px rgba(120,170,255,0.3)",fontVariantNumeric:"tabular-nums",opacity:tPeek?1:0,transform:`translateY(${tPeek?0:8}px)`,transition:tNoFade?"none":"opacity .5s ease, transform .5s ease",pointerEvents:"none",zIndex:4}}>{c.label}</div>
+          )}
+          <div onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={endHide} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 30px)",display:"flex",justifyContent:"center",zIndex:4,transform:hidden?`translateX(-${Math.round(W*0.62)}px)`:"translateX(0)",opacity:hidden?0:1,pointerEvents:hidden?"none":"auto",transition:ease}}>
+            <RingControl c={c} color={color} t={t} variant="glass" digitSize={Math.round(big*0.16)}/>
+          </div>
+          <button onClick={show} onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={endShow} aria-label={t?.resume||"Visa"} style={{position:"absolute",left:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 48px)",width:27,height:62,borderTopRightRadius:16,borderBottomRightRadius:16,border:"1px solid rgba(255,255,255,0.22)",borderLeft:"none",background:"rgba(255,255,255,0.14)",backdropFilter:"blur(16px) saturate(1.3)",WebkitBackdropFilter:"blur(16px) saturate(1.3)",boxShadow:`0 10px 28px -12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 26px -10px ${color}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:5,transform:hidden?"translateX(0)":"translateX(-115%)",opacity:hidden?1:0,pointerEvents:hidden?"auto":"none",transition:ease}}>
+            <svg width="11" height="14" viewBox="0 0 11 14" fill="none"><path d="M2.2 2 L8 7 L2.2 12" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
-        </div>
+        </>
       )}
     </>
   );
@@ -1544,7 +1584,7 @@ function DoneBadge({color,t,onReplay,onClose,onDark}){
       <style>{`
         @keyframes dcPop_${uid}{0%{transform:scale(0.5);opacity:0}62%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
         @keyframes dcRing_${uid}{0%{transform:scale(0.7);opacity:0.5}75%{transform:scale(1.6);opacity:0}100%{opacity:0}}
-        @keyframes dcChk_${uid}{from{stroke-dashoffset:30}to{stroke-dashoffset:0}}
+        @keyframes dcChk_${uid}{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
         @keyframes dcUp_${uid}{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:translateY(0)}}
       `}</style>
       <div style={{position:"relative",width:122,height:122,display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -1555,7 +1595,7 @@ function DoneBadge({color,t,onReplay,onClose,onDark}){
           display:"flex",alignItems:"center",justifyContent:"center",
           animation:`dcPop_${uid} 0.6s cubic-bezier(0.22,0.61,0.36,1) both`}}>
           <svg width="58" height="58" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12.5 L10 17.5 L19 7" style={{strokeDasharray:30,animation:`dcChk_${uid} 0.45s 0.5s cubic-bezier(0.65,0,0.35,1) both`}}/>
+            <path d="M5 12.5 L10 17.5 L19 7" pathLength="1" style={{strokeDasharray:1,animation:`dcChk_${uid} 0.62s 0.56s cubic-bezier(0.5,0,0.2,1) both`}}/>
           </svg>
         </div>
       </div>
@@ -2084,7 +2124,7 @@ function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hide
           </svg>
         </div>
       </div>
-      {!hideLabel&&(<div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>)}
+      {null}
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
@@ -2162,7 +2202,7 @@ function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLa
             <circle cx={(exO+exI)/2} cy={(eyO+eyI)/2} r={bandW/2} fill={deep}/>
           </>)}
         </svg>
-        {!hideLabel&&(<div style={{fontFamily:G.serif,fontWeight:700,fontSize:size*0.12,color:"#F4F1FA",letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>)}
+        {null}
         {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
       </div>
     );
@@ -2215,7 +2255,7 @@ function RingTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLa
           )}
         </svg>
       </div>
-      {!hideLabel&&(<div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>)}
+      {null}
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
@@ -2446,7 +2486,7 @@ function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMod
       {/* Lamp legend — hidden in preview */}
       {!hideLabel&&<div style={{fontFamily:G.font,fontWeight:500,fontSize:11,color:isDark()?"rgba(244,241,250,0.6)":G.ink3,letterSpacing:.8,textTransform:"uppercase"}}>{lampLabel}</div>}
       {/* Time remaining */}
-      {!hideLabel&&(<div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>)}
+      {null}
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
@@ -2458,7 +2498,7 @@ function DotsTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,dotMod
    dancing caustics, rising bubbles, drifting light motes, a bright meniscus
    waterline and a glass-vessel sheen. One clean rAF loop, no per-frame
    shadowBlur — buttery on mobile. Water level follows the timer. */
-function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,aesthetic="C",hideLabel=false,immersive=false,onClose,activity}){
+function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,aesthetic="C",hideLabel=false,immersive=false,preview=false,onClose,activity}){
   const c=useTimer(totalSec,autoRun);
   const[vp,setVp]=useState(()=>(typeof window!=="undefined"?{w:window.innerWidth,h:window.innerHeight}:{w:390,h:780}));
   useEffect(()=>{if(!immersive)return;const on=()=>setVp({w:window.innerWidth,h:window.innerHeight});window.addEventListener("resize",on);window.addEventListener("orientationchange",on);return()=>{window.removeEventListener("resize",on);window.removeEventListener("orientationchange",on);};},[immersive]);
@@ -2581,11 +2621,7 @@ function WaveTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,aesthe
         boxShadow:dk?`inset 0 1px 0 rgba(255,255,255,0.08), 0 0 90px -10px ${color}45, 0 28px 60px -20px ${color}33, 0 10px 30px -15px rgba(0,0,0,0.8)`:`${sh.md}, inset 0 1px 0 rgba(255,255,255,0.6)`,
         border:`1px solid ${dk?"rgba(255,255,255,0.06)":color+"30"}`}}>
         <canvas ref={cvRef} style={{position:"absolute",inset:0,width:W,height:H,display:"block"}}/>
-        {!hideLabel&&(
-          <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
-            <span style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.15,color:onWater?"#fff":shadeHex(color,dk?0.35:-0.15),textShadow:onWater?`0 2px ${Math.round(8+c.pctSmooth*10)}px rgba(0,0,0,${(0.2+c.pctSmooth*0.2).toFixed(2)})`:"none",fontVariantNumeric:"tabular-nums",transition:"color .6s ease"}}>{c.label}</span>
-          </div>
-        )}
+        {null}
       </div>
       {showCtrl&&<div style={{marginTop:16}}><TCtrl c={c} color={color} t={t}/></div>}
     </div>
@@ -2763,7 +2799,7 @@ function SunsetScene({W,H,progress,immersive=false,radius=24}){
       octx.putImageData(img,0,0);return off;
     };
     const cloudImg=genCloud();
-    let raf;
+    let raf, orbStart=0;
     const draw=()=>{
       const now=performance.now(), p=clamp(live.current.progress,0,1);
       const sun=ramp(P.sun,p), skyW=clamp((p-0.25)/0.5,0,1);
@@ -2810,12 +2846,13 @@ function SunsetScene({W,H,progress,immersive=false,radius=24}){
       if(refA>0.02){
         ctx.save();ctx.globalCompositeOperation="lighter";
         bloom(W/2,HZ+2,R*2.1,sun,0.55*refA); bloom(W/2,HZ-R*0.4,R*1.3,sun,0.30*refA);
-        for(let y=HZ+1;y<H;y+=2){const depth=(y-HZ)/(H-HZ);const w=R*(0.62+depth*1.35);const s1=Math.sin(now*0.004+y*0.55),s2=Math.sin(now*0.0026+y*1.2);const flick=Math.pow(Math.abs(s1*0.6+s2*0.4),1.7);const a=0.5*refA*(1-depth*0.95)*(0.14+0.86*flick);if(a<0.012)continue;const wob=s2*(1+depth*5);const rg=ctx.createLinearGradient(W/2-w,0,W/2+w,0);rg.addColorStop(0,rgba(sun,0));rg.addColorStop(0.5,rgba(mix(sun,[255,244,218],0.42),a));rg.addColorStop(1,rgba(sun,0));ctx.fillStyle=rg;ctx.fillRect(W/2-w+wob,y,w*2,1.6);}
+        for(let y=HZ+1;y<H;y+=3){const depth=(y-HZ)/(H-HZ);const w=R*(0.62+depth*1.35);const s1=Math.sin(now*0.004+y*0.55),s2=Math.sin(now*0.0026+y*1.2);const flick=Math.pow(Math.abs(s1*0.6+s2*0.4),1.7);const a=0.5*refA*(1-depth*0.95)*(0.14+0.86*flick);if(a<0.012)continue;const wob=s2*(1+depth*5);const rg=ctx.createLinearGradient(W/2-w,0,W/2+w,0);rg.addColorStop(0,rgba(sun,0));rg.addColorStop(0.5,rgba(mix(sun,[255,244,218],0.42),a));rg.addColorStop(1,rgba(sun,0));ctx.fillStyle=rg;ctx.fillRect(W/2-w+wob,y,w*2,2.4);}
         for(let k=0;k<5;k++){const gy=HZ+6+k*7+Math.sin(now*0.003+k)*2;const gx=W/2+Math.sin(now*0.0021+k*2)*(R*0.5);const ga=0.5*refA*Math.abs(Math.sin(now*0.005+k*1.7));bloom(gx,gy,R*0.42,light,ga);}
         ctx.restore();
       }
       // whale — surfaces & blows a misty spout near the end
       const dl=clamp((p-0.9)/0.1,0,1);
+      if(dl<=0) orbStart=0;
       if(dl>0&&dl<1){
         const wx=W*0.64, water=HZ+(H-HZ)*0.17, K=(H-HZ);
         const emerge=clamp(dl/0.28,0,1), submerge=clamp((dl-0.6)/0.4,0,1), backAmt=emerge*(1-submerge*0.92);
@@ -2838,6 +2875,44 @@ function SunsetScene({W,H,progress,immersive=false,radius=24}){
           for(let i=0;i<16;i++){const tt=i/15,spread=ph*0.24*tt,lean=Math.sin(now*0.0018)*ph*0.06*tt;for(let j=-1;j<=1;j++){const ox=j*spread*0.62+Math.sin(i*12.9+j*7.1)*spread*0.3+lean;const py=by-ph*tt-Math.sin(now*0.004+i*0.5)*0.6;const rr=(1.4+tt*6.5)*(j===0?1.1:0.85);const a=plumeA*(1-tt*0.82)*(0.24-Math.abs(j)*0.05);bloom(bx+ox,py,rr,mist,a);}}
           ctx.restore();
         }
+        // golden sun — Luma's signet: a mini sun (like the aurora dawn sun)
+        // sprayed up, skipping AWAY across the water toward the horizon, then
+        // dipping down below it. Warm radiant corona, no glossy pearl look.
+        {
+          if(orbStart===0 && dl>0.08) orbStart=now;
+          const os=orbStart>0?(now-orbStart)/1000:-1;
+          const s=os-0.12;
+          const wl=water, K2=K, BD=2.4;
+          const sink=clamp((dl-0.82)/0.16,0,1);            // pops down WITH the sun at the horizon
+          const hov=clamp((s-BD)/0.8,0,1);                  // dim while it rests at the horizon
+          const appear=clamp(s/0.26,0,1);
+          const alpha=appear*(1-sink)*(1-0.45*hov);
+          if(s>=0 && alpha>0.012 && dl<1){
+            const obx=wx-halfW*0.4;
+            const au=clamp(s/BD,0,1), aw=1-(1-au)*(1-au);   // smooth ease-out glide
+            const ox=obx+W*0.22*aw;                          // glides away toward the open sea
+            const by=wl+(HZ+K2*0.006-wl)*aw;                 // rises smoothly to meet the horizon
+            // smooth skim: one launch arc out of the spout, then gentle decaying skips
+            const spray=K2*0.15*Math.max(0,Math.sin(Math.PI*clamp(s/0.95,0,1)));
+            const skim=K2*0.045*Math.abs(Math.sin(s*5.0))*Math.max(0,1-s/BD);
+            const hh=spray*(1-0.4*aw)+skim;
+            const orbR=Math.max(2.0,K2*0.016+(K2*0.008-K2*0.016)*aw);  // small, shrinking with distance
+            const oy=by-hh+sink*K2*0.06;                     // and finally pops below the horizon
+            const pulse=0.92+0.08*Math.sin(now*0.0024);
+            const near=clamp(1-hh/(K2*0.03),0,1);
+            ctx.save();ctx.globalCompositeOperation="lighter";
+            if(hh>K2*0.008 && aw<0.7){const rl=Math.min(K2*0.07,hh*0.8);const wob=Math.sin(now*0.003)*orbR*0.3;const rg=ctx.createLinearGradient(ox,by,ox,by+rl);rg.addColorStop(0,`rgba(255,198,116,${(0.09*alpha).toFixed(3)})`);rg.addColorStop(1,"rgba(255,198,116,0)");ctx.fillStyle=rg;ctx.fillRect(ox-orbR*0.5+wob,by,orbR,rl);}
+            if(near>0.02) bloom(ox,by+1,orbR*(1.4+near*1.8),[255,198,116],0.09*alpha*near);
+            // mini-sun corona — warm, radiant, discreet
+            bloom(ox,oy,orbR*3.6,[255,182,80],0.10*alpha*pulse);
+            bloom(ox,oy,orbR*2.1,[255,208,124],0.20*alpha*pulse);
+            ctx.restore();
+            // radiant sun core
+            const cg=ctx.createRadialGradient(ox,oy,0,ox,oy,orbR);
+            cg.addColorStop(0,`rgba(255,251,236,${alpha})`);cg.addColorStop(0.42,`rgba(255,229,158,${alpha})`);cg.addColorStop(0.78,`rgba(255,193,99,${alpha})`);cg.addColorStop(1,`rgba(255,160,62,${(alpha*0.9).toFixed(3)})`);
+            ctx.fillStyle=cg;ctx.beginPath();ctx.arc(ox,oy,orbR,0,7);ctx.fill();
+          }
+        }
       }
       // cinematic warm lift + vignette + grain
       ctx.save();ctx.globalCompositeOperation="lighter";bloom(W/2,HZ-R*0.4,W*0.52,sun,0.07*(0.4+gold*0.6));ctx.restore();
@@ -2859,8 +2934,6 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
   // true the render bailed early, executing fewer hooks than the previous
   // render, which triggers React error #300 ("Rendered fewer hooks than
   // expected"). Keeping every hook above the early return fixes that.
-  const sunGroupRef=useRef(null);
-  const dolphinGroupRef=useRef(null);
   const[vp,setVp]=useState(()=>(typeof window!=="undefined"?{w:window.innerWidth,h:window.innerHeight}:{w:390,h:780}));
   useEffect(()=>{
     if(!immersive)return;
@@ -2874,54 +2947,6 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
   const sunR=Math.round(size*0.13);
   const skyTopMargin=Math.round(size*0.12);
 
-  // 60fps DIRECT-DOM update loop for sun + dolphin transforms.
-  // React re-renders SunTimer ~once per second (when whole-second `secs`
-  // changes). On iOS Safari that React render is heavy because the SVG
-  // scene has many elements (clouds, shimmer bands, halos, birds, etc).
-  // Solution: bypass React for the sun/dolphin transforms. We write the
-  // current position straight to the DOM each animation frame.
-  useEffect(()=>{
-    if(!c.run||c.done) return;
-    const startMs=Date.now();
-    const initialPct=c.pctSmooth;
-    const totalMs=totalSec*1000;
-    const endMs=startMs+initialPct*totalMs;
-    let raf=0;
-    const tick=()=>{
-      const now=Date.now();
-      const leftMs=Math.max(0,endMs-now);
-      const pct=totalMs>0?leftMs/totalMs:0;
-      const prog=1-pct;
-      const sunCY=skyTopMargin+prog*(horizonY+sunR-skyTopMargin);
-      const sunSq=1-Math.max(0,Math.min(1,(prog-0.70)/0.24))*0.16;
-      if(sunGroupRef.current){
-        sunGroupRef.current.style.transform=`translate3d(${W/2}px, ${sunCY}px, 0)`;
-        const squashTarget=sunGroupRef.current.querySelector("[data-sun-squash]");
-        if(squashTarget) squashTarget.style.transform=`scale(1, ${sunSq})`;
-      }
-      if(dolphinGroupRef.current){
-        const dolActive=prog>0.90;
-        if(dolActive){
-          const dolT=Math.max(0,Math.min(1,(prog-0.90)/0.085));
-          const dxC=W*0.62, span=W*0.20;
-          const dx=dxC-span/2+span*dolT;
-          const peak=H*0.15;
-          const arc=Math.sin(dolT*Math.PI);
-          const dy=horizonY+6-arc*peak;
-          const rot=(dolT-0.5)*120;
-          const sc=size*0.0012;
-          dolphinGroupRef.current.style.display="";
-          dolphinGroupRef.current.style.transform=`translate3d(${dx}px, ${dy}px, 0) rotate(${rot}deg) scale(${sc})`;
-        } else {
-          dolphinGroupRef.current.style.display="none";
-        }
-      }
-      raf=requestAnimationFrame(tick);
-    };
-    raf=requestAnimationFrame(tick);
-    return()=>cancelAnimationFrame(raf);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[c.run,c.done,totalSec,size]);
 
   if(c.done&&!immersive) return <DoneBadge color={color} t={t} onReplay={()=>{c.reset();c.setRun(true);}} onClose={onClose}/>;
 
@@ -2929,186 +2954,6 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
   // timer's time, the sun is exactly 50% of the way to the horizon, and at
   // t=0 the sun crosses the horizon precisely as the timer hits 00:00.
   const progress = 1 - c.pctSmooth;
-
-  const lerp=(a,b,t)=>a+(b-a)*t;
-  const phaseT=(start,end)=>Math.max(0,Math.min(1,(progress-start)/(end-start)));
-
-  // PASTEL palette — soft, muted, never saturated.
-  // ── Rich palette ported from the approved concepts ──────────────────────
-  // Sky + sun colours come from "Skymning"; the moving water shimmer (below,
-  // as a canvas overlay) comes from "Filmisk". RGB-lerped so the colour
-  // strings are always valid (no malformed hsl can ever break the scene).
-  const _hx=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
-  const _rampArr=(arr,pp)=>{const n=arr.length-1;const x=Math.max(0,Math.min(1,pp))*n;const i=Math.min(n-1,Math.floor(x));const f=x-i,a=arr[i],b=arr[i+1];return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f];};
-  const _mix=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];
-  const _rgb=c=>`rgb(${c[0]|0},${c[1]|0},${c[2]|0})`;
-  const PAL_SKYTOP=["#6FA8D6","#8FB2CE","#C9A9C0","#7E6AA0","#3A2C5E","#1C1636"].map(_hx);
-  const PAL_SKYMID=["#A9C9E0","#CDC2CE","#E7A98E","#B06E8E","#4A3A6E","#241C46"].map(_hx);
-  const PAL_SKYHOR=["#DCEBF2","#F3D9A6","#F6A45E","#EF6E72","#7A4E7E","#2A2050"].map(_hx);
-  const PAL_SUN=["#FFF7E6","#FFE9B0","#FFC070","#FF8A58","#F0606A","#C24C66"].map(_hx);
-
-  // Phases: pale day → soft peach → dusty rose → lavender dusk → indigo night
-  // Sky top color
-  let skyTopH, skyTopS, skyTopL;
-  if(progress<0.30){
-    const p=progress/0.30;
-    skyTopH=lerp(210,32,p); skyTopS=lerp(45,40,p); skyTopL=lerp(91,90,p);
-  } else if(progress<0.55){
-    const p=phaseT(0.30,0.55);
-    skyTopH=lerp(32,18,p); skyTopS=lerp(40,42,p); skyTopL=lerp(90,86,p);
-  } else if(progress<0.78){
-    const p=phaseT(0.55,0.78);
-    skyTopH=lerp(18,340,p); skyTopS=lerp(42,38,p); skyTopL=lerp(86,78,p);
-  } else if(progress<0.92){
-    const p=phaseT(0.78,0.92);
-    skyTopH=lerp(340,260,p); skyTopS=lerp(38,32,p); skyTopL=lerp(78,55,p);
-  } else {
-    const p=phaseT(0.92,1.0);
-    skyTopH=lerp(260,235,p); skyTopS=lerp(32,38,p); skyTopL=lerp(55,28,p);
-  }
-
-  // Sky bottom (near horizon) — always slightly warmer/lighter than top
-  let skyBotH, skyBotS, skyBotL;
-  if(progress<0.30){
-    const p=progress/0.30;
-    skyBotH=lerp(38,28,p); skyBotS=lerp(55,60,p); skyBotL=lerp(92,90,p);
-  } else if(progress<0.55){
-    const p=phaseT(0.30,0.55);
-    skyBotH=lerp(28,18,p); skyBotS=lerp(60,68,p); skyBotL=lerp(90,84,p);
-  } else if(progress<0.78){
-    const p=phaseT(0.55,0.78);
-    skyBotH=lerp(18,8,p); skyBotS=lerp(68,55,p); skyBotL=lerp(84,72,p);
-  } else if(progress<0.92){
-    const p=phaseT(0.78,0.92);
-    skyBotH=lerp(8,310,p); skyBotS=lerp(55,40,p); skyBotL=lerp(72,50,p);
-  } else {
-    const p=phaseT(0.92,1.0);
-    skyBotH=lerp(310,250,p); skyBotS=lerp(40,38,p); skyBotL=lerp(50,30,p);
-  }
-
-  // Sky gradient strings now come from the "Skymning" palette (the HSL numbers
-  // above are kept — hills, clouds, horizon glow & water still derive from them).
-  // Sky now MIRRORS the sun's colour — the dusk palette is blended toward the
-  // sun's warm hue, strongest at the horizon and growing toward sunset, so the
-  // whole sky glows in sympathy with the sun instead of feeling independent.
-  const _skySun=_rampArr(PAL_SUN,progress);
-  const _skyWarm=Math.max(0,Math.min(1,(progress-0.25)/0.5));
-  const skyTop=_rgb(_mix(_rampArr(PAL_SKYTOP,progress),_skySun,_skyWarm*0.13));
-  const skyBot=_rgb(_mix(_rampArr(PAL_SKYHOR,progress),_skySun,0.30+_skyWarm*0.40));
-
-  // Water — blue ocean at start, transitions to warmer reflective tones as sun sets
-  // Phases: blue → soft teal → muted peach → dusky rose → indigo night
-  let waterH, waterS, waterL;
-  if(progress<0.30){
-    const p=progress/0.30;
-    // Start: clear cool blue ocean
-    waterH=lerp(205,210,p); waterS=lerp(56,50,p); waterL=lerp(62,58,p);
-  } else if(progress<0.55){
-    const p=phaseT(0.30,0.55);
-    // Afternoon: blue deepening to steel blue (no green)
-    waterH=lerp(210,216,p); waterS=lerp(50,44,p); waterL=lerp(58,52,p);
-  } else if(progress<0.78){
-    const p=phaseT(0.55,0.78);
-    // Sunset: steel blue shifts to soft slate-violet (up through blue, never green)
-    waterH=lerp(216,232,p); waterS=lerp(44,38,p); waterL=lerp(52,46,p);
-  } else if(progress<0.92){
-    const p=phaseT(0.78,0.92);
-    // Dusk: slate-violet into dusky rose-violet
-    waterH=lerp(232,268,p); waterS=lerp(38,34,p); waterL=lerp(46,38,p);
-  } else {
-    const p=phaseT(0.92,1.0);
-    // Night: deep indigo
-    waterH=lerp(268,238,p); waterS=lerp(34,40,p); waterL=lerp(38,22,p);
-  }
-  const waterTop=`hsl(${waterH},${waterS}%,${waterL}%)`;
-  const waterBot=`hsl(${waterH+4},${Math.max(20,waterS-8)}%,${Math.max(14,waterL-16)}%)`;
-
-  // Sun trajectory: at progress=0 the sun sits high; at progress=1 the sun
-  // has JUST set (its lower edge crosses the horizon at the timer's final
-  // tick). sunCenterY ends at horizonY+sunR — i.e. fully under the line.
-  // sunR/skyTopMargin are declared at the top of the function (before the
-  // early return) so the raf loop can read them too.
-  const sunCenterY=skyTopMargin+progress*(horizonY+sunR-skyTopMargin);
-  const sunVisible=sunCenterY<horizonY+sunR;
-
-  // Soft pastel sun: pale cream → peach → rose
-  const warmth=Math.min(1,Math.max(0,(progress-0.35)/0.45));
-  // Sun colour ramped from the "Skymning" sun palette — warm, soft, never
-  // white-hot: cream → gold → amber → coral → deep coral as it descends.
-  const _sunBase=_rampArr(PAL_SUN,progress);
-  const sunCenter=_rgb(_mix(_sunBase,[255,250,238],0.18));
-  const sunMid=_rgb(_sunBase);
-  const sunEdge=_rgb(_mix(_sunBase,[60,28,46],0.18));
-
-  // Glow halo — soft, large, never burning
-  const glowR=sunR*(2.2+warmth*0.6);
-  const glowOpacity=Math.max(0.12,(1-progress*0.5)*0.55);
-
-  // Reflection on water — only when sun is near horizon
-  const showReflection=sunCenterY>horizonY-sunR*3 && progress<0.94;
-  const reflectionStrength=showReflection?Math.min(1,Math.max(0,1-Math.abs(sunCenterY-horizonY)/(sunR*3.5))):0;
-
-  // Subtle horizon glow band — peaks at sunset
-  const horizonGlow=progress>0.45&&progress<0.94?Math.min(1,(progress-0.45)/0.25)*(1-(progress-0.85)/0.09):0;
-
-  // Birds fade with day progress — visible while sun is high
-  const birdOpacity=Math.max(0,1-progress*1.4)*0.55;
-
-  // Sun rays — visible during the day, soft pastel pulse
-  const raysOpacity=progress<0.78?Math.max(0,(1-progress*0.85))*0.65:0;
-
-  // Quiet stars that emerge as the sky darkens (a little earlier now, and a
-  // few more — they were a liked moment) and twinkle through to night.
-  const starOpacity=Math.max(0,(progress-0.74)/0.22);
-  const stars=starOpacity>0.02?[
-    {x:0.12,y:0.14,br:0.85},{x:0.28,y:0.08,br:1.0},{x:0.42,y:0.16,br:0.7},
-    {x:0.58,y:0.10,br:0.9},{x:0.72,y:0.18,br:0.75},{x:0.86,y:0.12,br:1.0},
-    {x:0.20,y:0.30,br:0.7},{x:0.50,y:0.34,br:0.85},{x:0.78,y:0.32,br:0.7},
-    {x:0.07,y:0.24,br:0.6},{x:0.36,y:0.05,br:0.65},{x:0.66,y:0.26,br:0.6},
-    {x:0.92,y:0.22,br:0.8},{x:0.34,y:0.24,br:0.55},{x:0.48,y:0.06,br:0.7},
-  ]:[];
-
-  // ── Atmospheric depth (world-class layering) ──
-  // Drifting clouds — tinted by the current sky light, fade out as night falls.
-  const cloudOpacity=Math.max(0,Math.min(1,1-Math.max(0,(progress-0.72)/0.26)))*0.9;
-  // Cloud tint: catches warm light at sunset, cool/white by day.
-  const cloudTint = progress<0.5
-    ? `hsl(${lerp(210,30,progress/0.5)},${lerp(30,55,progress/0.5)}%,${lerp(98,92,progress/0.5)}%)`
-    : `hsl(${lerp(30,330,phaseT(0.5,0.85))},${lerp(55,40,phaseT(0.5,0.85))}%,${lerp(92,80,phaseT(0.5,0.85))}%)`;
-  const clouds=[
-    {x:0.18,y:0.20,s:1.0,dur:120,delay:0},
-    {x:0.62,y:0.13,s:1.3,dur:160,delay:-60},
-    {x:0.84,y:0.28,s:0.8,dur:140,delay:-30},
-  ];
-  // Distant hill silhouettes — two ridges for parallax depth; darken into dusk.
-  const hillFar=`hsl(${skyBotH},${Math.max(18,skyBotS-22)}%,${Math.max(20,skyBotL-26)}%)`;
-  const hillNear=`hsl(${skyBotH-4},${Math.max(16,skyBotS-26)}%,${Math.max(14,skyBotL-36)}%)`;
-
-  const uid=`s${size}`;
-  // ── Master-level atmosphere ──
-  // Third sky color so the gradient reads zenith → mid → warm horizon.
-  const skyMid=_rgb(_mix(_rampArr(PAL_SKYMID,progress),_skySun,0.14+_skyWarm*0.28));
-  // Golden-hour horizon bloom — swells as the sun meets the sea, fades after.
-  const sunsetBloom=Math.max(0,Math.sin(Math.max(0,Math.min(1,(progress-0.40)/0.50))*Math.PI));
-  const bloomCol=`hsl(${lerp(40,6,phaseT(0.5,0.95))},${lerp(78,66,phaseT(0.5,0.95))}%,${lerp(74,60,phaseT(0.5,0.95))}%)`;
-  // Soft crepuscular god-rays — peak at golden hour, gone by night.
-  const godRayOpacity=Math.max(0,Math.sin(Math.max(0,Math.min(1,(progress-0.12)/0.72))*Math.PI))*0.46;
-  // Sun appears to flatten (atmospheric refraction) as it touches the horizon.
-  const sunSquash=1-Math.max(0,Math.min(1,(progress-0.70)/0.24))*0.16;
-  // Moon rises with the first stars.
-  const moonOpacity=Math.max(0,(progress-0.80)/0.20);
-  // A dolphin breaches just before the timer finishes — a quiet little reward.
-  const dolphinActive=progress>0.90;
-  const dolphinT=dolphinActive?Math.max(0,Math.min(1,(progress-0.90)/0.085)):0; // 0→1 over the final stretch
-  // God-ray wedge clip — a soft sunburst of light streaks radiating from the sun.
-  const rayWedges=(()=>{
-    const R=sunR*4.4, n=11, half=(Math.PI*2/n)*0.30; let d="";
-    for(let i=0;i<n;i++){const a=(i/n)*Math.PI*2,a1=a-half,a2=a+half;
-      d+=`M0,0 L${(R*Math.cos(a1)).toFixed(1)},${(R*Math.sin(a1)).toFixed(1)} L${(R*Math.cos(a2)).toFixed(1)},${(R*Math.sin(a2)).toFixed(1)} Z `;}
-    return d;
-  })();
-  // 1Hz color/position transitions — smooths the gap between timer ticks
-  const tCol="fill 1s linear, stroke 1s linear, opacity 1s linear, stop-color 1s linear";
 
   return(
     <div style={immersive?{position:"fixed",inset:0,zIndex:9700,background:"#0b1020",overflow:"hidden",animation:"ftIn .3s ease"}:{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
@@ -3146,9 +2991,7 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
         position:"relative",
       }}>
       <SunsetScene W={W} H={H} progress={progress} immersive={immersive} radius={immersive?0:24}/>
-      {!hideLabel&&!immersive&&(
-        <div style={{position:"absolute",left:0,right:0,top:H*0.80,transform:"translateY(-50%)",textAlign:"center",pointerEvents:"none",fontSize:Math.round(size*0.14),fontWeight:600,color:"rgba(255,255,255,0.96)",fontFamily:G.serif,fontVariantNumeric:"tabular-nums",letterSpacing:0.5,filter:"drop-shadow(0 2px 10px rgba(0,0,0,0.45))"}}>{c.label}</div>
-      )}
+      {null}
       </div>
       {immersive
         ? <ImmersiveChrome c={c} color={color} t={t} onClose={onClose} activity={activity} W={W} H={H} hideLabel={hideLabel} doneEmoji="🌇" labelYFrac={0.72}/>
@@ -3158,7 +3001,7 @@ function SunTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLab
 }
 
 /* ═══ LAVA ═══ */
-function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false,immersive=false,onClose,activity}){
+function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false,immersive=false,preview=false,onClose,activity}){
   const c=useTimer(totalSec,autoRun);
   const[vp,setVp]=useState(()=>(typeof window!=="undefined"?{w:window.innerWidth,h:window.innerHeight}:{w:390,h:780}));
   useEffect(()=>{if(!immersive)return;const on=()=>setVp({w:window.innerWidth,h:window.innerHeight});window.addEventListener("resize",on);window.addEventListener("orientationchange",on);return()=>{window.removeEventListener("resize",on);window.removeEventListener("orientationchange",on);};},[immersive]);
@@ -3285,7 +3128,7 @@ function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLa
   return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
       {svgEl}
-      {!hideLabel&&(<div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.085,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>)}
+      {null}
       {showCtrl&&<div style={{marginTop:14}}><TCtrl c={c} color={color} t={t}/></div>}
     </div>
   );
@@ -3296,7 +3139,7 @@ function LavaTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLa
    one as it passes. When all the candy is gone, time is up and it's full & happy.
    Body takes the chosen timer colour; candies are a cheerful fixed palette. */
 const MON_CANDY=["#F48FB1","#FFD86B","#8FD9C0","#FF9E7A","#B8A1E3","#7EC8E3","#F7A8C4","#FFC04D"];
-function MonsterTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false,onClose}){
+function MonsterTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false,preview=false,onClose}){
   const c=useTimer(totalSec,autoRun);
   const W=size, H=Math.round(size*0.62);
   const VB=200, VBH=124;
@@ -3441,7 +3284,7 @@ function MonsterTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hid
           </g>
         </svg>
       </div>
-      {!hideLabel&&<div style={{fontFamily:G.serif,fontWeight:600,fontSize:size*0.11,color:isDark()?"#F4F1FA":G.ink,letterSpacing:1,fontVariantNumeric:"tabular-nums"}}>{c.label}</div>}
+      {null}
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
   );
@@ -3469,6 +3312,55 @@ function AuroraTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hide
   const pctRef=useRef(c.pctSmooth); pctRef.current=c.pctSmooth;
   useEffect(()=>{
     const cv=cvRef.current; if(!cv) return;
+    // ── PRIMARY: on-screen WebGL aurora scene (same engine as the approved mockup,
+    //    with sunrise + moon driven by the timer). Falls through to the 2D band
+    //    renderer below only if WebGL is genuinely unavailable. ──────────────────
+    {
+      const DPRg=Math.min(2,(typeof window!=="undefined"&&window.devicePixelRatio)||1);
+      const glOpts={antialias:true,alpha:false,premultipliedAlpha:true};
+      let glS=null; try{ glS=cv.getContext("webgl",glOpts)||cv.getContext("experimental-webgl",glOpts); }catch(e){ glS=null; }
+      if(glS){
+        cv.width=Math.round(W*DPRg); cv.height=Math.round(H*DPRg);
+        const accS=hexToRgb(color)||[167,139,250];
+        const AC=[(167+(accS[0]-167)*0.42)/255,(139+(accS[1]-139)*0.42)/255,(250+(accS[2]-250)*0.42)/255];
+        const VSS="attribute vec2 a;void main(){gl_Position=vec4(a,0.0,1.0);}";
+        const FSS=[
+          "precision highp float;",
+          "uniform vec2 uRes;uniform float uTime;uniform float uDawn;uniform float uElapsed;uniform vec3 uAccent;",
+          "float hash21(vec2 n){return fract(sin(dot(n,vec2(12.9898,78.233)))*43758.5453);}",
+          "mat2 mm2(float a){float c=cos(a),s=sin(a);return mat2(c,s,-s,c);}",
+          "float tri(float x){return clamp(abs(fract(x)-0.5),0.01,0.49);}",
+          "vec2 tri2(vec2 p){return vec2(tri(p.x)+tri(p.y),tri(p.y+tri(p.x)));}",
+          "float triNoise2d(vec2 p,float spd){float z=1.8,z2=2.5,rz=0.0;p.x+=sin(p.y*0.9+uTime*0.20)*0.6+sin(p.y*2.1-uTime*0.12)*0.25;p*=mm2(p.x*0.06);vec2 bp=p;for(float i=0.0;i<5.0;i++){vec2 dg=tri2(bp*2.0)*0.8;dg*=mm2(uTime*spd);p-=dg/z2;bp*=1.6;z2*=0.6;z*=1.8;p*=1.2;rz+=tri(p.x+tri(p.y))/z;bp+=0.14;}return clamp(1.0/pow(rz*29.0,1.3),0.0,0.55);}",
+          "vec3 auroraCol(float h){vec3 c=mix(vec3(1.0,0.22,0.66),vec3(0.10,1.0,0.40),smoothstep(0.0,0.16,h));c=mix(c,vec3(0.14,1.0,0.82),smoothstep(0.30,0.55,h));c=mix(c,vec3(0.60,0.50,1.0),smoothstep(0.62,0.95,h));return c;}",
+          "vec4 aurora(vec3 ro,vec3 rd){vec4 col=vec4(0.0);vec4 avgCol=vec4(0.0);float hb=0.5+0.5*sin(uTime*0.13);for(float i=0.0;i<38.0;i++){float h=i/38.0;float pt=((0.8+pow(i,1.4)*0.002)-ro.y)/(rd.y*2.0+0.4);vec3 bpos=ro+pt*rd;vec2 p2=bpos.zx;float rzt=triNoise2d(p2*0.5,0.10);rzt*=0.80+0.20*sin(p2.x*8.0+uTime*1.1+h*4.0);rzt*=0.82+0.30*sin(p2.x*1.5-uTime*0.85+h*2.0);vec3 cc=auroraCol(clamp(h+0.10*hb-0.05,0.0,1.0));vec4 c2=vec4(cc*rzt,rzt);avgCol=mix(avgCol,c2,0.5);col+=avgCol*exp2(-i*0.065-2.5)*smoothstep(0.0,5.0,i);}col.rgb*=0.86+0.14*sin(uTime*0.6)+0.05*sin(uTime*1.7);col*=clamp(rd.y*15.0+0.4,0.0,1.0);return col*1.9;}",
+          "vec3 starsF(vec2 q){vec2 g=q*vec2(uRes.x/uRes.y,1.0)*70.0;vec2 id=floor(g);vec2 f=fract(g)-0.5;float h=hash21(id);float s=step(0.965,h);float d=1.0-smoothstep(0.0,0.085,length(f));float tw=0.55+0.45*sin(uTime*2.0+h*40.0);return vec3(0.88,0.92,1.0)*s*d*tw;}",
+          "vec3 mwF(vec2 q,vec2 p){float b=smoothstep(0.20,0.0,abs((p.y-0.16)-p.x*0.22));return vec3(0.40,0.46,0.62)*b*0.05*(0.5+0.5*hash21(floor(q*140.0)));}",
+          "vec3 moonF(vec2 q){vec2 d=(q-vec2(0.80-0.10*uElapsed,0.20+0.12*uElapsed))*vec2(uRes.x/uRes.y,1.0);float r=0.045;float disc=smoothstep(r,r-0.004,length(d));float carve=smoothstep(r*1.04,r*1.04-0.004,length(d-vec2(r*0.5,-r*0.15)));float cres=clamp(disc-carve,0.0,1.0);vec3 col=vec3(0.96,0.97,1.0)*cres;col+=vec3(0.75,0.82,1.0)*exp(-length(d)*18.0)*0.16;return col;}",
+          "void main(){vec2 q=gl_FragCoord.xy/uRes.xy;vec2 p=q-0.5;p.x*=uRes.x/uRes.y;float hor=-0.05;float dawn=uDawn;vec3 ro=vec3(0.0,0.0,-6.7);vec3 color;",
+          "  if(p.y>hor){vec3 night=mix(vec3(0.03,0.07,0.16),vec3(0.02,0.04,0.11),smoothstep(0.0,0.55,p.y-hor));vec3 dsky=mix(vec3(1.0,0.62,0.40),vec3(0.30,0.24,0.46),smoothstep(0.0,0.45,p.y-hor));vec3 sky=mix(night,dsky,dawn);vec3 rd=normalize(vec3(p.x,(p.y-hor)+0.10,1.0));color=sky+starsF(q)*(1.0-dawn);vec4 aur=aurora(ro,rd);vec3 ab=aur.rgb;ab+=ab*ab*0.45;ab=mix(ab,ab*uAccent*1.5,0.10);color+=ab*(1.0-dawn*1.1);color+=vec3(0.05,0.20,0.12)*smoothstep(0.35,0.0,p.y-hor)*0.5*(1.0-dawn);color+=mwF(q,p)*(1.0-dawn);color+=moonF(q)*(1.0-dawn);float sy=hor+0.015+dawn*0.05;float sd=length(p-vec2(0.0,sy));color+=vec3(1.0,0.88,0.62)*smoothstep(0.055,0.0,sd)*dawn;color+=vec3(1.0,0.66,0.36)*exp(-sd*7.0)*dawn*0.5;}",
+          "  else{float depth=(hor-p.y);float rip=sin(uTime*1.6+p.y*55.0)*(0.003+depth*0.05)+sin(uTime*2.9+p.y*120.0)*(0.0015+depth*0.02);vec3 rd=normalize(vec3(p.x+rip,(-(p.y-hor))+0.10,1.0));vec3 nW=mix(vec3(0.03,0.06,0.12),vec3(0.008,0.015,0.04),smoothstep(0.0,0.45,depth));vec3 dW=mix(vec3(0.45,0.26,0.26),vec3(0.05,0.04,0.09),smoothstep(0.0,0.5,depth));vec3 water=mix(nW,dW,dawn);vec4 aur=aurora(ro,rd);color=water+aur.rgb*0.32*exp(-depth*3.4)*(1.0-dawn*1.1);float rxx=abs(p.x+sin(uTime*2.0+p.y*40.0)*0.01);color+=vec3(1.0,0.78,0.45)*exp(-rxx*8.0)*exp(-depth*2.6)*dawn*0.55;}",
+          "  float farshore=smoothstep(0.012,0.0,abs(p.y-hor));color=mix(color,vec3(0.015,0.02,0.045),farshore*0.8);",
+          "  float aa=0.0021;float cx=-0.18,bw=0.05,bh=0.045;float bx=abs(p.x-cx);float body=smoothstep(bw+aa,bw-aa,bx)*smoothstep(hor-aa,hor+aa,p.y)*smoothstep(hor+bh+aa,hor+bh-aa,p.y);float roofT=hor+bh,roofH=0.03;float redge=bw*(1.0-(p.y-roofT)/roofH);float roof=smoothstep(redge+aa,redge-aa,bx)*smoothstep(roofT-aa,roofT+aa,p.y)*smoothstep(roofT+roofH+aa,roofT+roofH-aa,p.y);float house=clamp(body+roof,0.0,1.0);color=mix(color,vec3(0.014,0.017,0.038),house);",
+          "  vec2 wc=vec2(cx,hor+bh*0.45);float wd=length((p-wc)*vec2(1.0,1.2));float wf=1.0-dawn*0.5;color+=vec3(1.0,0.80,0.44)*exp(-wd*210.0)*0.95*wf;color+=vec3(1.0,0.66,0.30)*exp(-wd*70.0)*0.38*wf;color+=vec3(1.0,0.70,0.34)*exp(-wd*30.0)*0.12*wf;",
+          "  if(p.y<hor){float rx3=abs(p.x-cx+sin(uTime*2.0+p.y*45.0)*0.004);color+=vec3(1.0,0.62,0.30)*exp(-rx3*110.0)*exp(-(hor-p.y)*7.0)*0.45*wf;}",
+          "  color=pow(clamp(color,0.0,1.0),vec3(0.88));gl_FragColor=vec4(color,1.0);}"
+        ].join("\n");
+        const mkS=(t,s)=>{const sh=glS.createShader(t);glS.shaderSource(sh,s);glS.compileShader(sh);return sh;};
+        const progS=glS.createProgram();glS.attachShader(progS,mkS(glS.VERTEX_SHADER,VSS));glS.attachShader(progS,mkS(glS.FRAGMENT_SHADER,FSS));glS.linkProgram(progS);
+        if(glS.getProgramParameter(progS,glS.LINK_STATUS)){
+          glS.useProgram(progS);
+          const bufS=glS.createBuffer();glS.bindBuffer(glS.ARRAY_BUFFER,bufS);glS.bufferData(glS.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),glS.STATIC_DRAW);
+          const laS=glS.getAttribLocation(progS,"a");glS.enableVertexAttribArray(laS);glS.vertexAttribPointer(laS,2,glS.FLOAT,false,0,0);
+          const uR=glS.getUniformLocation(progS,"uRes"),uT=glS.getUniformLocation(progS,"uTime"),uD=glS.getUniformLocation(progS,"uDawn"),uEl=glS.getUniformLocation(progS,"uElapsed"),uA=glS.getUniformLocation(progS,"uAccent");
+          glS.viewport(0,0,cv.width,cv.height);
+          let rafS,aliveS=true,t0S=performance.now();
+          const drawS=(now)=>{ if(!aliveS)return; const pp=Math.max(0,Math.min(1,pctRef.current)); glS.uniform2f(uR,cv.width,cv.height); glS.uniform1f(uT,(now-t0S)/1000); glS.uniform1f(uD,Math.pow(1-pp,1.8)); glS.uniform1f(uEl,1-pp); glS.uniform3f(uA,AC[0],AC[1],AC[2]); glS.drawArrays(glS.TRIANGLES,0,3); rafS=requestAnimationFrame(drawS); };
+          rafS=requestAnimationFrame(drawS);
+          return ()=>{ aliveS=false; cancelAnimationFrame(rafS); };
+        }
+      }
+    }
     const ctx=cv.getContext("2d"); if(!ctx) return;
     const DPR=Math.min(2,(typeof window!=="undefined"&&window.devicePixelRatio)||1);
     cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -3503,6 +3395,41 @@ function AuroraTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hide
       mctx.globalCompositeOperation="destination-out"; mctx.beginPath(); mctx.arc(cx+r*0.66,cy-r*0.16,r*1.06,0,7); mctx.fill();
       mctx.globalCompositeOperation="source-over";
     }
+    // ── GPU aurora — raymarched triangle-noise volume rendered to an offscreen
+    //    WebGL canvas, then composited into the scene. This is the realistic
+    //    look; the 2D band aurora below is kept only as a fallback. ───────────
+    const AR_S=0.9;            // aurora render scale (perf + soft natural bloom)
+    let glA=null;
+    try{
+      const gc=document.createElement("canvas");
+      gc.width=Math.max(2,Math.round(W*AR_S)); gc.height=Math.max(2,Math.round(HY*AR_S));
+      const glOpts={preserveDrawingBuffer:true,antialias:true,premultipliedAlpha:true,alpha:true};
+      const g=gc.getContext("webgl",glOpts)||gc.getContext("experimental-webgl",glOpts);
+      if(g){
+        const VSRC="attribute vec2 a;void main(){gl_Position=vec4(a,0.0,1.0);}";
+        const FSRC=[
+          "precision highp float;",
+          "uniform vec2 uRes;uniform float uTime;uniform float uInt;uniform vec3 uAccent;",
+          "mat2 mm2(float a){float c=cos(a),s=sin(a);return mat2(c,s,-s,c);}",
+          "float tri(float x){return clamp(abs(fract(x)-0.5),0.01,0.49);}",
+          "vec2 tri2(vec2 p){return vec2(tri(p.x)+tri(p.y),tri(p.y+tri(p.x)));}",
+          "float triNoise2d(vec2 p,float spd){float z=1.8,z2=2.5,rz=0.0;p.x+=sin(p.y*0.9+uTime*0.20)*0.6+sin(p.y*2.1-uTime*0.12)*0.25;p*=mm2(p.x*0.06);vec2 bp=p;for(float i=0.0;i<5.0;i++){vec2 dg=tri2(bp*2.0)*0.8;dg*=mm2(uTime*spd);p-=dg/z2;bp*=1.6;z2*=0.6;z*=1.8;p*=1.2;rz+=tri(p.x+tri(p.y))/z;bp+=0.14;}return clamp(1.0/pow(rz*29.0,1.3),0.0,0.55);}",
+          "vec3 auroraCol(float h){vec3 c=mix(vec3(1.0,0.22,0.66),vec3(0.10,1.0,0.40),smoothstep(0.0,0.16,h));c=mix(c,vec3(0.14,1.0,0.82),smoothstep(0.30,0.55,h));c=mix(c,vec3(0.60,0.50,1.0),smoothstep(0.62,0.95,h));return c;}",
+          "vec4 aurora(vec3 ro,vec3 rd){vec4 col=vec4(0.0);vec4 avgCol=vec4(0.0);float hb=0.5+0.5*sin(uTime*0.13);for(float i=0.0;i<38.0;i++){float h=i/38.0;float pt=((0.8+pow(i,1.4)*0.002)-ro.y)/(rd.y*2.0+0.4);vec3 bpos=ro+pt*rd;vec2 p2=bpos.zx;float rzt=triNoise2d(p2*0.5,0.10);rzt*=0.80+0.20*sin(p2.x*8.0+uTime*1.1+h*4.0);rzt*=0.82+0.30*sin(p2.x*1.5-uTime*0.85+h*2.0);vec3 cc=auroraCol(clamp(h+0.10*hb-0.05,0.0,1.0));vec4 c2=vec4(cc*rzt,rzt);avgCol=mix(avgCol,c2,0.5);col+=avgCol*exp2(-i*0.065-2.5)*smoothstep(0.0,5.0,i);}col.rgb*=0.86+0.14*sin(uTime*0.6)+0.05*sin(uTime*1.7);col*=clamp(rd.y*15.0+0.4,0.0,1.0);return col*1.9;}",
+          "void main(){vec2 q=gl_FragCoord.xy/uRes.xy;vec2 p=q-0.5;p.x*=uRes.x/uRes.y;vec3 ro=vec3(0.0,0.0,-6.7);vec3 rd=normalize(vec3(p.x,q.y*0.55+0.10,1.0));vec4 aur=aurora(ro,rd);vec3 col=aur.rgb*uInt;col+=col*col*0.45;col+=vec3(0.05,0.20,0.12)*uInt*smoothstep(0.4,0.0,q.y)*0.5;col=mix(col,col*uAccent*1.5,0.12);col*=smoothstep(0.0,0.10,q.y);gl_FragColor=vec4(col,1.0);}"
+        ].join("");
+        const mk=(ty,src)=>{const s=g.createShader(ty);g.shaderSource(s,src);g.compileShader(s);return s;};
+        const prog=g.createProgram();g.attachShader(prog,mk(g.VERTEX_SHADER,VSRC));g.attachShader(prog,mk(g.FRAGMENT_SHADER,FSRC));g.linkProgram(prog);
+        if(g.getProgramParameter(prog,g.LINK_STATUS)){
+          g.useProgram(prog);
+          const buf=g.createBuffer();g.bindBuffer(g.ARRAY_BUFFER,buf);g.bufferData(g.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),g.STATIC_DRAW);
+          const la=g.getAttribLocation(prog,"a");g.enableVertexAttribArray(la);g.vertexAttribPointer(la,2,g.FLOAT,false,0,0);
+          glA={gc,g,uRes:g.getUniformLocation(prog,"uRes"),uTime:g.getUniformLocation(prog,"uTime"),uInt:g.getUniformLocation(prog,"uInt"),uAccent:g.getUniformLocation(prog,"uAccent")};
+          g.viewport(0,0,gc.width,gc.height);
+        }
+      }
+    }catch(e){ glA=null; }
+    const VIOn=[VIO[0]/255,VIO[1]/255,VIO[2]/255];
     let shoot=null, nextShoot=1400+Math.random()*3000;
     const fir=(bx,by,h,w)=>{for(let k=0;k<3;k++){const yTip=by-h+(h*0.30)*k,yBot=yTip+h*0.44,lw=w*(0.46+0.54*(k/2));ctx.beginPath();ctx.moveTo(bx,yTip);ctx.lineTo(bx-lw/2,yBot);ctx.lineTo(bx+lw/2,yBot);ctx.closePath();ctx.fill();}ctx.fillRect(bx-0.8,by-2,1.6,3);};
     const band=(time,b,p)=>{const layerT=b/2,intensity=Math.pow(p,0.7);const baseY=lerp(HY*0.28,HY*0.60,layerT)-(1-p)*HY*0.12;const amp=lerp(H*0.10,H*0.05,layerT)*(0.6+0.4*intensity),speed=0.00016*(1+layerT*0.6),segs=Math.max(18,Math.round(W/7)),step=W/segs,pts=[];for(let i=0;i<=segs;i++){const xx=i*step,ph=xx*0.02+time*speed+b*1.7;pts.push({x:xx,y:baseY+Math.sin(ph)*amp+Math.sin(ph*0.5+1.3)*amp*0.6});}return{pts,layerT,intensity,segs,step};};
@@ -3525,23 +3452,50 @@ function AuroraTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hide
       ctx.save();ctx.globalCompositeOperation="lighter";
       let mg=ctx.createRadialGradient(mx,my,mr0*0.3,mx,my,mr0*3.0);mg.addColorStop(0,`rgba(208,224,255,${(0.16*moonA).toFixed(3)})`);mg.addColorStop(1,"rgba(208,224,255,0)");ctx.fillStyle=mg;ctx.beginPath();ctx.arc(mx,my,mr0*3.0,0,7);ctx.fill();
       ctx.restore();
-      if(moonA>0.01){ctx.save();ctx.globalAlpha=Math.min(1,moonA);ctx.imageSmoothingEnabled=true;ctx.drawImage(moonCv,Math.round(mx-MS/2),Math.round(my-MS/2),MS,MS);ctx.restore();}
+      if(moonA>0.01){ctx.save();ctx.globalAlpha=Math.min(1,moonA);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";ctx.drawImage(moonCv,mx-MS/2,my-MS/2,MS,MS);ctx.restore();}
       // shooting star
       nextShoot-=dt; if(!shoot&&nextShoot<=0&&starA>0.4){shoot={x:Math.random()*W*0.5,y:Math.random()*HY*0.4,vx:0.5+Math.random()*0.5,life:0};nextShoot=2600+Math.random()*4000;}
       if(shoot){shoot.life+=dt;const prog=shoot.life/620;if(prog>=1)shoot=null;else{const sx=shoot.x+shoot.vx*shoot.life*0.7,sy=shoot.y+shoot.vx*shoot.life*0.32,a=Math.sin(prog*Math.PI)*starA;ctx.save();ctx.globalCompositeOperation="lighter";const lg=ctx.createLinearGradient(sx,sy,sx-26,sy-12);lg.addColorStop(0,`rgba(255,255,255,${a})`);lg.addColorStop(1,"rgba(255,255,255,0)");ctx.strokeStyle=lg;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx-26,sy-12);ctx.stroke();ctx.restore();}}
-      // aurora — sky
+      // aurora — sky (GPU shader; falls back to 2D bands if WebGL is unavailable)
+      if(glA){
+        const g=glA.g;
+        g.uniform2f(glA.uRes,glA.gc.width,glA.gc.height);
+        g.uniform1f(glA.uTime,time/1000);
+        g.uniform1f(glA.uInt,Math.max(0.18,p));
+        g.uniform3f(glA.uAccent,VIOn[0],VIOn[1],VIOn[2]);
+        g.drawArrays(g.TRIANGLES,0,3);
+        ctx.save();ctx.globalCompositeOperation="lighter";ctx.globalAlpha=Math.max(0,1-dawn*1.1);
+        ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";
+        ctx.drawImage(glA.gc,0,0,W,HY);
+        ctx.restore();
+      }else{
       ctx.save();ctx.globalCompositeOperation="lighter";
       for(let b=0;b<3;b++){const {pts,layerT,intensity,segs,step}=band(time,b,p);if(intensity<0.01)continue;const hh=hue(time,b,layerT),curtain=lerp(H*0.5,H*0.85,layerT)*(0.7+0.3*intensity);
         for(let i=0;i<=segs;i++){const {x:px,y:py}=pts[i];const fl=0.5+0.5*Math.sin(time*0.002+i*0.5+b*2),aTop=0.16*intensity*(0.6+0.4*fl);let gg=ctx.createLinearGradient(0,py,0,py+curtain);gg.addColorStop(0,rgba(hh,aTop));gg.addColorStop(0.35,rgba(hh,aTop*0.5));gg.addColorStop(1,rgba(hh,0));ctx.fillStyle=gg;ctx.fillRect(px-step*0.62,py,step*1.24,curtain);
           if(i%2===0){const rA=0.10*intensity*(0.4+0.6*Math.sin(time*0.004+i+b*3));let rg=ctx.createLinearGradient(0,py,0,py+curtain*0.8);rg.addColorStop(0,rgba(mix(hh,[255,255,255],0.3),rA));rg.addColorStop(1,rgba(hh,0));ctx.fillStyle=rg;ctx.fillRect(px-0.7,py,1.4,curtain*0.8);}}
         ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<=segs;i++){const a=pts[i-1],bb=pts[i];ctx.quadraticCurveTo(a.x,a.y,(a.x+bb.x)/2,(a.y+bb.y)/2);}ctx.lineWidth=1.8;ctx.strokeStyle=rgba(mix(hh,[255,255,255],0.4),0.30*intensity);ctx.shadowBlur=16*intensity;ctx.shadowColor=rgba(hh,0.9);ctx.stroke();ctx.shadowBlur=0;}
       ctx.restore();
+      }
       // water
       const wTop=mix([10,16,38],[60,52,70],dawn), wBot=mix([4,7,20],[150,96,80],dawn);
       let wg=ctx.createLinearGradient(0,HY,0,H);wg.addColorStop(0,rgba(wTop,1));wg.addColorStop(1,rgba(wBot,1));ctx.fillStyle=wg;ctx.fillRect(0,HY,W,H-HY);
-      // aurora — reflection + moon glitter
+      // aurora — reflection (dim, broken by ripples, fades fast with depth) + moon glitter
       ctx.save();ctx.globalCompositeOperation="lighter";
-      for(let b=0;b<3;b++){const {pts,layerT,intensity,segs,step}=band(time,b,p);if(intensity<0.01)continue;const hh=hue(time,b,layerT);for(let i=0;i<=segs;i++){const {x:px,y:py}=pts[i];const ry=HY+(HY-py)*0.5;const wob=Math.sin(time*0.0016+i*0.6+b)*4*(1+(ry-HY)/H);const len=lerp(H*0.35,H*0.55,layerT)*intensity;let rg=ctx.createLinearGradient(0,ry,0,ry+len);rg.addColorStop(0,rgba(hh,0.10*intensity));rg.addColorStop(1,rgba(hh,0));ctx.fillStyle=rg;ctx.fillRect(px-step*0.7+wob,ry,step*1.4,len);}}
+      if(glA){
+        ctx.beginPath();ctx.rect(0,HY,W,H-HY);ctx.clip();
+        const sliceH=4;
+        for(let y=HY;y<H;y+=sliceH){const tt=(y-HY)/(H-HY);const fade=Math.pow(1-tt,1.6);if(fade<0.02)continue;
+          const ys=2*HY-y; if(ys<0||ys>HY)continue;
+          const ripple=Math.sin(now*0.0018+y*0.06)*(2+tt*18)+Math.sin(now*0.0031+y*0.13)*(1+tt*7);
+          const sy=Math.max(0,Math.min(glA.gc.height-1,ys*AR_S));
+          const shh=Math.max(1,Math.min(glA.gc.height-sy,sliceH*AR_S+1));
+          ctx.globalAlpha=0.30*fade*Math.max(0,1-dawn*1.1);
+          ctx.drawImage(glA.gc,0,sy,glA.gc.width,shh,ripple,y,W,sliceH+1.2);}
+      }else{
+        for(let b=0;b<3;b++){const {pts,layerT,intensity,segs,step}=band(time,b,p);if(intensity<0.01)continue;const hh=hue(time,b,layerT);for(let i=0;i<=segs;i++){const {x:px,y:py}=pts[i];const ry=HY+(HY-py)*0.5;const wob=Math.sin(time*0.0016+i*0.6+b)*4*(1+(ry-HY)/H);const len=lerp(H*0.35,H*0.55,layerT)*intensity;let rg=ctx.createLinearGradient(0,ry,0,ry+len);rg.addColorStop(0,rgba(hh,0.10*intensity));rg.addColorStop(1,rgba(hh,0));ctx.fillStyle=rg;ctx.fillRect(px-step*0.7+wob,ry,step*1.4,len);}}
+      }
+      ctx.restore();
+      ctx.save();ctx.globalCompositeOperation="lighter";
       for(let y=HY;y<H;y+=4){const tt=(y-HY)/(H-HY);const wob=Math.sin(now*0.002+y*0.15)*(4+tt*12);const w=lerp(8,34,tt);ctx.fillStyle=`rgba(232,240,255,${(0.14*(1-tt)*moonA).toFixed(3)})`;ctx.fillRect(mx-w/2+wob,y,w,2.5);}
       ctx.restore();
       // dawn glow + rising sun + golden path
@@ -3559,7 +3513,7 @@ function AuroraTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hide
       raf=requestAnimationFrame(draw);
     };
     raf=requestAnimationFrame(draw);
-    return()=>{alive=false;cancelAnimationFrame(raf);};
+    return()=>{alive=false;cancelAnimationFrame(raf);try{if(glA&&glA.g){const ex=glA.g.getExtension("WEBGL_lose_context");if(ex)ex.loseContext();}}catch(e){}};
   },[W,H,color,HYr]);
   const dk=isDark();
   if(immersive){
@@ -3578,11 +3532,7 @@ function AuroraTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hide
         boxShadow:dk?`0 0 90px -10px rgba(94,234,212,0.28), 0 28px 60px -20px rgba(16,24,52,0.6), 0 10px 30px -15px rgba(0,0,0,0.8)`:`0 22px 52px -22px rgba(16,24,52,0.55), 0 6px 18px -10px rgba(16,24,52,0.4)`,
         border:`1px solid ${dk?"rgba(255,255,255,0.06)":"rgba(16,24,52,0.12)"}`}}>
         <canvas ref={cvRef} style={{width:W,height:H,display:"block"}}/>
-        {!hideLabel&&(
-          <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
-            <span style={{fontFamily:G.font,fontWeight:500,fontSize:size*0.155,color:"#F4F7FF",letterSpacing:-0.5,textShadow:"0 2px 24px rgba(120,170,255,0.5), 0 0 50px rgba(94,234,212,0.28)",fontVariantNumeric:"tabular-nums"}}>{c.label}</span>
-          </div>
-        )}
+        {null}
       </div>
       {showCtrl&&<TCtrl c={c} color={color} t={t}/>}
     </div>
@@ -3611,7 +3561,7 @@ function TimerComp({type,totalSec,color,t,autoRun=false,size=240,showCtrl=true,d
   const previewSec=type==="dots"?360:8;     // 360s → 6 lamps × 1 min
   const effSec=preview?previewSec:totalSec;
   const effAutoRun=preview?true:autoRun;
-  return <Comp key={preview?`prev-${cycleKey}`:undefined} totalSec={effSec} color={color} t={t} autoRun={effAutoRun} size={size} showCtrl={showCtrl} dotMode={dotMode} mode={mode} setMode={setMode} hideLabel={preview} onClose={onClose}/>;
+  return <Comp key={preview?`prev-${cycleKey}`:undefined} totalSec={effSec} color={color} t={t} autoRun={effAutoRun} size={size} showCtrl={showCtrl} dotMode={dotMode} mode={mode} setMode={setMode} hideLabel={preview} preview={preview} onClose={onClose}/>;
 }
 
 function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
@@ -3629,11 +3579,22 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
     const vw=landscape?W:(tablet?W:Math.min(W,480));
     const chrome=landscape?(170+headerSpace):(300+headerSpace);
     const maxByHeight=Math.max(150,(H-chrome)/1.05);
-    const maxByWidth=Math.max(150,vw-(landscape?80:32));
-    const cap=tablet?(landscape?820:680):(landscape?520:440);
+    const maxByWidth=Math.max(150,vw-(landscape?100:64));
+    const cap=tablet?(landscape?820:680):(landscape?500:410);
     return Math.round(Math.min(cap, Math.min(maxByHeight,maxByWidth)));
   };
   const[size,setSize]=useState(computeSize);
+  // Swipe-to-hide the controls (play/pause + close) on boxed timers, mirroring
+  // the immersive scene timers. Provided to the control via HideCtx.
+  const[hidden,setHidden]=useState(false);
+  const[tabY,setTabY]=useState(null);
+  const sx=useRef(0),sy=useRef(0),swp=useRef(false);
+  const clampY=y=>{const h=(typeof window!=="undefined"?window.innerHeight:800);return Math.max(110,Math.min(h-110,y));};
+  const onStart=e=>{const p=e.touches[0];sx.current=p.clientX;sy.current=p.clientY;swp.current=false;};
+  const onMove=e=>{const p=e.touches[0];if(Math.abs(p.clientX-sx.current)>Math.abs(p.clientY-sy.current)&&Math.abs(p.clientX-sx.current)>12)swp.current=true;};
+  const onEndShow=e=>{if(swp.current){const dx=e.changedTouches[0].clientX-sx.current;if(dx>26)setHidden(false);}};
+  const onEndHide=e=>{if(swp.current){const dx=e.changedTouches[0].clientX-sx.current;if(dx<-26){setTabY(clampY(sy.current));setHidden(true);}else if(dx>26)setHidden(false);}};
+  const swEase="transform .44s cubic-bezier(0.32,0.72,0,1), opacity .34s ease";
   useEffect(()=>{
     const onResize=()=>setSize(computeSize());
     window.addEventListener("resize",onResize);
@@ -3649,12 +3610,15 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
   if(type==="aurora") return <AuroraTimer immersive totalSec={totalSec} color={color} t={t} autoRun={autoRun} onClose={onClose} activity={activity}/>;
   if(type==="sun") return <SunTimer immersive totalSec={totalSec} color={color} t={t} autoRun={autoRun} onClose={onClose} activity={activity}/>;
   return(
-    <div style={{position:"fixed",inset:0,zIndex:9700,background:isDark()?"#0A0810":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(60% 45% at 50% 55%, ${color}22 0%, ${color}10 35%, transparent 70%), radial-gradient(90% 40% at 50% 0%, ${color}1C 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0A0810 100%)`:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:`calc(env(safe-area-inset-top, 0px) + ${activity?72:32}px) 20px calc(env(safe-area-inset-bottom, 0px) + 20px)`,gap:22,animation:"ftIn .25s ease",overflow:"hidden"}}>
+    <HideCtx.Provider value={{hidden,setHidden,tabY}}>
+    <div onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEndHide} style={{position:"fixed",inset:0,zIndex:9700,background:isDark()?"#0A0810":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(60% 45% at 50% 55%, ${color}22 0%, ${color}10 35%, transparent 70%), radial-gradient(90% 40% at 50% 0%, ${color}1C 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0A0810 100%)`:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:`calc(env(safe-area-inset-top, 0px) + ${activity?72:32}px) 20px calc(env(safe-area-inset-bottom, 0px) + 20px)`,gap:22,animation:"ftIn .25s ease",overflow:"hidden"}}>
       <style>{`
         @keyframes ftIn{from{opacity:0}to{opacity:1}}
         @keyframes ftActIn{0%{opacity:0;transform:translateY(-8px) scale(0.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
       `}</style>
-      <button onClick={onClose} aria-label={t?.close||"Stäng"} className="lt-press-soft" style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 14px)",right:20,width:42,height:42,borderRadius:21,border:isDark()?"1px solid rgba(255,255,255,0.10)":"none",background:isDark()?"#23213A":"#FFFFFF",color:isDark()?"#E8E2F0":G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:isDark()?"0 12px 26px -12px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.12)":"0 12px 26px -12px rgba(20,24,40,0.26), 0 3px 8px -4px rgba(20,24,40,0.12), inset 0 1px 0 #FFFFFF",zIndex:2}}><IconX size={14}/></button>
+      <div style={{position:"absolute",top:"calc(env(safe-area-inset-top, 0px) + 14px)",right:20,zIndex:4,transform:hidden?"translateX(160%)":"translateX(0)",opacity:hidden?0:1,pointerEvents:hidden?"none":"auto",transition:swEase}}>
+        <button onClick={onClose} aria-label={t?.close||"Stäng"} className="lt-press-soft" style={{width:42,height:42,borderRadius:21,border:isDark()?"1px solid rgba(255,255,255,0.10)":"none",background:isDark()?"#23213A":"#FFFFFF",color:isDark()?"#E8E2F0":G.ink2,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:isDark()?"0 12px 26px -12px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.12)":"0 12px 26px -12px rgba(20,24,40,0.26), 0 3px 8px -4px rgba(20,24,40,0.12), inset 0 1px 0 #FFFFFF"}}><IconX size={14}/></button>
+      </div>
       {/* Dot-timer look toggle — sits at the same height as the close button,
           top-left, so it never collides with the lamps. */}
       {type==="dots"&&(()=>{const oc2=readable(color);return(
@@ -3695,6 +3659,7 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
       )}
       <TimerComp type={type} totalSec={totalSec} color={color} t={t} autoRun={autoRun} size={size} mode={type==="dots"?dotsMode:undefined} setMode={type==="dots"?setDotsMode:undefined} onClose={onClose}/>
     </div>
+    </HideCtx.Provider>
   );
 }
 
