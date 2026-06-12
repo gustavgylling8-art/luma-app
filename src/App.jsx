@@ -1053,7 +1053,7 @@ const SIGVARD_LAMP_PALETTE=[
   "#FFFFFF", // white — soft & minimal
 ];
 
-const CFG0={cardStyle:"compact",theme:"light",logoStyle:"none",schedView:"both",showSigvard:false,sigvardColor:"#FF4848",showBanner:false,showNowLine:true,nowLineColor:"white",weekColors:SIGVARD0,tools:{home:true,timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","aurora","lava","monster"],defaultType:"wave",defaultMin:5,defaultColor:"#5AA99F",dotMode:"globe"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]}};
+const CFG0={cardStyle:"compact",theme:"light",logoStyle:"none",schedView:"both",showSigvard:false,sigvardColor:"#FF4848",showBanner:false,showNowLine:true,nowLineColor:"white",weekColors:SIGVARD0,tools:{home:true,timer:true,emotion:true,comm:true,stories:true,calm:true,idcard:true,week:true},timerCfg:{allowedTypes:["sector","ring","dots","wave","sun","aurora","lava","monster"],defaultType:"wave",defaultMin:5,defaultColor:"#5AA99F",dotMode:"globe"},visibleEmotions:[1,2,3,4,5],customEmotions:[],emotionOverrides:{},deletedBuiltinEmotions:[],emotionStyle:"arc",emotionReasonEnabled:true,emotionReasonLabel:"",calmTools:{breath:true,grounding:true,skylight:true},idCard:{name:"",photo:null,age:"",condition:"",triggers:"",helpful:"",contacts:[]},talaVoiceURI:"",talaRate:1};
 
 const TR={
   sv:{other:"EN",myDay:"Min dag",editorOpen:"Redigera",editorClose:"Stäng",list:"Lista",card:"Kort",noActs:"Lägg till aktiviteter i redigeraren",addAct:"Ny aktivitet",save:"Spara",cancel:"Avbryt",actName:"Aktivitetsnamn",actTime:"Tid",pickEmoji:"Välj emoji",pickColor:"Färg",steps:"Checklista",stepPH:"t.ex. Ta på skorna",timerAct:"Timer – aktivitet",timerType:"Timertyp",timerMin:"Minuter",timerColor:"Timerfärg",sector:"Time Timer",ring:"Ring",dots:"Timstock",wave:"Våg",sun:"Solnedgång",aurora:"Norrsken",lava:"Lava",monster:"Monster",monsterFull:"Mätt!",pause:"Paus",resume:"Starta",reset:"Nollställ",next:"Nästa",prev:"Tillbaka",min:"min",settings:"Inställningar",themeLabel:"Utseende",themeLight:"Ljust",themeDark:"Mörkt",themeHint:"Mörkt läge ger hela appen ett lugnt, mörkt utseende.",modeChoiceTitle:"Välj utseende",modeChoiceDesc:"Hur vill du att Luma ska se ut? Du kan alltid ändra detta i inställningarna.",modeChoiceContinue:"Fortsätt",cardStyle:"Kortstil",styleNormal:"Normal",styleCompact:"Kompakt",styleBig:"Stor",syncTitle:"Delning",sameDevice:"Samma enhet",syncMode:"Via kod",sameDeviceDesc:"Redigering & användarvy på samma enhet.",syncModeDesc:"Dela schema via kod.",yourCode:"Din kod",codeHint:"Ge koden till användaren",enterCode:"Ange kod",connect:"Anslut",wrongCode:"Hittade inget.",copied:"Kopierad ✓",playAgain:"Spela igen",openTimer:"Starta timer",allDoneMsg:"Bra jobbat! 🌟",emotions:"Hur mår du?",emotionSaved:"Sparat! ✓",emotionReason:"Varför?",emotionHistory:"Historik",noHistory:"Ingen historik",toolsTimer:"Timer",toolsEmotion:"Känsla",home:"Dag",comm:"Tala",sigvardOn:"Sigvard-lampor",sigvardColor:"Färg på lampor",sigvardColorHint:"Tidslinjen följer samma färg",schedVisuals:"Visa i schemat",schedVisualsHint:"Slå av om det blir för mycket – båda kan användas, en av dem, eller inget alls.",bannerLabel:"\"Pågår nu\"-rad",bannerHint:"Liten rad högst upp som visar pågående eller nästa aktivitet.",nowLineLabel:"Tidsstreck",nowLineHint:"Linjen som följer aktuell tid genom dagen.",nowLineColor:"Färg på strecket",nowLineSameAsSig:"Samma som lamporna",visibleTools:"Synliga verktyg",schedView:"Schemavy",viewBoth:"Lista + Kort",viewList:"Endast lista",viewCard:"Endast kort",addCard:"+ Nytt kort",addCat:"+ Ny kategori",catName:"Kategorinamn",autoTimer:"Synkas med starttid",preview:"Förhandsgranskning",startTimer:"Starta",timerSettings:"Timerinst. för användarvyn",allowedTimers:"Tillåtna timers",defaultTimer:"Standardtimer",visibleEmotions:"Synliga känslor",barometerStyle:"Mätarens stil",barometerStyleHint:"Hur känslorna visas för användaren.",styleArc:"Bågformad",styleVertical:"Lodrät",addEmotion:"+ Lägg till känsla",editEmotion:"Redigera känsla",emotionName:"Namn",emotionNamePH:"t.ex. Stressad",customLabel:"Egen",changePhoto:"Byt foto",resetEmotions:"Återställ förvalda",resetEmotionsHint:"Återställer känslorna till standard.",confirmDeleteEmotion:"Ta bort?",reasonField:"Anteckningsfält",reasonFieldHint:"Användaren får skriva några ord om sin känsla. Stäng av om det är för mycket.",reasonLabelPH:"t.ex. Varför? eller Vad hände?",enlarge:"Förstora",cardImage:"Bild",uploadPhoto:"Ladda upp foto",useEmoji:"Använd emoji istället",stories:"Berättelser",newStory:"Ny berättelse",storyTitle:"Titel",pages:"Sidor",addPage:"+ Lägg till sida",pageNum:"Sida",storyText:"Text på sidan",noStories:"Inga berättelser – tryck Redigera för att skapa",renameCat:"Byt namn på kategori",calm:"Lugn",calmTitle:"Hitta lugnet",breathing:"Andas",grounding:"54321",breathIn:"Andas in",breathHold:"Håll",breathOut:"Andas ut",breathDone:"Bra jobbat",groundIntro:"Stanna upp. Vi gör det här tillsammans.",groundStart:"Börja",see5:"5 saker du kan se",hear4:"4 saker du kan höra",touch3:"3 saker du kan röra",smell2:"2 saker du kan lukta",taste1:"1 sak du kan smaka",iAmHere:"Jag är här. Jag är trygg.",roundsDone:"Klar",calmSettings:"Lugn – övningar",idcard:"Mitt kort",myName:"Mitt namn",myAge:"Ålder",aboutMe:"Om mig",myTriggers:"Det här kan vara svårt",whatHelps:"Det här hjälper mig",emergencyContacts:"Ring",contactName:"Namn",contactPhone:"Telefon",contactRelation:"Relation",addContact:"+ Lägg till kontakt",call:"Ring",idHint:"Visa det här till någon som vill hjälpa","editCard":"Redigera mitt kort",helloMyNameIs:"Hej, jag heter",yearsOld:"år",emptyCardTitle:"Kortet är inte ifyllt än",emptyCardDesc:"Mitt-mig-kortet visar viktig information som kan vara värdefull i situationer där du behöver hjälp. Tryck Redigera för att fylla i det.",createCardTitle:"Skapa mitt-mig-kortet",createCardDesc:"Sammanfattar viktig information — namn, kontaktpersoner, och vad som hjälper i pressade situationer. Visas vid behov.",showLarge:"Visa stort",tools:"Verktyg",firstthen:"Först-Sedan",choices:"Val",rewards:"Belöning",recipes:"Recept",first:"Först",then:"Sedan",ftDone:"Klart!",chQuestion:"Vad vill du?",chTap:"Tryck för att välja",stars:"stjärnor",goalReached:"Du har tjänat din belöning! 🎉",reward:"Belöning",starsGoal:"Mål – antal stjärnor",addChoice:"+ Nytt val",newCategory:"+ Ny kategori",rewardEmoji:"Emoji",rewardText:"Belöning",ingredients:"Ingredienser",instructions:"Så gör du",servings:"Portioner",time:"Tid",newRecipe:"Nytt recept",step:"Steg",addStep:"+ Lägg till steg",useReward:"Ge stjärna när klar",resetStars:"Nollställ stjärnor",starsEarned:"Stjärnor intjänade",bannerNowOngoing:"Pågår nu",bannerNextUp:"Nästa aktivitet",bannerDayLabel:"Dagen",bannerNoActsLeft:"Inga aktiviteter kvar",close:"Stäng",del:"Radera",week:"Vecka",myWeek:"Min vecka",weekEmpty:"Inga aktiviteter den här veckan",weekAdd:"Lägg till aktivitet",dayColors:"Veckodagsfärger",dayColorsHint:"Tryck på en dag för att välja färg",resetColors:"Återställ till standard",monday:"Måndag",tuesday:"Tisdag",wednesday:"Onsdag",thursday:"Torsdag",friday:"Fredag",saturday:"Lördag",sunday:"Söndag",skylight:"Himmel",skyHint:"Låt blicken vila",notTodayHint:"Du tittar på en annan dag. Stegen kan inte bockas av nu.",editStory:"Redigera berättelse",storyType:"Typ",typeSeq:"Steg-för-steg",typeSeqDesc:"Flera sidor",typeFT:"Först-Sedan",typeFTDesc:"Två aktiviteter",coverImage:"Huvudbild",camera:"Kamera",gallery:"Galleri",emoji:"Emoji",removePhoto:"Ta bort foto",storyPlacehSeq:"t.ex. Städa rummet",storyPlacehFT:"t.ex. Först läxor, sedan TV",ftLabels:"Etiketter (visas över korten)",ftSection:"Först och Sedan",pageImage:"Bild på sidan",pageTextPH:"Skriv vad som händer på sidan…",pageTimer:"Timer på sidan",off:"Av",sunset:"Solnedgång",editingLabel:"Redigerar",duEditing:"Du redigerar",cover:"Huvudbild",schedule:"Schema",doneTitle:"Klart",doneSub:"Du kan vila en stund.",dayOpen:"Inga aktiviteter idag",allActsDoneTitle:"Alla aktiviteter är klara",allActsDoneSub:"Du kan vila resten av dagen.",lampOne:"1 lampa = 1 minut",lampMany:"1 lampa = {n} minuter",lampSec:"1 lampa = {n} sek",dotToCandle:"Ljus",dotToPearl:"Pärlor",dotToGlobe:"Klot",dotToBulb:"Glöd",dotToLantern:"Lykta",unitLamp:"lampa",unitFlame:"låga",unitSecShort:"sek",unitMinOne:"minut",unitMinMany:"minuter",stepCountOne:"1 steg",stepCountMany:"{n} steg",noName:"(Utan namn)",unsavedTitle:"Osparade ändringar",unsavedDesc:"Vill du spara innan du stänger?",discardChanges:"Släng",keepEditing:"Fortsätt redigera",overlapTitle:"Tidskrock",overlapDesc:"Den nya aktiviteten {t} överlappar:",goBack:"Gå tillbaka",saveAnyway:"Spara ändå",editAct:"Redigera aktivitet",newAct:"Ny aktivitet",actNamePH:"t.ex. Frukost",timeStart:"Start",timeEnd:"Slut (frivilligt)",repeat:"Upprepa",repNone:"Endast idag",repDaily:"Varje dag",repWeekdays:"Vardagar",repWeekend:"Helger",repPickDays:"Välj veckodagar",repDailyShort:"Dagligen",repDaysSuffix:"dagar",daysShort:["sön","mån","tis","ons","tor","fre","lör"],resetSection:"Återställ",resetDataDesc:"Rensar alla aktiviteter, berättelser, känslohistorik och inställningar.",resetDataBtn:"Rensa all data",resetDataConfirm:"Allt data raderas permanent.",backupSection:"Säkerhetskopiering",backupDesc:"Spara allt – scheman, kort, berättelser och inställningar – till en fil. Använd den för att återställa eller flytta till en annan enhet.",exportBtn:"Exportera till fil",importBtn:"Importera från fil",importConfirm:"Ersätt all data med filen?",importBad:"Filen kunde inte läsas som en Luma-säkerhetskopia.",importOk:"Importerat ✓",exportOk:"Exporterat ✓",tmplTitle:"Vill du komma igång snabbt?",tmplDesc:"Lägg till en färdig rutin – du kan ändra allt efteråt.",tmplAdd:"Lägg till",tmplDismiss:"Nej tack",tmplAdded:"Tillagd ✓",tmplPickTitle:"Förslag på rutiner",tmplPickDesc:"Plussa in de aktiviteter du vill. Du kan ändra allt efteråt.",tmplPickDone:"Klar",tmplAddAll:"Lägg till alla",tmplAdded2:"Tillagd",undoSaved:"Klart!",undoBtn:"Ångra",logoStyle:"Logga-stil",logoStyleHint:"Hur Luma-loggan visas högst upp i appen.",logoStyleNone:"Bara solen",logoStyleGlass:"Glaslåda",logoStylePillow:"Mjuk bädd",logoStyleSquircle:"Appikon"},
@@ -1415,6 +1415,17 @@ function RingControl({c,color="#E0A46A",t,variant="solid",digitSize,peekW,peekH}
   const applyHidden = v => (hctx?hctx.setHidden:setLocalHidden)(v);
   useEffect(()=>{ if(!hidden) setPeekT(false); },[hidden]);
   const sx=useRef(0),sy=useRef(0),swped=useRef(false);
+  const playRef=useRef(null);
+  // Tell FullTimer where the play/pause button sits, so the restore tab can line
+  // up with it. Measured only for boxed (non-glass) timers while shown.
+  useLayoutEffect(()=>{
+    if(!hctx||variant==="glass") return;
+    const measure=()=>{ if(hctx.hidden||!playRef.current||!hctx.setCtrlY) return; const r=playRef.current.getBoundingClientRect(); hctx.setCtrlY(r.top+r.height/2); };
+    measure();
+    window.addEventListener("resize",measure);
+    return()=>window.removeEventListener("resize",measure);
+  // eslint-disable-next-line
+  },[hidden]);
   const peek=()=>{
     if(reveal){ setNoFade(true); setReveal(false); return; }
     setNoFade(false); setReveal(true);
@@ -1468,7 +1479,7 @@ function RingControl({c,color="#E0A46A",t,variant="solid",digitSize,peekW,peekH}
           <path d={arcD} fill="none" stroke={`url(#${gid})`} strokeWidth={sw} strokeLinecap="round" style={{filter:`drop-shadow(0 0 ${glass?8:6}px ${g0}) drop-shadow(0 0 ${glass?20:16}px ${g2})`,animation:"lumaRingShimmer 3.4s ease-in-out infinite"}}/>
           {pctv>0.004&&pctv<0.999&&<circle cx={hx} cy={hy} r={glass?3.8:3.2} fill={_mix(_rgb,[255,255,255],0.55)} style={{filter:`drop-shadow(0 0 6px ${g0}) drop-shadow(0 0 13px ${g2})`}}/>}
         </svg>
-        <button onClick={tapPlay} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} className="lt-press" aria-label={c.run?(t?.pause||"Paus"):(t?.resume||"Starta")} style={{...btnStyle,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",color:ico,transition:"transform .26s cubic-bezier(0.32,0.72,0,1)"}}>
+        <button ref={playRef} onClick={tapPlay} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} className="lt-press" aria-label={c.run?(t?.pause||"Paus"):(t?.resume||"Starta")} style={{...btnStyle,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",color:ico,transition:"transform .26s cubic-bezier(0.32,0.72,0,1)"}}>
           {c.run
             ? <svg width={glass?26:22} height={glass?26:22} viewBox="0 0 24 24" fill={ico}><rect x="6.6" y="5" width="3.5" height="14" rx="1.4"/><rect x="13.9" y="5" width="3.5" height="14" rx="1.4"/></svg>
             : <svg width={glass?30:24} height={glass?30:24} viewBox="0 0 24 24" fill={ico} style={{marginLeft:3}}><path d="M8 5.3 L18.5 12 L8 18.7 Z"/></svg>}
@@ -1479,10 +1490,10 @@ function RingControl({c,color="#E0A46A",t,variant="solid",digitSize,peekW,peekH}
       <Fragment>
         {/* hidden mode: tap anywhere shows the time; swipe right restores the control */}
         <div onClick={()=>{ if(swped.current) return; setPeekT(p=>!p); }} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={e=>{ if(swped.current){ const dx=e.changedTouches[0].clientX-sx.current; if(dx>26){applyHidden(false);setPeekT(false);} } }} style={{position:"fixed",inset:0,zIndex:9748,background:"transparent",pointerEvents:hidden?"auto":"none"}}/>
-        <div aria-hidden style={{position:"fixed",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 86px)",display:"flex",justifyContent:"center",zIndex:9749,pointerEvents:"none",opacity:(hidden&&peekT)?1:0,transform:`translateY(${(hidden&&peekT)?"0":"6px"})`,transition:"opacity .42s ease, transform .42s ease"}}>
+        <div aria-hidden style={{position:"fixed",left:0,right:0,top:(hctx&&hctx.ctrlY!=null)?hctx.ctrlY:"70%",display:"flex",justifyContent:"center",zIndex:9749,pointerEvents:"none",opacity:(hidden&&peekT)?1:0,transform:`translateY(calc(-50% + ${(hidden&&peekT)?"0px":"6px"}))`,transition:"opacity .42s ease, transform .42s ease"}}>
           <span style={{fontFamily:G.font,fontWeight:500,fontSize:46,letterSpacing:-1.5,color:dk?"#F4F1FA":shadeHex(color,-0.22),fontVariantNumeric:"tabular-nums",textShadow:dk?"0 8px 40px rgba(0,0,0,0.5)":"none"}}>{c.label}</span>
         </div>
-        <button onClick={()=>{applyHidden(false);setPeekT(false);}} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={e=>{if(swped.current){const dx=e.changedTouches[0].clientX-sx.current;if(dx>26){applyHidden(false);setPeekT(false);}}}} aria-label={t?.resume||"Visa"} style={{position:"fixed",left:0,top:"70%",transform:"translateY(-50%)",width:27,height:62,borderTopRightRadius:16,borderBottomRightRadius:16,border:`1px solid ${dk?"rgba(255,255,255,0.16)":color+"40"}`,borderLeft:"none",background:dk?"rgba(28,26,42,0.92)":"#FFFFFF",boxShadow:`0 10px 28px -12px rgba(0,0,0,0.4), 0 0 22px -10px ${color}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:9750,opacity:hidden?1:0,pointerEvents:hidden?"auto":"none",transition:"opacity .34s ease"}}>
+        <button onClick={()=>{applyHidden(false);setPeekT(false);}} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={e=>{if(swped.current){const dx=e.changedTouches[0].clientX-sx.current;if(dx>26){applyHidden(false);setPeekT(false);}}}} aria-label={t?.resume||"Visa"} style={{position:"fixed",left:0,top:(hctx&&hctx.ctrlY!=null)?hctx.ctrlY:"70%",transform:"translateY(-50%)",width:27,height:62,borderTopRightRadius:16,borderBottomRightRadius:16,border:`1px solid ${dk?"rgba(255,255,255,0.16)":color+"40"}`,borderLeft:"none",background:dk?"rgba(28,26,42,0.92)":"#FFFFFF",boxShadow:`0 10px 28px -12px rgba(0,0,0,0.4), 0 0 22px -10px ${color}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",zIndex:9750,opacity:hidden?1:0,pointerEvents:hidden?"auto":"none",transition:"opacity .34s ease"}}>
           <svg width="10" height="13" viewBox="0 0 11 14" fill="none"><path d="M2.2 2 L8 7 L2.2 12" stroke={dk?"#fff":shadeHex(color,-0.3)} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
       </Fragment>
@@ -1500,8 +1511,13 @@ function TCtrl({c,color,t}){
   const hctx=useContext(HideCtx);
   const hidden=!!hctx&&hctx.hidden;
   if(c.done) return null;
+  const inFull=!!hctx;
+  // Inside FullTimer: sit the pause button noticeably lower, and when hidden only
+  // collapse a little (≈50px) so the tile drifts down just a touch, not a big jump.
+  const mt = inFull ? (hidden?96:118) : (hidden?0:70);
+  const mh = inFull ? (hidden?60:88) : (hidden?0:84);
   return(
-    <div style={{display:"flex",justifyContent:"center",marginTop:hidden?0:70,maxHeight:hidden?0:84,overflow:hidden?"hidden":"visible",transition:"margin-top .44s cubic-bezier(0.32,0.72,0,1), max-height .44s cubic-bezier(0.32,0.72,0,1)"}}>
+    <div style={{display:"flex",justifyContent:"center",marginTop:mt,maxHeight:mh,overflow:hidden?"hidden":"visible",transition:"margin-top .44s cubic-bezier(0.32,0.72,0,1), max-height .44s cubic-bezier(0.32,0.72,0,1)"}}>
       <RingControl c={c} color={color} t={t} variant="solid"/>
     </div>
   );
@@ -2044,6 +2060,7 @@ function LumaSymbol({size=40,color="#9DC4D8"}){
 /* ═══ SECTOR TIME TIMER (numbers CCW from top — like a real Time Timer) ═══ */
 function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hideLabel=false,onClose}){
   const c=useTimer(totalSec,autoRun);
+  size=Math.round(size*0.92);   // Time Timer reads larger than others (chunky frame) — trim to fit
   if(c.done) return <DoneBadge color={color} t={t} onReplay={()=>{c.reset();c.setRun(true);}} onClose={onClose}/>;
   const cx=size/2, cy=size/2, R=size/2-size*0.15;
   // Time Timer behavior: sector shrinks counter-clockwise (matches the red disc
@@ -2082,8 +2099,8 @@ function SectorTimer({totalSec,color,t,autoRun=false,size=240,showCtrl=true,hide
   return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
       <style>{`@keyframes timerIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}@keyframes ttPulse{0%,100%{box-shadow:0 14px 40px ${color}40, 0 4px 12px ${color}33, inset 0 1.5px 0 rgba(255,255,255,.5)}50%{box-shadow:0 18px 50px ${color}55, 0 6px 16px ${color}44, inset 0 1.5px 0 rgba(255,255,255,.5)}}`}</style>
-      <div style={{padding:14,borderRadius:size*0.13,background:`linear-gradient(155deg,${color},${color}D8)`,animation:"timerIn .35s ease, ttPulse 3.6s ease-in-out infinite"}}>
-        <div style={{padding:10,borderRadius:size*0.105,background:isDark()?"#15131F":"#fff",boxShadow:isDark()?"inset 0 0 0 1px rgba(255,255,255,.06)":"inset 0 0 0 1px rgba(0,0,0,.05), inset 0 2px 4px rgba(0,0,0,.04)"}}>
+      <div style={{padding:11,borderRadius:size*0.13,background:`linear-gradient(155deg,${color},${color}D8)`,animation:"timerIn .35s ease, ttPulse 3.6s ease-in-out infinite"}}>
+        <div style={{padding:8,borderRadius:size*0.105,background:isDark()?"#15131F":"#fff",boxShadow:isDark()?"inset 0 0 0 1px rgba(255,255,255,.06)":"inset 0 0 0 1px rgba(0,0,0,.05), inset 0 2px 4px rgba(0,0,0,.04)"}}>
           <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{display:"block"}}>
             <defs>
               <radialGradient id={`stSect${size}`} cx="50%" cy="50%" r="50%">
@@ -3588,6 +3605,7 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
   // the immersive scene timers. Provided to the control via HideCtx.
   const[hidden,setHidden]=useState(false);
   const[tabY,setTabY]=useState(null);
+  const[ctrlY,setCtrlY]=useState(null);
   const sx=useRef(0),sy=useRef(0),swp=useRef(false);
   const clampY=y=>{const h=(typeof window!=="undefined"?window.innerHeight:800);return Math.max(110,Math.min(h-110,y));};
   const onStart=e=>{const p=e.touches[0];sx.current=p.clientX;sy.current=p.clientY;swp.current=false;};
@@ -3610,7 +3628,7 @@ function FullTimer({type,totalSec,color,t,autoRun,onClose,activity}){
   if(type==="aurora") return <AuroraTimer immersive totalSec={totalSec} color={color} t={t} autoRun={autoRun} onClose={onClose} activity={activity}/>;
   if(type==="sun") return <SunTimer immersive totalSec={totalSec} color={color} t={t} autoRun={autoRun} onClose={onClose} activity={activity}/>;
   return(
-    <HideCtx.Provider value={{hidden,setHidden,tabY}}>
+    <HideCtx.Provider value={{hidden,setHidden,tabY,ctrlY,setCtrlY}}>
     <div onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEndHide} style={{position:"fixed",inset:0,zIndex:9700,background:isDark()?"#0A0810":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(60% 45% at 50% 55%, ${color}22 0%, ${color}10 35%, transparent 70%), radial-gradient(90% 40% at 50% 0%, ${color}1C 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0A0810 100%)`:"none",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:`calc(env(safe-area-inset-top, 0px) + ${activity?72:32}px) 20px calc(env(safe-area-inset-bottom, 0px) + 20px)`,gap:22,animation:"ftIn .25s ease",overflow:"hidden"}}>
       <style>{`
         @keyframes ftIn{from{opacity:0}to{opacity:1}}
@@ -6662,7 +6680,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
 }
 
 /* ═══ Communication board ═══ */
-function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
+function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal,cfg,setCfg}){
   const[spoken,setSpoken]=useState(null);
   const tabBarRef=useRef(null);
   /* Drag-to-reorder state for category pills (editor only).
@@ -6709,6 +6727,36 @@ function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
     return()=>clearTimeout(id);
   },[isEditor]);
   const S=scrPal("comm");
+  // ── Tala voice: use the device's installed text-to-speech voices. The chosen
+  // voice + speed are saved in cfg; the read-aloud below respects the choice. ──
+  const voicePref = cfg?.talaVoiceURI || "";
+  const voiceRate = cfg?.talaRate || 1;
+  const[voices,setVoices]=useState([]);
+  useEffect(()=>{
+    if(typeof window==="undefined"||!window.speechSynthesis) return;
+    const load=()=>{ try{ setVoices(window.speechSynthesis.getVoices()||[]); }catch(e){} };
+    load();
+    try{ window.speechSynthesis.addEventListener("voiceschanged",load); }
+    catch(e){ try{ window.speechSynthesis.onvoiceschanged=load; }catch(_){ } }
+    return()=>{ try{ window.speechSynthesis.removeEventListener("voiceschanged",load); }catch(e){} };
+  },[]);
+  const langPrefix = lang==="sv"?"sv":"en";
+  const langVoices = voices.filter(v=>(v.lang||"").toLowerCase().replace("_","-").startsWith(langPrefix));
+  const voiceList = langVoices.length? langVoices : voices;
+  const previewVoice=()=>{
+    if(typeof window==="undefined"||!window.speechSynthesis) return;
+    const sp=window.speechSynthesis; try{ sp.cancel(); }catch(e){}
+    const say=()=>{ const u=new SpeechSynthesisUtterance(lang==="sv"?"Hej! Så här låter rösten.":"Hi! This is how the voice sounds.");
+      u.lang=lang==="sv"?"sv-SE":"en-US";
+      if(voicePref){ const v=(sp.getVoices()||[]).find(x=>x.voiceURI===voicePref); if(v){ u.voice=v; u.lang=v.lang; } }
+      u.rate=voiceRate; u.pitch=1; try{ sp.speak(u); }catch(e){} };
+    if(typeof requestAnimationFrame!=="undefined") requestAnimationFrame(()=>requestAnimationFrame(say)); else setTimeout(say,24);
+  };
+  const[voiceHidden,setVoiceHidden]=useState(false);
+  const vsx=useRef(0),vsy=useRef(0),vsw=useRef(false);
+  const vTS=e=>{const p=e.touches[0];vsx.current=p.clientX;vsy.current=p.clientY;vsw.current=false;};
+  const vTM=e=>{const p=e.touches[0];if(Math.abs(p.clientX-vsx.current)>Math.abs(p.clientY-vsy.current)&&Math.abs(p.clientX-vsx.current)>12)vsw.current=true;};
+  const vTE=e=>{if(!vsw.current)return;const dx=e.changedTouches[0].clientX-vsx.current;if(dx<-26)setVoiceHidden(true);else if(dx>26)setVoiceHidden(false);};
   const speak=card=>{
     // Web Speech quirk: calling cancel() then speak() in the SAME tick can make
     // the engine drop or delay the new utterance (the "waits before speaking"
@@ -6720,7 +6768,8 @@ function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
       const say=()=>{
         const u=new SpeechSynthesisUtterance(lang==="sv"?card.sv:card.en);
         u.lang=lang==="sv"?"sv-SE":"en-US";
-        u.rate=1; u.pitch=1;
+        if(voicePref){ const v=(sp.getVoices()||[]).find(x=>x.voiceURI===voicePref); if(v){ u.voice=v; u.lang=v.lang; } }
+        u.rate=voiceRate; u.pitch=1;
         try{ sp.speak(u); }catch(e){}
       };
       // A double rAF (≈32ms) reliably lets the cancel settle before speaking.
@@ -7118,6 +7167,46 @@ function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal}){
           </button>
         )}
       </div>
+      {isEditor&&(()=>{const ink=tk();const canPick=voiceList.length>=2;
+        if(voiceHidden){return(
+          <div onTouchStart={vTS} onTouchMove={vTM} onTouchEnd={e=>{if(vsw.current){const dx=e.changedTouches[0].clientX-vsx.current;if(dx>26)setVoiceHidden(false);}}} style={{margin:"2px 14px 0",display:"flex",alignItems:"center",gap:9,padding:"9px 10px 9px 13px",borderRadius:13,background:isDark()?"rgba(255,255,255,0.05)":"#FFFFFF",border:`1px solid ${isDark()?"rgba(255,255,255,0.08)":S.soft}`,boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.06)":"0 4px 14px -10px rgba(31,27,46,0.22)"}}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={S.deep} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10v4h4l5 5V5L7 10H3z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
+            <span style={{fontFamily:G.font,fontWeight:700,fontSize:12.5,color:ink.inkSoft,letterSpacing:.2}}>{lang==="sv"?"Röst":"Voice"}</span>
+            <button onClick={()=>setVoiceHidden(false)} aria-label={lang==="sv"?"Visa röst":"Show voice"} className="lt-press-soft" style={{marginLeft:"auto",width:30,height:30,borderRadius:9,border:`1px solid ${isDark()?"rgba(255,255,255,0.12)":S.soft}`,background:"transparent",color:ink.ink2,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",fontFamily:G.font,fontWeight:700,fontSize:18,lineHeight:1,flexShrink:0}}>+</button>
+          </div>
+        );}
+        return(
+        <div onTouchStart={vTS} onTouchMove={vTM} onTouchEnd={vTE} style={{margin:"2px 14px 0",padding:"12px 14px",borderRadius:16,background:isDark()?"rgba(255,255,255,0.05)":"#FFFFFF",border:`1px solid ${isDark()?"rgba(255,255,255,0.08)":S.soft}`,boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.06)":"0 6px 18px -12px rgba(31,27,46,0.2)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={S.deep} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10v4h4l5 5V5L7 10H3z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
+            <div style={{fontFamily:G.font,fontWeight:700,fontSize:13.5,color:ink.inkSoft,letterSpacing:.2}}>{lang==="sv"?"Röst":"Voice"}</div>
+            <button onClick={()=>setVoiceHidden(true)} aria-label={lang==="sv"?"Dölj röst":"Hide voice"} className="lt-press-soft" style={{marginLeft:"auto",width:30,height:30,borderRadius:9,border:`1px solid ${isDark()?"rgba(255,255,255,0.12)":S.soft}`,background:"transparent",color:ink.ink2,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",fontFamily:G.font,fontWeight:700,fontSize:18,lineHeight:1,flexShrink:0}}>−</button>
+          </div>
+          {canPick?(
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{position:"relative",flex:1}}>
+                <select value={voicePref} onChange={e=>setCfg&&setCfg(x=>({...x,talaVoiceURI:e.target.value}))} style={{width:"100%",appearance:"none",WebkitAppearance:"none",padding:"11px 34px 11px 13px",borderRadius:12,border:`1px solid ${isDark()?"rgba(255,255,255,0.12)":S.soft}`,background:isDark()?"#1B1830":"#FFF",color:ink.ink,fontFamily:G.font,fontWeight:600,fontSize:14,cursor:"pointer",lineHeight:1.2}}>
+                  <option value="">{lang==="sv"?"Enhetens standardröst":"Device default voice"}</option>
+                  {voiceList.map(v=><option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>)}
+                </select>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={ink.ink2} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <button onClick={previewVoice} className="lt-press-soft" style={{flexShrink:0,padding:"11px 14px",borderRadius:11,border:"none",background:`linear-gradient(135deg, ${S.h}, ${S.deep})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:12.5,cursor:"pointer",boxShadow:`0 6px 16px ${S.h}44`}}>{lang==="sv"?"Testa":"Test"}</button>
+            </div>
+          ):(
+            <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
+              <div style={{flex:1,fontFamily:G.font,fontWeight:400,fontSize:12.5,color:ink.ink2,lineHeight:1.5}}>{lang==="sv"?"Den här enheten har bara en röst för svenska. På iPhone kan du ladda ner fler i Inställningar → Tillgänglighet → Talat innehåll → Röster.":"This device has only one voice. On iPhone you can add more in Settings → Accessibility → Spoken Content → Voices."}</div>
+              <button onClick={previewVoice} className="lt-press-soft" style={{flexShrink:0,padding:"11px 14px",borderRadius:11,border:"none",background:`linear-gradient(135deg, ${S.h}, ${S.deep})`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:12.5,cursor:"pointer",boxShadow:`0 6px 16px ${S.h}44`}}>{lang==="sv"?"Testa":"Test"}</button>
+            </div>
+          )}
+          <div style={{display:"flex",alignItems:"center",gap:6,marginTop:10}}>
+            <span style={{fontFamily:G.font,fontWeight:600,fontSize:11.5,color:ink.ink2,marginRight:2,whiteSpace:"nowrap"}}>{lang==="sv"?"Hastighet":"Speed"}</span>
+            {[["0.8",lang==="sv"?"Långsam":"Slow"],["1",lang==="sv"?"Normal":"Normal"],["1.2",lang==="sv"?"Snabb":"Fast"]].map(([val,lb])=>{const active=Math.abs(voiceRate-parseFloat(val))<0.001;return(
+              <button key={val} onClick={()=>setCfg&&setCfg(x=>({...x,talaRate:parseFloat(val)}))} className="lt-press-soft" style={{flex:1,padding:"8px 0",borderRadius:10,border:`1px solid ${active?S.h:(isDark()?"rgba(255,255,255,0.1)":S.soft)}`,background:active?`${S.h}22`:"transparent",color:active?(isDark()?"#fff":S.deep):ink.ink2,fontFamily:G.font,fontWeight:700,fontSize:12,cursor:"pointer",transition:"all .2s ease"}}>{lb}</button>
+            );})}
+          </div>
+        </div>
+        );})()}
       <div style={{flex:1,padding:14,display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,overflowY:"auto",alignContent:"start"}}>
         {cat.cards.length===0&&!isEditor&&(
           <div style={{gridColumn:"1 / -1",padding:"60px 24px",textAlign:"center"}}>
@@ -13967,7 +14056,7 @@ function SceneIntro(){
       // soft warm drop shadow (matches the warm plate, no cool halo)
       ctx.shadowColor="rgba(150,95,60,0.24)"; ctx.shadowBlur=34; ctx.shadowOffsetY=16;
       const bg=ctx.createLinearGradient(ix,iy,ix+ICON,iy+ICON);
-      bg.addColorStop(0,"#F4BE93"); bg.addColorStop(1,"#EAA371");
+      bg.addColorStop(0,"#F3B98A"); bg.addColorStop(1,"#E2965E");
       roundRectPath(ix,iy,ICON,ICON,v(22.37)); ctx.fillStyle=bg; ctx.fill();
       ctx.shadowColor="transparent";
       // soft top highlight — CLIPPED to the plate so there is no hard rim/edge
@@ -13984,9 +14073,13 @@ function SceneIntro(){
         ctx.lineTo(ix+v(34.5),iy+v(63.5));
         ctx.arc(ix+v(50),iy+v(63.5),v(15.5),Math.PI,0,true);
         ctx.lineTo(ix+v(65.5),iy+v(43.3)); };
-      ctx.lineCap="round"; ctx.lineJoin="round"; ctx.lineWidth=v(12.8);
-      ctx.save(); ctx.translate(0,v(1.6)); markPath(); ctx.strokeStyle="rgba(150,80,45,0.30)"; ctx.stroke(); ctx.restore();
-      markPath(); ctx.strokeStyle="#FCE1CB"; ctx.stroke();
+      ctx.lineCap="round"; ctx.lineJoin="round";
+      // depth shadow under the mark — gives the ivory a carved, defined edge
+      ctx.save(); ctx.translate(0,v(2.2)); markPath(); ctx.lineWidth=v(13.0); ctx.strokeStyle="rgba(138,70,36,0.45)"; ctx.stroke(); ctx.restore();
+      // main mark — bright warm ivory so it reads crisply (not washed out)
+      ctx.lineWidth=v(12.8); markPath(); ctx.strokeStyle="#FFF6EA"; ctx.stroke();
+      // soft inner bevel highlight along the top — a gentle 3D sheen
+      ctx.save(); ctx.translate(0,-v(0.7)); markPath(); ctx.lineWidth=v(9.2); ctx.strokeStyle="rgba(255,255,255,0.42)"; ctx.stroke(); ctx.restore();
       ctx.restore();
       // Seated pearl — grows in at landing and STAYS (pearlScale 0→1).
       if(pearlScale>0){
@@ -17219,7 +17312,7 @@ export default function App(){
         {screen==="emotion"&&<EmotionScreen lang={lang} t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} onInputFocusChange={setInputFocused} onOpenEmoEditor={setEmoEditor}/>}
         {screen==="calm"&&<CalmScreen t={t} lang={lang} cfg={cfg} isEditor={isEd} setCfg={setCfg} onImmersiveChange={setImmersiveMode} active={calmActive} setActive={setCalmActive}/>}
         {screen==="idcard"&&<IdCardScreen t={t} lang={lang} cfg={cfg} setCfg={setCfg} isEditor={isEd} onOpenEditor={()=>setIdCardEditorOpen(true)} onShowLarge={()=>setIdCardLargeOpen(true)}/>}
-        {screen==="comm"&&<CommBoard lang={lang} t={t} isEditor={isEd} cats={commCats} setCats={setCommCats} sel={commSel} setSel={setCommSel} openModal={setCommModal}/>}
+        {screen==="comm"&&<CommBoard lang={lang} t={t} isEditor={isEd} cats={commCats} setCats={setCommCats} sel={commSel} setSel={setCommSel} openModal={setCommModal} cfg={cfg} setCfg={setCfg}/>}
           </div>
         </div>
       </div>
