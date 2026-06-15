@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useMemo, useContext, createContext, Fragment } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useContext, createContext, Fragment } from "react";
 
 (() => {
   // ── ABSOLUTE FIRST: lock the boot surface to the splash colour ───────────
@@ -752,6 +752,14 @@ const STORIES0=[
   //    cooking flow, a morning wind-up, and a First-Then — with VARIED timer
   //    styles (sun/sunset, wave, ring, sector/Time Timer, monster, lava) used
   //    only where a pause or wait is part of the moment.
+  {id:"s_fairytale",example:true,type:"sequence",sv:"Pärlan och drömskeppet",en:"Pearl and the dream ship",emoji:"🌙",color:"#9683C2",pages:[
+    {id:"p1",emoji:"🌙",photo:null,sv:"Det var en gång en liten flicka som hette Pärla. Varje kväll, just när hon blundat, kom ett litet skepp seglande genom fönstret — byggt av månsken och tunt som en dröm.",en:"Once upon a time there was a little girl named Pearl. Every evening, just as she closed her eyes, a little ship came sailing through her window — built of moonlight and thin as a dream."},
+    {id:"p2",emoji:"⛵",photo:null,sv:"\"Stig ombord\", sa den gamle kaptenen, som hade skägg av silver och en hatt full av stjärnor. Och Pärla klev ner i den mjuka båten.",en:"\"Climb aboard,\" said the old captain, who had a beard of silver and a hat full of stars. And Pearl stepped down into the soft little boat.",timer:{on:true,type:"wave",min:1,color:"#8AAFD2"}},
+    {id:"p3",emoji:"🌊",photo:null,sv:"De seglade ut över Sömnhavet, där vågorna gick långsamt som andetag och vinden luktade nybakt bröd och blåbär.",en:"They sailed out across the Sea of Sleep, where the waves moved as slowly as breathing and the wind smelled of fresh bread and blueberries."},
+    {id:"p4",emoji:"🐳",photo:null,sv:"En snäll val lyfte skeppet på sin rygg och vaggade det fram och tillbaka, fram och tillbaka, mjukt och stilla.",en:"A gentle whale lifted the ship onto its back and rocked it to and fro, to and fro, soft and still."},
+    {id:"p5",emoji:"🏝️",photo:null,sv:"Vid Drömlandets strand låg en bädd av varm sand och tusen blinkande stjärnor. Där fick Pärla lägga sig att vila.",en:"On the shore of Dreamland lay a bed of warm sand and a thousand twinkling stars. There Pearl lay down to rest.",timer:{on:true,type:"sun",min:1,color:"#D9B868"}},
+    {id:"p6",emoji:"🌌",photo:null,sv:"\"Sov nu\", viskade kaptenen och drog stjärntäcket över henne. \"Imorgon seglar vi hem igen.\" Och Pärla sov. Godnatt, lilla vän.",en:"\"Sleep now,\" whispered the captain, drawing the starry blanket over her. \"Tomorrow we sail home again.\" And Pearl slept. Goodnight, little one."},
+  ]},
   {id:"s_forest",example:true,type:"sequence",sv:"Godistrollen",en:"The candy trolls",emoji:"🍬",color:"#DCA6B2",pages:[
     {id:"p1",emoji:"🌲",photo:null,sv:"I skogens djup, där mossan gror,\nvid granens rot ett trollfolk bor.\nVart litet troll, så mjukt och len,\nbär socker i sitt hår — var en.",en:"Deep in the forest, soft and green,\nbeneath a root where moss is seen,\nthere lives a folk both small and sweet,\nwith sugar hair from head to feet."},
     {id:"p2",emoji:"❄️",photo:null,sv:"Och när den första snön föll ner,\nlåg skogen tyst, så långt man ser.\nTy denna natt, en gång om år,\nblir kola kokt i kitteln vår.",en:"And when the first snow drifted low\nand hushed the woods in white and slow,\nthe trolls all knew the night was here\nto cook the toffee, once a year."},
@@ -779,14 +787,6 @@ const STORIES0=[
   {id:"ft_calm",example:true,type:"firstthen",sv:"Först lugn, sedan lek",en:"First calm, then play",emoji:"📋",color:"#9683C2",pages:[
     {id:"first",emoji:"🌬️",photo:null,sv:"Andas lugnt",en:"Breathe calmly",timer:{on:true,type:"ring",min:2,color:"#8FBFA1"}},
     {id:"then",emoji:"🪀",photo:null,sv:"Lek",en:"Play",timer:{on:true,type:"monster",min:15,color:"#E89B89"}},
-  ]},
-  {id:"s_fairytale",example:true,type:"sequence",sv:"Pärlan och drömskeppet",en:"Pearl and the dream ship",emoji:"🌙",color:"#9683C2",pages:[
-    {id:"p1",emoji:"🌙",photo:null,sv:"Varje kväll, i den stund då mörkret lade sig mjukt som ett tyg över taken, kom ett litet skepp seglande genom Pärlas fönster. Det var byggt av gammalt månsken och tystnade vinden när det närmade sig.",en:"Every evening, in the moment when darkness settled soft as cloth across the rooftops, a little ship came sailing through Pearl's window. It was built of old moonlight, and the wind grew quiet as it drew near."},
-    {id:"p2",emoji:"⛵",photo:null,sv:"Vid rodret stod en gammal man vars skägg var vitt som dimma och vars ögon var mörka som djupvatten. Han sa ingenting. Han sträckte bara ut sin hand.",en:"At the helm stood an old man whose beard was white as mist and whose eyes were dark as deep water. He said nothing. He only held out his hand.",timer:{on:true,type:"wave",min:1,color:"#8AAFD2"}},
-    {id:"p3",emoji:"🌊",photo:null,sv:"De seglade ut över Sömnhavet. Vågorna rörde sig som andetag — långa, lugna, ett i taget. Långt under dem lyste något kallt och vackert i djupet.",en:"They sailed out across the Sea of Sleep. The waves moved like breathing — long, calm, one at a time. Far beneath them something cold and beautiful glowed in the deep."},
-    {id:"p4",emoji:"🐳",photo:null,sv:"En val steg upp ur mörkret, så stilla att vattnet knappt rörde sig. Den lade sig under skeppet och bar det framåt, med ett andetag som varade en hel natt.",en:"A whale rose from the darkness, so gently that the water barely moved. It settled beneath the ship and carried it forward, on a single breath that lasted all night."},
-    {id:"p5",emoji:"🏝️",photo:null,sv:"Vid Drömlandets kust låg sanden varm, alldeles stilla. Inga vågor nådde dit. Bara ljuset från stjärnorna, och tystnaden, och en känsla av att allting fick vara precis som det var.",en:"At the shore of Dreamland the sand lay warm and perfectly still. No waves reached there. Only the light of the stars, and the silence, and a feeling that everything was allowed to be exactly as it was.",timer:{on:true,type:"sun",min:1,color:"#D9B868"}},
-    {id:"p6",emoji:"🌌",photo:null,sv:"Kaptenen satt bredvid henne en lång stund utan att säga något. Till sist viskade han: \"Vi seglar hem igen när du är redo.\" Och Pärla slöt ögonen. Godnatt.",en:"The captain sat beside her for a long while without speaking. At last he whispered: \"We sail home again when you are ready.\" And Pearl closed her eyes. Goodnight."},
   ]},
 ];
 
@@ -1560,7 +1560,7 @@ function ImmersiveChrome({c,t,onClose,activity,W,H,hideLabel,doneEmoji="🌅",la
           {/* tap anywhere to peek the time, or swipe right to bring the controls back */}
           {hidden&&<div onClick={toggleT} onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={endShow} style={{position:"absolute",inset:0,zIndex:3,background:"transparent"}}/>}
           {hidden&&(
-            <div aria-hidden style={{position:"absolute",left:36,right:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 79px)",textAlign:"center",fontFamily:G.font,fontWeight:500,fontSize:Math.round(big*0.16),letterSpacing:-1,color:"#F4F7FF",textShadow:"0 2px 32px rgba(0,0,0,0.45), 0 0 60px rgba(120,170,255,0.3)",fontVariantNumeric:"tabular-nums",opacity:tPeek?1:0,transform:`translateY(calc(50% + ${tPeek?0:8}px))`,transition:tNoFade?"none":"opacity .5s ease, transform .5s ease",pointerEvents:"none",zIndex:4}}>{c.label}</div>
+            <div aria-hidden style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 52px)",textAlign:"center",fontFamily:G.font,fontWeight:500,fontSize:Math.round(big*0.16),letterSpacing:-1,color:"#F4F7FF",textShadow:"0 2px 32px rgba(0,0,0,0.45), 0 0 60px rgba(120,170,255,0.3)",fontVariantNumeric:"tabular-nums",opacity:tPeek?1:0,transform:`translateY(${tPeek?0:8}px)`,transition:tNoFade?"none":"opacity .5s ease, transform .5s ease",pointerEvents:"none",zIndex:4}}>{c.label}</div>
           )}
           <div onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={endHide} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 30px)",display:"flex",justifyContent:"center",zIndex:4,transform:hidden?`translateX(-${Math.round(W*0.62)}px)`:"translateX(0)",opacity:hidden?0:1,pointerEvents:hidden?"none":"auto",transition:ease}}>
             <RingControl c={c} color={color} t={t} variant="glass" digitSize={Math.round(big*0.16)}/>
@@ -5493,6 +5493,32 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
   const[stepEmoji,setStepEmoji]=useState("");
   const[stepPhoto,setStepPhoto]=useState(null);
   const[showStepE,setShowStepE]=useState(false);
+  const[stepSheet,setStepSheet]=useState(null); // null | {id:string|"new", text, emoji, photo, timerMin, timerType, timerOn}
+  const openStepSheet=(s)=>setStepSheet({
+    id:s?.id||"new",
+    text:s?.text||"",
+    emoji:s?.emoji||"✅",
+    photo:s?.photo||null,
+    timerMin:s?.timerMin||5,
+    timerType:s?.timerType||"sector",
+    timerOn:!!(s?.timerMin&&s.timerMin>0),
+  });
+  const saveStepSheet=()=>{
+    if(!stepSheet)return;
+    const saved={
+      text:stepSheet.text,
+      emoji:stepSheet.emoji,
+      photo:stepSheet.photo,
+      timerMin:stepSheet.timerOn?stepSheet.timerMin:0,
+      timerType:stepSheet.timerType,
+    };
+    if(stepSheet.id==="new"){
+      setSteps(ss=>[...ss,{id:uid(),...saved}]);
+    } else {
+      setSteps(ss=>ss.map(x=>x.id===stepSheet.id?{...x,...saved}:x));
+    }
+    setStepSheet(null);
+  };
   const[editStepId,setEditStepId]=useState(null); // step currently being edited inline
   const[editStepTxt,setEditStepTxt]=useState("");
   const[editStepEmojiOpen,setEditStepEmojiOpen]=useState(false);
@@ -5783,14 +5809,17 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
           dark
         >
         <ELabel>{t.actTime}</ELabel>
-        <div style={{display:"flex",gap:10,marginBottom:18}}>
-          <div style={{flex:1}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>
+          <div>
             <div style={{fontFamily:G.font,fontWeight:500,fontSize:10,color:edPal().text3,letterSpacing:.5,marginBottom:4}}>{t.timeStart}</div>
             <input type="time" value={time} onChange={e=>setTime(e.target.value)} className="lt-input" style={{...EINP(),marginBottom:0}}/>
           </div>
-          <div style={{flex:1}}>
+          <div>
             <div style={{fontFamily:G.font,fontWeight:500,fontSize:10,color:edPal().text3,letterSpacing:.5,marginBottom:4}}>{t.timeEnd}</div>
-            <input type="time" value={endTime} onChange={e=>setEndTime(e.target.value)} className="lt-input" style={{...EINP(),marginBottom:0}}/>
+            <label style={{...EINP(),marginBottom:0,display:"flex",alignItems:"center",cursor:"pointer",position:"relative",boxSizing:"border-box"}}>
+              <span style={{color:endTime?undefined:edPal().text3,fontWeight:endTime?600:400}}>{endTime||"--:--"}</span>
+              <input type="time" value={endTime} onChange={e=>setEndTime(e.target.value)} style={{position:"absolute",inset:0,opacity:0,width:"100%",height:"100%",cursor:"pointer",zIndex:1}}/>
+            </label>
           </div>
         </div>
         <ELabel>{t.repeat}</ELabel>
@@ -5815,6 +5844,7 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
         </Section>
 
         {/* ── Checklist ── */}
+        {/* ── Checklista ── micro-sheet design ── */}
         <Section
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>}
           title={t.steps}
@@ -5822,163 +5852,174 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
           delay={0.22}
           dark
         >
-        {steps.map(s=>{
-          const editing=editStepId===s.id;
-          const startEdit=()=>{setEditStepId(s.id);setEditStepTxt(s.text||"");setEditStepEmojiOpen(false);};
-          const saveEdit=()=>{const v=editStepTxt.trim();setSteps(ss=>ss.map(x=>x.id===s.id?{...x,text:v||x.text}:x));setEditStepId(null);setEditStepEmojiOpen(false);};
+        <style>{`
+          @keyframes stepRowIn{0%{opacity:0;transform:translateY(-5px) scale(0.98)}100%{opacity:1;transform:translateY(0) scale(1)}}
+          @keyframes stepSheetIn{0%{transform:translateY(100%)}100%{transform:translateY(0)}}
+          @keyframes stepBgIn{0%{opacity:0}100%{opacity:1}}
+        `}</style>
+
+        {/* Step rows */}
+        {steps.map((s,i)=>{
+          const dk=isDark();
+          const hasTimer=!!(s.timerMin&&s.timerMin>0);
+          const accentC=color&&color!=="#FFFFFF"&&color!=="#1F1B2E"?color:S.h;
           return(
-          <div key={s.id} style={{background:isDark()?edPal().cardBg:G.white,borderRadius:12,border:`1px solid ${editing?(S.h+"66"):(isDark()?edPal().cardBorder:G.border)}`,marginBottom:8,boxShadow:editing?`0 0 0 3px ${S.h}1A`:(isDark()?"none":"0 1px 3px rgba(31,27,46,0.04)"),animation:"stepRowIn 0.42s cubic-bezier(0.32, 0.72, 0, 1) both",overflow:"hidden",transition:"border-color .25s ease, box-shadow .25s ease"}}>
-            <style>{`@keyframes stepRowIn{0%{opacity:0;transform:translateY(-6px) scale(0.98)}100%{opacity:1;transform:translateY(0) scale(1)}}`}</style>
-            <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px"}}>
-              {/* Emoji / photo tile — tappable to change (in edit mode opens picker) */}
-              <button onClick={()=>{ if(!editing) startEdit(); setEditStepEmojiOpen(o=>!o); }} aria-label={lang==="sv"?"Byt bild/emoji":"Change image/emoji"} className="lt-press" style={{flexShrink:0,padding:0,border:editing?`1px solid ${S.h}55`:"none",borderRadius:9,background:"transparent",cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
-                {s.photo
-                  ? <div style={{width:32,height:32,borderRadius:8,overflow:"hidden",background:"#000"}}><img src={s.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/></div>
-                  : <span style={{fontSize:17,width:32,height:32,display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{s.emoji}</span>}
+            <div key={s.id}
+              onClick={()=>openStepSheet(s)}
+              className="lt-press-soft"
+              style={{
+                display:"flex",alignItems:"center",gap:10,
+                padding:"11px 4px",
+                borderBottom:i<steps.length-1?`1px solid ${dk?"rgba(255,255,255,0.05)":"rgba(31,27,46,0.05)"}` :"none",
+                cursor:"pointer",
+                animation:"stepRowIn 0.35s cubic-bezier(0.32,0.72,0,1) both",
+              }}>
+              <div style={{
+                width:20,height:20,borderRadius:6,flexShrink:0,
+                background:dk?"rgba(168,201,176,0.1)":"rgba(104,141,114,0.08)",
+                border:`1px solid ${dk?"rgba(168,201,176,0.16)":"rgba(104,141,114,0.14)"}`,
+                display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:9,fontWeight:800,
+                color:dk?"rgba(168,201,176,0.65)":"rgba(88,130,96,0.7)",
+                fontVariantNumeric:"tabular-nums",
+              }}>{i+1}</div>
+              <div style={{
+                width:36,height:36,borderRadius:11,flexShrink:0,
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,
+                background:s.photo?"transparent":(dk?`${accentC}14`:`${accentC}12`),
+                border:`1px solid ${dk?`${accentC}20`:`${accentC}20`}`,
+                overflow:"hidden",
+              }}>
+                {s.photo?<img src={s.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(s.emoji||"✅")}
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontFamily:G.font,fontSize:14,fontWeight:600,color:dk?edPal().text:G.ink,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{s.text||t.noName}</div>
+                {hasTimer&&(
+                  <div style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:3,padding:"2px 7px",borderRadius:6,
+                    background:dk?"rgba(134,182,212,0.1)":"rgba(85,126,158,0.07)",
+                    border:`1px solid ${dk?"rgba(134,182,212,0.18)":"rgba(85,126,158,0.14)"}`,
+                  }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke={dk?"rgba(134,182,212,0.8)":"#557E9E"} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>
+                    <span style={{fontFamily:G.font,fontSize:10,fontWeight:700,color:dk?"rgba(134,182,212,0.8)":"#557E9E"}}>{s.timerMin} {t.min}</span>
+                  </div>
+                )}
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={dk?"rgba(110,104,130,0.4)":"rgba(31,27,46,0.22)"} strokeWidth="2" strokeLinecap="round" style={{flexShrink:0}}><path d="M9 18l6-6-6-6"/></svg>
+              <button
+                onClick={e=>{e.stopPropagation();setSteps(ss=>ss.filter(x=>x.id!==s.id));}}
+                aria-label={lang==="sv"?"Ta bort":"Remove"}
+                style={{width:28,height:28,borderRadius:8,border:"none",background:"transparent",cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:dk?"rgba(110,104,130,0.5)":"rgba(31,27,46,0.28)",transition:"color .15s, background .15s",}}
+              >
+                <IconX size={12}/>
               </button>
-              {editing
-                ? <input value={editStepTxt} onChange={e=>setEditStepTxt(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")saveEdit();if(e.key==="Escape")setEditStepId(null);}} className="lt-input" style={{...EINP(),marginBottom:0,flex:1,padding:"8px 11px",fontSize:16}}/>
-                : <button onClick={startEdit} className="lt-press-soft" style={{flex:1,minWidth:0,textAlign:"left",background:"transparent",border:"none",cursor:"pointer",padding:"2px 0",display:"inline-flex",alignItems:"center",gap:7}}>
-                    <span style={{fontFamily:G.font,fontWeight:500,color:edPal().text,fontSize:14,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{s.text}</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={edPal().text4} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0,opacity:0.7}}><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                  </button>}
-              {editing
-                ? <button onClick={saveEdit} className="lt-press" style={{flexShrink:0,padding:"7px 14px",borderRadius:9,border:"none",background:S.h,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:13,cursor:"pointer"}}>{t.save}</button>
-                : <>
-                    {/* Per-step timer toggle */}
-                    <button onClick={()=>{if(typeof navigator!=="undefined"&&navigator.vibrate)navigator.vibrate(10);setSteps(ss=>ss.map(x=>x.id===s.id?{...x,timerMin:x.timerMin?0:10}:x));}} aria-label={lang==="sv"?"Timer på steget":"Timer on step"} className="lt-press" style={{flexShrink:0,display:"inline-flex",alignItems:"center",gap:5,padding:s.timerMin?"5px 9px 5px 7px":"6px",borderRadius:9,border:`1px solid ${s.timerMin?(color&&color!=="#FFFFFF"&&color!=="#1F1B2E"?color:S.h)+"55":(isDark()?edPal().cardBorder:G.border)}`,background:s.timerMin?(color&&color!=="#FFFFFF"&&color!=="#1F1B2E"?color:S.h)+(isDark()?"24":"16"):"transparent",color:s.timerMin?(isDark()?shadeHex(color&&color!=="#FFFFFF"&&color!=="#1F1B2E"?color:S.h,0.4):shadeHex(color&&color!=="#FFFFFF"&&color!=="#1F1B2E"?color:S.h,-0.35)):edPal().text3,cursor:"pointer",transition:"all .25s ease"}}>
-                      {s.timerMin
-                        ? <TimerIcon type={s.timerType||timerType||"sector"} size={14} color="currentColor"/>
-                        : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>}
-                      {s.timerMin?<span style={{fontFamily:G.font,fontWeight:700,fontSize:12,fontVariantNumeric:"tabular-nums"}}>{s.timerMin}m</span>:null}
-                    </button>
-                    <button onClick={()=>setSteps(ss=>ss.filter(x=>x.id!==s.id))} aria-label={lang==="sv"?"Ta bort steg":"Remove step"} style={{background:"none",border:"none",color:edPal().text3,cursor:"pointer",padding:6,display:"inline-flex",alignItems:"center",justifyContent:"center"}}><IconX size={13}/></button>
-                  </>}
             </div>
-            {/* Inline image/emoji chooser for editing this step */}
-            {editing&&editStepEmojiOpen&&(
-              <div style={{padding:"0 12px 12px"}}>
-                <div style={{display:"flex",gap:7,marginBottom:editStepEmojiOpen==="emoji"?10:0,flexWrap:"wrap"}}>
-                  <button onMouseDown={e=>e.preventDefault()} onClick={()=>openGlobalEmoji({value:s.emoji,color:S.h,onPick:em=>{setSteps(ss=>ss.map(x=>x.id===s.id?{...x,emoji:em,photo:null}:x));}})} className="lt-press" style={{flex:1,minWidth:120,padding:"10px 12px",borderRadius:10,border:`1px solid ${isDark()?edPal().cardBorderHi:G.border}`,background:isDark()?edPal().cardBg2:G.white,color:edPal().text2,fontFamily:G.font,fontWeight:600,fontSize:12.5,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7}}>
-                    <span style={{fontSize:15}}>🙂</span>{lang==="sv"?"Byt emoji":"Change emoji"}
-                  </button>
-                  <label className="lt-press" style={{flex:1,minWidth:120,padding:"10px 12px",borderRadius:10,border:`1px solid ${isDark()?edPal().cardBorderHi:G.border}`,background:isDark()?edPal().cardBg2:G.white,color:edPal().text2,fontFamily:G.font,fontWeight:600,fontSize:12.5,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.75,flexShrink:0}}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                    <span>{s.photo?(lang==="sv"?"Byt bild":"Change photo"):(lang==="sv"?"Lägg till bild":"Add photo")}</span>
-                    <input type="file" accept="image/*" onChange={e=>{
-                      const f=e.target.files?.[0]; if(!f) return;
-                      setCropTarget(s.id);
-                      readToCrop(f);
-                      e.target.value="";
-                    }} style={{display:"none"}}/>
-                  </label>
-                  {s.photo&&<button onClick={()=>setSteps(ss=>ss.map(x=>x.id===s.id?{...x,photo:null}:x))} className="lt-press" style={{padding:"10px 12px",borderRadius:10,border:"none",background:isDark()?"rgba(239,68,68,0.16)":"#FEF2F2",color:"#EF4444",fontFamily:G.font,fontWeight:600,fontSize:12,cursor:"pointer",flexShrink:0}}>{lang==="sv"?"Ta bort bild":"Remove photo"}</button>}
-                </div>
-              </div>
-            )}
-            {/* Inline minute stepper + per-step timer TYPE picker — shown only when this step has a timer */}
-            {s.timerMin&&!editing?(
-              <>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,padding:"10px 12px",borderTop:`1px solid ${isDark()?edPal().hairline:G.border}`,background:isDark()?"rgba(255,255,255,0.02)":`${S.h}08`}}>
-                <span style={{fontFamily:G.font,fontWeight:500,fontSize:12.5,color:edPal().text2}}>{lang==="sv"?"Tid på steget":"Time for this step"}</span>
-                <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <button onClick={()=>{if(typeof navigator!=="undefined"&&navigator.vibrate)navigator.vibrate(8);setSteps(ss=>ss.map(x=>x.id===s.id?{...x,timerMin:Math.max(1,Math.round(((x.timerMin||10)-5)/5)*5||1)}:x));}} aria-label="−5" className="lt-press" style={{width:30,height:30,borderRadius:9,border:`1px solid ${isDark()?edPal().cardBorderHi:G.border}`,background:isDark()?edPal().cardBg2:G.white,color:edPal().text,fontSize:18,fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>−</button>
-                  <span style={{fontFamily:G.font,fontWeight:700,fontSize:15,color:edPal().text,minWidth:58,textAlign:"center",fontVariantNumeric:"tabular-nums"}}>{s.timerMin} {t.min}</span>
-                  <button onClick={()=>{if(typeof navigator!=="undefined"&&navigator.vibrate)navigator.vibrate(8);setSteps(ss=>ss.map(x=>x.id===s.id?{...x,timerMin:Math.min(180,Math.round(((x.timerMin||10)+5)/5)*5)}:x));}} aria-label="+5" className="lt-press" style={{width:30,height:30,borderRadius:9,border:`1px solid ${isDark()?edPal().cardBorderHi:G.border}`,background:isDark()?edPal().cardBg2:G.white,color:edPal().text,fontSize:18,fontWeight:600,cursor:"pointer",display:"inline-flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>+</button>
-                </div>
-              </div>
-              <div style={{display:"flex",alignItems:"center",gap:9,padding:"9px 12px 11px",borderTop:`1px solid ${isDark()?edPal().hairline:G.border}`,background:isDark()?"rgba(255,255,255,0.02)":`${S.h}08`,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
-                <span style={{fontFamily:G.font,fontWeight:500,fontSize:12.5,color:edPal().text2,flexShrink:0}}>{t.timerType}</span>
-                <div style={{display:"flex",gap:6}}>
-                  {TTYPES.map(k=>{const act=(s.timerType||timerType)===k;const hc=(color&&color!=="#FFFFFF"&&color!=="#1F1B2E")?color:S.h;return(
-                    <button key={k} onClick={()=>{if(typeof navigator!=="undefined"&&navigator.vibrate)navigator.vibrate(8);setSteps(ss=>ss.map(x=>x.id===s.id?{...x,timerType:k}:x));}} aria-label={tlbl(k,t)} className="lt-press" style={{flexShrink:0,width:36,height:36,borderRadius:10,display:"inline-flex",alignItems:"center",justifyContent:"center",cursor:"pointer",border:`1px solid ${act?hc:(isDark()?edPal().cardBorder:G.border)}`,background:act?hc:(isDark()?edPal().cardBg2:G.white),color:act?"#fff":edPal().text2,transition:"all .2s ease"}}>
-                      <TimerIcon type={k} size={17} color={act?"#fff":edPal().text2}/>
-                    </button>
-                  );})}
-                </div>
-              </div>
-              </>
-            ):null}
-          </div>
           );
         })}
-        {/* Step adder: bigger and more breathable than before. Three rows:
-            (1) Preview tile with the chosen emoji/photo
-            (2) Two clear pill-buttons: "Välj emoji" + "Lägg till bild"
-            (3) Text input + add button on its own row */}
-        <div ref={stepAdderRef} style={{background:isDark()?edPal().cardBg:G.white,borderRadius:14,border:`1px solid ${isDark()?edPal().cardBorder:G.border}`,padding:14}}>
-          {/* Row 1: preview + chooser buttons */}
-          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
-            <div style={{
-              width:56,height:56,borderRadius:14,flexShrink:0,
-              border:stepPhoto?"none":`1px solid ${isDark()?edPal().cardBorder:G.border}`,
-              background:stepPhoto?"#000":`linear-gradient(140deg, ${S.h}10, ${S.h}20)`,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              overflow:"hidden",
-              transition:"background .3s ease, border-color .3s ease",
-            }}>
-              <style>{`@keyframes stepPreviewPop{0%{opacity:0;transform:scale(0.6)}60%{transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}`}</style>
-              {stepPhoto
-                ? <img key="ph" src={stepPhoto} alt="" style={{width:"100%",height:"100%",objectFit:"cover",animation:"stepPreviewPop .34s cubic-bezier(.34,1.56,.64,1) both"}}/>
-                : (stepEmoji?<span key={stepEmoji} style={{fontSize:28,animation:"stepPreviewPop .34s cubic-bezier(.34,1.56,.64,1) both"}}>{stepEmoji}</span>:<LumaSymbol size={32} color={S.h}/>)}
-            </div>
-            <div style={{flex:1,display:"flex",flexDirection:"column",gap:6}}>
-              <button onMouseDown={e=>e.preventDefault()} onClick={()=>openGlobalEmoji({value:stepEmoji,color:S.h,onPick:setStepEmoji})} style={{
-                padding:"9px 12px",borderRadius:10,
-                border:`1px solid ${isDark()?edPal().cardBorderHi:G.border}`,background:isDark()?edPal().cardBg2:G.white,
-                color:edPal().text2,fontFamily:G.font,fontWeight:500,fontSize:12.5,
-                cursor:"pointer",textAlign:"left",
-                WebkitTapHighlightColor:"transparent",
-              }}>{stepEmoji?(lang==="sv"?"Byt emoji":"Change emoji"):(lang==="sv"?"Välj emoji":"Pick emoji")}</button>
-              <label style={{
-                padding:"9px 12px",borderRadius:10,
-                border:`1px solid ${isDark()?edPal().cardBorderHi:G.border}`,background:isDark()?edPal().cardBg2:G.white,
-                color:edPal().text2,fontFamily:G.font,fontWeight:500,fontSize:12.5,
-                cursor:"pointer",
-                display:"flex",alignItems:"center",gap:7,
+
+        {/* Add step — collapsed button */}
+        <button onClick={()=>openStepSheet(null)} className="lt-press-soft" style={{
+          display:"flex",alignItems:"center",gap:11,width:"100%",
+          padding:"12px 14px",borderRadius:14,
+          border:`1.5px dashed ${isDark()?"rgba(168,201,176,0.2)":"rgba(104,141,114,0.2)"}`,
+          background:isDark()?"rgba(168,201,176,0.025)":"rgba(168,201,176,0.04)",
+          cursor:"pointer",marginTop:steps.length>0?8:0,
+        }}>
+          <div style={{width:30,height:30,borderRadius:9,flexShrink:0,
+            background:isDark()?"rgba(168,201,176,0.1)":"rgba(104,141,114,0.09)",
+            border:`1px solid ${isDark()?"rgba(168,201,176,0.16)":"rgba(104,141,114,0.16)"}`,
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isDark()?"rgba(168,201,176,0.7)":"rgba(88,130,96,0.75)"} strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </div>
+          <div style={{textAlign:"left"}}>
+            <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:isDark()?"rgba(168,201,176,0.75)":"rgba(88,130,96,0.85)"}}>{lang==="sv"?"Lägg till ett steg":"Add a step"}</div>
+            <div style={{fontFamily:G.font,fontWeight:400,fontSize:11,color:edPal().text3,marginTop:1}}>{lang==="sv"?"Tryck för att lägga till i checklistan":"Tap to add to the checklist"}</div>
+          </div>
+        </button>
+
+        {/* ── Step micro-sheet ── */}
+        {stepSheet&&(()=>{
+          const dk=isDark();
+          const ss=stepSheet;
+          const accentC=color&&color!=="#FFFFFF"&&color!=="#1F1B2E"?color:S.h;
+          return(
+            <>
+              <div onClick={()=>setStepSheet(null)} style={{position:"fixed",inset:0,zIndex:9800,background:"rgba(8,5,18,0.6)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",animation:"stepBgIn .25s ease both"}}/>
+              <div style={{
+                position:"fixed",left:0,right:0,bottom:0,zIndex:9801,
+                background:dk?"linear-gradient(180deg,#1A162A 0%,#120F1E 100%)":"linear-gradient(180deg,#FFFFFF 0%,#F8F5FD 100%)",
+                borderRadius:"28px 28px 0 0",
+                border:`1px solid ${dk?"rgba(255,255,255,0.09)":"rgba(31,27,46,0.06)"}`,
+                borderBottom:"none",
+                boxShadow:dk?"0 -20px 60px rgba(0,0,0,0.55)":"0 -12px 40px rgba(31,27,46,0.1)",
+                animation:"stepSheetIn .32s cubic-bezier(0.32,0.72,0,1) both",
+                paddingBottom:"calc(env(safe-area-inset-bottom,0px) + 20px)",
               }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.7,flexShrink:0}}>
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                  <circle cx="12" cy="13" r="4"/>
-                </svg>
-                <span>{stepPhoto?(lang==="sv"?"Byt bild":"Change photo"):(lang==="sv"?"Lägg till bild":"Add photo")}</span>
-                <input type="file" accept="image/*" onChange={e=>{
-                  const f=e.target.files?.[0]; if(!f) return;
-                  setCropTarget("newstep");
-                  readToCrop(f);
-                  e.target.value="";
-                }} style={{display:"none"}}/>
-              </label>
-              {stepPhoto&&<button onClick={()=>setStepPhoto(null)} style={{
-                padding:"6px 10px",borderRadius:9,
-                border:"none",background:isDark()?"rgba(239,68,68,0.16)":"#FEF2F2",color:"#EF4444",
-                fontFamily:G.font,fontWeight:500,fontSize:11,
-                cursor:"pointer",alignSelf:"flex-start",
-              }}>{lang==="sv"?"Ta bort bild":"Remove photo"}</button>}
-            </div>
-          </div>
-          {/* Inline emoji picker — opens right here, under the chooser buttons,
-              instead of far below the whole section. Scrolled into view on open. */}
-          {/* Row 2: text input + add */}
-          <div style={{display:"flex",gap:7}}>
-            <input value={stepTxt} onChange={e=>setStepTxt(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addStep()} className="lt-input" style={{...EINP(),marginBottom:0,flex:1}} placeholder={t.stepPH}/>
-            {(()=>{
-              const canAdd=!!(stepTxt.trim()||stepPhoto||stepEmoji);
-              return(
-            <button onClick={addStep} disabled={!canAdd} style={{
-              padding:"0 18px",borderRadius:12,border:"none",
-              background:canAdd?S.h:(isDark()?edPal().cardBorder:G.border),
-              color:"#fff",fontFamily:G.font,fontWeight:700,
-              cursor:canAdd?"pointer":"default",
-              fontSize:16,
-              opacity:canAdd?1:0.5,
-              transition:"all .25s ease",
-            }}>+ {lang==="sv"?"Lägg till":"Add"}</button>
-              );
-            })()}
-          </div>
-        </div>
+                <div style={{width:36,height:4,borderRadius:2,background:dk?"rgba(255,255,255,0.16)":"rgba(31,27,46,0.1)",margin:"12px auto 0"}}/>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 20px 12px",borderBottom:`1px solid ${dk?"rgba(255,255,255,0.06)":"rgba(31,27,46,0.06)"}`}}>
+                  <div style={{fontFamily:G.serif,fontSize:16,fontWeight:700,color:dk?edPal().text:G.ink}}>
+                    {ss.id==="new"?(lang==="sv"?"Nytt steg":"New step"):(lang==="sv"?"Redigera steg":"Edit step")}
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>setStepSheet(null)} style={{padding:"7px 14px",borderRadius:10,border:`1px solid ${dk?"rgba(255,255,255,0.1)":G.border}`,background:dk?"rgba(255,255,255,0.07)":G.white,color:dk?edPal().text2:G.ink2,fontFamily:G.font,fontWeight:600,fontSize:13,cursor:"pointer"}}>{t.cancel}</button>
+                    <button onClick={saveStepSheet} style={{padding:"7px 14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#A8C9B0,#5A8A68)",color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:13,cursor:"pointer",boxShadow:"0 4px 12px rgba(88,138,100,0.28)"}}>{t.save}</button>
+                  </div>
+                </div>
+                <div style={{padding:"16px 20px",display:"flex",flexDirection:"column",gap:12}}>
+                  <div style={{display:"flex",gap:12,alignItems:"center"}}>
+                    <button
+                      onClick={()=>openGlobalEmoji({value:ss.emoji,color:accentC,onPick:em=>setStepSheet(x=>({...x,emoji:em,photo:null}))})}
+                      className="lt-press"
+                      style={{width:52,height:52,borderRadius:16,flexShrink:0,border:`1px solid ${dk?`${accentC}28`:`${accentC}30`}`,background:ss.photo?"transparent":(dk?`${accentC}16`:`${accentC}14`),display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,cursor:"pointer",padding:0,overflow:"hidden",boxShadow:`inset 0 1px 0 rgba(255,255,255,${dk?"0.1":"0.5"})`}}>
+                      {ss.photo?<img src={ss.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(ss.emoji||"✅")}
+                    </button>
+                    <input
+                      value={ss.text}
+                      onChange={e=>setStepSheet(x=>({...x,text:e.target.value}))}
+                      onKeyDown={e=>e.key==="Enter"&&saveStepSheet()}
+                      autoFocus
+                      placeholder={lang==="sv"?"Beskriv steget…":"Describe the step…"}
+                      style={{flex:1,background:dk?"rgba(0,0,0,0.28)":G.white,border:`1px solid ${dk?"rgba(255,255,255,0.12)":G.border}`,borderRadius:14,padding:"13px 15px",fontFamily:G.serif,fontSize:17,fontWeight:700,color:dk?edPal().text:G.ink,outline:"none",WebkitAppearance:"none",boxShadow:dk?"inset 0 2px 6px rgba(0,0,0,0.25)":"0 2px 6px rgba(31,27,46,0.04), inset 0 1px 0 rgba(255,255,255,0.8)",caretColor:accentC}}
+                    />
+                  </div>
+                  <label className="lt-press-soft" style={{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",borderRadius:12,border:`1px solid ${dk?"rgba(255,255,255,0.08)":G.border}`,background:dk?"rgba(255,255,255,0.04)":G.white,cursor:"pointer",boxShadow:dk?"none":"0 1px 4px rgba(31,27,46,0.04), inset 0 1px 0 rgba(255,255,255,0.9)"}}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.55,color:dk?edPal().text2:G.ink2}}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <span style={{fontFamily:G.font,fontSize:14,fontWeight:500,color:dk?edPal().text2:G.ink2,flex:1}}>{ss.photo?(lang==="sv"?"Byt bild":"Change photo"):(lang==="sv"?"Lägg till bild":"Add photo")}</span>
+                    {ss.photo&&<button onClick={e=>{e.preventDefault();setStepSheet(x=>({...x,photo:null}));}} style={{padding:"4px 10px",borderRadius:8,border:"none",background:"rgba(239,68,68,0.1)",color:"#EF4444",fontFamily:G.font,fontSize:12,fontWeight:600,cursor:"pointer"}}>{lang==="sv"?"Ta bort":"Remove"}</button>}
+                    <input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(!f)return;setCropTarget(ss.id==="new"?"newstep":ss.id);readToCrop(f);e.target.value="";}} style={{display:"none"}}/>
+                  </label>
+                  <div onClick={()=>setStepSheet(x=>({...x,timerOn:!x.timerOn}))} className="lt-press-soft" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:14,cursor:"pointer",background:ss.timerOn?(dk?`${accentC}10`:`${accentC}0C`):(dk?"rgba(255,255,255,0.04)":G.white),border:`1px solid ${ss.timerOn?(dk?`${accentC}26`:`${accentC}28`):(dk?"rgba(255,255,255,0.08)":G.border)}`,boxShadow:ss.timerOn?"none":(dk?"none":"0 1px 4px rgba(31,27,46,0.04), inset 0 1px 0 rgba(255,255,255,0.9)"),transition:"all .2s ease"}}>
+                    <div>
+                      <div style={{fontFamily:G.font,fontWeight:600,fontSize:14,color:dk?edPal().text:G.ink}}>{lang==="sv"?"Timer för steget":"Step timer"}</div>
+                      <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:dk?edPal().text3:G.ink3,marginTop:2}}>{ss.timerOn?`${ss.timerMin} ${t.min} · ${tlbl(ss.timerType,t)}`:(lang==="sv"?"Av":"Off")}</div>
+                    </div>
+                    <Toggle on={ss.timerOn} onChange={()=>setStepSheet(x=>({...x,timerOn:!x.timerOn}))} color={accentC}/>
+                  </div>
+                  {ss.timerOn&&(
+                    <div style={{padding:"14px",borderRadius:14,background:dk?"rgba(0,0,0,0.18)":"rgba(31,27,46,0.025)",border:`1px solid ${dk?"rgba(255,255,255,0.07)":G.border}`,display:"flex",flexDirection:"column",gap:12,animation:"stepRowIn 0.28s cubic-bezier(0.32,0.72,0,1) both"}}>
+                      <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                        {TTYPES.map(k=>{
+                          const on=ss.timerType===k;
+                          return(
+                            <button key={k} onClick={e=>{e.stopPropagation();setStepSheet(x=>({...x,timerType:k}));}} className="lt-press" style={{flex:1,minWidth:0,padding:"8px 4px 7px",borderRadius:10,border:"1px solid",borderColor:on?(dk?`${accentC}50`:`${accentC}55`):(dk?"rgba(255,255,255,0.08)":G.border),background:on?(dk?`${accentC}18`:`${accentC}10`):(dk?"rgba(255,255,255,0.03)":G.white),color:on?(dk?shadeHex(accentC,0.45):shadeHex(accentC,-0.3)):(dk?edPal().text3:G.ink3),display:"flex",flexDirection:"column",alignItems:"center",gap:4,cursor:"pointer",fontFamily:G.font,fontWeight:600,fontSize:9,transition:"all .2s ease"}}>
+                              <TimerIcon type={k} size={14} color="currentColor"/>
+                              {tlbl(k,t)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:12}}>
+                        <input type="range" min={1} max={60} value={ss.timerMin} onChange={e=>{e.stopPropagation();setStepSheet(x=>({...x,timerMin:+e.target.value}));}} onClick={e=>e.stopPropagation()} style={{flex:1,accentColor:accentC}}/>
+                        <span style={{fontFamily:G.serif,fontWeight:700,fontSize:17,color:dk?edPal().text:G.ink,minWidth:42,textAlign:"right"}}>{ss.timerMin}m</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          );
+        })()}
         </Section>
+        {/* ── Timer ── */}
         {/* ── Timer ── */}
         <Section
           icon={<TimerIcon type="sector" size={16} color="currentColor"/>}
@@ -6322,8 +6363,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
         </div>
         )}
 
-        {/* ── Card style + view — only relevant when Dag (home) screen is active ── */}
-        {tools.home&&(
+        {/* ── Card style + view ── */}
         <Section
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>}
           title={lang==="sv"?"Hur dagen visas":"How the day shows"}
@@ -6340,7 +6380,6 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
             {[["both",t.viewBoth],["list",t.viewList],["card",t.viewCard]].map(([k,lb])=><button key={k} onClick={()=>setSv(k)} style={{flex:1,padding:"10px 4px",borderRadius:13,border:`1px solid ${sv===k?(isDark()?"rgba(255,255,255,0.22)":S.h):tk().border}`,background:sv===k?(isDark()?"rgba(255,255,255,0.13)":S.h):"transparent",color:sv===k?(isDark()?"#FFFFFF":"#fff"):tk().ink2,fontFamily:G.serif,fontWeight:600,cursor:"pointer",fontSize:11,transition:"all .25s ease",boxShadow:sv===k&&isDark()?"inset 0 1px 0 rgba(255,255,255,0.25)":"none"}}>{lb}</button>)}
           </div>
         </Section>
-        )}
 
         {/* ── Visa i schemat ── */}
         <Section
@@ -6682,7 +6721,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
 }
 
 /* ═══ Communication board ═══ */
-function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal,cfg,setCfg}){
+function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal,cfg,setCfg,onScrollHdr}){
   const[spoken,setSpoken]=useState(null);
   const tabBarRef=useRef(null);
   /* Drag-to-reorder state for category pills (editor only).
@@ -7653,7 +7692,7 @@ function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
 }
 
 /* ═══ Emotion screen ═══ */
-function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoEditor}){
+function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoEditor,onScrollHdr}){
   const[sel,setSel]=useState(null);
   const[reason,setReason]=useState("");
   const[saved,setSaved]=useState(false);
@@ -7855,7 +7894,7 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
     const hasAnyEdits=Object.keys(overrides).length>0||deleted.length>0;
 
     return(
-      <div style={{flex:1,overflowY:"auto",background:"transparent",padding:"24px 22px 120px",display:"flex",flexDirection:"column",gap:18}}>
+      <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",background:"transparent",padding:"24px 22px 120px",display:"flex",flexDirection:"column",gap:18}}>
         {/* Style picker — arc vs vertical */}
         <div style={{background:tk().white,borderRadius:22,padding:"18px 20px",border:`1px solid ${tk().border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
           <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,marginBottom:6,letterSpacing:.2}}>{t.barometerStyle}</div>
@@ -8765,7 +8804,7 @@ function CustomEmotionEditor({existing,onSave,onDelete,onClose,t,lang}){
 }
 
 /* ═══ Timer screen ═══ */
-function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange}){
+function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange,onScrollHdr}){
   const S=scrPal("timer");
   const tc=cfg.timerCfg;
   const allowed=tc.allowedTypes.length>0?tc.allowedTypes:["sector"];
@@ -8802,7 +8841,7 @@ function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange}){
       if(!next.includes(tc.defaultType)) upd("defaultType",next[0]);
     };
     return(
-      <div style={{flex:1,overflowY:"auto",padding:"24px 18px 28px",display:"flex",flexDirection:"column",gap:22,background:"transparent"}}>
+      <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",padding:"24px 18px 28px",display:"flex",flexDirection:"column",gap:22,background:"transparent"}}>
         <div style={{background:tk().white,borderRadius:22,padding:"20px 20px 18px",border:`1px solid ${tk().border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
           <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,marginBottom:6,letterSpacing:.2}}>{lang==="en"?"What user sees":"Vad användaren ser"}</div>
           <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:tk().ink2,lineHeight:1.5,marginBottom:0}}>{lang==="en"?"Choose which timer types are available, and which one starts selected.":"Välj vilka timertyper som är tillgängliga, och vilken som är förvald."}</div>
@@ -8889,7 +8928,7 @@ function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange}){
 
   return(
     <>
-      <div style={{flex:1,overflowY:"auto",padding:"24px 18px 28px",display:"flex",flexDirection:"column",gap:24,background:"transparent"}}>
+      <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",padding:"24px 18px 28px",display:"flex",flexDirection:"column",gap:24,background:"transparent"}}>
         <style>{`@keyframes tmSectionIn{0%{opacity:0;transform:translateY(10px) scale(0.98)}100%{opacity:1;transform:translateY(0) scale(1)}}`}</style>
         {/* Preview + start — HERO. The timer is the hero on a soft tinted
             gradient canvas (in the timer's own colour) with a glowing orb
@@ -10234,7 +10273,7 @@ function EmojiPicker({value,onChange,color:rawColor,lang,t,onClose,title}){
         </div>
 
         {/* Emoji grid — fills the rest of the sheet, comfortable touch targets */}
-        <div ref={scrollRef} style={{flex:1,overflowY:"auto",padding:"6px 18px 20px",touchAction:"pan-y",minHeight:0,WebkitOverflowScrolling:"touch"}}>
+        <div onScroll={onScrollHdr} ref={scrollRef} style={{flex:1,overflowY:"auto",padding:"6px 18px 20px",touchAction:"pan-y",minHeight:0,WebkitOverflowScrolling:"touch"}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(48px, 1fr))",gap:7}}>
             {activeEmojis.map(em=>{const on=value===em;return(
               <button key={em} onClick={()=>handle(em)} style={{
@@ -10481,7 +10520,7 @@ function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,pa
 }
 
 /* ═══ Story viewer (fullscreen page-by-page) ═══ */
-function StoryViewer({story,lang,t,onClose,onOpenFullTimer}){
+function StoryViewer({story,lang,t,onClose}){
   const[idx,setIdx]=useState(0);
   const[showTimer,setShowTimer]=useState(false);
   // Which page's timer the FIRST-THEN view is showing (independent of `idx`,
@@ -10515,9 +10554,7 @@ function StoryViewer({story,lang,t,onClose,onOpenFullTimer}){
     const ftTimer=ftTimerPage===0?firstPage?.timer:ftTimerPage===1?thenPage?.timer:null;
     return(
       <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${story.color}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${story.color}12 0%,#FFFFFF 70%)`,display:"flex",flexDirection:"column",userSelect:"none",animation:"ftIn .25s ease"}}>
-        {ftTimer&&ftTimer.on&&((ftTimer.type==="aurora"||ftTimer.type==="sun")
-          ? (onOpenFullTimer&&onOpenFullTimer({type:ftTimer.type,totalSec:ftTimer.min*60,color:ftTimer.color}),setFtTimerPage(null),null)
-          : <FullTimer type={ftTimer.type} totalSec={ftTimer.min*60} color={ftTimer.color} t={t} autoRun={true} onClose={()=>setFtTimerPage(null)}/>)}
+        {ftTimer&&ftTimer.on&&<FullTimer type={ftTimer.type} totalSec={ftTimer.min*60} color={ftTimer.color} t={t} autoRun={true} onClose={()=>setFtTimerPage(null)}/>}
         <style>{`@keyframes ftArrow{0%{transform:translateX(0)}50%{transform:translateX(8px)}100%{transform:translateX(0)}}`}</style>
         <div style={{padding:"calc(env(safe-area-inset-top, 0px) + 14px) 22px 0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
           <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
@@ -10633,7 +10670,7 @@ function StoryViewer({story,lang,t,onClose,onOpenFullTimer}){
         </div>
         <button onClick={onClose} style={{width:44,height:44,borderRadius:22,border:`1px solid ${isDark()?"rgba(255,255,255,0.14)":tk().border}`,background:isDark()?"rgba(255,255,255,0.08)":tk().white,backdropFilter:isDark()?"blur(12px)":"none",WebkitBackdropFilter:isDark()?"blur(12px)":"none",color:isDark()?"#F4F1FA":tk().ink2,cursor:"pointer",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.16)":sh.sm,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><IconX size={16}/></button>
       </div>
-      <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:showTimer?"flex-start":"center",padding:"20px 30px",gap:20,transition:"justify-content .4s ease",position:"relative",minHeight:0}}>
+      <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:showTimer?"flex-start":"center",padding:"20px 30px",gap:20,transition:"justify-content .4s ease",position:"relative",minHeight:0}}>
         <style>{`
           @keyframes storyPageInNext{0%{opacity:0;transform:translateX(28px) scale(0.96)}55%{opacity:1}100%{opacity:1;transform:translateX(0) scale(1)}}
           @keyframes storyPageInPrev{0%{opacity:0;transform:translateX(-28px) scale(0.96)}55%{opacity:1}100%{opacity:1;transform:translateX(0) scale(1)}}
@@ -10704,7 +10741,7 @@ function StoryViewer({story,lang,t,onClose,onOpenFullTimer}){
             full-screen scenes, so on a story page they open immersively (just
             like in the schedule and First-Then), instead of as a cramped card. */}
         {hasTimer&&showTimer&&((pt.type==="aurora"||pt.type==="sun")
-          ? (onOpenFullTimer&&onOpenFullTimer({type:pt.type,totalSec:pt.min*60,color:pt.color}),setShowTimer(false),null)
+          ? <FullTimer type={pt.type} totalSec={pt.min*60} color={pt.color} t={t} autoRun={true} onClose={()=>setShowTimer(false)}/>
           : (
           <div style={{
             width:"100%",
@@ -11199,10 +11236,10 @@ function StoryEditor({story,onSave,onDel,onClose,t,lang}){
 }
 
 /* ═══ Story list screen ═══ */
-function StoryScreen({lang,t,isEditor,stories,setStories,onOpenStory,onOpenEditor}){
+function StoryScreen({lang,t,isEditor,stories,setStories,onOpenStory,onOpenEditor,onScrollHdr}){
   const S=scrPal("stories");
   return(
-    <div style={{flex:1,overflowY:"auto",background:"transparent"}}>
+    <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",background:"transparent"}}>
       <div style={{padding:"24px 22px 120px"}}>
         {stories.length===0&&!isEditor?(
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"72px 30px 60px",gap:16}}>
@@ -12501,7 +12538,7 @@ function SkylightExercise({onClose,t,lang}){
 }
 
 /* ═══ Calm screen — pick exercise ═══ */
-function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActive}){
+function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActive,onScrollHdr}){
   const S=scrPal("calm");
 
   // Tell App which immersive exercise is running. App renders the exercise at
@@ -12531,7 +12568,7 @@ function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActi
       {key:"skylight",icon:"☁️",title:t.skylight,desc:lang==="en"?"Rest your gaze on the sky":"Vila blicken mot himlen",color:"#B89DC4"},
     ];
     return(
-      <div style={{flex:1,overflowY:"auto",background:"transparent",padding:"24px 22px 120px",display:"flex",flexDirection:"column",gap:18}}>
+      <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",background:"transparent",padding:"24px 22px 120px",display:"flex",flexDirection:"column",gap:18}}>
         <div style={{background:tk().white,borderRadius:22,padding:"20px 20px 18px",border:`1px solid ${tk().border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
           <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,marginBottom:6,letterSpacing:.2}}>{lang==="en"?"Available exercises":"Tillgängliga övningar"}</div>
           <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:tk().ink2,lineHeight:1.5}}>{lang==="en"?"Choose which exercises the user can see. At least one must be enabled.":"Välj vilka övningar som syns för användaren. Minst en måste vara aktiv."}</div>
@@ -12568,7 +12605,7 @@ function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActi
     cfg.calmTools?.skylight!==false&&{key:"skylight",emoji:"☁️",title:t.skylight,desc:lang==="en"?"Rest your gaze on the sky":"Vila blicken mot himlen",color:"#B89DC4",gradFrom:"#B89DC4",gradTo:"#D5C5DD"},
   ].filter(Boolean);
   return(
-    <div style={{flex:1,overflowY:"auto",background:"transparent",animation:"calmRadialReveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both"}}>
+    <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",background:"transparent",animation:"calmRadialReveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both"}}>
       <style>{`
         @keyframes calmRadialReveal{
           0%{opacity:0;clip-path:circle(0% at 50% 50%)}
@@ -12775,7 +12812,7 @@ function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActi
    visual weight. Today prominent, past tones down,
    future waits quietly. Edit mode = tap to edit.
 ═══════════════════════════════════════════════════ */
-function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEdit,onAdd,headerTapCount,setHeaderTapCount}){
+function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEdit,onAdd,headerTapCount,setHeaderTapCount,onScrollHdr}){
   // ════════════════════════════════════════════════════════════════════════
   //  WEEKSCREEN — OVERVIEW (rhythm chart)
   //  ════════════════════════════════════════════════════════════════════════
@@ -13038,7 +13075,7 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
           at the top, which felt heavy. Putting it inside the scroll body lets
           it scroll out of view gracefully when the user scrolls down to the
           day list — the rhythm chart then sits at the top, getting more room. */}
-      <div ref={scrollBodyRef} style={{flex:1,minHeight:0,overflowY:"auto",overflowX:"hidden",overscrollBehaviorX:"none",overscrollBehaviorY:"none",WebkitOverflowScrolling:"touch",padding:"0 14px 24px"}}>
+      <div onScroll={onScrollHdr} ref={scrollBodyRef} style={{flex:1,minHeight:0,overflowY:"auto",overflowX:"hidden",overscrollBehaviorX:"none",overscrollBehaviorY:"none",WebkitOverflowScrolling:"touch",padding:"0 14px 24px"}}>
         {/* ── In-flow header: the sky banner + Vecka/Redigera row live INSIDE the
             scroll so the whole week page scrolls as one continuous surface (like
             a web page) — nothing stays pinned, no hard edge cuts the content. */}
@@ -13094,7 +13131,7 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
           const _dateSpan = <span style={{fontFamily:G.serif,fontSize:13,fontWeight:500,transition:"color .5s ease",..._dateStyle}}>{dateRange}</span>;
           return dark ? (
             // Dark: number + date inside a frosted glass cube.
-            <div style={{padding:"4px 22px 12px 14px",display:"flex",alignItems:"flex-start",justifyContent:"flex-start"}}>
+            <div style={{padding:"4px 22px 12px 14px"}}>
               <div style={_glassCube}>{_numSpan}{_dateSpan}</div>
             </div>
           ) : (
@@ -13427,12 +13464,11 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
                       width:30,height:30,borderRadius:9,flexShrink:0,
                       display:"flex",alignItems:"center",justifyContent:"center",
                       fontSize:16,
-                      background:a.photo?"transparent":`linear-gradient(140deg, ${a.color}20, ${a.color}35)`,
+                      background:`linear-gradient(140deg, ${a.color}20, ${a.color}35)`,
                       border:`1px solid ${a.color}30`,
                       boxShadow:`inset 0 1px 0 ${dark?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.5)"}`,
                       filter:struck?"saturate(0.55)":"none",
-                      overflow:"hidden",
-                    }}>{a.photo?<img src={a.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(a.emoji||"•")}</div>
+                    }}>{a.emoji||"•"}</div>
                     <div style={{flex:1,minWidth:0,fontSize:13.5,fontWeight:600,color:tk().ink,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textDecoration:struck?"line-through":"none",textDecorationColor:dark?"rgba(255,255,255,0.35)":"rgba(31,27,46,0.3)"}}>
                       {a.name||t.noName}
                     </div>
@@ -13546,7 +13582,7 @@ function IdCardLargeView({cfg,t,onClose}){
   );
 }
 
-function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor,onShowLarge}){
+function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor,onShowLarge,onScrollHdr}){
   const S=scrPal("idcard");
   const c=cfg.idCard||{};
   const contacts=c.contacts||[];
@@ -13630,7 +13666,7 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor,onShowLarge}){
           content scrolls in the region BELOW it, so the card can never slide up
           under the bar no matter the scroll position. */}
       <div aria-hidden="true" style={{height:80,flexShrink:0}}/>
-      <div ref={scrollRef} style={{flex:1,minHeight:0,overflowY:"auto",overscrollBehavior:"contain",padding:"0 18px 40px"}}>
+      <div onScroll={onScrollHdr} ref={scrollRef} style={{flex:1,minHeight:0,overflowY:"auto",overscrollBehavior:"contain",padding:"0 18px 40px"}}>
         {isEmpty?(
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 30px 60px",gap:16}}>
             <style>{`@keyframes idcEmptyHalo{0%,100%{transform:scale(0.92);opacity:.5}50%{transform:scale(1.08);opacity:.9}}@keyframes idcEmptyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}`}</style>
@@ -13646,7 +13682,7 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor,onShowLarge}){
               </div>
             </div>
             <div style={{fontFamily:G.serif,fontWeight:500,fontSize:22,color:tk().inkSoft,letterSpacing:-.4,lineHeight:1.1,textAlign:"center"}}>{t.emptyCardTitle}</div>
-            <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:tk().ink2,letterSpacing:.1,textAlign:"center",lineHeight:1.5,maxWidth:280}}>{isEditor?t.createCardDesc:(lang==="sv"?"Be den som hjälper dig att fylla i kortet.":"Ask someone who helps you to fill in the card.")}</div>
+            <div style={{fontFamily:G.font,fontWeight:400,fontSize:14,color:tk().ink2,letterSpacing:.1,textAlign:"center",lineHeight:1.5,maxWidth:280}}>{isEditor?t.createCardDesc:(lang==="sv"?"Öppna redigeraren för att fylla i kortet.":"Open the editor to fill in the card.")}</div>
             {isEditor&&(
               <button onClick={()=>onOpenEditor()} className="lt-press" style={{marginTop:6,padding:"13px 28px",borderRadius:14,border:"none",background:`linear-gradient(135deg,${S.h},${S.h}DC)`,color:"#fff",fontFamily:G.font,fontWeight:700,fontSize:14,cursor:"pointer",boxShadow:`0 10px 24px ${S.h}55, inset 0 1px 0 rgba(255,255,255,0.3)`,display:"inline-flex",alignItems:"center",gap:8}}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>{lang==="sv"?"Skapa kort":"Create card"}</span>
@@ -15309,7 +15345,7 @@ export default function App(){
   },[]);
   const[lang,setLang]=usePersistentState("lang",detectInitialLang);
   const emojiReq=useGlobalEmoji(); // global emoji picker request (rendered at root)
-  const[headerTapCount,setHeaderTapCount]=useState(0); // increments on header tap — used by WeekScreen to reset focus
+  const[headerTapCount,setHeaderTapCount]=useState(0);
   // Comm modals lifted to App level so they render outside the body-wrapper's overflow:hidden,
   // which would otherwise clip them on iOS Safari (same DOM level as EditModal which works).
   const[commCats,setCommCats]=usePersistentState("commCats",COMM0);
@@ -15401,6 +15437,31 @@ export default function App(){
   };
   const[stories,setStories]=usePersistentState("stories",()=>STORIES0.map(s=>({...s,pages:s.pages.map(p=>({...p}))})));
   const[screen,setScreen]=useState("home");
+  const _hdrRef=useRef(null);
+  const _hdrState=useRef({last:0,hidden:false,h:0});
+  const onScrollHdr=useCallback((e)=>{
+    if(screen==="home"||screen==="week") return;
+    const hdr=_hdrRef.current; if(!hdr) return;
+    const st=_hdrState.current;
+    if(!st.h) st.h=hdr.offsetHeight;
+    const y=e.currentTarget.scrollTop;
+    const dy=y-st.last; st.last=y;
+    if(dy>3&&!st.hidden&&y>st.h){
+      hdr.style.transition="transform .22s ease";
+      hdr.style.transform=`translateY(-${st.h}px)`;
+      st.hidden=true;
+    } else if(dy<-3&&st.hidden){
+      hdr.style.transition="transform .22s ease";
+      hdr.style.transform="translateY(0)";
+      st.hidden=false;
+    }
+  },[screen]);
+  useEffect(()=>{
+    const hdr=_hdrRef.current; if(!hdr) return;
+    hdr.style.transition="none";
+    hdr.style.transform="translateY(0)";
+    _hdrState.current={last:0,hidden:false,h:0};
+  },[screen]);
   const[isEd,setIsEd]=useState(false);
   const[view,setView]=useState("list");
   // Ref to the collapsing tab-bar DOM node. The schedule's scroll handler writes
@@ -15473,6 +15534,27 @@ export default function App(){
     waitForSplashGone();
     return ()=>{ cancelled=true; };
   },[cfg.theme]);
+  // Sync theme-color meta tag with current screen colour
+  useEffect(()=>{
+    if(typeof document==="undefined") return;
+    if(APP_THEME==="dark") return;
+    const tc=document.head.querySelector('meta[name="theme-color"]');
+    const sb=document.head.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    if(!tc||!sb) return;
+    let hex="#FBFDFE"; let dark=false;
+    if(screen==="home"||screen==="week"){
+      const h=now.getHours()+now.getMinutes()/60;
+      const sk=skyAt(h);
+      const [r,g,b]=sk.top.map(x=>Math.round(Math.max(0,Math.min(255,x))));
+      hex="#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
+      dark=(0.299*r+0.587*g+0.114*b)<160;
+    } else {
+      const pal=SCREENS[screen]||SCREENS.home;
+      hex=pal.hb||"#FBFDFE";
+    }
+    tc.setAttribute("content",hex);
+    sb.setAttribute("content",dark?"black":"default");
+  },[screen,now,cfg.theme]);
   const[resetKey,setResetKey]=useState(0);
   // Track the previously-rendered screen so the entrance fade only plays on a
   // real screen change. Without this, unrelated re-renders (toggling edit mode,
@@ -16660,6 +16742,7 @@ export default function App(){
         @keyframes usHalo { 0%,100% { opacity:0.7; transform:scale(1); } 50% { opacity:1; transform:scale(1.06); } }
         /* Input focus state — subtle dark glow */
         .lt-input { transition: border-color .25s ease, background .25s ease, box-shadow .25s ease; }
+        input[type="time"].lt-input { min-width: 0; width: 100%; display: block; }
         /* iOS Safari auto-zooms into any text field whose font-size is < 16px, and
            then doesn't reliably zoom back out — which broke the emoji picker when
            opened from a focused field. Forcing a 16px MINIMUM (visual scale is kept
@@ -16801,7 +16884,7 @@ export default function App(){
           along the top edge (like sunlight catching glass), and a colored
           hairline at the bottom. Everything transitions over .5s when the
           screen color changes, and the auroras breathe gently over time. */}
-      <div onClick={()=>setHeaderTapCount(c=>c+1)} className="lt-app-header" style={{
+      <div ref={_hdrRef} onClick={()=>setHeaderTapCount(c=>c+1)} className="lt-app-header" style={{
         display: undefined,
         // Per-screen header: each tool has its own fullness and glow shape (see
         // HEADER_CHAR) so every header is unique, while sharing one calm design
@@ -17311,13 +17394,13 @@ export default function App(){
             )}
           </div>
         )}
-        {screen==="week"&&<WeekScreen acts={acts} dailyState={dailyState} isEd={isEd} setIsEd={setIsEd} effS={effS} t={t} lang={lang} now={now} cfg={cfg} onTap={openDetail} onEdit={item=>{setEditAct(item);setShowEd(true);}} onAdd={()=>{setEditAct(null);setShowEd(true);}} headerTapCount={headerTapCount} setHeaderTapCount={setHeaderTapCount}/>}
-        {screen==="timer"&&<TimerScreen t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} lang={lang} onLaunchTimer={launchTimer} onColorChange={setLiveTimerColor}/>}
-        {screen==="stories"&&<StoryScreen lang={lang} t={t} isEditor={isEd} stories={stories} setStories={setStories} onOpenStory={setStoryViewer} onOpenEditor={setStoryEditor}/>}
-        {screen==="emotion"&&<EmotionScreen lang={lang} t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} onInputFocusChange={setInputFocused} onOpenEmoEditor={setEmoEditor}/>}
-        {screen==="calm"&&<CalmScreen t={t} lang={lang} cfg={cfg} isEditor={isEd} setCfg={setCfg} onImmersiveChange={setImmersiveMode} active={calmActive} setActive={setCalmActive}/>}
-        {screen==="idcard"&&<IdCardScreen t={t} lang={lang} cfg={cfg} setCfg={setCfg} isEditor={isEd} onOpenEditor={()=>setIdCardEditorOpen(true)} onShowLarge={()=>setIdCardLargeOpen(true)}/>}
-        {screen==="comm"&&<CommBoard lang={lang} t={t} isEditor={isEd} cats={commCats} setCats={setCommCats} sel={commSel} setSel={setCommSel} openModal={setCommModal} cfg={cfg} setCfg={setCfg}/>}
+        {screen==="week"&&<WeekScreen acts={acts} dailyState={dailyState} isEd={isEd} setIsEd={setIsEd} effS={effS} t={t} lang={lang} now={now} cfg={cfg} onTap={openDetail} onEdit={item=>{setEditAct(item);setShowEd(true);}} onAdd={()=>{setEditAct(null);setShowEd(true);}} headerTapCount={headerTapCount} setHeaderTapCount={setHeaderTapCount} onScrollHdr={onScrollHdr}/>}
+        {screen==="timer"&&<TimerScreen t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} lang={lang} onLaunchTimer={launchTimer} onColorChange={setLiveTimerColor} onScrollHdr={onScrollHdr}/>}
+        {screen==="stories"&&<StoryScreen lang={lang} t={t} isEditor={isEd} stories={stories} setStories={setStories} onOpenStory={setStoryViewer} onOpenEditor={setStoryEditor} onScrollHdr={onScrollHdr}/>}
+        {screen==="emotion"&&<EmotionScreen lang={lang} t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} onInputFocusChange={setInputFocused} onOpenEmoEditor={setEmoEditor} onScrollHdr={onScrollHdr}/>}
+        {screen==="calm"&&<CalmScreen t={t} lang={lang} cfg={cfg} isEditor={isEd} setCfg={setCfg} onImmersiveChange={setImmersiveMode} active={calmActive} setActive={setCalmActive} onScrollHdr={onScrollHdr}/>}
+        {screen==="idcard"&&<IdCardScreen t={t} lang={lang} cfg={cfg} setCfg={setCfg} isEditor={isEd} onOpenEditor={()=>setIdCardEditorOpen(true)} onShowLarge={()=>setIdCardLargeOpen(true)} onScrollHdr={onScrollHdr}/>}
+        {screen==="comm"&&<CommBoard lang={lang} t={t} isEditor={isEd} cats={commCats} setCats={setCommCats} sel={commSel} setSel={setCommSel} openModal={setCommModal} cfg={cfg} setCfg={setCfg} onScrollHdr={onScrollHdr}/>}
           </div>
         </div>
       </div>
@@ -17662,7 +17745,7 @@ export default function App(){
       {/* StoryViewer rendered HERE at App root — not inside StoryScreen —
           so its position:fixed escapes the screen-container's animation context
           and truly covers the viewport including the bottom tab bar. */}
-      {storyViewer&&<StoryViewer story={storyViewer} lang={lang} t={t} onClose={()=>setStoryViewer(null)} onOpenFullTimer={({type,totalSec,color})=>setFullTimer({type,totalSec,color})}/>}
+      {storyViewer&&<StoryViewer story={storyViewer} lang={lang} t={t} onClose={()=>setStoryViewer(null)}/>}
       {/* Calm exercises rendered HERE at App root — same reason as StoryViewer —
           so their position:fixed covers the whole viewport (incl. the header),
           instead of being trapped inside the content stacking context where the
