@@ -15534,27 +15534,6 @@ export default function App(){
     waitForSplashGone();
     return ()=>{ cancelled=true; };
   },[cfg.theme]);
-  // Sync theme-color meta tag with current screen colour
-  useEffect(()=>{
-    if(typeof document==="undefined") return;
-    if(APP_THEME==="dark") return;
-    const tc=document.head.querySelector('meta[name="theme-color"]');
-    const sb=document.head.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
-    if(!tc||!sb) return;
-    let hex="#FBFDFE"; let dark=false;
-    if(screen==="home"||screen==="week"){
-      const h=now.getHours()+now.getMinutes()/60;
-      const sk=skyAt(h);
-      const [r,g,b]=sk.top.map(x=>Math.round(Math.max(0,Math.min(255,x))));
-      hex="#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
-      dark=(0.299*r+0.587*g+0.114*b)<160;
-    } else {
-      const pal=SCREENS[screen]||SCREENS.home;
-      hex=pal.hb||"#FBFDFE";
-    }
-    tc.setAttribute("content",hex);
-    sb.setAttribute("content",dark?"black":"default");
-  },[screen,now,cfg.theme]);
   const[resetKey,setResetKey]=useState(0);
   // Track the previously-rendered screen so the entrance fade only plays on a
   // real screen change. Without this, unrelated re-renders (toggling edit mode,
