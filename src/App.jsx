@@ -752,14 +752,6 @@ const STORIES0=[
   //    cooking flow, a morning wind-up, and a First-Then — with VARIED timer
   //    styles (sun/sunset, wave, ring, sector/Time Timer, monster, lava) used
   //    only where a pause or wait is part of the moment.
-  {id:"s_fairytale",example:true,type:"sequence",sv:"Pärlan och drömskeppet",en:"Pearl and the dream ship",emoji:"🌙",color:"#9683C2",pages:[
-    {id:"p1",emoji:"🌙",photo:null,sv:"Det var en gång en liten flicka som hette Pärla. Varje kväll, just när hon blundat, kom ett litet skepp seglande genom fönstret — byggt av månsken och tunt som en dröm.",en:"Once upon a time there was a little girl named Pearl. Every evening, just as she closed her eyes, a little ship came sailing through her window — built of moonlight and thin as a dream."},
-    {id:"p2",emoji:"⛵",photo:null,sv:"\"Stig ombord\", sa den gamle kaptenen, som hade skägg av silver och en hatt full av stjärnor. Och Pärla klev ner i den mjuka båten.",en:"\"Climb aboard,\" said the old captain, who had a beard of silver and a hat full of stars. And Pearl stepped down into the soft little boat.",timer:{on:true,type:"wave",min:1,color:"#8AAFD2"}},
-    {id:"p3",emoji:"🌊",photo:null,sv:"De seglade ut över Sömnhavet, där vågorna gick långsamt som andetag och vinden luktade nybakt bröd och blåbär.",en:"They sailed out across the Sea of Sleep, where the waves moved as slowly as breathing and the wind smelled of fresh bread and blueberries."},
-    {id:"p4",emoji:"🐳",photo:null,sv:"En snäll val lyfte skeppet på sin rygg och vaggade det fram och tillbaka, fram och tillbaka, mjukt och stilla.",en:"A gentle whale lifted the ship onto its back and rocked it to and fro, to and fro, soft and still."},
-    {id:"p5",emoji:"🏝️",photo:null,sv:"Vid Drömlandets strand låg en bädd av varm sand och tusen blinkande stjärnor. Där fick Pärla lägga sig att vila.",en:"On the shore of Dreamland lay a bed of warm sand and a thousand twinkling stars. There Pearl lay down to rest.",timer:{on:true,type:"sun",min:1,color:"#D9B868"}},
-    {id:"p6",emoji:"🌌",photo:null,sv:"\"Sov nu\", viskade kaptenen och drog stjärntäcket över henne. \"Imorgon seglar vi hem igen.\" Och Pärla sov. Godnatt, lilla vän.",en:"\"Sleep now,\" whispered the captain, drawing the starry blanket over her. \"Tomorrow we sail home again.\" And Pearl slept. Goodnight, little one."},
-  ]},
   {id:"s_forest",example:true,type:"sequence",sv:"Godistrollen",en:"The candy trolls",emoji:"🍬",color:"#DCA6B2",pages:[
     {id:"p1",emoji:"🌲",photo:null,sv:"I skogens djup, där mossan gror,\nvid granens rot ett trollfolk bor.\nVart litet troll, så mjukt och len,\nbär socker i sitt hår — var en.",en:"Deep in the forest, soft and green,\nbeneath a root where moss is seen,\nthere lives a folk both small and sweet,\nwith sugar hair from head to feet."},
     {id:"p2",emoji:"❄️",photo:null,sv:"Och när den första snön föll ner,\nlåg skogen tyst, så långt man ser.\nTy denna natt, en gång om år,\nblir kola kokt i kitteln vår.",en:"And when the first snow drifted low\nand hushed the woods in white and slow,\nthe trolls all knew the night was here\nto cook the toffee, once a year."},
@@ -787,6 +779,14 @@ const STORIES0=[
   {id:"ft_calm",example:true,type:"firstthen",sv:"Först lugn, sedan lek",en:"First calm, then play",emoji:"📋",color:"#9683C2",pages:[
     {id:"first",emoji:"🌬️",photo:null,sv:"Andas lugnt",en:"Breathe calmly",timer:{on:true,type:"ring",min:2,color:"#8FBFA1"}},
     {id:"then",emoji:"🪀",photo:null,sv:"Lek",en:"Play",timer:{on:true,type:"monster",min:15,color:"#E89B89"}},
+  ]},
+  {id:"s_fairytale",example:true,type:"sequence",sv:"Pärlan och drömskeppet",en:"Pearl and the dream ship",emoji:"🌙",color:"#9683C2",pages:[
+    {id:"p1",emoji:"🌙",photo:null,sv:"Varje kväll, i den stund då mörkret lade sig mjukt som ett tyg över taken, kom ett litet skepp seglande genom Pärlas fönster. Det var byggt av gammalt månsken och tystnade vinden när det närmade sig.",en:"Every evening, in the moment when darkness settled soft as cloth across the rooftops, a little ship came sailing through Pearl's window. It was built of old moonlight, and the wind grew quiet as it drew near."},
+    {id:"p2",emoji:"⛵",photo:null,sv:"Vid rodret stod en gammal man vars skägg var vitt som dimma och vars ögon var mörka som djupvatten. Han sa ingenting. Han sträckte bara ut sin hand.",en:"At the helm stood an old man whose beard was white as mist and whose eyes were dark as deep water. He said nothing. He only held out his hand.",timer:{on:true,type:"wave",min:1,color:"#8AAFD2"}},
+    {id:"p3",emoji:"🌊",photo:null,sv:"De seglade ut över Sömnhavet. Vågorna rörde sig som andetag — långa, lugna, ett i taget. Långt under dem lyste något kallt och vackert i djupet.",en:"They sailed out across the Sea of Sleep. The waves moved like breathing — long, calm, one at a time. Far beneath them something cold and beautiful glowed in the deep."},
+    {id:"p4",emoji:"🐳",photo:null,sv:"En val steg upp ur mörkret, så stilla att vattnet knappt rörde sig. Den lade sig under skeppet och bar det framåt, med ett andetag som varade en hel natt.",en:"A whale rose from the darkness, so gently that the water barely moved. It settled beneath the ship and carried it forward, on a single breath that lasted all night."},
+    {id:"p5",emoji:"🏝️",photo:null,sv:"Vid Drömlandets kust låg sanden varm, alldeles stilla. Inga vågor nådde dit. Bara ljuset från stjärnorna, och tystnaden, och en känsla av att allting fick vara precis som det var.",en:"At the shore of Dreamland the sand lay warm and perfectly still. No waves reached there. Only the light of the stars, and the silence, and a feeling that everything was allowed to be exactly as it was.",timer:{on:true,type:"sun",min:1,color:"#D9B868"}},
+    {id:"p6",emoji:"🌌",photo:null,sv:"Kaptenen satt bredvid henne en lång stund utan att säga något. Till sist viskade han: \"Vi seglar hem igen när du är redo.\" Och Pärla slöt ögonen. Godnatt.",en:"The captain sat beside her for a long while without speaking. At last he whispered: \"We sail home again when you are ready.\" And Pearl closed her eyes. Goodnight."},
   ]},
 ];
 
@@ -1560,7 +1560,7 @@ function ImmersiveChrome({c,t,onClose,activity,W,H,hideLabel,doneEmoji="🌅",la
           {/* tap anywhere to peek the time, or swipe right to bring the controls back */}
           {hidden&&<div onClick={toggleT} onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={endShow} style={{position:"absolute",inset:0,zIndex:3,background:"transparent"}}/>}
           {hidden&&(
-            <div aria-hidden style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 52px)",textAlign:"center",fontFamily:G.font,fontWeight:500,fontSize:Math.round(big*0.16),letterSpacing:-1,color:"#F4F7FF",textShadow:"0 2px 32px rgba(0,0,0,0.45), 0 0 60px rgba(120,170,255,0.3)",fontVariantNumeric:"tabular-nums",opacity:tPeek?1:0,transform:`translateY(${tPeek?0:8}px)`,transition:tNoFade?"none":"opacity .5s ease, transform .5s ease",pointerEvents:"none",zIndex:4}}>{c.label}</div>
+            <div aria-hidden style={{position:"absolute",left:36,right:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 79px)",textAlign:"center",fontFamily:G.font,fontWeight:500,fontSize:Math.round(big*0.16),letterSpacing:-1,color:"#F4F7FF",textShadow:"0 2px 32px rgba(0,0,0,0.45), 0 0 60px rgba(120,170,255,0.3)",fontVariantNumeric:"tabular-nums",opacity:tPeek?1:0,transform:`translateY(calc(50% + ${tPeek?0:8}px))`,transition:tNoFade?"none":"opacity .5s ease, transform .5s ease",pointerEvents:"none",zIndex:4}}>{c.label}</div>
           )}
           <div onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={endHide} style={{position:"absolute",left:0,right:0,bottom:"calc(env(safe-area-inset-bottom, 0px) + 30px)",display:"flex",justifyContent:"center",zIndex:4,transform:hidden?`translateX(-${Math.round(W*0.62)}px)`:"translateX(0)",opacity:hidden?0:1,pointerEvents:hidden?"none":"auto",transition:ease}}>
             <RingControl c={c} color={color} t={t} variant="glass" digitSize={Math.round(big*0.16)}/>
@@ -6322,7 +6322,8 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
         </div>
         )}
 
-        {/* ── Card style + view ── */}
+        {/* ── Card style + view — only relevant when Dag (home) screen is active ── */}
+        {tools.home&&(
         <Section
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>}
           title={lang==="sv"?"Hur dagen visas":"How the day shows"}
@@ -6339,6 +6340,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
             {[["both",t.viewBoth],["list",t.viewList],["card",t.viewCard]].map(([k,lb])=><button key={k} onClick={()=>setSv(k)} style={{flex:1,padding:"10px 4px",borderRadius:13,border:`1px solid ${sv===k?(isDark()?"rgba(255,255,255,0.22)":S.h):tk().border}`,background:sv===k?(isDark()?"rgba(255,255,255,0.13)":S.h):"transparent",color:sv===k?(isDark()?"#FFFFFF":"#fff"):tk().ink2,fontFamily:G.serif,fontWeight:600,cursor:"pointer",fontSize:11,transition:"all .25s ease",boxShadow:sv===k&&isDark()?"inset 0 1px 0 rgba(255,255,255,0.25)":"none"}}>{lb}</button>)}
           </div>
         </Section>
+        )}
 
         {/* ── Visa i schemat ── */}
         <Section
@@ -10479,7 +10481,7 @@ function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,pa
 }
 
 /* ═══ Story viewer (fullscreen page-by-page) ═══ */
-function StoryViewer({story,lang,t,onClose}){
+function StoryViewer({story,lang,t,onClose,onOpenFullTimer}){
   const[idx,setIdx]=useState(0);
   const[showTimer,setShowTimer]=useState(false);
   // Which page's timer the FIRST-THEN view is showing (independent of `idx`,
@@ -10513,7 +10515,9 @@ function StoryViewer({story,lang,t,onClose}){
     const ftTimer=ftTimerPage===0?firstPage?.timer:ftTimerPage===1?thenPage?.timer:null;
     return(
       <div style={{position:"fixed",inset:0,zIndex:9000,background:isDark()?"#0E0C16":"#FFFFFF",backgroundImage:isDark()?`radial-gradient(90% 40% at 50% 0%, ${story.color}26 0%, transparent 55%), linear-gradient(180deg,#1C1A33 0%, #15131F 38%, #0C0A14 100%)`:`linear-gradient(165deg,${story.color}12 0%,#FFFFFF 70%)`,display:"flex",flexDirection:"column",userSelect:"none",animation:"ftIn .25s ease"}}>
-        {ftTimer&&ftTimer.on&&<FullTimer type={ftTimer.type} totalSec={ftTimer.min*60} color={ftTimer.color} t={t} autoRun={true} onClose={()=>setFtTimerPage(null)}/>}
+        {ftTimer&&ftTimer.on&&((ftTimer.type==="aurora"||ftTimer.type==="sun")
+          ? (onOpenFullTimer&&onOpenFullTimer({type:ftTimer.type,totalSec:ftTimer.min*60,color:ftTimer.color}),setFtTimerPage(null),null)
+          : <FullTimer type={ftTimer.type} totalSec={ftTimer.min*60} color={ftTimer.color} t={t} autoRun={true} onClose={()=>setFtTimerPage(null)}/>)}
         <style>{`@keyframes ftArrow{0%{transform:translateX(0)}50%{transform:translateX(8px)}100%{transform:translateX(0)}}`}</style>
         <div style={{padding:"calc(env(safe-area-inset-top, 0px) + 14px) 22px 0",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
           <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
@@ -10700,7 +10704,7 @@ function StoryViewer({story,lang,t,onClose}){
             full-screen scenes, so on a story page they open immersively (just
             like in the schedule and First-Then), instead of as a cramped card. */}
         {hasTimer&&showTimer&&((pt.type==="aurora"||pt.type==="sun")
-          ? <FullTimer type={pt.type} totalSec={pt.min*60} color={pt.color} t={t} autoRun={true} onClose={()=>setShowTimer(false)}/>
+          ? (onOpenFullTimer&&onOpenFullTimer({type:pt.type,totalSec:pt.min*60,color:pt.color}),setShowTimer(false),null)
           : (
           <div style={{
             width:"100%",
@@ -13090,7 +13094,7 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
           const _dateSpan = <span style={{fontFamily:G.serif,fontSize:13,fontWeight:500,transition:"color .5s ease",..._dateStyle}}>{dateRange}</span>;
           return dark ? (
             // Dark: number + date inside a frosted glass cube.
-            <div style={{padding:"4px 22px 12px 14px"}}>
+            <div style={{padding:"4px 22px 12px 14px",display:"flex",alignItems:"flex-start",justifyContent:"flex-start"}}>
               <div style={_glassCube}>{_numSpan}{_dateSpan}</div>
             </div>
           ) : (
@@ -13423,11 +13427,12 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
                       width:30,height:30,borderRadius:9,flexShrink:0,
                       display:"flex",alignItems:"center",justifyContent:"center",
                       fontSize:16,
-                      background:`linear-gradient(140deg, ${a.color}20, ${a.color}35)`,
+                      background:a.photo?"transparent":`linear-gradient(140deg, ${a.color}20, ${a.color}35)`,
                       border:`1px solid ${a.color}30`,
                       boxShadow:`inset 0 1px 0 ${dark?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.5)"}`,
                       filter:struck?"saturate(0.55)":"none",
-                    }}>{a.emoji||"•"}</div>
+                      overflow:"hidden",
+                    }}>{a.photo?<img src={a.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(a.emoji||"•")}</div>
                     <div style={{flex:1,minWidth:0,fontSize:13.5,fontWeight:600,color:tk().ink,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textDecoration:struck?"line-through":"none",textDecorationColor:dark?"rgba(255,255,255,0.35)":"rgba(31,27,46,0.3)"}}>
                       {a.name||t.noName}
                     </div>
@@ -17657,7 +17662,7 @@ export default function App(){
       {/* StoryViewer rendered HERE at App root — not inside StoryScreen —
           so its position:fixed escapes the screen-container's animation context
           and truly covers the viewport including the bottom tab bar. */}
-      {storyViewer&&<StoryViewer story={storyViewer} lang={lang} t={t} onClose={()=>setStoryViewer(null)}/>}
+      {storyViewer&&<StoryViewer story={storyViewer} lang={lang} t={t} onClose={()=>setStoryViewer(null)} onOpenFullTimer={({type,totalSec,color})=>setFullTimer({type,totalSec,color})}/>}
       {/* Calm exercises rendered HERE at App root — same reason as StoryViewer —
           so their position:fixed covers the whole viewport (incl. the header),
           instead of being trapped inside the content stacking context where the
