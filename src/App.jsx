@@ -174,18 +174,18 @@ import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, use
       if (!document.body || document.getElementById("lumaPreBoot")) return;
       var dark = false;   // SPLASH ALWAYS LIGHT (bug-free) — never a dark variant
       // Light "Peach" palette — Concept 2 (Inre ljus): plate lit from within.
-      var bg     = dark ? "#0C0B14" : "#FBFDFE";
+      var bg     = dark ? "#0C0B14" : "#FFFFFF";
       var bgCss  = dark
         ? "radial-gradient(125% 100% at 50% 42%, #1A1626 0%, #120F1C 58%, #0A0810 100%)"
-        : "radial-gradient(125% 100% at 50% 42%, #FFF7EF 0%, #FBF1EA 58%, #F4E7DA 100%)";
-      var icoBgA = dark ? "#352C46" : "#F3B98E";
-      var icoBgB = dark ? "#1B1626" : "#E89B6C";
+        : "#FFFFFF";
+      var icoBgA = dark ? "#352C46" : "#FFCB9C";
+      var icoBgB = dark ? "#1B1626" : "#F2968A";
       var markStroke = dark ? "#F4EEFF" : "#FFFFFF";
       var glowC  = dark ? "#FFC890" : "#FFD98C";
-      var igA = dark ? "#FFC890" : "#FFEAC4";   // inner glow — the plate lit from within
-      var igB = dark ? "#FFB070" : "#F6C089";
-      var igO0 = dark ? "0.30" : "0.72";
-      var igO1 = dark ? "0.12" : "0.28";
+      var igA = dark ? "#FFC890" : "#FFCB9C";
+      var igB = dark ? "#FFB070" : "#F2968A";
+      var igO0 = dark ? "0.30" : "0.85";
+      var igO1 = dark ? "0.12" : "0.38";
       var auraC  = dark ? "rgba(255,200,140,0.16)" : "rgba(232,168,120,0.16)";
       var auraC2 = dark ? "rgba(255,200,140,0.05)" : "rgba(232,168,120,0.06)";
       var emboss = dark ? "" :
@@ -752,14 +752,6 @@ const STORIES0=[
   //    cooking flow, a morning wind-up, and a First-Then — with VARIED timer
   //    styles (sun/sunset, wave, ring, sector/Time Timer, monster, lava) used
   //    only where a pause or wait is part of the moment.
-  {id:"s_fairytale",example:true,type:"sequence",sv:"Pärlan och drömskeppet",en:"Pearl and the dream ship",emoji:"🌙",color:"#9683C2",pages:[
-    {id:"p1",emoji:"🌙",photo:null,sv:"Det var en gång en liten flicka som hette Pärla. Varje kväll, just när hon blundat, kom ett litet skepp seglande genom fönstret — byggt av månsken och tunt som en dröm.",en:"Once upon a time there was a little girl named Pearl. Every evening, just as she closed her eyes, a little ship came sailing through her window — built of moonlight and thin as a dream."},
-    {id:"p2",emoji:"⛵",photo:null,sv:"\"Stig ombord\", sa den gamle kaptenen, som hade skägg av silver och en hatt full av stjärnor. Och Pärla klev ner i den mjuka båten.",en:"\"Climb aboard,\" said the old captain, who had a beard of silver and a hat full of stars. And Pearl stepped down into the soft little boat.",timer:{on:true,type:"wave",min:1,color:"#8AAFD2"}},
-    {id:"p3",emoji:"🌊",photo:null,sv:"De seglade ut över Sömnhavet, där vågorna gick långsamt som andetag och vinden luktade nybakt bröd och blåbär.",en:"They sailed out across the Sea of Sleep, where the waves moved as slowly as breathing and the wind smelled of fresh bread and blueberries."},
-    {id:"p4",emoji:"🐳",photo:null,sv:"En snäll val lyfte skeppet på sin rygg och vaggade det fram och tillbaka, fram och tillbaka, mjukt och stilla.",en:"A gentle whale lifted the ship onto its back and rocked it to and fro, to and fro, soft and still."},
-    {id:"p5",emoji:"🏝️",photo:null,sv:"Vid Drömlandets strand låg en bädd av varm sand och tusen blinkande stjärnor. Där fick Pärla lägga sig att vila.",en:"On the shore of Dreamland lay a bed of warm sand and a thousand twinkling stars. There Pearl lay down to rest.",timer:{on:true,type:"sun",min:1,color:"#D9B868"}},
-    {id:"p6",emoji:"🌌",photo:null,sv:"\"Sov nu\", viskade kaptenen och drog stjärntäcket över henne. \"Imorgon seglar vi hem igen.\" Och Pärla sov. Godnatt, lilla vän.",en:"\"Sleep now,\" whispered the captain, drawing the starry blanket over her. \"Tomorrow we sail home again.\" And Pearl slept. Goodnight, little one."},
-  ]},
   {id:"s_forest",example:true,type:"sequence",sv:"Godistrollen",en:"The candy trolls",emoji:"🍬",color:"#DCA6B2",pages:[
     {id:"p1",emoji:"🌲",photo:null,sv:"I skogens djup, där mossan gror,\nvid granens rot ett trollfolk bor.\nVart litet troll, så mjukt och len,\nbär socker i sitt hår — var en.",en:"Deep in the forest, soft and green,\nbeneath a root where moss is seen,\nthere lives a folk both small and sweet,\nwith sugar hair from head to feet."},
     {id:"p2",emoji:"❄️",photo:null,sv:"Och när den första snön föll ner,\nlåg skogen tyst, så långt man ser.\nTy denna natt, en gång om år,\nblir kola kokt i kitteln vår.",en:"And when the first snow drifted low\nand hushed the woods in white and slow,\nthe trolls all knew the night was here\nto cook the toffee, once a year."},
@@ -787,6 +779,14 @@ const STORIES0=[
   {id:"ft_calm",example:true,type:"firstthen",sv:"Först lugn, sedan lek",en:"First calm, then play",emoji:"📋",color:"#9683C2",pages:[
     {id:"first",emoji:"🌬️",photo:null,sv:"Andas lugnt",en:"Breathe calmly",timer:{on:true,type:"ring",min:2,color:"#8FBFA1"}},
     {id:"then",emoji:"🪀",photo:null,sv:"Lek",en:"Play",timer:{on:true,type:"monster",min:15,color:"#E89B89"}},
+  ]},
+  {id:"s_fairytale",example:true,type:"sequence",sv:"Pärlan och drömskeppet",en:"Pearl and the dream ship",emoji:"🌙",color:"#9683C2",pages:[
+    {id:"p1",emoji:"🌙",photo:null,sv:"Det var en gång en liten flicka som hette Pärla. Varje kväll, just när hon blundat, kom ett litet skepp seglande genom fönstret — byggt av månsken och tunt som en dröm.",en:"Once upon a time there was a little girl named Pearl. Every evening, just as she closed her eyes, a little ship came sailing through her window — built of moonlight and thin as a dream."},
+    {id:"p2",emoji:"⛵",photo:null,sv:"\"Stig ombord\", sa den gamle kaptenen, som hade skägg av silver och en hatt full av stjärnor. Och Pärla klev ner i den mjuka båten.",en:"\"Climb aboard,\" said the old captain, who had a beard of silver and a hat full of stars. And Pearl stepped down into the soft little boat.",timer:{on:true,type:"wave",min:1,color:"#8AAFD2"}},
+    {id:"p3",emoji:"🌊",photo:null,sv:"De seglade ut över Sömnhavet, där vågorna gick långsamt som andetag och vinden luktade nybakt bröd och blåbär.",en:"They sailed out across the Sea of Sleep, where the waves moved as slowly as breathing and the wind smelled of fresh bread and blueberries."},
+    {id:"p4",emoji:"🐳",photo:null,sv:"En snäll val lyfte skeppet på sin rygg och vaggade det fram och tillbaka, fram och tillbaka, mjukt och stilla.",en:"A gentle whale lifted the ship onto its back and rocked it to and fro, to and fro, soft and still."},
+    {id:"p5",emoji:"🏝️",photo:null,sv:"Vid Drömlandets strand låg en bädd av varm sand och tusen blinkande stjärnor. Där fick Pärla lägga sig att vila.",en:"On the shore of Dreamland lay a bed of warm sand and a thousand twinkling stars. There Pearl lay down to rest.",timer:{on:true,type:"sun",min:1,color:"#D9B868"}},
+    {id:"p6",emoji:"🌌",photo:null,sv:"\"Sov nu\", viskade kaptenen och drog stjärntäcket över henne. \"Imorgon seglar vi hem igen.\" Och Pärla sov. Godnatt, lilla vän.",en:"\"Sleep now,\" whispered the captain, drawing the starry blanket over her. \"Tomorrow we sail home again.\" And Pearl slept. Goodnight, little one."},
   ]},
 ];
 
@@ -885,7 +885,7 @@ const RP0=[
 // Classic Swedish standard: Mon green, Tue light blue, Wed brown, Thu white,
 // Fri yellow, Sat pink, Sun red. Slightly desaturated for app palette harmony
 // but kept identifiably classic.
-const SIGVARD0=["#E26B6B","#7AC178","#82BFD6","#A87E58","#FFFFFF","#F5E26B","#F5B7CC"];
+const SIGVARD0=["#E03535","#6DB86A","#7BBDD4","#FFFFFF","#A07848","#F5E23A","#F0A8C8"];
 
 // Curated palette for weekday color editor — classics first, then alternates
 const DAY_PALETTE=[
@@ -5486,6 +5486,18 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
   const railRef=useRef(null);
   const[steps,setSteps]=useState(()=>item?.steps?[...item.steps]:[]);
   const[timerOn,setTimerOn]=useState(item?.timer?.on||false);
+  const timerSectionRef=useRef(null);
+  const toggleTimerOn=()=>{
+    setTimerOn(x=>{
+      if(!x){
+        // Scrolling into view after state update + render
+        setTimeout(()=>{
+          try{timerSectionRef.current?.scrollIntoView({behavior:"smooth",block:"start"});}catch(_){}
+        },80);
+      }
+      return !x;
+    });
+  };
   const[timerType,setTType]=useState(item?.timer?.type||"sector");
   const[timerMin,setTMin]=useState(item?.timer?.min||10);
   const[timerCol,setTCol]=useState(item?.timer?.color||"#E89B89");
@@ -5493,7 +5505,21 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
   const[stepEmoji,setStepEmoji]=useState("");
   const[stepPhoto,setStepPhoto]=useState(null);
   const[showStepE,setShowStepE]=useState(false);
-  const[stepSheet,setStepSheet]=useState(null); // null | {id:string|"new", text, emoji, photo, timerMin, timerType, timerOn}
+  const[stepSheet,setStepSheet]=useState(null);
+  const[sheetBottom,setSheetBottom]=useState(0);
+  useEffect(()=>{
+    if(!stepSheet){setSheetBottom(0);return;}
+    const vv=window.visualViewport;
+    if(!vv){return;}
+    const update=()=>{
+      // Keyboard height = total window height minus visible viewport height minus any offset
+      const kbHeight=window.innerHeight-vv.height-vv.offsetTop;
+      setSheetBottom(Math.max(0,kbHeight));
+    };
+    update();
+    vv.addEventListener("resize",update,{passive:true});
+    return()=>{vv.removeEventListener("resize",update);setSheetBottom(0);};
+  },[!!stepSheet]); // null | {id:string|"new", text, emoji, photo, timerMin, timerType, timerOn}
   const openStepSheet=(s)=>setStepSheet({
     id:s?.id||"new",
     text:s?.text||"",
@@ -5945,14 +5971,16 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
             <>
               <div onClick={()=>setStepSheet(null)} style={{position:"fixed",inset:0,zIndex:9800,background:"rgba(8,5,18,0.6)",backdropFilter:"blur(6px)",WebkitBackdropFilter:"blur(6px)",animation:"stepBgIn .25s ease both"}}/>
               <div style={{
-                position:"fixed",left:0,right:0,bottom:0,zIndex:9801,
+                position:"fixed",left:0,right:0,bottom:sheetBottom,zIndex:9801,
                 background:dk?"linear-gradient(180deg,#1A162A 0%,#120F1E 100%)":"linear-gradient(180deg,#FFFFFF 0%,#F8F5FD 100%)",
                 borderRadius:"28px 28px 0 0",
                 border:`1px solid ${dk?"rgba(255,255,255,0.09)":"rgba(31,27,46,0.06)"}`,
                 borderBottom:"none",
                 boxShadow:dk?"0 -20px 60px rgba(0,0,0,0.55)":"0 -12px 40px rgba(31,27,46,0.1)",
                 animation:"stepSheetIn .32s cubic-bezier(0.32,0.72,0,1) both",
-                paddingBottom:"calc(env(safe-area-inset-bottom,0px) + 20px)",
+                transition:"bottom .25s cubic-bezier(0.32,0.72,0,1)",
+                paddingBottom:sheetBottom>0?16:"calc(env(safe-area-inset-bottom,0px) + 20px)",
+                transition:"bottom .22s ease, padding-bottom .22s ease",
               }}>
                 <div style={{width:36,height:4,borderRadius:2,background:dk?"rgba(255,255,255,0.16)":"rgba(31,27,46,0.1)",margin:"12px auto 0"}}/>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 20px 12px",borderBottom:`1px solid ${dk?"rgba(255,255,255,0.06)":"rgba(31,27,46,0.06)"}`}}>
@@ -5973,10 +6001,10 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
                       {ss.photo?<img src={ss.photo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(ss.emoji||"✅")}
                     </button>
                     <input
+                      ref={el=>{if(el&&ss){setTimeout(()=>{try{el.focus({preventScroll:true});}catch(_){}},380);}}}
                       value={ss.text}
                       onChange={e=>setStepSheet(x=>({...x,text:e.target.value}))}
                       onKeyDown={e=>e.key==="Enter"&&saveStepSheet()}
-                      autoFocus
                       placeholder={lang==="sv"?"Beskriv steget…":"Describe the step…"}
                       style={{flex:1,background:dk?"rgba(0,0,0,0.28)":G.white,border:`1px solid ${dk?"rgba(255,255,255,0.12)":G.border}`,borderRadius:14,padding:"13px 15px",fontFamily:G.serif,fontSize:17,fontWeight:700,color:dk?edPal().text:G.ink,outline:"none",WebkitAppearance:"none",boxShadow:dk?"inset 0 2px 6px rgba(0,0,0,0.25)":"0 2px 6px rgba(31,27,46,0.04), inset 0 1px 0 rgba(255,255,255,0.8)",caretColor:accentC}}
                     />
@@ -5987,8 +6015,8 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
                     {ss.photo&&<button onClick={e=>{e.preventDefault();setStepSheet(x=>({...x,photo:null}));}} style={{padding:"4px 10px",borderRadius:8,border:"none",background:"rgba(239,68,68,0.1)",color:"#EF4444",fontFamily:G.font,fontSize:12,fontWeight:600,cursor:"pointer"}}>{lang==="sv"?"Ta bort":"Remove"}</button>}
                     <input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(!f)return;setCropTarget(ss.id==="new"?"newstep":ss.id);readToCrop(f);e.target.value="";}} style={{display:"none"}}/>
                   </label>
-                  <div onClick={()=>setStepSheet(x=>({...x,timerOn:!x.timerOn}))} className="lt-press-soft" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:14,cursor:"pointer",background:ss.timerOn?(dk?`${accentC}10`:`${accentC}0C`):(dk?"rgba(255,255,255,0.04)":G.white),border:`1px solid ${ss.timerOn?(dk?`${accentC}26`:`${accentC}28`):(dk?"rgba(255,255,255,0.08)":G.border)}`,boxShadow:ss.timerOn?"none":(dk?"none":"0 1px 4px rgba(31,27,46,0.04), inset 0 1px 0 rgba(255,255,255,0.9)"),transition:"all .2s ease"}}>
-                    <div>
+                  <div className="lt-press-soft" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:14,background:ss.timerOn?(dk?`${accentC}10`:`${accentC}0C`):(dk?"rgba(255,255,255,0.04)":G.white),border:`1px solid ${ss.timerOn?(dk?`${accentC}26`:`${accentC}28`):(dk?"rgba(255,255,255,0.08)":G.border)}`,boxShadow:ss.timerOn?"none":(dk?"none":"0 1px 4px rgba(31,27,46,0.04), inset 0 1px 0 rgba(255,255,255,0.9)"),transition:"all .2s ease"}}>
+                    <div style={{flex:1,cursor:"pointer"}} onClick={()=>setStepSheet(x=>({...x,timerOn:!x.timerOn}))}>
                       <div style={{fontFamily:G.font,fontWeight:600,fontSize:14,color:dk?edPal().text:G.ink}}>{lang==="sv"?"Timer för steget":"Step timer"}</div>
                       <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:dk?edPal().text3:G.ink3,marginTop:2}}>{ss.timerOn?`${ss.timerMin} ${t.min} · ${tlbl(ss.timerType,t)}`:(lang==="sv"?"Av":"Off")}</div>
                     </div>
@@ -6020,7 +6048,6 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
         })()}
         </Section>
         {/* ── Timer ── */}
-        {/* ── Timer ── */}
         <Section
           icon={<TimerIcon type="sector" size={16} color="currentColor"/>}
           title={t.timerAct}
@@ -6028,8 +6055,8 @@ function EditModal({item,onSave,onDel,onClose,t,lang,existingActs=[],theme="ligh
           delay={0.28}
           dark
         >
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:timerOn?16:0}}>
-          <Toggle on={timerOn} onChange={()=>setTimerOn(x=>!x)} color={SCREENS.timer.h}/>
+        <div ref={timerSectionRef} style={{display:"flex",alignItems:"center",gap:12,marginBottom:timerOn?16:0}}>
+          <Toggle on={timerOn} onChange={toggleTimerOn} color={SCREENS.timer.h}/>
           <span style={{fontFamily:G.font,fontWeight:500,color:edPal().text,fontSize:14}}>{lang==="sv"?"Visa timer för denna aktivitet":"Show timer for this activity"}</span>
         </div>
         {timerOn&&(
@@ -6521,13 +6548,33 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
           </div>
         </Section>
 
-        {/* Day color editor — Sigvard weekday colours */}
         <Section
+          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L4 7 L4 17 L12 22 L20 17 L20 7 Z"/><path d="M12 12 L4 7 M12 12 L20 7 M12 12 L12 22"/></svg>}
+          title={t.visibleTools}
+          color={SCREENS.calm.h}
+          delay={0.28}
+          dark={isDark()}
+        >
+          {TOOLLIST.map((tool,idx)=>(
+            <div key={tool.k} style={{display:"flex",alignItems:"center",gap:14,paddingBottom:13,marginBottom:13,borderBottom:idx===TOOLLIST.length-1?"none":`1px solid ${tk().border}`}}>
+              <Toggle on={tools[tool.k]} color={tool.s.h} onChange={()=>{
+                setTools(tv=>{const next={...tv,[tool.k]:!tv[tool.k]};return Object.values(next).some(Boolean)?next:tv;});
+              }}/>
+              <div style={{width:34,height:34,borderRadius:11,background:`linear-gradient(140deg, ${tool.s.h}${isDark()?"26":"1F"}, ${tool.s.h}${isDark()?"3A":"33"})`,border:`1px solid ${tool.s.h}${isDark()?"3D":"30"}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.08)":`inset 0 1px 0 rgba(255,255,255,0.5)`}}>
+                <NavIcon type={tool.t} active={true} color={isDark()?tool.s.h:tool.s.deep} size={20}/>
+              </div>
+              <span style={{fontFamily:G.serif,fontWeight:500,color:tk().ink,fontSize:14,letterSpacing:.1,flex:1}}>{tool.l}</span>
+            </div>
+          ))}
+        </Section>
+
+        {/* Day color editor — separate section, hidden when week tool is off */}
+        {tools.week&&<Section
           icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>}
           title={t.dayColors}
           desc={t.dayColorsHint}
           color={SCREENS.week.h}
-          delay={0.22}
+          delay={0.30}
           dark={isDark()}
         >
           <div style={{background:tk().cream,borderRadius:16,border:`1px solid ${tk().border}`,overflow:"hidden"}}>
@@ -6559,24 +6606,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
             })}
           </div>
           <button onClick={()=>{setWc([...SIGVARD0]);setExpDay(null);}} className="lt-press" style={{marginTop:12,padding:"8px 14px",borderRadius:11,border:`1px solid ${tk().border}`,background:"transparent",color:tk().ink2,fontFamily:G.serif,fontWeight:500,fontSize:12,cursor:"pointer",letterSpacing:.2}}>{t.resetColors}</button>
-        </Section>
-        <Section
-          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 L4 7 L4 17 L12 22 L20 17 L20 7 Z"/><path d="M12 12 L4 7 M12 12 L20 7 M12 12 L12 22"/></svg>}
-          title={t.visibleTools}
-          color={SCREENS.calm.h}
-          delay={0.28}
-          dark={isDark()}
-        >
-          {TOOLLIST.map((tool,idx)=>(
-            <div key={tool.k} style={{display:"flex",alignItems:"center",gap:14,paddingBottom:13,marginBottom:13,borderBottom:idx===TOOLLIST.length-1?"none":`1px solid ${tk().border}`}}>
-              <Toggle on={tools[tool.k]} color={tool.s.h} onChange={()=>setTools(tv=>{const next={...tv,[tool.k]:!tv[tool.k]};return Object.values(next).some(Boolean)?next:tv;})}/>
-              <div style={{width:34,height:34,borderRadius:11,background:`linear-gradient(140deg, ${tool.s.h}${isDark()?"26":"1F"}, ${tool.s.h}${isDark()?"3A":"33"})`,border:`1px solid ${tool.s.h}${isDark()?"3D":"30"}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.08)":`inset 0 1px 0 rgba(255,255,255,0.5)`}}>
-                <NavIcon type={tool.t} active={true} color={isDark()?tool.s.h:tool.s.deep} size={20}/>
-              </div>
-              <span style={{fontFamily:G.serif,fontWeight:500,color:tk().ink,fontSize:14,letterSpacing:.1,flex:1}}>{tool.l}</span>
-            </div>
-          ))}
-        </Section>
+        </Section>}
         {tools.timer&&(
           <Section
             icon={<TimerIcon type="sector" size={16} color="currentColor"/>}
@@ -6721,7 +6751,7 @@ function SettingsModal({cfg,setCfg,shareCode,onClose,t,lang,setLang,onOpenSuperv
 }
 
 /* ═══ Communication board ═══ */
-function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal,cfg,setCfg,onScrollHdr}){
+function CommBoard({lang,t,isEditor,cats,setCats,sel,setSel,openModal,cfg,setCfg}){
   const[spoken,setSpoken]=useState(null);
   const tabBarRef=useRef(null);
   /* Drag-to-reorder state for category pills (editor only).
@@ -7692,7 +7722,7 @@ function CommModals({modal,onClose,cats,setCats,lang,t,setSel}){
 }
 
 /* ═══ Emotion screen ═══ */
-function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoEditor,onScrollHdr}){
+function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoEditor}){
   const[sel,setSel]=useState(null);
   const[reason,setReason]=useState("");
   const[saved,setSaved]=useState(false);
@@ -7894,7 +7924,7 @@ function EmotionScreen({lang,t,cfg,isEditor,setCfg,onInputFocusChange,onOpenEmoE
     const hasAnyEdits=Object.keys(overrides).length>0||deleted.length>0;
 
     return(
-      <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",background:"transparent",padding:"24px 22px 120px",display:"flex",flexDirection:"column",gap:18}}>
+      <div style={{flex:1,overflowY:"auto",background:"transparent",padding:"24px 22px 120px",display:"flex",flexDirection:"column",gap:18}}>
         {/* Style picker — arc vs vertical */}
         <div style={{background:tk().white,borderRadius:22,padding:"18px 20px",border:`1px solid ${tk().border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
           <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,marginBottom:6,letterSpacing:.2}}>{t.barometerStyle}</div>
@@ -8804,7 +8834,7 @@ function CustomEmotionEditor({existing,onSave,onDelete,onClose,t,lang}){
 }
 
 /* ═══ Timer screen ═══ */
-function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange,onScrollHdr}){
+function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange}){
   const S=scrPal("timer");
   const tc=cfg.timerCfg;
   const allowed=tc.allowedTypes.length>0?tc.allowedTypes:["sector"];
@@ -8841,7 +8871,7 @@ function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange,onS
       if(!next.includes(tc.defaultType)) upd("defaultType",next[0]);
     };
     return(
-      <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",padding:"24px 18px 28px",display:"flex",flexDirection:"column",gap:22,background:"transparent"}}>
+      <div style={{flex:1,overflowY:"auto",padding:"24px 18px 28px",display:"flex",flexDirection:"column",gap:22,background:"transparent"}}>
         <div style={{background:tk().white,borderRadius:22,padding:"20px 20px 18px",border:`1px solid ${tk().border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
           <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,marginBottom:6,letterSpacing:.2}}>{lang==="en"?"What user sees":"Vad användaren ser"}</div>
           <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:tk().ink2,lineHeight:1.5,marginBottom:0}}>{lang==="en"?"Choose which timer types are available, and which one starts selected.":"Välj vilka timertyper som är tillgängliga, och vilken som är förvald."}</div>
@@ -8928,7 +8958,7 @@ function TimerScreen({t,cfg,isEditor,setCfg,lang,onLaunchTimer,onColorChange,onS
 
   return(
     <>
-      <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",padding:"24px 18px 28px",display:"flex",flexDirection:"column",gap:24,background:"transparent"}}>
+      <div style={{flex:1,overflowY:"auto",padding:"24px 18px 28px",display:"flex",flexDirection:"column",gap:24,background:"transparent"}}>
         <style>{`@keyframes tmSectionIn{0%{opacity:0;transform:translateY(10px) scale(0.98)}100%{opacity:1;transform:translateY(0) scale(1)}}`}</style>
         {/* Preview + start — HERO. The timer is the hero on a soft tinted
             gradient canvas (in the timer's own colour) with a glowing orb
@@ -10273,7 +10303,7 @@ function EmojiPicker({value,onChange,color:rawColor,lang,t,onClose,title}){
         </div>
 
         {/* Emoji grid — fills the rest of the sheet, comfortable touch targets */}
-        <div onScroll={onScrollHdr} ref={scrollRef} style={{flex:1,overflowY:"auto",padding:"6px 18px 20px",touchAction:"pan-y",minHeight:0,WebkitOverflowScrolling:"touch"}}>
+        <div ref={scrollRef} style={{flex:1,overflowY:"auto",padding:"6px 18px 20px",touchAction:"pan-y",minHeight:0,WebkitOverflowScrolling:"touch"}}>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(48px, 1fr))",gap:7}}>
             {activeEmojis.map(em=>{const on=value===em;return(
               <button key={em} onClick={()=>handle(em)} style={{
@@ -10520,7 +10550,7 @@ function SlideTabRow({segments,leadingLabel,goldKey,color,deep,floating,onSky,pa
 }
 
 /* ═══ Story viewer (fullscreen page-by-page) ═══ */
-function StoryViewer({story,lang,t,onClose}){
+function StoryViewer({story,lang,t,onClose,onOpenFullTimer}){
   const[idx,setIdx]=useState(0);
   const[showTimer,setShowTimer]=useState(false);
   // Which page's timer the FIRST-THEN view is showing (independent of `idx`,
@@ -10670,7 +10700,7 @@ function StoryViewer({story,lang,t,onClose}){
         </div>
         <button onClick={onClose} style={{width:44,height:44,borderRadius:22,border:`1px solid ${isDark()?"rgba(255,255,255,0.14)":tk().border}`,background:isDark()?"rgba(255,255,255,0.08)":tk().white,backdropFilter:isDark()?"blur(12px)":"none",WebkitBackdropFilter:isDark()?"blur(12px)":"none",color:isDark()?"#F4F1FA":tk().ink2,cursor:"pointer",boxShadow:isDark()?"inset 0 1px 0 rgba(255,255,255,0.16)":sh.sm,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><IconX size={16}/></button>
       </div>
-      <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:showTimer?"flex-start":"center",padding:"20px 30px",gap:20,transition:"justify-content .4s ease",position:"relative",minHeight:0}}>
+      <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",padding:"20px 30px",gap:20,position:"relative",minHeight:0}}>
         <style>{`
           @keyframes storyPageInNext{0%{opacity:0;transform:translateX(28px) scale(0.96)}55%{opacity:1}100%{opacity:1;transform:translateX(0) scale(1)}}
           @keyframes storyPageInPrev{0%{opacity:0;transform:translateX(-28px) scale(0.96)}55%{opacity:1}100%{opacity:1;transform:translateX(0) scale(1)}}
@@ -10741,18 +10771,21 @@ function StoryViewer({story,lang,t,onClose}){
             full-screen scenes, so on a story page they open immersively (just
             like in the schedule and First-Then), instead of as a cramped card. */}
         {hasTimer&&showTimer&&((pt.type==="aurora"||pt.type==="sun")
-          ? <FullTimer type={pt.type} totalSec={pt.min*60} color={pt.color} t={t} autoRun={true} onClose={()=>setShowTimer(false)}/>
+          ? (onOpenFullTimer
+              ? (()=>{onOpenFullTimer({type:pt.type,totalSec:pt.min*60,color:pt.color});setShowTimer(false);return null;})()
+              : <FullTimer type={pt.type} totalSec={pt.min*60} color={pt.color} t={t} autoRun={true} onClose={()=>setShowTimer(false)}/>)
           : (
           <div style={{
             width:"100%",
             display:"flex",
             flexDirection:"column",
             alignItems:"center",
-            gap:14,
+            gap:12,
+            paddingBottom:16,
             animation:"timerInlineIn 0.55s cubic-bezier(0.32, 0.72, 0, 1) both",
           }}>
             <style>{`@keyframes timerInlineIn{0%{opacity:0;transform:translateY(14px) scale(0.95)}100%{opacity:1;transform:translateY(0) scale(1)}}`}</style>
-            <TimerComp type={pt.type} totalSec={pt.min*60} color={pt.color} t={t} autoRun={true} size={Math.min(240, typeof window!=="undefined"?Math.min(window.innerWidth,480)-72:240)} showCtrl={true}/>
+            <TimerComp type={pt.type} totalSec={pt.min*60} color={pt.color} t={t} autoRun={true} size={180} showCtrl={true}/>
             <button onClick={()=>setShowTimer(false)} className="lt-press-soft" style={{
               padding:"8px 16px",borderRadius:12,
               border:`1px solid ${tk().border}`,
@@ -11236,10 +11269,10 @@ function StoryEditor({story,onSave,onDel,onClose,t,lang}){
 }
 
 /* ═══ Story list screen ═══ */
-function StoryScreen({lang,t,isEditor,stories,setStories,onOpenStory,onOpenEditor,onScrollHdr}){
+function StoryScreen({lang,t,isEditor,stories,setStories,onOpenStory,onOpenEditor}){
   const S=scrPal("stories");
   return(
-    <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",background:"transparent"}}>
+    <div style={{flex:1,overflowY:"auto",background:"transparent"}}>
       <div style={{padding:"24px 22px 120px"}}>
         {stories.length===0&&!isEditor?(
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"72px 30px 60px",gap:16}}>
@@ -12538,7 +12571,7 @@ function SkylightExercise({onClose,t,lang}){
 }
 
 /* ═══ Calm screen — pick exercise ═══ */
-function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActive,onScrollHdr}){
+function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActive}){
   const S=scrPal("calm");
 
   // Tell App which immersive exercise is running. App renders the exercise at
@@ -12568,7 +12601,7 @@ function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActi
       {key:"skylight",icon:"☁️",title:t.skylight,desc:lang==="en"?"Rest your gaze on the sky":"Vila blicken mot himlen",color:"#B89DC4"},
     ];
     return(
-      <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",background:"transparent",padding:"24px 22px 120px",display:"flex",flexDirection:"column",gap:18}}>
+      <div style={{flex:1,overflowY:"auto",background:"transparent",padding:"24px 22px 120px",display:"flex",flexDirection:"column",gap:18}}>
         <div style={{background:tk().white,borderRadius:22,padding:"20px 20px 18px",border:`1px solid ${tk().border}`,boxShadow:"0 8px 24px rgba(31,27,46,0.04)"}}>
           <div style={{fontFamily:G.font,fontWeight:600,fontSize:13,color:S.deep,marginBottom:6,letterSpacing:.2}}>{lang==="en"?"Available exercises":"Tillgängliga övningar"}</div>
           <div style={{fontFamily:G.font,fontWeight:400,fontSize:12,color:tk().ink2,lineHeight:1.5}}>{lang==="en"?"Choose which exercises the user can see. At least one must be enabled.":"Välj vilka övningar som syns för användaren. Minst en måste vara aktiv."}</div>
@@ -12605,7 +12638,7 @@ function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActi
     cfg.calmTools?.skylight!==false&&{key:"skylight",emoji:"☁️",title:t.skylight,desc:lang==="en"?"Rest your gaze on the sky":"Vila blicken mot himlen",color:"#B89DC4",gradFrom:"#B89DC4",gradTo:"#D5C5DD"},
   ].filter(Boolean);
   return(
-    <div onScroll={onScrollHdr} style={{flex:1,overflowY:"auto",background:"transparent",animation:"calmRadialReveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both"}}>
+    <div style={{flex:1,overflowY:"auto",background:"transparent",animation:"calmRadialReveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both"}}>
       <style>{`
         @keyframes calmRadialReveal{
           0%{opacity:0;clip-path:circle(0% at 50% 50%)}
@@ -12812,7 +12845,7 @@ function CalmScreen({t,lang,cfg,isEditor,setCfg,onImmersiveChange,active,setActi
    visual weight. Today prominent, past tones down,
    future waits quietly. Edit mode = tap to edit.
 ═══════════════════════════════════════════════════ */
-function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEdit,onAdd,headerTapCount,setHeaderTapCount,onScrollHdr}){
+function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEdit,onAdd,headerTapCount,setHeaderTapCount}){
   // ════════════════════════════════════════════════════════════════════════
   //  WEEKSCREEN — OVERVIEW (rhythm chart)
   //  ════════════════════════════════════════════════════════════════════════
@@ -13075,7 +13108,7 @@ function WeekScreen({acts,dailyState,isEd,setIsEd,effS,t,lang,now,cfg,onTap,onEd
           at the top, which felt heavy. Putting it inside the scroll body lets
           it scroll out of view gracefully when the user scrolls down to the
           day list — the rhythm chart then sits at the top, getting more room. */}
-      <div onScroll={onScrollHdr} ref={scrollBodyRef} style={{flex:1,minHeight:0,overflowY:"auto",overflowX:"hidden",overscrollBehaviorX:"none",overscrollBehaviorY:"none",WebkitOverflowScrolling:"touch",padding:"0 14px 24px"}}>
+      <div ref={scrollBodyRef} style={{flex:1,minHeight:0,overflowY:"auto",overflowX:"hidden",overscrollBehaviorX:"none",overscrollBehaviorY:"none",WebkitOverflowScrolling:"touch",padding:"0 14px 24px"}}>
         {/* ── In-flow header: the sky banner + Vecka/Redigera row live INSIDE the
             scroll so the whole week page scrolls as one continuous surface (like
             a web page) — nothing stays pinned, no hard edge cuts the content. */}
@@ -13582,7 +13615,7 @@ function IdCardLargeView({cfg,t,onClose}){
   );
 }
 
-function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor,onShowLarge,onScrollHdr}){
+function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor,onShowLarge}){
   const S=scrPal("idcard");
   const c=cfg.idCard||{};
   const contacts=c.contacts||[];
@@ -13666,7 +13699,7 @@ function IdCardScreen({t,lang,cfg,setCfg,isEditor,onOpenEditor,onShowLarge,onScr
           content scrolls in the region BELOW it, so the card can never slide up
           under the bar no matter the scroll position. */}
       <div aria-hidden="true" style={{height:80,flexShrink:0}}/>
-      <div onScroll={onScrollHdr} ref={scrollRef} style={{flex:1,minHeight:0,overflowY:"auto",overscrollBehavior:"contain",padding:"0 18px 40px"}}>
+      <div ref={scrollRef} style={{flex:1,minHeight:0,overflowY:"auto",overscrollBehavior:"contain",padding:"0 18px 40px"}}>
         {isEmpty?(
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"40px 30px 60px",gap:16}}>
             <style>{`@keyframes idcEmptyHalo{0%,100%{transform:scale(0.92);opacity:.5}50%{transform:scale(1.08);opacity:.9}}@keyframes idcEmptyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}`}</style>
@@ -14094,10 +14127,10 @@ function SceneIntro(){
     const drawIcon=(plateA,pearlScale=0)=>{
       // plate
       ctx.save(); ctx.globalAlpha=plateA;
-      // soft warm drop shadow (matches the warm plate, no cool halo)
-      ctx.shadowColor="rgba(150,95,60,0.24)"; ctx.shadowBlur=34; ctx.shadowOffsetY=16;
+      // soft warm drop shadow
+      ctx.shadowColor="rgba(200,120,80,0.18)"; ctx.shadowBlur=34; ctx.shadowOffsetY=16;
       const bg=ctx.createLinearGradient(ix,iy,ix+ICON,iy+ICON);
-      bg.addColorStop(0,"#F3B98A"); bg.addColorStop(1,"#E2965E");
+      bg.addColorStop(0,"#FFCB9C"); bg.addColorStop(1,"#F2968A");
       roundRectPath(ix,iy,ICON,ICON,v(22.37)); ctx.fillStyle=bg; ctx.fill();
       ctx.shadowColor="transparent";
       // soft top highlight — CLIPPED to the plate so there is no hard rim/edge
@@ -14116,7 +14149,7 @@ function SceneIntro(){
         ctx.lineTo(ix+v(65.5),iy+v(43.3)); };
       ctx.lineCap="round"; ctx.lineJoin="round";
       // depth shadow under the mark — gives the ivory a carved, defined edge
-      ctx.save(); ctx.translate(0,v(2.2)); markPath(); ctx.lineWidth=v(13.0); ctx.strokeStyle="rgba(138,70,36,0.45)"; ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.translate(0,v(1.8)); markPath(); ctx.lineWidth=v(13.0); ctx.strokeStyle="rgba(180,100,60,0.28)"; ctx.stroke(); ctx.restore();
       // main mark — bright warm ivory so it reads crisply (not washed out)
       ctx.lineWidth=v(12.8); markPath(); ctx.strokeStyle="#FFF6EA"; ctx.stroke();
       // soft inner bevel highlight along the top — a gentle 3D sheen
@@ -15437,31 +15470,6 @@ export default function App(){
   };
   const[stories,setStories]=usePersistentState("stories",()=>STORIES0.map(s=>({...s,pages:s.pages.map(p=>({...p}))})));
   const[screen,setScreen]=useState("home");
-  const _hdrRef=useRef(null);
-  const _hdrState=useRef({last:0,hidden:false,h:0});
-  const onScrollHdr=useCallback((e)=>{
-    if(screen==="home"||screen==="week") return;
-    const hdr=_hdrRef.current; if(!hdr) return;
-    const st=_hdrState.current;
-    if(!st.h) st.h=hdr.offsetHeight;
-    const y=e.currentTarget.scrollTop;
-    const dy=y-st.last; st.last=y;
-    if(dy>3&&!st.hidden&&y>st.h){
-      hdr.style.transition="transform .22s ease";
-      hdr.style.transform=`translateY(-${st.h}px)`;
-      st.hidden=true;
-    } else if(dy<-3&&st.hidden){
-      hdr.style.transition="transform .22s ease";
-      hdr.style.transform="translateY(0)";
-      st.hidden=false;
-    }
-  },[screen]);
-  useEffect(()=>{
-    const hdr=_hdrRef.current; if(!hdr) return;
-    hdr.style.transition="none";
-    hdr.style.transform="translateY(0)";
-    _hdrState.current={last:0,hidden:false,h:0};
-  },[screen]);
   const[isEd,setIsEd]=useState(false);
   const[view,setView]=useState("list");
   // Ref to the collapsing tab-bar DOM node. The schedule's scroll handler writes
@@ -15619,7 +15627,7 @@ export default function App(){
   // detect any story whose id is a known built-in example id, drop those, and
   // splice in the fresh STORIES0 — while keeping every story the user created
   // themselves (unknown ids). Bumping the version key reruns it once.
-  const[migrStoriesV2,setMigrStoriesV2]=usePersistentState("migr_stories_v21",false);
+  const[migrStoriesV2,setMigrStoriesV2]=usePersistentState("migr_stories_v22",false);
   useEffect(()=>{
     if(migrStoriesV2) return;
     // All ids ever used by built-in examples (old + intermediate + current).
@@ -16863,7 +16871,7 @@ export default function App(){
           along the top edge (like sunlight catching glass), and a colored
           hairline at the bottom. Everything transitions over .5s when the
           screen color changes, and the auroras breathe gently over time. */}
-      <div ref={_hdrRef} onClick={()=>setHeaderTapCount(c=>c+1)} className="lt-app-header" style={{
+      <div onClick={()=>setHeaderTapCount(c=>c+1)} className="lt-app-header" style={{
         display: undefined,
         // Per-screen header: each tool has its own fullness and glow shape (see
         // HEADER_CHAR) so every header is unique, while sharing one calm design
@@ -17373,13 +17381,13 @@ export default function App(){
             )}
           </div>
         )}
-        {screen==="week"&&<WeekScreen acts={acts} dailyState={dailyState} isEd={isEd} setIsEd={setIsEd} effS={effS} t={t} lang={lang} now={now} cfg={cfg} onTap={openDetail} onEdit={item=>{setEditAct(item);setShowEd(true);}} onAdd={()=>{setEditAct(null);setShowEd(true);}} headerTapCount={headerTapCount} setHeaderTapCount={setHeaderTapCount} onScrollHdr={onScrollHdr}/>}
-        {screen==="timer"&&<TimerScreen t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} lang={lang} onLaunchTimer={launchTimer} onColorChange={setLiveTimerColor} onScrollHdr={onScrollHdr}/>}
-        {screen==="stories"&&<StoryScreen lang={lang} t={t} isEditor={isEd} stories={stories} setStories={setStories} onOpenStory={setStoryViewer} onOpenEditor={setStoryEditor} onScrollHdr={onScrollHdr}/>}
-        {screen==="emotion"&&<EmotionScreen lang={lang} t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} onInputFocusChange={setInputFocused} onOpenEmoEditor={setEmoEditor} onScrollHdr={onScrollHdr}/>}
-        {screen==="calm"&&<CalmScreen t={t} lang={lang} cfg={cfg} isEditor={isEd} setCfg={setCfg} onImmersiveChange={setImmersiveMode} active={calmActive} setActive={setCalmActive} onScrollHdr={onScrollHdr}/>}
-        {screen==="idcard"&&<IdCardScreen t={t} lang={lang} cfg={cfg} setCfg={setCfg} isEditor={isEd} onOpenEditor={()=>setIdCardEditorOpen(true)} onShowLarge={()=>setIdCardLargeOpen(true)} onScrollHdr={onScrollHdr}/>}
-        {screen==="comm"&&<CommBoard lang={lang} t={t} isEditor={isEd} cats={commCats} setCats={setCommCats} sel={commSel} setSel={setCommSel} openModal={setCommModal} cfg={cfg} setCfg={setCfg} onScrollHdr={onScrollHdr}/>}
+        {screen==="week"&&<WeekScreen acts={acts} dailyState={dailyState} isEd={isEd} setIsEd={setIsEd} effS={effS} t={t} lang={lang} now={now} cfg={cfg} onTap={openDetail} onEdit={item=>{setEditAct(item);setShowEd(true);}} onAdd={()=>{setEditAct(null);setShowEd(true);}} headerTapCount={headerTapCount} setHeaderTapCount={setHeaderTapCount}/>}
+        {screen==="timer"&&<TimerScreen t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} lang={lang} onLaunchTimer={launchTimer} onColorChange={setLiveTimerColor}/>}
+        {screen==="stories"&&<StoryScreen lang={lang} t={t} isEditor={isEd} stories={stories} setStories={setStories} onOpenStory={setStoryViewer} onOpenEditor={setStoryEditor}/>}
+        {screen==="emotion"&&<EmotionScreen lang={lang} t={t} cfg={cfg} isEditor={isEd} setCfg={setCfg} onInputFocusChange={setInputFocused} onOpenEmoEditor={setEmoEditor}/>}
+        {screen==="calm"&&<CalmScreen t={t} lang={lang} cfg={cfg} isEditor={isEd} setCfg={setCfg} onImmersiveChange={setImmersiveMode} active={calmActive} setActive={setCalmActive}/>}
+        {screen==="idcard"&&<IdCardScreen t={t} lang={lang} cfg={cfg} setCfg={setCfg} isEditor={isEd} onOpenEditor={()=>setIdCardEditorOpen(true)} onShowLarge={()=>setIdCardLargeOpen(true)}/>}
+        {screen==="comm"&&<CommBoard lang={lang} t={t} isEditor={isEd} cats={commCats} setCats={setCommCats} sel={commSel} setSel={setCommSel} openModal={setCommModal} cfg={cfg} setCfg={setCfg}/>}
           </div>
         </div>
       </div>
@@ -17507,8 +17515,8 @@ export default function App(){
         flexShrink:0,zIndex:20,position:"relative",
         maxHeight:navHidden?0:300,
         opacity:navHidden?0:1,
-        paddingTop:navHidden?0:7,
-        paddingBottom:navHidden?0:"calc(6px + env(safe-area-inset-bottom, 0px))",
+        paddingTop:navHidden?0:4,
+        paddingBottom:navHidden?0:"calc(2px + env(safe-area-inset-bottom, 0px))",
         // Horizontal scroll when many tools overflow the width; vertical stays
         // clipped. When hidden (input focus / calm mode) everything is clipped.
         overflowX:navHidden?"hidden":"auto",
@@ -17724,7 +17732,7 @@ export default function App(){
       {/* StoryViewer rendered HERE at App root — not inside StoryScreen —
           so its position:fixed escapes the screen-container's animation context
           and truly covers the viewport including the bottom tab bar. */}
-      {storyViewer&&<StoryViewer story={storyViewer} lang={lang} t={t} onClose={()=>setStoryViewer(null)}/>}
+      {storyViewer&&<StoryViewer story={storyViewer} lang={lang} t={t} onClose={()=>setStoryViewer(null)} onOpenFullTimer={({type,totalSec,color})=>setFullTimer({type,totalSec,color})}/>}
       {/* Calm exercises rendered HERE at App root — same reason as StoryViewer —
           so their position:fixed covers the whole viewport (incl. the header),
           instead of being trapped inside the content stacking context where the
